@@ -1,0 +1,22 @@
+.studio {
+  display: flex;
+  height: 100%;
+  min-height: 0;
+}
+
+.thread {
+  flex: 0 0 auto;
+  overflow: hidden;
+}
+
+.artifactPanel {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.resizeHandle {
+  flex: 0 0 auto;
+  width: 4px;
+  cursor: col-resize;
+}

@@ -1,0 +1,61 @@
+.aiLabel {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 7px;
+  font-size: 12px;
+  color: var(--erd-color-text-tertiary, #8c8c8c);
+}
+
+.aiLabelIcon {
+  color: var(--erd-color-primary, #1677ff);
+  font-size: 13px;
+}
+
+.artifactChip {
+  margin-top: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border: 1px solid var(--erd-color-border-secondary, #f0f0f0);
+  border-radius: 9px;
+  background: var(--erd-color-fill-quaternary, rgba(0, 0, 0, 0.02));
+  font-size: 12.5px;
+}
+
+.artifactChipIcon {
+  color: var(--erd-color-primary, #1677ff);
+}
+
+.workingSteps {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding: 4px 2px;
+  margin-bottom: 10px;
+}
+
+.workingStep {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  font-size: 12.5px;
+  color: var(--erd-color-text, inherit);
+}
+
+.stepIconSuccess {
+  color: var(--erd-color-success, #52c41a);
+}
+
+.stepIconRunning {
+  color: var(--erd-color-primary, #1677ff);
+}
+
+.stepIconPending {
+  display: inline-block;
+  width: 11px;
+  height: 11px;
+  border: 2px solid var(--erd-color-border, #d9d9d9);
+  border-radius: 50%;
+}

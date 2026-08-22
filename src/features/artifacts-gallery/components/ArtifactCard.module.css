@@ -1,0 +1,115 @@
+.card {
+  position: relative;
+  border: 1px solid var(--erd-color-border-secondary, #f0f0f0);
+  border-radius: 12px;
+  background: var(--erd-color-bg-container, #fff);
+  box-shadow: var(--shadow-sm, 0 1px 2px rgba(0, 0, 0, 0.05));
+  overflow: hidden;
+}
+
+.open {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+
+.thumbnail {
+  position: relative;
+  height: 104px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--erd-color-primary-bg, #e6f4ff);
+  color: var(--erd-color-primary, #1677ff);
+}
+
+.thumbnailIcon {
+  font-size: 34px;
+}
+
+.body {
+  display: block;
+  padding: 12px 13px;
+}
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.name {
+  flex: 1;
+  min-width: 0;
+  font-size: 13.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.kindTag {
+  flex: none;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--erd-color-text-tertiary, #8c8c8c);
+  background: var(--erd-color-fill-tertiary, #f0f0f0);
+  border-radius: 5px;
+  padding: 1px 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.metaRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 5px;
+}
+
+.time {
+  font-size: 11px;
+  color: var(--erd-color-text-quaternary, #bfbfbf);
+}
+
+.sharedByBadge {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--erd-color-text-secondary, #595959);
+  background: var(--erd-color-fill-tertiary, #f0f0f0);
+  border-radius: 5px;
+  padding: 1px 6px;
+}
+
+.pinButton {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 5;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  color: var(--erd-color-text-tertiary, #8c8c8c);
+  background: var(--erd-color-bg-container, #fff);
+  box-shadow: var(--shadow-sm, 0 1px 2px rgba(0, 0, 0, 0.05));
+  font-size: 12px;
+}
+
+.pinButton[aria-pressed='true'] {
+  color: var(--erd-color-primary, #1677ff);
+}

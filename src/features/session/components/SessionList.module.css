@@ -1,0 +1,163 @@
+.sessionList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px;
+}
+
+.topRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.groupHeadingButton {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  margin: 8px 0 2px;
+  padding: 2px 4px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: var(--erd-color-text-tertiary, #8c8c8c);
+}
+
+.groupHeadingChevron {
+  font-size: 9px;
+}
+
+.groupHeading {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: inherit;
+}
+
+.countBadge {
+  font-size: 11px;
+  line-height: 1;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--erd-color-fill-tertiary, rgba(0, 0, 0, 0.06));
+  color: var(--erd-color-text-tertiary, #8c8c8c);
+}
+
+.navShortcuts {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 4px 0;
+}
+
+.navShortcut {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  color: var(--erd-color-text, inherit);
+}
+
+.navShortcut:hover {
+  background: var(--erd-color-fill-quaternary, rgba(0, 0, 0, 0.04));
+}
+
+.navShortcut[aria-current='page'] {
+  background: color-mix(in srgb, var(--erd-color-primary, #1677ff) 12%, transparent);
+  color: var(--erd-color-primary, #1677ff);
+  font-weight: 600;
+}
+
+.navShortcutLabel {
+  flex: 1 1 auto;
+  text-align: left;
+}
+
+.sessionGroupList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.sessionRowContainer {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.sessionRow {
+  box-sizing: border-box;
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  text-align: left;
+  padding: 6px 8px;
+  border: 1px solid transparent;
+  background: transparent;
+  border-radius: 10px;
+  cursor: pointer;
+  color: var(--erd-color-text, inherit);
+}
+
+.sessionRow:hover {
+  background: var(--erd-color-fill-quaternary, rgba(0, 0, 0, 0.04));
+}
+
+.sessionRow[aria-current='true'] {
+  background: color-mix(in srgb, var(--erd-color-primary, #1677ff) 12%, transparent);
+  border-color: color-mix(in srgb, var(--erd-color-primary, #1677ff) 45%, transparent);
+  font-weight: 600;
+}
+
+.sessionRowTitle {
+  display: flex;
+  align-items: center;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sessionRowTimestamp {
+  font-size: 11.5px;
+  color: var(--erd-color-text-tertiary, #8c8c8c);
+}
+
+.pinIndicator {
+  margin-right: 6px;
+  color: var(--erd-color-text-tertiary, #8c8c8c);
+}
+
+.moreActionsButton {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.moreActionsButton:hover {
+  background: var(--erd-color-fill-quaternary, rgba(0, 0, 0, 0.04));
+}
+
+.renameInput {
+  flex: 1 1 auto;
+  min-width: 0;
+}
