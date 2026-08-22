@@ -1,0 +1,114 @@
+.page {
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 28px 32px;
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.subtitle {
+  font-size: 13px;
+  color: var(--erd-color-text-secondary, #595959);
+  margin: 6px 0 0;
+}
+
+.sortTrigger {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 34px;
+  padding: 0 12px;
+  border: 1px solid var(--erd-color-border, #d9d9d9);
+  border-radius: 9px;
+  background: var(--erd-color-bg-container, #fff);
+  cursor: pointer;
+  font-size: 12.5px;
+  color: var(--erd-color-text-secondary, #595959);
+}
+
+.sortTriggerValue {
+  color: var(--erd-color-text, #141414);
+  font-weight: 500;
+}
+
+.sortTriggerChevron {
+  font-size: 10px;
+  opacity: 0.6;
+}
+
+.sortMenuItem {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 12.5px;
+  white-space: nowrap;
+}
+
+.sortMenuItemLabel {
+  flex: 1;
+}
+
+.filters {
+  margin-top: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.pill {
+  cursor: pointer;
+  font-size: 12.5px;
+  padding: 6px 13px;
+  border-radius: 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--erd-color-text-secondary, #595959);
+  background: var(--erd-color-bg-container, #fff);
+  border: 1px solid var(--erd-color-border, #d9d9d9);
+}
+
+.pillActive {
+  color: #fff;
+  background: var(--erd-color-primary, #1677ff);
+  border: 1px solid var(--erd-color-primary, #1677ff);
+}
+
+.pillCount {
+  font-size: 11px;
+  padding: 0 6px;
+  border-radius: 9px;
+  background: var(--erd-color-fill-tertiary, #f0f0f0);
+  color: var(--erd-color-text-tertiary, #8c8c8c);
+}
+
+.pillActive .pillCount {
+  background: rgba(255, 255, 255, 0.24);
+  color: #fff;
+}
+
+.grid {
+  margin-top: 18px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 14px;
+}
+
+.empty {
+  margin-top: 40px;
+  text-align: center;
+  color: var(--erd-color-text-tertiary, #8c8c8c);
+  font-size: 13px;
+}
