@@ -17,6 +17,7 @@ import {
   useDeleteArtifact,
   useSetArtifactPinned,
 } from '@/features/artifact/hooks/useArtifactMutations';
+import { useSessions } from '@/features/session/hooks/useSessions';
 import type { Artifact } from '@/types/api';
 import { dispatchMenuAction } from '@/utils/dispatchMenuAction';
 import { formatRelativeTime } from '@/utils/formatRelativeTime';
@@ -33,6 +34,8 @@ export function ArtifactCard({
   const setArtifactPinned = useSetArtifactPinned();
   const deleteArtifact = useDeleteArtifact();
   const [isShareOpen, setIsShareOpen] = useState(false);
+  const { data: sessions } = useSessions();
+  const sessionTitle = sessions?.find((s) => s.id === artifact.sessionId)?.title;
 
   const menuItems = [
     {
@@ -66,12 +69,18 @@ export function ArtifactCard({
   return (
     <div className={styles.card} role="listitem">
       <button type="button" className={styles.open} onClick={() => onOpen(artifact)}>
-        <span className={styles.thumbnail} aria-hidden="true">
+        <span
+          className={styles.thumbnail}
+          aria-hidden="true"
+          data-testid="artifact-thumbnail"
+          data-kind={artifact.kind}
+        >
           {artifact.kind === 'slides' ? (
             <FilePptOutlined className={styles.thumbnailIcon} />
           ) : (
             <DashboardOutlined className={styles.thumbnailIcon} />
           )}
+          {artifact.sharedBy && <span className={styles.sharedToMeOverlay}>Shared to me</span>}
         </span>
         <span className={styles.body}>
           <span className={styles.titleRow}>
@@ -80,8 +89,14 @@ export function ArtifactCard({
               {artifact.kind === 'slides' ? 'Deck' : 'Dash'}
             </span>
           </span>
+          {sessionTitle && (
+            <span className={styles.sessionRow} aria-hidden="true">
+              {sessionTitle}
+            </span>
+          )}
           <span className={styles.metaRow} aria-hidden="true">
             <span className={styles.time}>{formatRelativeTime(artifact.createdAt)}</span>
+            {artifact.shared && <span className={styles.sharedBadge}>Shared</span>}
             {artifact.sharedBy && (
               <span className={styles.sharedByBadge}>
                 <UsergroupAddOutlined /> {artifact.sharedBy}

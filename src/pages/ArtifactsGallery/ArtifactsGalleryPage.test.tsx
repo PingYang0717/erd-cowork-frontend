@@ -193,6 +193,59 @@ describe('Artifacts gallery', () => {
     expect(await screen.findByRole('dialog', { name: '分享 Artifact' })).toBeInTheDocument();
   });
 
+  it('distinguishes kinds by thumbnail, names the producing session, and badges sharing states', async () => {
+    renderGalleryPage();
+
+    const spcOpen = await screen.findByRole('button', { name: 'SPC analysis — Vt (gate CD)' });
+    const spcCard = spcOpen.closest('[role="listitem"]') as HTMLElement;
+    const dailyCard = screen
+      .getByRole('button', { name: 'Daily monitor (A14)' })
+      .closest('[role="listitem"]') as HTMLElement;
+
+    // Thumbnails carry the kind so dashboard and slides cards can be told apart.
+    expect(within(spcCard).getByTestId('artifact-thumbnail')).toHaveAttribute(
+      'data-kind',
+      'dashboard',
+    );
+    expect(within(dailyCard).getByTestId('artifact-thumbnail')).toHaveAttribute(
+      'data-kind',
+      'slides',
+    );
+
+    // Each card names the session that produced it (session list loads async).
+    expect(await within(spcCard).findByText('SPC — Vt (gate CD)')).toBeInTheDocument();
+    expect(await within(dailyCard).findByText('Defect pareto — W12')).toBeInTheDocument();
+
+    // Shared-to-me cards carry the thumbnail overlay badge; owned ones don't.
+    expect(within(dailyCard).getByText('Shared to me')).toBeInTheDocument();
+    expect(within(spcCard).queryByText('Shared to me')).not.toBeInTheDocument();
+  });
+
+  it('shows the primary "Shared" badge in the meta row once an Artifact has been shared', async () => {
+    const user = userEvent.setup();
+    renderGalleryPage();
+    await screen.findByRole('button', { name: 'SPC analysis — Vt (gate CD)' });
+
+    const spcCard = screen
+      .getByRole('button', { name: 'SPC analysis — Vt (gate CD)' })
+      .closest('[role="listitem"]') as HTMLElement;
+    expect(within(spcCard).queryByText('Shared')).not.toBeInTheDocument();
+
+    await user.click(
+      screen.getByRole('button', { name: 'More actions for SPC analysis — Vt (gate CD)' }),
+    );
+    await user.click(screen.getByRole('menuitem', { name: 'Share' }));
+
+    const dialog = await screen.findByRole('dialog', { name: '分享 Artifact' });
+    const picker = within(dialog).getByRole('combobox');
+    await user.type(picker, '鄭凱宇');
+    await user.click(await screen.findByRole('option', { name: /CHXXGHYC/ }));
+    await user.click(within(dialog).getByRole('button', { name: '分享' }));
+    await user.click(within(dialog).getByRole('button', { name: '完成' }));
+
+    expect(await within(spcCard).findByText('Shared')).toBeInTheDocument();
+  });
+
   it('opens an Artifact in the full-page view when its card is clicked', async () => {
     const user = userEvent.setup();
     const queryClient = new QueryClient();
