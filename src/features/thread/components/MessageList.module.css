@@ -4,32 +4,27 @@
   margin: 14px 0;
 }
 
-.userMessage {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 6px;
-  max-width: 78%;
-}
-
+/* Attachment chips sit inside the blue bubble, above the text (mockup). */
 .userAttachments {
   display: flex;
   flex-wrap: wrap;
-  justify-content: flex-end;
   gap: 6px;
-  margin: 0;
+  margin: 0 0 8px;
   padding: 0;
   list-style: none;
 }
 
 .userBubble {
-  max-width: 100%;
+  max-width: 78%;
   background: var(--erd-color-primary, #1677ff);
   color: #fff;
   padding: 10px 13px;
   border-radius: 14px 14px 4px 14px;
   font-size: 13px;
   line-height: 1.55;
+}
+
+.userText {
   white-space: pre-wrap;
 }
 

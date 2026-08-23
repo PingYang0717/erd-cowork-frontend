@@ -34,8 +34,7 @@ function MessageBubble({ message }: { message: Message }) {
 
     return (
       <div className={styles.userRow}>
-        <div className={styles.userMessage}>
-          <div className={styles.userBubble}>{message.text}</div>
+        <div className={styles.userBubble}>
           {attachments.length > 0 && (
             <ul className={styles.userAttachments} aria-label="Message attachments">
               {attachments.map((upload) => (
@@ -45,6 +44,7 @@ function MessageBubble({ message }: { message: Message }) {
               ))}
             </ul>
           )}
+          <span className={styles.userText}>{message.text}</span>
         </div>
       </div>
     );

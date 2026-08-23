@@ -118,7 +118,32 @@ describe('File attachments', () => {
     expect(within(dialog).getByText('big-1.csv')).toBeInTheDocument();
   });
 
-  it('sends attachments with the message and clears the composer', async () => {
+  it('renders modal file rows with a type-colored icon, a type/size line, and a remove button', async () => {
+    const user = userEvent.setup();
+    renderStudioPage();
+    const dialog = await selectASessionAndOpenFileModal(user);
+
+    const input = screen.getByLabelText('Choose files');
+    await user.upload(input, [
+      fileOfSize('lot-genealogy.csv', 1024),
+      fileOfSize('yields.xlsx', 2048),
+    ]);
+
+    const csvRow = (await within(dialog).findByText('lot-genealogy.csv')).closest(
+      'li',
+    ) as HTMLElement;
+    expect(within(csvRow).getByText('CSV · 1.0 KB')).toBeInTheDocument();
+    expect(within(csvRow).getByTestId('file-type-icon')).toHaveAttribute('data-file-type', 'csv');
+    expect(
+      within(csvRow).getByRole('button', { name: 'Remove lot-genealogy.csv' }),
+    ).toBeInTheDocument();
+
+    const xlsxRow = within(dialog).getByText('yields.xlsx').closest('li') as HTMLElement;
+    expect(within(xlsxRow).getByText('XLSX · 2.0 KB')).toBeInTheDocument();
+    expect(within(xlsxRow).getByTestId('file-type-icon')).toHaveAttribute('data-file-type', 'xlsx');
+  });
+
+  it('sends attachments with the message, rendering the chips inside the bubble above the text', async () => {
     const user = userEvent.setup();
     renderStudioPage();
     const dialog = await selectASessionAndOpenFileModal(user);
@@ -131,8 +156,14 @@ describe('File attachments', () => {
     await user.type(screen.getByRole('textbox', { name: 'Message' }), 'Check this lot data');
     await user.keyboard('{Enter}');
 
-    const sent = await screen.findByRole('list', { name: 'Message attachments' });
+    // The chips live inside the blue user bubble, before the message text.
+    const bubbleText = await screen.findByText('Check this lot data');
+    const bubble = bubbleText.parentElement as HTMLElement;
+    const sent = within(bubble).getByRole('list', { name: 'Message attachments' });
     expect(within(sent).getByText('lot-genealogy.csv')).toBeInTheDocument();
+    expect(
+      sent.compareDocumentPosition(bubbleText) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
     expect(screen.queryByRole('list', { name: 'Attached files' })).not.toBeInTheDocument();
   });
 

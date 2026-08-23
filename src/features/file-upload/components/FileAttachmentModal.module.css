@@ -77,6 +77,72 @@
   padding: 0 7px;
 }
 
+.fileRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--erd-color-border-secondary, #f0f0f0);
+  border-radius: 9px;
+  background: var(--erd-color-bg-container, #fff);
+}
+
+.fileRowIcon {
+  flex: none;
+  font-size: 18px;
+  color: var(--erd-color-text-secondary, rgba(0, 0, 0, 0.65));
+}
+
+.fileRowIcon[data-file-type='csv'] {
+  color: var(--erd-color-primary, #1677ff);
+}
+
+.fileRowIcon[data-file-type='xlsx'],
+.fileRowIcon[data-file-type='xls'] {
+  color: var(--erd-color-success, #52c41a);
+}
+
+.fileRowInfo {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.fileRowName {
+  font-size: 12.5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fileRowMeta {
+  font-size: 11px;
+  color: var(--erd-color-text-tertiary, #8c8c8c);
+}
+
+.fileRowRemove {
+  flex: none;
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--erd-color-text-tertiary, #8c8c8c);
+}
+
+.fileRowRemove:hover {
+  background: var(--erd-color-fill-tertiary, rgba(0, 0, 0, 0.04));
+  color: var(--erd-color-text, rgba(0, 0, 0, 0.88));
+}
+
 .attachedList {
   display: flex;
   flex-direction: column;
