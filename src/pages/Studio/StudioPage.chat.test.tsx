@@ -163,6 +163,22 @@ describe('Scenario matching', () => {
     expect(screen.getByText('CL / ±3σ, apply Western Electric rules')).toBeInTheDocument();
   });
 
+  it('auto-scrolls the thread to the bottom when a new message lands', async () => {
+    renderStudioPage();
+    await selectASessionWithFakeTimers();
+
+    const log = screen.getByRole('log', { name: 'Messages' });
+    Object.defineProperty(log, 'scrollHeight', { value: 640, configurable: true });
+    expect(log.scrollTop).toBe(0);
+
+    fireEvent.click(screen.getByRole('button', { name: 'SPC analysis' }));
+    await advanceTimers(0);
+    // Step playback plus the mockup's 40ms post-render scroll delay.
+    await advanceTimers(500 * 4 + 40);
+
+    expect(log.scrollTop).toBe(640);
+  });
+
   it('appends the slides step and names a slides Artifact when clicking "Generate slides"', async () => {
     renderStudioPage();
     await selectASessionWithFakeTimers();
