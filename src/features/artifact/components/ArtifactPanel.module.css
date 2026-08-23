@@ -52,7 +52,8 @@
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  padding: 8px 12px;
+  height: 54px;
+  padding: 0 20px;
   background: var(--erd-color-bg-container, #fff);
   border-bottom: 1px solid var(--erd-color-border-secondary, #f0f0f0);
 }

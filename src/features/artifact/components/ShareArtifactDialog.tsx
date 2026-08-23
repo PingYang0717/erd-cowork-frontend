@@ -54,7 +54,14 @@ export function ShareArtifactDialog({
   }
 
   return (
-    <Modal open={open} onCancel={handleClose} title="分享 Artifact" footer={null} destroyOnHidden>
+    <Modal
+      open={open}
+      onCancel={handleClose}
+      title="分享 Artifact"
+      width={460}
+      footer={null}
+      destroyOnHidden
+    >
       <p className={styles.subtitle}>Artifact 已生成,可分享給團隊檢視。</p>
       <div className={styles.infoCard} aria-label="Artifact 資訊">
         <span className={styles.infoCardIcon} aria-hidden>

@@ -10,7 +10,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
 
 /* The mockup's context chips: h28, br14, fs12, secondary text, plain

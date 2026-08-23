@@ -43,13 +43,17 @@ function SessionRow({
   const [isRenaming, setIsRenaming] = useState(false);
   const [renameDraft, setRenameDraft] = useState(session.title);
 
+  // Dividers between every item, per the mockup's session menu. The Pin icon
+  // deliberately keeps its filled-when-pinned variant (spec exception).
   const menuItems = [
     {
       key: 'pin',
       label: session.pinned ? 'Unpin' : 'Pin',
       icon: session.pinned ? <PushpinFilled aria-hidden /> : <PushpinOutlined aria-hidden />,
     },
+    { type: 'divider' as const },
     { key: 'rename', label: 'Rename', icon: <EditOutlined aria-hidden /> },
+    { type: 'divider' as const },
     { key: 'delete', label: 'Delete', danger: true, icon: <DeleteOutlined aria-hidden /> },
   ];
 
@@ -115,6 +119,7 @@ function SessionRow({
       </button>
       <Dropdown
         trigger={['click']}
+        overlayClassName="erd-menu"
         menu={{ items: menuItems, onClick: ({ key }) => handleMenuClick(key) }}
       >
         <button

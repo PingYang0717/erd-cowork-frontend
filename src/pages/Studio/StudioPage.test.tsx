@@ -69,13 +69,13 @@ describe('StudioPage three-pane layout', () => {
 
     const rail = screen.getByRole('navigation', { name: 'Session list' });
     const handle = screen.getByRole('separator', { name: 'Resize session rail' });
-    expect(rail.style.width).toBe('280px');
+    expect(rail.style.width).toBe('270px');
 
     fireEvent.mouseDown(handle, { clientX: 300 });
     fireEvent.mouseMove(window, { clientX: 360 });
     fireEvent.mouseUp(window);
 
-    expect(rail.style.width).toBe('340px');
+    expect(rail.style.width).toBe('330px');
 
     fireEvent.mouseDown(handle, { clientX: 360 });
     fireEvent.mouseMove(window, { clientX: 2000 });
@@ -89,13 +89,13 @@ describe('StudioPage three-pane layout', () => {
 
     const thread = screen.getByRole('region', { name: 'Thread' });
     const handle = screen.getByRole('separator', { name: 'Resize thread panel' });
-    expect(thread.style.width).toBe('480px');
+    expect(thread.style.width).toBe('430px');
 
     fireEvent.mouseDown(handle, { clientX: 300 });
     fireEvent.mouseMove(window, { clientX: 200 });
     fireEvent.mouseUp(window);
 
-    expect(thread.style.width).toBe('380px');
+    expect(thread.style.width).toBe('330px');
 
     fireEvent.mouseDown(handle, { clientX: 200 });
     fireEvent.mouseMove(window, { clientX: -1000 });
@@ -134,7 +134,7 @@ describe('StudioPage three-pane layout', () => {
 
     expect(screen.getByRole('button', { name: 'New chat' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Schedule' })).toBeInTheDocument();
-    expect(rail.style.width).toBe('280px');
+    expect(rail.style.width).toBe('270px');
   });
 
   it('keeps panel widths as session-only state that resets on reload, per architecture.md', async () => {
@@ -145,12 +145,12 @@ describe('StudioPage three-pane layout', () => {
     });
     fireEvent.mouseMove(window, { clientX: 360 });
     fireEvent.mouseUp(window);
-    expect(screen.getByRole('navigation', { name: 'Session list' }).style.width).toBe('340px');
+    expect(screen.getByRole('navigation', { name: 'Session list' }).style.width).toBe('330px');
 
     await renderReloadedStudioPage();
 
     expect(screen.getAllByRole('navigation', { name: 'Session list' })[1].style.width).toBe(
-      '280px',
+      '270px',
     );
   });
 });
