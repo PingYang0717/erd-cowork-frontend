@@ -4,7 +4,12 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** done
+
+> **Note (verification):** CSS Modules stylesheets are not applied in the
+> jsdom test environment, so computed-style assertions cannot observe these
+> values; verified by side-by-side visual comparison per ADR-0004, matching
+> the spec's "純樣式 token 調整不寫斷言測試" decision.
 
 - [ ] Selected session row background/border use the mockup's fixed `--erd-color-primary-bg`/`--erd-color-primary-border` tokens instead of `color-mix`-derived values, correct in both light and dark themes
 - [ ] Thread empty-state icon tile uses the primary-bg (blue) background instead of the gray fill-tertiary background, at the mockup's size/radius/icon scale
