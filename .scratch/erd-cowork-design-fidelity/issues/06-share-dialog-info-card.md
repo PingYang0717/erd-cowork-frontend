@@ -4,7 +4,7 @@
 
 **Blocked by:** 02 (Per-version 生成/發佈狀態 + 生成動作)
 
-**Status:** ready-for-agent
+**Status:** done
 
 - [ ] Share dialog shows an info card: 40×40 icon tile (primary-bg), the Artifact's name, a "{kind} · eRD Cowork" subtitle, and a success-colored "已生成" chip reflecting the current version's generated state from ticket 02
 - [ ] Seam test: open the share dialog for a generated Artifact, assert the info card renders the correct name, kind, and generated chip

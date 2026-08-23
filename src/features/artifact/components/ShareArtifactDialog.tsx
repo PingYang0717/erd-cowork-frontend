@@ -1,4 +1,10 @@
-import { CheckOutlined, CopyOutlined, LinkOutlined } from '@ant-design/icons';
+import {
+  AppstoreOutlined,
+  CheckOutlined,
+  CopyOutlined,
+  FundOutlined,
+  LinkOutlined,
+} from '@ant-design/icons';
 import { Button, Input, Modal, Select } from 'antd';
 import { useState } from 'react';
 
@@ -50,7 +56,23 @@ export function ShareArtifactDialog({
   return (
     <Modal open={open} onCancel={handleClose} title="分享 Artifact" footer={null} destroyOnHidden>
       <p className={styles.subtitle}>Artifact 已生成,可分享給團隊檢視。</p>
-      <p className={styles.artifactName}>{artifact.name}</p>
+      <div className={styles.infoCard} aria-label="Artifact 資訊">
+        <span className={styles.infoCardIcon} aria-hidden>
+          {artifact.kind === 'dashboard' ? <FundOutlined /> : <AppstoreOutlined />}
+        </span>
+        <span className={styles.infoCardText}>
+          <span className={styles.infoCardName}>{artifact.name}</span>
+          <span className={styles.infoCardKind}>
+            {artifact.kind === 'dashboard' ? 'Dashboard' : 'Slides'} · eRD Cowork
+          </span>
+        </span>
+        {artifact.generated && (
+          <span className={styles.infoCardGeneratedChip}>
+            <CheckOutlined aria-hidden />
+            已生成
+          </span>
+        )}
+      </div>
 
       <div className={styles.section}>
         <div className={styles.sectionLabel}>分享對象</div>
