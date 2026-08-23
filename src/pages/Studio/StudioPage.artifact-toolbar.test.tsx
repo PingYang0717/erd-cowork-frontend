@@ -63,7 +63,9 @@ describe('Artifact panel toolbar', () => {
     await user.click(within(dialog).getByRole('button', { name: '分享' }));
     await user.click(within(dialog).getByRole('button', { name: '完成' }));
 
-    expect(screen.getByText('已生成')).toBeInTheDocument();
+    // The panel chip persists (the closing dialog's info card may still hold
+    // its own 已生成 chip mid-transition, hence getAllByText).
+    expect(screen.getAllByText('已生成').length).toBeGreaterThan(0);
     // The mockup has no extra shared checkmark on the share button; it stays
     // the plain, enabled Share control after sharing.
     expect(screen.getByRole('button', { name: 'Share artifact' })).toBeEnabled();
