@@ -4,7 +4,7 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** done
 
 > **Note:** `.scratch/erd-cowork-frontend/` ticket 14 previously removed a name-based `dedupeSharedByName` as unrequested behaviour that could hide unrelated rows. This ticket reintroduces deduplication deliberately, keyed by Artifact id instead of name, which avoids that failure mode — this is a considered reversal, not a repeat of the same mistake.
 

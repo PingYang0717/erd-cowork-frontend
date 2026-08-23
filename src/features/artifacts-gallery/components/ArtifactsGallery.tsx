@@ -31,12 +31,27 @@ const EMPTY_MESSAGES: Record<FilterCategory, string> = {
   pinned: "You haven't pinned any artifacts yet.",
 };
 
+// An Artifact shared to the user more than once arrives as repeated rows for
+// the same id; one row per id is enough. Keyed by id — not name — so two
+// genuinely different Artifacts that happen to share a name both survive.
+// (Reintroduces, by id, what the earlier name-based dedupe got wrong.)
+function dedupeById(artifacts: Artifact[]) {
+  const seen = new Set<string>();
+  return artifacts.filter((artifact) => {
+    if (seen.has(artifact.id)) {
+      return false;
+    }
+    seen.add(artifact.id);
+    return true;
+  });
+}
+
 function filterArtifacts(artifacts: Artifact[], category: FilterCategory) {
   switch (category) {
     case 'yours':
       return artifacts.filter((artifact) => artifact.mine);
     case 'shared':
-      return artifacts.filter((artifact) => !!artifact.sharedBy);
+      return dedupeById(artifacts.filter((artifact) => !!artifact.sharedBy));
     case 'pinned':
       return artifacts.filter((artifact) => artifact.pinned);
     default:
@@ -64,7 +79,7 @@ export function ArtifactsGallery() {
 
   const artifacts = data ?? [];
   const yoursCount = artifacts.filter((artifact) => artifact.mine).length;
-  const sharedCount = artifacts.filter((artifact) => !!artifact.sharedBy).length;
+  const sharedCount = dedupeById(artifacts.filter((artifact) => !!artifact.sharedBy)).length;
   const pinnedCount = artifacts.filter((artifact) => artifact.pinned).length;
 
   const visible = sortArtifacts(filterArtifacts(artifacts, category), sort);
