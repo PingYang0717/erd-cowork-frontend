@@ -69,6 +69,25 @@ describe('File attachments', () => {
     expect(await within(composerAttachments()).findByText('lot-genealogy.csv')).toBeInTheDocument();
   });
 
+  it('rejects unsupported file types with the Chinese error and an accept attribute on the input', async () => {
+    // applyAccept off simulates a file arriving past the picker (drag & drop).
+    const user = userEvent.setup({ applyAccept: false });
+    renderStudioPage();
+    const dialog = await selectASessionAndOpenFileModal(user);
+
+    const input = screen.getByLabelText('Choose files');
+    expect(input).toHaveAttribute('accept', '.csv,.xlsx,.xls');
+
+    await user.upload(input, fileOfSize('notes.pdf', 1024));
+
+    expect(await within(dialog).findByRole('alert')).toHaveTextContent('僅支援 .csv / .xlsx');
+    expect(within(dialog).queryByText('notes.pdf')).not.toBeInTheDocument();
+
+    // Supported types still go through afterwards.
+    await user.upload(input, fileOfSize('lots.xlsx', 1024));
+    expect(await within(dialog).findByText('lots.xlsx')).toBeInTheDocument();
+  });
+
   it('caps attachments at 5 files and warns when more are dropped at once', async () => {
     const user = userEvent.setup();
     renderStudioPage();

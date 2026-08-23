@@ -5,7 +5,11 @@ import { useRef } from 'react';
 import type { Upload } from '@/types/api';
 import { formatBytes } from '@/utils/formatBytes';
 
-import { MAX_ATTACHMENT_COUNT, MAX_ATTACHMENT_TOTAL_BYTES } from '../hooks/useFileAttachments';
+import {
+  ACCEPT_ATTRIBUTE,
+  MAX_ATTACHMENT_COUNT,
+  MAX_ATTACHMENT_TOTAL_BYTES,
+} from '../hooks/useFileAttachments';
 import { AttachmentChip } from './AttachmentChip';
 import styles from './FileAttachmentModal.module.css';
 
@@ -35,6 +39,7 @@ export function FileAttachmentModal({
         ref={inputRef}
         type="file"
         multiple
+        accept={ACCEPT_ATTRIBUTE}
         className={styles.hiddenInput}
         aria-label="Choose files"
         onChange={(e) => {

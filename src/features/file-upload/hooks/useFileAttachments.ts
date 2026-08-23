@@ -6,6 +6,15 @@ import { useCreateUpload } from './useCreateUpload';
 
 export const MAX_ATTACHMENT_COUNT = 5;
 export const MAX_ATTACHMENT_TOTAL_BYTES = 5 * 1024 * 1024 * 1024;
+// The analyses only consume spreadsheet data; the mockup enforces the same
+// whitelist on the picker (`accept`) and on dropped files.
+export const ACCEPTED_FILE_EXTENSIONS = ['.csv', '.xlsx', '.xls'] as const;
+export const ACCEPT_ATTRIBUTE = ACCEPTED_FILE_EXTENSIONS.join(',');
+
+function hasAcceptedExtension(fileName: string) {
+  const lower = fileName.toLowerCase();
+  return ACCEPTED_FILE_EXTENSIONS.some((ext) => lower.endsWith(ext));
+}
 
 interface FileLike {
   name: string;
@@ -27,6 +36,12 @@ export function useFileAttachments() {
 
     for (const file of Array.from(files)) {
       if (existingNames.has(file.name)) {
+        continue;
+      }
+      if (!hasAcceptedExtension(file.name)) {
+        if (!rejections.includes('僅支援 .csv / .xlsx')) {
+          rejections.push('僅支援 .csv / .xlsx');
+        }
         continue;
       }
       if (count >= MAX_ATTACHMENT_COUNT) {
