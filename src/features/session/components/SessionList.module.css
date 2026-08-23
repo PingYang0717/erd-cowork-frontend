@@ -90,26 +90,44 @@
   margin: 4px 0;
 }
 
+/* The mockup's nav rows: quieter secondary text with tertiary fs16 icons
+   when inactive; the active row flips background, text, icon, and badge all
+   to primary. */
 .navShortcut {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px;
+  gap: 10px;
+  padding: 8px 10px;
+  margin: 0 8px;
   border: none;
   background: transparent;
-  border-radius: 8px;
+  border-radius: 9px;
   cursor: pointer;
-  color: var(--erd-color-text, inherit);
+  color: var(--erd-color-text-secondary, rgba(0, 0, 0, 0.65));
+}
+
+.navShortcut > :global(.anticon) {
+  font-size: 16px;
+  color: var(--erd-color-text-tertiary, rgba(0, 0, 0, 0.45));
 }
 
 .navShortcut:hover {
-  background: var(--erd-color-fill-quaternary, rgba(0, 0, 0, 0.04));
+  background: var(--erd-color-fill-tertiary, rgba(0, 0, 0, 0.04));
 }
 
 .navShortcut[aria-current='page'] {
-  background: color-mix(in srgb, var(--erd-color-primary, #1677ff) 12%, transparent);
+  background: var(--erd-color-primary-bg, #e6f4ff);
   color: var(--erd-color-primary, #1677ff);
   font-weight: 600;
+}
+
+.navShortcut[aria-current='page'] > :global(.anticon) {
+  color: var(--erd-color-primary, #1677ff);
+}
+
+.navShortcut[aria-current='page'] .countBadge {
+  background: var(--erd-color-primary-bg, #e6f4ff);
+  color: var(--erd-color-primary, #1677ff);
 }
 
 /* Coach highlight after generating an Artifact: pulses the row until the
@@ -170,9 +188,11 @@
   background: var(--erd-color-fill-quaternary, rgba(0, 0, 0, 0.04));
 }
 
+/* The mockup's fixed tokens, not a color-mix approximation — the derived
+   values drifted visibly in dark mode (gray-blue vs the token navy). */
 .sessionRow[aria-current='true'] {
-  background: color-mix(in srgb, var(--erd-color-primary, #1677ff) 12%, transparent);
-  border-color: color-mix(in srgb, var(--erd-color-primary, #1677ff) 45%, transparent);
+  background: var(--erd-color-primary-bg, #e6f4ff);
+  border-color: var(--erd-color-primary-border, #91caff);
   font-weight: 600;
 }
 

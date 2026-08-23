@@ -53,6 +53,8 @@
   border-top: 1px solid var(--erd-color-border-secondary, #f0f0f0);
 }
 
+/* The mockup's empty state: a 52px primary-tinted (blue, not gray) icon
+   tile over a fs14.5 heading and a fs12.5 line capped at 280px. */
 .emptyState {
   height: 100%;
   display: flex;
@@ -60,32 +62,32 @@
   align-items: center;
   justify-content: center;
   text-align: center;
-  gap: 12px;
   padding: 24px;
   color: var(--erd-color-text-tertiary, #8c8c8c);
 }
 
 .emptyStateIcon {
-  width: 44px;
-  height: 44px;
+  width: 52px;
+  height: 52px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 12px;
-  background: var(--erd-color-fill-tertiary, rgba(22, 119, 255, 0.1));
+  border-radius: 14px;
+  margin-bottom: 12px;
+  background: var(--erd-color-primary-bg, #e6f4ff);
   color: var(--erd-color-primary, #1677ff);
-  font-size: 20px;
+  font-size: 26px;
 }
 
 .emptyStateHeading {
   margin: 0;
-  font-size: 15px;
+  font-size: 14.5px;
   font-weight: 600;
   color: var(--erd-color-text, inherit);
 }
 
 .emptyStateSubtitle {
-  margin: 0;
-  max-width: 320px;
-  font-size: 13px;
+  margin: 5px 0 0;
+  max-width: 280px;
+  font-size: 12.5px;
 }
