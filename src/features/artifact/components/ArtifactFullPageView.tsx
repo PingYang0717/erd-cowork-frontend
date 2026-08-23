@@ -107,7 +107,7 @@ export function ArtifactFullPageView({ artifactId }: { artifactId: string | unde
             <ReloadOutlined aria-hidden />
           </button>
         </Tooltip>
-        <Tooltip content="在新分頁開啟">
+        <Tooltip content="在新分頁開啟預覽">
           <button
             type="button"
             className={styles.iconButton}

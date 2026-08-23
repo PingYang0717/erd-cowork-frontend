@@ -61,7 +61,8 @@ function MessageBubble({ message }: { message: Message }) {
       {message.artifactName && (
         <div className={styles.artifactChip}>
           <AppstoreOutlined aria-hidden className={styles.artifactChipIcon} />
-          Artifact: {message.artifactName}
+          <span>{message.artifactName}</span>
+          <span className={styles.artifactChipHint}>shown right →</span>
         </div>
       )}
     </div>

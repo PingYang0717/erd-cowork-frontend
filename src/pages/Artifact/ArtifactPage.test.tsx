@@ -130,7 +130,12 @@ describe('Artifact full-page view', () => {
     await user.click(screen.getByRole('button', { name: 'Refresh artifact' }));
     expect(await screen.findByTitle('Artifact preview')).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: 'Open artifact in new tab' }));
+    const openInNewTab = screen.getByRole('button', { name: 'Open artifact in new tab' });
+    await user.hover(openInNewTab);
+    expect(await screen.findByRole('tooltip')).toHaveTextContent('在新分頁開啟預覽');
+    await user.unhover(openInNewTab);
+
+    await user.click(openInNewTab);
     expect(openSpy).toHaveBeenCalledWith(
       '/cowork/artifact/artifact-1',
       '_blank',

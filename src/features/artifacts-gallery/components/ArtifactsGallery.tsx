@@ -19,16 +19,16 @@ type FilterCategory = 'all' | 'yours' | 'shared' | 'pinned';
 type SortKey = 'pinned' | 'recent' | 'name';
 
 const SORT_OPTIONS = [
-  { key: 'pinned', label: 'Pinned first', icon: <PushpinOutlined aria-hidden /> },
-  { key: 'recent', label: 'Most recent', icon: <ClockCircleOutlined aria-hidden /> },
-  { key: 'name', label: 'Name A→Z', icon: <SortAscendingOutlined aria-hidden /> },
+  { key: 'pinned', label: '釘選優先', icon: <PushpinOutlined aria-hidden /> },
+  { key: 'recent', label: '最近建立', icon: <ClockCircleOutlined aria-hidden /> },
+  { key: 'name', label: '名稱 A→Z', icon: <SortAscendingOutlined aria-hidden /> },
 ];
 
 const EMPTY_MESSAGES: Record<FilterCategory, string> = {
-  all: 'No artifacts yet.',
-  yours: "You don't have any artifacts yet.",
-  shared: 'Nothing has been shared with you yet.',
-  pinned: "You haven't pinned any artifacts yet.",
+  all: '目前還沒有 Artifact。',
+  yours: '你還沒有生成任何 Artifact。',
+  shared: '目前沒有分享給你的 Artifact。',
+  pinned: '你還沒有釘選任何 Artifact。',
 };
 
 // An Artifact shared to the user more than once arrives as repeated rows for
@@ -114,7 +114,7 @@ export function ArtifactsGallery() {
         >
           <button type="button" className={styles.sortTrigger}>
             <SortAscendingOutlined aria-hidden />
-            <span>Sort:</span>
+            <span>排序:</span>
             <span className={styles.sortTriggerValue}>{activeSortOption.label}</span>
             <DownOutlined aria-hidden className={styles.sortTriggerChevron} />
           </button>

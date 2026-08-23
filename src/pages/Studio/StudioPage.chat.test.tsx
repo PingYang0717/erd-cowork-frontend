@@ -133,7 +133,8 @@ describe('Scenario matching', () => {
       await advanceTimers(500 * 4);
 
       expect(screen.getByText(replyMatch)).toBeInTheDocument();
-      expect(screen.getByText(`Artifact: ${artifactName}`)).toBeInTheDocument();
+      const chip = screen.getByText('shown right →').closest('div') as HTMLElement;
+      expect(within(chip).getByText(artifactName)).toBeInTheDocument();
       expect(screen.queryByRole('status', { name: 'eRD AI is working' })).not.toBeInTheDocument();
     },
   );
@@ -191,7 +192,8 @@ describe('Scenario matching', () => {
 
     await advanceTimers(500 * 5);
 
-    expect(screen.getByText('Artifact: SPC analysis — Vt (gate CD) (slides)')).toBeInTheDocument();
+    const chip = screen.getByText('shown right →').closest('div') as HTMLElement;
+    expect(within(chip).getByText('SPC analysis — Vt (gate CD) (slides)')).toBeInTheDocument();
   });
 
   it.each([
@@ -233,7 +235,8 @@ describe('Scenario matching', () => {
       await advanceTimers(500 * 4);
 
       expect(screen.getByText(replyMatch)).toBeInTheDocument();
-      expect(screen.getByText(`Artifact: ${artifactName}`)).toBeInTheDocument();
+      const chip = screen.getByText('shown right →').closest('div') as HTMLElement;
+      expect(within(chip).getByText(artifactName)).toBeInTheDocument();
       expect(screen.queryByRole('status', { name: 'eRD AI is working' })).not.toBeInTheDocument();
     },
   );

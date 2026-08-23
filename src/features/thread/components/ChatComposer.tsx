@@ -9,7 +9,7 @@ import {
   PieChartOutlined,
   PlusOutlined,
 } from '@ant-design/icons';
-import { Button, Dropdown, Input } from 'antd';
+import { Dropdown, Input } from 'antd';
 import type { ReactNode } from 'react';
 import { useState } from 'react';
 
