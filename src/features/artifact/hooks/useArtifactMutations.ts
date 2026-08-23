@@ -1,8 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { artifactApi } from '../api/artifactApi';
-import { artifactsQueryKey } from './useArtifacts';
-import { artifactVersionsQueryKey } from './useArtifactVersions';
+import { artifactQueryKey, artifactsQueryKey } from './useArtifacts';
 
 export function useSetArtifactPinned() {
   const queryClient = useQueryClient();
@@ -45,7 +44,9 @@ export function useRegenerateArtifact() {
   return useMutation({
     mutationFn: (id: string) => artifactApi.regenerate(id),
     onSuccess: (_version, id) => {
-      queryClient.invalidateQueries({ queryKey: artifactVersionsQueryKey(id) });
+      // The new version has content of its own, so the panel needs a fresh
+      // render as well as a fresh version list.
+      queryClient.invalidateQueries({ queryKey: artifactQueryKey(id) });
     },
   });
 }

@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -127,6 +127,21 @@ describe('Scenario matching', () => {
       expect(screen.queryByRole('status', { name: 'eRD AI is working' })).not.toBeInTheDocument();
     },
   );
+
+  it('appends the slides step and names a slides Artifact when clicking "Generate slides"', async () => {
+    renderStudioPage();
+    await selectASessionWithFakeTimers();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Generate slides' }));
+    await advanceTimers(0);
+
+    const working = screen.getByRole('status', { name: 'eRD AI is working' });
+    expect(within(working).getByText('Generate slides')).toBeInTheDocument();
+
+    await advanceTimers(500 * 5);
+
+    expect(screen.getByText('Artifact: SPC analysis — Vt (gate CD) (slides)')).toBeInTheDocument();
+  });
 
   it.each([
     {

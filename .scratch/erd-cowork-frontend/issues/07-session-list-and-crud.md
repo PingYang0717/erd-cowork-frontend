@@ -12,3 +12,13 @@
 - [x] User can pin/unpin and rename a session from the rail
 - [x] `docs/api/interface.md` updated with the session endpoints; `types/api/Session.ts` finalized
 - [x] Seam test: create a session, rename it, pin it, reload (simulated), assert it's still there and in the right section
+
+## Comments
+
+**2026-08-23:** Code review flagged session deletion (`DELETE /sessions/:id` plus the
+rail's delete action) as behaviour outside this ticket's AC, which covers list / create
+/ rename / pin only. It is built, working, and documented in `docs/api/interface.md`,
+so this ticket's scope is retroactively expanded to cover it rather than removing a
+working feature:
+
+- [x] User can delete a session from the rail; the deletion is persisted

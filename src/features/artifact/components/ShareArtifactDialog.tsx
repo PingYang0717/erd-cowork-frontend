@@ -2,6 +2,8 @@ import { CheckOutlined, CopyOutlined, LinkOutlined } from '@ant-design/icons';
 import { Button, Input, Modal, Select } from 'antd';
 import { useState } from 'react';
 
+import type { Artifact } from '@/types/api';
+
 import { useShareArtifact } from '../hooks/useArtifactMutations';
 import { useDirectory } from '../hooks/useDirectory';
 import styles from './ShareArtifactDialog.module.css';
@@ -9,13 +11,11 @@ import styles from './ShareArtifactDialog.module.css';
 export function ShareArtifactDialog({
   open,
   onClose,
-  artifactId,
-  artifactName,
+  artifact,
 }: {
   open: boolean;
   onClose: () => void;
-  artifactId: string;
-  artifactName: string;
+  artifact: Artifact;
 }) {
   const { data: directory } = useDirectory();
   const shareArtifact = useShareArtifact();
@@ -32,7 +32,7 @@ export function ShareArtifactDialog({
 
   function handleConfirm() {
     shareArtifact.mutate(
-      { id: artifactId, targetIds },
+      { id: artifact.id, targetIds },
       { onSuccess: (result) => setShareUrl(result.url) },
     );
   }
@@ -50,7 +50,7 @@ export function ShareArtifactDialog({
   return (
     <Modal open={open} onCancel={handleClose} title="分享 Artifact" footer={null} destroyOnHidden>
       <p className={styles.subtitle}>Artifact 已生成,可分享給團隊檢視。</p>
-      <p className={styles.artifactName}>{artifactName}</p>
+      <p className={styles.artifactName}>{artifact.name}</p>
 
       <div className={styles.section}>
         <div className={styles.sectionLabel}>分享對象</div>

@@ -4,19 +4,17 @@
   min-height: 0;
 }
 
+/* The mockup separates the thread from the Artifact panel with a 1px border
+   (both panes share the same bg-layout background, so this line is the only
+   boundary); the ResizeHandle sits on top of it. */
 .thread {
   flex: 0 0 auto;
   overflow: hidden;
+  border-right: 1px solid var(--erd-color-border-secondary, #f0f0f0);
 }
 
 .artifactPanel {
   flex: 1 1 auto;
   min-width: 0;
   overflow: hidden;
-}
-
-.resizeHandle {
-  flex: 0 0 auto;
-  width: 4px;
-  cursor: col-resize;
 }

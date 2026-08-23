@@ -179,11 +179,9 @@ export function SessionGroup({
 
 export function SessionList({
   onCollapse,
-  scheduleCount,
   artifactsCount,
 }: {
   onCollapse?: () => void;
-  scheduleCount?: number;
   artifactsCount?: number;
 }) {
   const { pinned, recent, selectedSessionId, selectAndNavigate, createAndNavigate } =
@@ -220,7 +218,6 @@ export function SessionList({
         >
           <ClockCircleOutlined aria-hidden />
           <span className={styles.navShortcutLabel}>Schedule</span>
-          {scheduleCount != null && <span className={styles.countBadge}>{scheduleCount}</span>}
         </button>
         <button
           type="button"

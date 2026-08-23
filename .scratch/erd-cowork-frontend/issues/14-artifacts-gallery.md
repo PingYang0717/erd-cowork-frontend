@@ -21,3 +21,9 @@
 **2026-08-23:** Code review found the scope note above no longer matches what shipped: `ArtifactCard.tsx` implements Copy link, Share, and Delete in the card's kebab menu (wired to `useDeleteArtifact()` and `ShareArtifactDialog`), which the note above says were left out of this ticket's scope. Retroactively expanding this ticket's scope to cover them, since they're built and working:
 
 - [x] Card kebab menu offers Pin/Unpin, Copy link, Share (hidden once the artifact is already `sharedBy` someone else), and Delete
+
+**2026-08-23:** Code review flagged `dedupeSharedByName` as unrequested behaviour: it
+silently dropped every shared Artifact whose name it had already seen, which can hide
+rows and make the All / Shared counts disagree with the list. No AC asks for
+deduplication, so it has been removed; the Gallery now lists what `/artifacts`
+returns.

@@ -10,3 +10,18 @@ body,
 *::after {
   box-sizing: border-box;
 }
+
+/* Dialog chrome from eRDWorkspace20260819.html: an elevated card with a
+   hairline border and the deep dialog shadow, over a 42%-black mask with a 1px
+   blur. These parts belong to antd's own portaled markup, so a CSS Module
+   cannot reach them. The dialog panel is `.ant-modal-container` as of antd v6
+   (it was `.ant-modal-content` before). */
+.ant-modal .ant-modal-container {
+  border: 1px solid var(--erd-color-border-secondary);
+  box-shadow: var(--shadow-lg);
+}
+
+.ant-modal-root .ant-modal-mask {
+  background: rgba(0, 0, 0, 0.42);
+  backdrop-filter: blur(1px);
+}

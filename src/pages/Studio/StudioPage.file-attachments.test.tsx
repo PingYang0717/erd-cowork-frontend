@@ -99,6 +99,24 @@ describe('File attachments', () => {
     expect(within(dialog).getByText('big-1.csv')).toBeInTheDocument();
   });
 
+  it('sends attachments with the message and clears the composer', async () => {
+    const user = userEvent.setup();
+    renderStudioPage();
+    const dialog = await selectASessionAndOpenFileModal(user);
+
+    const input = screen.getByLabelText('Choose files');
+    await user.upload(input, fileOfSize('lot-genealogy.csv', 1024));
+    await within(dialog).findByText('lot-genealogy.csv');
+    await user.click(screen.getByRole('button', { name: 'Close' }));
+
+    await user.type(screen.getByRole('textbox', { name: 'Message' }), 'Check this lot data');
+    await user.keyboard('{Enter}');
+
+    const sent = await screen.findByRole('list', { name: 'Message attachments' });
+    expect(within(sent).getByText('lot-genealogy.csv')).toBeInTheDocument();
+    expect(screen.queryByRole('list', { name: 'Attached files' })).not.toBeInTheDocument();
+  });
+
   it('removes an attached file from the composer', async () => {
     const user = userEvent.setup();
     renderStudioPage();

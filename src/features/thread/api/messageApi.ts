@@ -1,9 +1,11 @@
 import { apiClient } from '@/services/apiClient';
-import type { Message, ScenarioKey } from '@/types/api';
+import type { ArtifactKind, Message, ScenarioKey, Upload } from '@/types/api';
 
 export interface SendMessageInput {
   text: string;
   scenarioKey?: ScenarioKey;
+  artifactKind?: ArtifactKind;
+  attachments?: Upload[];
 }
 
 export interface SendMessageResult {

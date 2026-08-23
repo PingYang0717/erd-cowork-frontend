@@ -4,8 +4,26 @@
   margin: 14px 0;
 }
 
-.userBubble {
+.userMessage {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
   max-width: 78%;
+}
+
+.userAttachments {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.userBubble {
+  max-width: 100%;
   background: var(--erd-color-primary, #1677ff);
   color: #fff;
   padding: 10px 13px;

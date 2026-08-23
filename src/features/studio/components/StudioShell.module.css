@@ -11,12 +11,6 @@
   border-right: 1px solid var(--erd-color-border-secondary, #f0f0f0);
 }
 
-.resizeHandle {
-  flex: 0 0 auto;
-  width: 4px;
-  cursor: col-resize;
-}
-
 .content {
   flex: 1 1 auto;
   min-width: 0;

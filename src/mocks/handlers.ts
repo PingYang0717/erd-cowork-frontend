@@ -1,16 +1,17 @@
 import { http, HttpResponse } from 'msw';
 
-import type { Artifact, ArtifactVersion } from '@/types/api/artifact';
+import { currentUser } from '@/services/currentUser';
+import type { Artifact, ArtifactKind, ArtifactVersion } from '@/types/api/artifact';
 import type { Connector, ConnectorStatus } from '@/types/api/connector';
 import type { Message } from '@/types/api/message';
 import type { ScenarioKey } from '@/types/api/scenario';
 import type { Session } from '@/types/api/session';
 import type { Upload } from '@/types/api/upload';
 
-import { ARTIFACT_FIXTURES, ARTIFACT_VERSION_CONTENT } from './artifactFixtures';
+import { ARTIFACT_VERSION_CONTENT, buildArtifactFixture } from './artifactFixtures';
 import { DIRECTORY_FIXTURES } from './directoryFixtures';
 import { createPersistedResource } from './persistedResource';
-import { matchScenario, SCENARIO_FIXTURES } from './scenarioFixtures';
+import { matchScenario, SCENARIO_FIXTURES, SLIDES_STEP } from './scenarioFixtures';
 
 interface ExampleWidget {
   id: string;
@@ -34,7 +35,23 @@ const messages = createPersistedResource<Message>('erd-cowork:messages', [
   },
 ]);
 
-const artifacts = createPersistedResource<Artifact>('erd-cowork:artifacts', [
+// Who owns an Artifact is the backend's business: it is stored as ownerId and
+// reaches the client only as Artifact.mine, resolved against the mock identity
+// in services/currentUser.ts. The storage key is suffixed so a browser holding
+// the older seeded shape (which carried mine directly) reseeds instead of
+// resolving every Artifact to "not yours".
+const ALICE_USER_ID = 'u-002';
+
+interface StoredArtifact extends Omit<Artifact, 'mine'> {
+  ownerId: string;
+}
+
+function toArtifactDto(stored: StoredArtifact): Artifact {
+  const { ownerId, ...rest } = stored;
+  return { ...rest, mine: ownerId === currentUser.id };
+}
+
+const artifacts = createPersistedResource<StoredArtifact>('erd-cowork:artifacts:v2', [
   {
     id: 'artifact-1',
     sessionId: 'session-1',
@@ -42,7 +59,7 @@ const artifacts = createPersistedResource<Artifact>('erd-cowork:artifacts', [
     kind: 'dashboard',
     scenario: 'spc',
     pinned: false,
-    mine: true,
+    ownerId: currentUser.id,
     shared: false,
     createdAt: '2026-08-20T09:15:00.000Z',
   },
@@ -53,7 +70,7 @@ const artifacts = createPersistedResource<Artifact>('erd-cowork:artifacts', [
     kind: 'dashboard',
     scenario: 'inline',
     pinned: true,
-    mine: true,
+    ownerId: currentUser.id,
     shared: false,
     createdAt: '2026-08-21T10:00:00.000Z',
   },
@@ -64,7 +81,7 @@ const artifacts = createPersistedResource<Artifact>('erd-cowork:artifacts', [
     kind: 'slides',
     scenario: 'daily',
     pinned: false,
-    mine: false,
+    ownerId: ALICE_USER_ID,
     shared: false,
     sharedBy: 'Alice Wu',
     createdAt: '2026-08-19T08:30:00.000Z',
@@ -226,23 +243,32 @@ export const handlers = [
 
   http.post('/api/sessions/:sessionId/messages', async ({ params, request }) => {
     const sessionId = params.sessionId as string;
-    const body = (await request.json()) as { text: string; scenarioKey?: ScenarioKey };
+    const body = (await request.json()) as {
+      text: string;
+      scenarioKey?: ScenarioKey;
+      artifactKind?: ArtifactKind;
+      attachments?: Upload[];
+    };
     const text = body.text?.trim();
     if (!text) {
       return new HttpResponse(null, { status: 400 });
     }
 
     const scenarioKey = body.scenarioKey ?? matchScenario(text);
+    const artifactKind = body.artifactKind ?? 'dashboard';
     const fixture = SCENARIO_FIXTURES[scenarioKey];
+    const artifactName =
+      artifactKind === 'slides' ? `${fixture.artifactName} (slides)` : fixture.artifactName;
+    const steps = artifactKind === 'slides' ? [...fixture.steps, SLIDES_STEP] : fixture.steps;
 
-    const artifact: Artifact = {
+    const artifact: StoredArtifact = {
       id: crypto.randomUUID(),
       sessionId,
-      name: fixture.artifactName,
-      kind: 'dashboard',
+      name: artifactName,
+      kind: artifactKind,
       scenario: scenarioKey,
       pinned: false,
-      mine: true,
+      ownerId: currentUser.id,
       shared: false,
       createdAt: new Date().toISOString(),
     };
@@ -252,7 +278,7 @@ export const handlers = [
       id: crypto.randomUUID(),
       artifactId: artifact.id,
       n: 1,
-      label: fixture.artifactName,
+      label: artifactName,
       createdAt: new Date().toISOString(),
     };
     artifactVersions.write([...artifactVersions.read(), version]);
@@ -262,6 +288,7 @@ export const handlers = [
       sessionId,
       role: 'user',
       text,
+      attachments: body.attachments?.length ? body.attachments : undefined,
     };
     const aiMessage: Message = {
       id: crypto.randomUUID(),
@@ -269,8 +296,8 @@ export const handlers = [
       role: 'ai',
       text: fixture.reply,
       scenario: scenarioKey,
-      steps: fixture.steps,
-      artifactName: fixture.artifactName,
+      steps,
+      artifactName,
       artifactId: artifact.id,
     };
 
@@ -279,7 +306,7 @@ export const handlers = [
   }),
 
   http.get('/api/artifacts', () => {
-    return HttpResponse.json(artifacts.read());
+    return HttpResponse.json(artifacts.read().map(toArtifactDto));
   }),
 
   http.patch('/api/artifacts/:id', async ({ params, request }) => {
@@ -289,9 +316,9 @@ export const handlers = [
     if (!existing) {
       return new HttpResponse(null, { status: 404 });
     }
-    const updated: Artifact = { ...existing, ...body };
+    const updated: StoredArtifact = { ...existing, ...body };
     artifacts.write(all.map((a) => (a.id === params.id ? updated : a)));
-    return HttpResponse.json(updated);
+    return HttpResponse.json(toArtifactDto(updated));
   }),
 
   http.delete('/api/artifacts/:id', ({ params }) => {
@@ -308,11 +335,14 @@ export const handlers = [
     const searchParams = new URL(request.url).searchParams;
     const theme = searchParams.get('theme') === 'dark' ? 'dark' : 'light';
     const versionId = searchParams.get('versionId');
-    const versionContent = versionId ? ARTIFACT_VERSION_CONTENT[versionId] : undefined;
-    const html = versionContent
-      ? versionContent[theme]
-      : ARTIFACT_FIXTURES[artifact.scenario][theme];
-    return HttpResponse.json({ html });
+    const versions = artifactVersions.read().filter((v) => v.artifactId === artifact.id);
+    const version = versionId
+      ? versions.find((v) => v.id === versionId)
+      : versions[versions.length - 1];
+    const fixture =
+      (versionId ? ARTIFACT_VERSION_CONTENT[versionId] : undefined) ??
+      buildArtifactFixture(artifact.scenario, artifact.kind, version?.n);
+    return HttpResponse.json({ html: fixture[theme] });
   }),
 
   http.get('/api/artifacts/:id/versions', ({ params }) => {
@@ -348,11 +378,11 @@ export const handlers = [
     if (!body.targetIds?.length) {
       return new HttpResponse(null, { status: 400 });
     }
-    const updated: Artifact = { ...existing, shared: true };
+    const updated: StoredArtifact = { ...existing, shared: true };
     artifacts.write(all.map((a) => (a.id === params.id ? updated : a)));
 
     const url = `${new URL(request.url).origin}/cowork/artifact/${params.id}`;
-    return HttpResponse.json({ url, artifact: updated });
+    return HttpResponse.json({ url, artifact: toArtifactDto(updated) });
   }),
 
   http.get('/api/directory', () => {

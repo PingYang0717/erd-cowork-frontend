@@ -20,7 +20,7 @@ import {
 } from '@ant-design/icons';
 import { Button, Input, Modal } from 'antd';
 import type { ReactNode } from 'react';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 
 import type { Connector, ConnectorStatus } from '@/types/api';
 
@@ -114,17 +114,13 @@ export function ConnectorsPanel({ open, onClose }: { open: boolean; onClose: () 
   const connectedCount = connectedConnectors.length;
 
   const normalizedSearch = search.trim().toLowerCase();
-  const visibleConnectors = useMemo(
-    () =>
-      connectors.filter(
-        (connector) =>
-          matchesFilter(connector, statusFilter) &&
-          (!normalizedSearch ||
-            `${connector.name} ${connector.description} ${connector.category}`
-              .toLowerCase()
-              .includes(normalizedSearch)),
-      ),
-    [connectors, statusFilter, normalizedSearch],
+  const visibleConnectors = connectors.filter(
+    (connector) =>
+      matchesFilter(connector, statusFilter) &&
+      (!normalizedSearch ||
+        `${connector.name} ${connector.description} ${connector.category}`
+          .toLowerCase()
+          .includes(normalizedSearch)),
   );
 
   function toggle(connector: Connector) {

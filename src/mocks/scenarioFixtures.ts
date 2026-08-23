@@ -6,6 +6,15 @@ interface ScenarioFixture {
   reply: string;
 }
 
+// A slides request replays its scenario and then adds this step, mirroring
+// eRDWorkspace20260819.html's eR(), which appends "Generate slides" to the
+// same base step list rather than defining a scenario of its own.
+export const SLIDES_STEP: MessageStep = {
+  key: '4',
+  title: 'Generate slides',
+  description: 'Title, control chart, Cpk, findings',
+};
+
 export const SCENARIO_FIXTURES: Record<ScenarioKey, ScenarioFixture> = {
   spc: {
     artifactName: 'SPC analysis — Vt (gate CD)',

@@ -1,4 +1,5 @@
 import {
+  AppstoreOutlined,
   CheckCircleFilled,
   DownOutlined,
   ExportOutlined,
@@ -23,11 +24,25 @@ import { ArtifactFrame } from './ArtifactFrame';
 import styles from './ArtifactPanel.module.css';
 import { ShareArtifactDialog } from './ShareArtifactDialog';
 
+function EmptyPanel() {
+  return (
+    <div className={styles.empty}>
+      <div className={styles.emptyIcon}>
+        <AppstoreOutlined aria-hidden />
+      </div>
+      <p className={styles.emptyHeading}>No artifact yet</p>
+      <p className={styles.emptyText}>
+        Ask eRD AI to build a dashboard or a deck — the result renders here.
+      </p>
+    </div>
+  );
+}
+
 export function ArtifactPanel() {
   const selectedSessionId = useSessionSelectionStore((s) => s.selectedSessionId);
 
   if (!selectedSessionId) {
-    return <div className={styles.empty}>Ask a question to generate an Artifact.</div>;
+    return <EmptyPanel />;
   }
 
   return <ArtifactPanelView sessionId={selectedSessionId} />;
@@ -40,7 +55,7 @@ function ArtifactPanelView({ sessionId }: { sessionId: string }) {
   const artifactId = latestArtifactMessage?.artifactId;
 
   if (!artifactId) {
-    return <div className={styles.empty}>Ask a question to generate an Artifact.</div>;
+    return <EmptyPanel />;
   }
 
   return <ArtifactPanelContent key={artifactId} artifactId={artifactId} />;
@@ -58,7 +73,7 @@ function ArtifactPanelContent({ artifactId }: { artifactId: string }) {
   const regenerateArtifact = useRegenerateArtifact();
 
   if (!data) {
-    return <div className={styles.empty}>Ask a question to generate an Artifact.</div>;
+    return <EmptyPanel />;
   }
 
   const activeVersion =
@@ -121,8 +136,7 @@ function ArtifactPanelContent({ artifactId }: { artifactId: string }) {
         <ShareArtifactDialog
           open={isShareOpen}
           onClose={() => setIsShareOpen(false)}
-          artifactId={artifact.id}
-          artifactName={artifact.name}
+          artifact={artifact}
         />
       )}
     </div>

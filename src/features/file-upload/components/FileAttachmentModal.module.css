@@ -46,8 +46,8 @@
   padding: 8px 11px;
   font-size: 12px;
   color: var(--erd-color-error, #ff4d4f);
-  background: rgba(255, 77, 79, 0.1);
-  border: 1px solid rgba(255, 77, 79, 0.3);
+  background: var(--erd-color-error-bg, #fff2f0);
+  border: 1px solid var(--erd-color-error-border, #ffccc7);
   border-radius: 8px;
 }
 

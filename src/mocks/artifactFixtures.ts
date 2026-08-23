@@ -1,24 +1,28 @@
-import type { ArtifactTheme, ScenarioKey } from '@/types/api';
+import type { ArtifactKind, ArtifactTheme, ScenarioKey } from '@/types/api';
 
+// The same surfaces the app itself uses (features/theme/tokens.ts, copied
+// from the mockup): the Artifact renders inside an iframe and so cannot read
+// the app's custom properties, but it has to look like it belongs to the page
+// it sits in — in both themes.
 const THEME_PALETTE: Record<
   ArtifactTheme,
   { bg: string; fg: string; fgMuted: string; accent: string; cardBg: string; cardBorder: string }
 > = {
   light: {
     bg: '#f5f6f8',
-    fg: '#141414',
-    fgMuted: '#8c8c8c',
+    fg: 'rgba(0, 0, 0, 0.88)',
+    fgMuted: 'rgba(0, 0, 0, 0.45)',
     accent: '#1677ff',
     cardBg: '#ffffff',
     cardBorder: '#f0f0f0',
   },
   dark: {
-    bg: '#0b0f14',
-    fg: '#e8e8e8',
-    fgMuted: '#8c9296',
-    accent: '#69b1ff',
-    cardBg: '#161b22',
-    cardBorder: '#2a333c',
+    bg: '#17181c',
+    fg: 'rgba(255, 255, 255, 0.88)',
+    fgMuted: 'rgba(255, 255, 255, 0.45)',
+    accent: '#1668dc',
+    cardBg: '#1f1f22',
+    cardBorder: '#303030',
   },
 };
 
@@ -36,45 +40,24 @@ interface ArtifactContent {
   stats: StatTile[];
 }
 
-function renderArtifactHtml(content: ArtifactContent, theme: ArtifactTheme) {
-  const { bg, fg, fgMuted, accent, cardBg, cardBorder } = THEME_PALETTE[theme];
-  const tagsHtml = content.tags.map((tag) => `<span class="tag">${tag}</span>`).join('');
-  const statsHtml = content.stats
-    .map(
-      (stat) => `<div class="stat">
-      <div class="stat-label">${stat.label}</div>
-      <div class="stat-value">${stat.value}</div>
-      <div class="stat-sub">${stat.sub}</div>
-    </div>`,
-    )
-    .join('');
+// Both artifact kinds ship the same document shell: a theme-colored body plus the
+// postMessage listener ADR-0001 relies on for live theme switching.
+function renderDocument(title: string, theme: ArtifactTheme, css: string, body: string) {
+  const { bg, fg } = THEME_PALETTE[theme];
 
   return `<!doctype html>
 <html data-artifact-theme="${theme}">
 <head>
 <meta charset="utf-8" />
-<title>${content.title}</title>
+<title>${title}</title>
 <style>
   * { box-sizing: border-box; }
   body { margin: 0; padding: 20px; font-family: -apple-system, "Segoe UI", sans-serif; background: ${bg}; color: ${fg}; }
-  h1 { color: ${fg}; font-size: 18px; margin: 0 0 2px; }
-  .subtitle { color: ${fgMuted}; font-size: 12px; margin: 0 0 10px; }
-  .description { font-size: 13px; line-height: 1.5; margin: 0 0 12px; }
-  .tags { display: flex; gap: 6px; margin-bottom: 20px; }
-  .tag { font-size: 11px; padding: 2px 8px; border-radius: 999px; border: 1px solid ${cardBorder}; color: ${fgMuted}; }
-  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; }
-  .stat { border: 1px solid ${cardBorder}; background: ${cardBg}; border-radius: 10px; padding: 12px 14px; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04); }
-  .stat-label { font-size: 10.5px; letter-spacing: 0.04em; text-transform: uppercase; color: ${fgMuted}; margin-bottom: 6px; }
-  .stat-value { font-size: 20px; font-weight: 700; color: ${accent}; }
-  .stat-sub { font-size: 11px; color: ${fgMuted}; margin-top: 2px; }
+${css}
 </style>
 </head>
 <body>
-<h1>${content.title}</h1>
-<p class="subtitle">${content.subtitle}</p>
-<p class="description">${content.description}</p>
-<div class="tags">${tagsHtml}</div>
-<div class="stats">${statsHtml}</div>
+${body}
 <script>
   window.addEventListener('message', (event) => {
     if (event.data && event.data.type === 'theme') {
@@ -86,20 +69,108 @@ function renderArtifactHtml(content: ArtifactContent, theme: ArtifactTheme) {
 </html>`;
 }
 
+function renderDashboardHtml(content: ArtifactContent, theme: ArtifactTheme) {
+  const { fg, fgMuted, accent, cardBg, cardBorder } = THEME_PALETTE[theme];
+  const tagsHtml = content.tags.map((tag) => `<span class="tag">${tag}</span>`).join('');
+  const statsHtml = content.stats
+    .map(
+      (stat) => `<div class="stat">
+      <div class="stat-label">${stat.label}</div>
+      <div class="stat-value">${stat.value}</div>
+      <div class="stat-sub">${stat.sub}</div>
+    </div>`,
+    )
+    .join('');
+
+  const css = `  h1 { color: ${fg}; font-size: 18px; margin: 0 0 2px; }
+  .subtitle { color: ${fgMuted}; font-size: 12px; margin: 0 0 10px; }
+  .description { font-size: 13px; line-height: 1.5; margin: 0 0 12px; }
+  .tags { display: flex; gap: 6px; margin-bottom: 20px; }
+  .tag { font-size: 11px; padding: 2px 8px; border-radius: 999px; border: 1px solid ${cardBorder}; color: ${fgMuted}; }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; }
+  .stat { border: 1px solid ${cardBorder}; background: ${cardBg}; border-radius: 10px; padding: 12px 14px; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04); }
+  .stat-label { font-size: 10.5px; letter-spacing: 0.04em; text-transform: uppercase; color: ${fgMuted}; margin-bottom: 6px; }
+  .stat-value { font-size: 20px; font-weight: 700; color: ${accent}; }
+  .stat-sub { font-size: 11px; color: ${fgMuted}; margin-top: 2px; }`;
+
+  const body = `<h1>${content.title}</h1>
+<p class="subtitle">${content.subtitle}</p>
+<p class="description">${content.description}</p>
+<div class="tags">${tagsHtml}</div>
+<div class="stats">${statsHtml}</div>`;
+
+  return renderDocument(content.title, theme, css, body);
+}
+
+// The slides kind renders the same analysis as a stacked deck (title slide,
+// findings slide, key-figures slide) instead of one dashboard surface.
+function renderSlidesHtml(content: ArtifactContent, theme: ArtifactTheme) {
+  const { fg, fgMuted, accent, cardBg, cardBorder } = THEME_PALETTE[theme];
+  const tagsHtml = content.tags.map((tag) => `<span class="tag">${tag}</span>`).join('');
+  const figuresHtml = content.stats
+    .map(
+      (stat) => `<li class="figure">
+        <span class="figure-value">${stat.value}</span>
+        <span class="figure-label">${stat.label}</span>
+        <span class="figure-sub">${stat.sub}</span>
+      </li>`,
+    )
+    .join('');
+
+  const css = `  .deck { display: flex; flex-direction: column; gap: 16px; }
+  .slide { position: relative; border: 1px solid ${cardBorder}; background: ${cardBg}; border-radius: 12px; padding: 22px 24px 28px; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04); }
+  .slide-number { position: absolute; right: 14px; bottom: 10px; font-size: 10.5px; color: ${fgMuted}; }
+  .slide-kicker { font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase; color: ${accent}; margin: 0 0 8px; }
+  .slide-title { color: ${fg}; font-size: 20px; margin: 0 0 6px; }
+  .slide-subtitle { color: ${fgMuted}; font-size: 12px; margin: 0; }
+  .slide-body { font-size: 13px; line-height: 1.6; margin: 0 0 12px; }
+  .tags { display: flex; gap: 6px; flex-wrap: wrap; }
+  .tag { font-size: 11px; padding: 2px 8px; border-radius: 999px; border: 1px solid ${cardBorder}; color: ${fgMuted}; }
+  .figures { list-style: none; display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; margin: 0; padding: 0; }
+  .figure { display: flex; flex-direction: column; gap: 2px; border-left: 3px solid ${accent}; padding-left: 10px; }
+  .figure-value { font-size: 20px; font-weight: 700; color: ${accent}; }
+  .figure-label { font-size: 11px; letter-spacing: 0.04em; text-transform: uppercase; color: ${fgMuted}; }
+  .figure-sub { font-size: 11px; color: ${fgMuted}; }`;
+
+  const body = `<div class="deck">
+  <section class="slide">
+    <p class="slide-kicker">eRD Cowork</p>
+    <h1 class="slide-title">${content.title}</h1>
+    <p class="slide-subtitle">${content.subtitle}</p>
+    <span class="slide-number">1 / 3</span>
+  </section>
+  <section class="slide">
+    <p class="slide-kicker">Findings</p>
+    <p class="slide-body">${content.description}</p>
+    <div class="tags">${tagsHtml}</div>
+    <span class="slide-number">2 / 3</span>
+  </section>
+  <section class="slide">
+    <p class="slide-kicker">Key figures</p>
+    <ul class="figures">${figuresHtml}</ul>
+    <span class="slide-number">3 / 3</span>
+  </section>
+</div>`;
+
+  return renderDocument(content.title, theme, css, body);
+}
+
 interface ArtifactFixture {
   light: string;
   dark: string;
 }
 
-function buildFixture(content: ArtifactContent): ArtifactFixture {
+function buildFixture(content: ArtifactContent, kind: ArtifactKind = 'dashboard'): ArtifactFixture {
+  const render = kind === 'slides' ? renderSlidesHtml : renderDashboardHtml;
   return {
-    light: renderArtifactHtml(content, 'light'),
-    dark: renderArtifactHtml(content, 'dark'),
+    light: render(content, 'light'),
+    dark: render(content, 'dark'),
   };
 }
 
 // Content for specific historical Artifact versions, keyed by ArtifactVersion.id.
-// A versionId with no entry here falls back to ARTIFACT_FIXTURES (the latest content).
+// A versionId with no entry here is rendered by buildArtifactFixture from the
+// scenario and kind of the Artifact it belongs to, tagged with its version number.
 export const ARTIFACT_VERSION_CONTENT: Record<string, ArtifactFixture> = {
   'artifact-1-v1': buildFixture({
     title: 'SPC analysis — Vt (gate CD)',
@@ -114,8 +185,8 @@ export const ARTIFACT_VERSION_CONTENT: Record<string, ArtifactFixture> = {
   }),
 };
 
-export const ARTIFACT_FIXTURES: Record<ScenarioKey, ArtifactFixture> = {
-  spc: buildFixture({
+const SCENARIO_CONTENT: Record<ScenarioKey, ArtifactContent> = {
+  spc: {
     title: 'SPC analysis — Vt (gate CD)',
     subtitle: 'Inline DB · N5 line',
     description:
@@ -127,8 +198,8 @@ export const ARTIFACT_FIXTURES: Record<ScenarioKey, ArtifactFixture> = {
       { label: 'OOC points', value: '1', sub: 'lot 109' },
       { label: 'Lots', value: '24', sub: 'N5 line' },
     ],
-  }),
-  inline: buildFixture({
+  },
+  inline: {
     title: 'Inline dashboard',
     subtitle: 'Inline DB · selected DC items',
     description: 'SPC cards for each selected DC item, with OOC wafers highlighted.',
@@ -138,8 +209,8 @@ export const ARTIFACT_FIXTURES: Record<ScenarioKey, ArtifactFixture> = {
       { label: 'OOC wafers', value: '3', sub: 'across items' },
       { label: 'Lots scanned', value: '42', sub: 'this week' },
     ],
-  }),
-  daily: buildFixture({
+  },
+  daily: {
     title: 'Daily Monitor Dashboard — A14',
     subtitle: 'Approval Center · EXP Health · Inline SPC',
     description: 'Approval Center, EXP Health, and Inline SPC merged into one daily view.',
@@ -149,8 +220,8 @@ export const ARTIFACT_FIXTURES: Record<ScenarioKey, ArtifactFixture> = {
       { label: 'EXP flags', value: '1', sub: 'Idsat drift' },
       { label: 'Inline OOC', value: '1', sub: 'lot 109' },
     ],
-  }),
-  cptest: buildFixture({
+  },
+  cptest: {
     title: 'CP Test status',
     subtitle: 'CP Test · submission records',
     description: 'Submission records grouped by site and progress.',
@@ -160,5 +231,19 @@ export const ARTIFACT_FIXTURES: Record<ScenarioKey, ArtifactFixture> = {
       { label: 'Completed', value: '18', sub: 'this month' },
       { label: 'Avg. progress', value: '64%', sub: 'in-flight lots' },
     ],
-  }),
+  },
 };
+
+// Every version of an Artifact renders its own content: the version number is
+// carried into the rendered subtitle, so regenerating an Artifact produces a
+// version that is visibly different from the one before it.
+export function buildArtifactFixture(
+  scenario: ScenarioKey,
+  kind: ArtifactKind,
+  versionN?: number,
+): ArtifactFixture {
+  const content = SCENARIO_CONTENT[scenario];
+  const versioned =
+    versionN == null ? content : { ...content, subtitle: `${content.subtitle} · v${versionN}` };
+  return buildFixture(versioned, kind);
+}

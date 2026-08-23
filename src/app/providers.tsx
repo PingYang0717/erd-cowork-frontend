@@ -3,8 +3,13 @@ import { App as AntdApp, ConfigProvider, theme } from 'antd';
 import type { CSSProperties, ReactNode } from 'react';
 
 import { useThemeStore } from '@/features/theme/store/useThemeStore';
+import { THEME_TOKENS, themeCssText, type ThemeTokens } from '@/features/theme/tokens';
 
 const queryClient = new QueryClient();
+
+// The hues antd's algorithm derives a whole palette from; see the note in
+// AppProviders for why these stay on the light values in both themes.
+const SEED = THEME_TOKENS.light;
 
 // Matches eRDWorkspace20260819.html's `body { font-family: ... }` exactly —
 // antd's own default token stack swaps in 'Noto Sans' + emoji fonts instead
@@ -16,37 +21,27 @@ const FONT_FAMILY =
 // plain HTML (body, <h1>, etc.) has no background/text color of its own, so
 // in dark mode its text (colored for a dark surface by antd's global CSS
 // reset) would render on the browser's default white canvas and vanish.
-// This surface reads the resolved tokens and paints the whole page, and also
-// exposes them as `--erd-color-*` custom properties: CSS Modules across the
-// app read these (with light-mode fallbacks) instead of hardcoding colors,
-// so a plain element like a <button> stays legible when the theme flips
-// instead of keeping the browser's default (always-black) foreground.
-function ThemedSurface({ children }: { children: ReactNode }) {
-  const { token } = theme.useToken();
-  const themeVars = {
+// This surface paints the whole page and exposes the mockup's palette as
+// `--erd-color-*` custom properties, which the CSS Modules across the app
+// read instead of hardcoding colors.
+function ThemedSurface({ tokens, children }: { tokens: ThemeTokens; children: ReactNode }) {
+  const surface: CSSProperties = {
     height: '100vh',
-    background: token.colorBgLayout,
-    color: token.colorText,
-    '--erd-color-text': token.colorText,
-    '--erd-color-text-secondary': token.colorTextSecondary,
-    '--erd-color-text-tertiary': token.colorTextTertiary,
-    '--erd-color-primary': token.colorPrimary,
-    '--erd-color-success': token.colorSuccess,
-    '--erd-color-success-bg': token.colorSuccessBg,
-    '--erd-color-success-border': token.colorSuccessBorder,
-    '--erd-color-border': token.colorBorder,
-    '--erd-color-border-secondary': token.colorBorderSecondary,
-    '--erd-color-fill-tertiary': token.colorFillTertiary,
-    '--erd-color-fill-quaternary': token.colorFillQuaternary,
-    '--erd-color-bg-container': token.colorBgContainer,
-    '--erd-color-bg-elevated': token.colorBgElevated,
-  } as CSSProperties;
+    background: tokens.bgLayout,
+    color: tokens.text,
+  };
 
-  return <div style={themeVars}>{children}</div>;
+  return (
+    <>
+      <style>{themeCssText(tokens)}</style>
+      <div style={surface}>{children}</div>
+    </>
+  );
 }
 
 export function AppProviders({ children }: { children: ReactNode }) {
   const isDarkMode = useThemeStore((s) => s.isDarkMode);
+  const tokens = THEME_TOKENS[isDarkMode ? 'dark' : 'light'];
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -59,19 +54,66 @@ export function AppProviders({ children }: { children: ReactNode }) {
             // default (14) reads noticeably larger/heavier across every
             // control that doesn't have its own font-size override.
             fontSize: 13,
+            // The algorithm gets the palette shape right but not the mockup's
+            // exact surfaces, so everything below comes from the one table in
+            // `features/theme/tokens.ts` that also feeds the CSS custom
+            // properties — antd components and plain elements cannot drift
+            // apart in either theme.
+            // Seed hues stay light in both themes: the mockup's dark palette
+            // IS antd's dark palette for these seeds (#1677ff derives #1668dc,
+            // #52c41a derives #49aa19, and so on), so handing the algorithm a
+            // value it has already darkened darkens it twice — that is what
+            // rendered the primary button #165bbe instead of #1668dc.
+            colorPrimary: SEED.primary,
+            colorSuccess: SEED.success,
+            colorWarning: SEED.warning,
+            colorError: SEED.error,
+            // The rest are map/alias tokens, applied as overrides after
+            // derivation, so they are pinned to the active theme directly.
+            colorPrimaryHover: tokens.primaryHover,
+            colorPrimaryBg: tokens.primaryBg,
+            colorPrimaryBorder: tokens.primaryBorder,
+            colorLink: tokens.link,
+            colorSuccessBg: tokens.successBg,
+            colorSuccessBorder: tokens.successBorder,
+            colorWarningBg: tokens.warningBg,
+            colorWarningBorder: tokens.warningBorder,
+            colorErrorBg: tokens.errorBg,
+            colorErrorBorder: tokens.errorBorder,
+            colorText: tokens.text,
+            colorTextSecondary: tokens.textSecondary,
+            colorTextTertiary: tokens.textTertiary,
+            colorTextQuaternary: tokens.textQuaternary,
+            colorBgLayout: tokens.bgLayout,
+            colorBgContainer: tokens.bgContainer,
+            colorBgElevated: tokens.bgElevated,
+            colorBorder: tokens.border,
+            colorBorderSecondary: tokens.borderSecondary,
+            colorFillTertiary: tokens.fillTertiary,
+            colorFillQuaternary: tokens.fillQuaternary,
+            boxShadow: tokens.shadowMd,
+            boxShadowSecondary: tokens.shadowMd,
           },
           components: {
             // Mockup's modal dialog corners (oh()) are 16px; antd's default
             // borderRadiusLG (8px) is otherwise fine for Dropdown/Select/etc,
             // so this is scoped to Modal only rather than changed globally.
-            Modal: { borderRadiusLG: 16 },
+            // The mockup's dialog: an elevated card with a hairline border
+            // and a bg-container footer band.
+            Modal: {
+              borderRadiusLG: 16,
+              contentBg: tokens.bgElevated,
+              headerBg: tokens.bgElevated,
+              footerBg: tokens.bgContainer,
+              titleFontSize: 16,
+            },
             // Mockup's composer "+" menu panel uses border-radius:11px.
             Dropdown: { borderRadiusLG: 11 },
           },
         }}
       >
         <AntdApp>
-          <ThemedSurface>{children}</ThemedSurface>
+          <ThemedSurface tokens={tokens}>{children}</ThemedSurface>
         </AntdApp>
       </ConfigProvider>
     </QueryClientProvider>
