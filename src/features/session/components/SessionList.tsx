@@ -134,15 +134,18 @@ export function SessionGroup({
   sessions,
   selectedSessionId,
   onSelect,
+  emptyFallback,
 }: {
   label: string;
   sessions: Session[];
   selectedSessionId: string | null;
   onSelect: (id: string) => void;
+  /** When set, an empty group keeps its header and shows this line instead of vanishing. */
+  emptyFallback?: string;
 }) {
   const [isExpanded, setIsExpanded] = useState(true);
 
-  if (sessions.length === 0) {
+  if (sessions.length === 0 && !emptyFallback) {
     return null;
   }
 
@@ -162,18 +165,21 @@ export function SessionGroup({
         <h3 className={styles.groupHeading}>{label}</h3>
         <span className={styles.groupCount}>{sessions.length}</span>
       </button>
-      {isExpanded && (
-        <ul className={styles.sessionGroupList}>
-          {sessions.map((session) => (
-            <SessionRow
-              key={session.id}
-              session={session}
-              isSelected={session.id === selectedSessionId}
-              onSelect={onSelect}
-            />
-          ))}
-        </ul>
-      )}
+      {isExpanded &&
+        (sessions.length === 0 ? (
+          <p className={styles.groupEmpty}>{emptyFallback}</p>
+        ) : (
+          <ul className={styles.sessionGroupList}>
+            {sessions.map((session) => (
+              <SessionRow
+                key={session.id}
+                session={session}
+                isSelected={session.id === selectedSessionId}
+                onSelect={onSelect}
+              />
+            ))}
+          </ul>
+        ))}
     </section>
   );
 }
@@ -233,18 +239,21 @@ export function SessionList({
           {artifactsCount != null && <span className={styles.countBadge}>{artifactsCount}</span>}
         </button>
       </nav>
-      <SessionGroup
-        label="Pinned"
-        sessions={pinned}
-        selectedSessionId={selectedSessionId}
-        onSelect={selectAndNavigate}
-      />
-      <SessionGroup
-        label="Recents"
-        sessions={recent}
-        selectedSessionId={selectedSessionId}
-        onSelect={selectAndNavigate}
-      />
+      <div className={styles.scrollRegion} data-testid="session-scroll">
+        <SessionGroup
+          label="Pinned"
+          sessions={pinned}
+          selectedSessionId={selectedSessionId}
+          onSelect={selectAndNavigate}
+        />
+        <SessionGroup
+          label="Recents"
+          sessions={recent}
+          selectedSessionId={selectedSessionId}
+          onSelect={selectAndNavigate}
+          emptyFallback="No recent chats."
+        />
+      </div>
     </div>
   );
 }

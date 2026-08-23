@@ -4,7 +4,7 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** done
 
 - [ ] Session rail separates its fixed header (New chat button, Schedule/Artifacts nav rows) from a scrollable session-list region, so every session remains reachable when the list is taller than one screen (currently the rail is `overflow:hidden` and later sessions are unreachable)
 - [ ] The "Recents" header renders even when there are no recent sessions, showing "No recent chats." instead of hiding the whole section
