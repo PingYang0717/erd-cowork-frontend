@@ -4,7 +4,7 @@
 
 **Blocked by:** 02 (Per-version 生成/發佈狀態 + 生成動作)
 
-**Status:** ready-for-agent
+**Status:** done
 
 - [ ] Custom menu (not antd Dropdown), width 340, shows a header row: "版本 · 共 N 個,可切換後再生成"
 - [ ] The currently-viewed version row is highlighted (primary-bg background, version label in primary color, fw600)

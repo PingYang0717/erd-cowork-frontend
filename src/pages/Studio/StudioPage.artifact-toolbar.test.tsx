@@ -110,13 +110,13 @@ describe('Artifact panel toolbar', () => {
 
     await user.click(await screen.findByRole('button', { name: 'SPC — Vt (gate CD)' }));
 
-    await user.click(await screen.findByTitle('切換版本'));
+    await user.click(await screen.findByRole('button', { name: '切換版本' }));
     expect(screen.getAllByRole('menuitem')).toHaveLength(2);
     await user.keyboard('{Escape}');
 
     await user.click(await screen.findByRole('button', { name: 'Regenerate artifact' }));
 
-    await user.click(await screen.findByTitle('切換版本'));
+    await user.click(await screen.findByRole('button', { name: '切換版本' }));
     await expect.poll(() => screen.getAllByRole('menuitem')).toHaveLength(3);
   });
 });

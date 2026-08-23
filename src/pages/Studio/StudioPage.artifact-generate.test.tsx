@@ -91,12 +91,12 @@ describe('Per-version Artifact generation', () => {
     await screen.findByRole('button', { name: '生成 Artifact' });
 
     // Switch back to the seeded, already-generated v2: the chip returns.
-    await user.click(await screen.findByTitle('切換版本'));
+    await user.click(await screen.findByRole('button', { name: '切換版本' }));
     await user.click(await screen.findByRole('menuitem', { name: /v2/ }));
     expect(await screen.findByText('已生成')).toBeInTheDocument();
 
     // And v3 is still ungenerated when switching to it again.
-    await user.click(await screen.findByTitle('切換版本'));
+    await user.click(await screen.findByRole('button', { name: '切換版本' }));
     await user.click(await screen.findByRole('menuitem', { name: /v3/ }));
     expect(await screen.findByRole('button', { name: '生成 Artifact' })).toBeInTheDocument();
   });
