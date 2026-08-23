@@ -283,7 +283,7 @@ export function ConnectorsPanel({ open, onClose }: { open: boolean; onClose: () 
                 </span>
                 <Button
                   className={styles.toggleButton}
-                  data-connected={isConnected}
+                  data-state={isPending ? 'connecting' : connector.status}
                   shape="circle"
                   size="small"
                   disabled={isDisabled}

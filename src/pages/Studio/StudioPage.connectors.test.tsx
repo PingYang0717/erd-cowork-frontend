@@ -45,6 +45,29 @@ describe('Connectors panel', () => {
     useSessionSelectionStore.setState(useSessionSelectionStore.getInitialState());
   });
 
+  it('exposes each connector state on its toggle button for the per-state styling', async () => {
+    const user = userEvent.setup();
+    renderStudioPage();
+    await selectASessionAndOpenConnectors(user);
+
+    expect(await screen.findByRole('button', { name: 'Disconnect Inline' })).toHaveAttribute(
+      'data-state',
+      'connected',
+    );
+    expect(screen.getByRole('button', { name: 'Connect Lot Info' })).toHaveAttribute(
+      'data-state',
+      'available',
+    );
+    expect(screen.getByRole('button', { name: 'Connect Recipe' })).toHaveAttribute(
+      'data-state',
+      'expired',
+    );
+    expect(screen.getByRole('button', { name: 'Connect Offline Tool Log' })).toHaveAttribute(
+      'data-state',
+      'no_access',
+    );
+  });
+
   it('lists every connector type with its current status', async () => {
     const user = userEvent.setup();
     renderStudioPage();

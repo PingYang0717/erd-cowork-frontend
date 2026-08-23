@@ -202,6 +202,7 @@ export function SessionList({
       <div className={styles.topRow}>
         <Button
           type="primary"
+          className={styles.newChatButton}
           style={{ flex: '1 1 auto', minWidth: 0 }}
           icon={<PlusOutlined aria-hidden />}
           onClick={createAndNavigate}

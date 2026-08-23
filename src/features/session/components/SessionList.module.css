@@ -28,6 +28,17 @@
   gap: 6px;
 }
 
+/* The mockup's New chat button: taller, rounder, medium weight, no antd
+   shadow. Doubled specificity outranks antd's base .ant-btn rule. */
+.topRow .newChatButton {
+  height: 38px;
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 500;
+  gap: 7px;
+  box-shadow: none;
+}
+
 .groupHeadingButton {
   display: flex;
   align-items: center;

@@ -4,7 +4,7 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** done
 
 - [ ] New chat button matches the mockup's measurements (h38, br9, fs13, fw500, gap7, no shadow)
 - [ ] Context/filter/sort chips match the mockup (h28, pad 5px 10px, br14, fs12, secondary text color, gap5, white background + border)
