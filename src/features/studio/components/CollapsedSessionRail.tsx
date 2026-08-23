@@ -9,10 +9,8 @@ import { useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useLocation, useNavigate } from 'react-router-dom';
 
-import { SessionGroup, sortByRecency } from '@/features/session/components/SessionList';
-import { useCreateSession } from '@/features/session/hooks/useSessionMutations';
-import { useSessions } from '@/features/session/hooks/useSessions';
-import { useSessionSelectionStore } from '@/features/session/store/useSessionSelectionStore';
+import { SessionGroup } from '@/features/session/components/SessionList';
+import { useSessionGroups } from '@/features/session/hooks/useSessionGroups';
 
 import styles from './CollapsedSessionRail.module.css';
 
@@ -21,29 +19,18 @@ interface CollapsedSessionRailProps {
 }
 
 export function CollapsedSessionRail({ onExpand }: CollapsedSessionRailProps) {
-  const createSession = useCreateSession();
   const navigate = useNavigate();
   const location = useLocation();
   const [historyOpen, setHistoryOpen] = useState(false);
   const [flyoutPosition, setFlyoutPosition] = useState({ top: 0, left: 0 });
   const historyButtonRef = useRef<HTMLButtonElement>(null);
 
-  const { data } = useSessions();
-  const sessions = data ?? [];
-  const pinned = sortByRecency(sessions.filter((session) => session.pinned));
-  const recent = sortByRecency(sessions.filter((session) => !session.pinned));
-  const selectedSessionId = useSessionSelectionStore((s) => s.selectedSessionId);
-  const selectSession = useSessionSelectionStore((s) => s.selectSession);
+  const { pinned, recent, selectedSessionId, selectAndNavigate, createAndNavigate } =
+    useSessionGroups();
 
   function handleSelectSession(id: string) {
-    selectSession(id);
+    selectAndNavigate(id);
     setHistoryOpen(false);
-    navigate('/cowork');
-  }
-
-  function handleNewChat() {
-    createSession.mutate();
-    navigate('/cowork');
   }
 
   function toggleHistory() {
@@ -71,7 +58,7 @@ export function CollapsedSessionRail({ onExpand }: CollapsedSessionRailProps) {
       <button
         type="button"
         className={styles.primaryTile}
-        onClick={handleNewChat}
+        onClick={createAndNavigate}
         title="New chat"
         aria-label="New chat"
       >
@@ -126,7 +113,7 @@ export function CollapsedSessionRail({ onExpand }: CollapsedSessionRailProps) {
                   <button
                     type="button"
                     className={styles.flyoutNewChat}
-                    onClick={handleNewChat}
+                    onClick={createAndNavigate}
                     title="New chat"
                     aria-label="New chat"
                   >

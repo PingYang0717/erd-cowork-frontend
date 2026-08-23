@@ -19,3 +19,12 @@
 - [x] Connect/disconnect action updates status via MSW PATCH, persisted
 - [x] `docs/api/interface.md` updated with connector endpoints; `types/api/Connector.ts` finalized
 - [x] Seam test: open panel, toggle a connector's connection state, reload (simulated), assert it persisted
+
+## Comments
+
+**2026-08-23:** Code review found the scope note above no longer matches what shipped: `ConnectorsPanel.tsx` implements a search box, a status filter-chip row, an "Add a custom data source" input with its own mutation, and a `Connecting…` pending state on toggle — all four of which this ticket's note says were explicitly trimmed from scope. Retroactively expanding this ticket's scope to cover them, since they're built and working:
+
+- [x] Search box filters the connector list by name
+- [x] Status filter chips narrow the list by connection state
+- [x] "Add a custom data source" input creates a new connector via its own mutation
+- [x] Toggling a connector shows a transient "Connecting…" pending state before flipping to Connected

@@ -1,5 +1,4 @@
 import {
-  AppstoreOutlined,
   CheckCircleFilled,
   DownOutlined,
   ExportOutlined,
@@ -11,14 +10,14 @@ import { Dropdown } from 'antd';
 import { useState } from 'react';
 
 import { useSessionSelectionStore } from '@/features/session/store/useSessionSelectionStore';
-import { useThemeStore } from '@/features/theme/store/useThemeStore';
 import { useMessages } from '@/features/thread/hooks/useMessages';
-import type { ArtifactTheme, ArtifactVersion } from '@/types/api';
+import type { ArtifactVersion } from '@/types/api';
 import { formatRelativeTime } from '@/utils/formatRelativeTime';
 
 import { useArtifactContent } from '../hooks/useArtifactContent';
 import { useRegenerateArtifact } from '../hooks/useArtifactMutations';
 import { useArtifacts } from '../hooks/useArtifacts';
+import { useArtifactTheme } from '../hooks/useArtifactTheme';
 import { useArtifactVersions } from '../hooks/useArtifactVersions';
 import { ArtifactFrame } from './ArtifactFrame';
 import styles from './ArtifactPanel.module.css';
@@ -48,8 +47,7 @@ function ArtifactPanelView({ sessionId }: { sessionId: string }) {
 }
 
 function ArtifactPanelContent({ artifactId }: { artifactId: string }) {
-  const isDarkMode = useThemeStore((s) => s.isDarkMode);
-  const theme: ArtifactTheme = isDarkMode ? 'dark' : 'light';
+  const theme = useArtifactTheme();
 
   const [versionId, setVersionId] = useState<string | undefined>(undefined);
   const [isShareOpen, setIsShareOpen] = useState(false);
@@ -76,22 +74,12 @@ function ArtifactPanelContent({ artifactId }: { artifactId: string }) {
             onSelect={setVersionId}
           />
         )}
-        {artifact &&
-          (artifact.shared ? (
-            <span className={styles.generatedBadge}>
-              <CheckCircleFilled aria-hidden />
-              已生成
-            </span>
-          ) : (
-            <button
-              type="button"
-              className={styles.generateButton}
-              onClick={() => setIsShareOpen(true)}
-            >
-              <AppstoreOutlined aria-hidden />
-              生成 Artifact
-            </button>
-          ))}
+        {artifact && (
+          <span className={styles.generatedBadge} title="此版本已生成 Artifact，可用右側分享">
+            <CheckCircleFilled aria-hidden />
+            已生成
+          </span>
+        )}
         <button
           type="button"
           className={styles.shareButton}
