@@ -4,7 +4,7 @@
 
 **Blocked by:** 02 (Per-version 生成/發佈狀態 + 生成動作)
 
-**Status:** ready-for-agent
+**Status:** done
 
 - [ ] Dashboard-kind Artifact cards use primary-bg/primary thumbnail coloring; slides-kind cards use fill-tertiary/secondary coloring (currently both kinds share the same colors)
 - [ ] Each card shows a session-name row (fs11.5, tertiary color) identifying which session produced it
