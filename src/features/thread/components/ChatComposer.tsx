@@ -100,13 +100,12 @@ export function ChatComposer({ onSend, disabled }: ChatComposerProps) {
 
   return (
     <div>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
+      <div className={styles.suggestRow}>
         {SUGGESTED_PROMPTS.map((prompt) => (
-          <Button
+          <button
             key={prompt.label}
-            shape="round"
-            size="small"
-            icon={prompt.icon}
+            type="button"
+            className={styles.suggestChip}
             disabled={disabled}
             onClick={() =>
               send({
@@ -116,8 +115,9 @@ export function ChatComposer({ onSend, disabled }: ChatComposerProps) {
               })
             }
           >
+            {prompt.icon}
             {prompt.label}
-          </Button>
+          </button>
         ))}
       </div>
       <div className={styles.composerBox}>
