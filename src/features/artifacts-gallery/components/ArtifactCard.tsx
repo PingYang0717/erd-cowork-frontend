@@ -18,6 +18,7 @@ import {
   useSetArtifactPinned,
 } from '@/features/artifact/hooks/useArtifactMutations';
 import type { Artifact } from '@/types/api';
+import { dispatchMenuAction } from '@/utils/dispatchMenuAction';
 import { formatRelativeTime } from '@/utils/formatRelativeTime';
 
 import styles from './ArtifactCard.module.css';
@@ -53,15 +54,13 @@ export function ArtifactCard({
   ].filter((item): item is NonNullable<typeof item> => item !== null);
 
   function handleMenuClick(key: string) {
-    if (key === 'pin') {
-      setArtifactPinned.mutate({ id: artifact.id, pinned: !artifact.pinned });
-    } else if (key === 'copyLink') {
-      navigator.clipboard.writeText(`${window.location.origin}/cowork/artifact/${artifact.id}`);
-    } else if (key === 'share') {
-      setIsShareOpen(true);
-    } else if (key === 'delete') {
-      deleteArtifact.mutate(artifact.id);
-    }
+    dispatchMenuAction(key, {
+      pin: () => setArtifactPinned.mutate({ id: artifact.id, pinned: !artifact.pinned }),
+      copyLink: () =>
+        navigator.clipboard.writeText(`${window.location.origin}/cowork/artifact/${artifact.id}`),
+      share: () => setIsShareOpen(true),
+      delete: () => deleteArtifact.mutate(artifact.id),
+    });
   }
 
   return (

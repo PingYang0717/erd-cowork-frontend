@@ -20,6 +20,7 @@ import { AttachmentChip } from '@/features/file-upload/components/AttachmentChip
 import { FileAttachmentModal } from '@/features/file-upload/components/FileAttachmentModal';
 import { useFileAttachments } from '@/features/file-upload/hooks/useFileAttachments';
 import type { ScenarioKey } from '@/types/api';
+import { dispatchMenuAction } from '@/utils/dispatchMenuAction';
 
 import styles from './ChatComposer.module.css';
 
@@ -134,13 +135,11 @@ export function ChatComposer({ onSend, disabled }: ChatComposerProps) {
                   icon: <ApiOutlined aria-hidden />,
                 },
               ],
-              onClick: ({ key }) => {
-                if (key === 'attach') {
-                  setFileModalOpen(true);
-                } else if (key === 'connectors') {
-                  setConnectorsOpen(true);
-                }
-              },
+              onClick: ({ key }) =>
+                dispatchMenuAction(key, {
+                  attach: () => setFileModalOpen(true),
+                  connectors: () => setConnectorsOpen(true),
+                }),
             }}
           >
             <button

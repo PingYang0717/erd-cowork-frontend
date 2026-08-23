@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { artifactApi } from '../api/artifactApi';
 import { artifactsQueryKey } from './useArtifacts';
+import { artifactVersionsQueryKey } from './useArtifactVersions';
 
 export function useSetArtifactPinned() {
   const queryClient = useQueryClient();
@@ -44,7 +45,7 @@ export function useRegenerateArtifact() {
   return useMutation({
     mutationFn: (id: string) => artifactApi.regenerate(id),
     onSuccess: (_version, id) => {
-      queryClient.invalidateQueries({ queryKey: ['artifacts', id, 'versions'] });
+      queryClient.invalidateQueries({ queryKey: artifactVersionsQueryKey(id) });
     },
   });
 }

@@ -16,21 +16,16 @@ import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import type { Session } from '@/types/api/session';
+import { dispatchMenuAction } from '@/utils/dispatchMenuAction';
 import { formatRelativeTime } from '@/utils/formatRelativeTime';
 
+import { useSessionGroups } from '../hooks/useSessionGroups';
 import {
-  useCreateSession,
   useDeleteSession,
   useRenameSession,
   useSetSessionPinned,
 } from '../hooks/useSessionMutations';
-import { useSessions } from '../hooks/useSessions';
-import { useSessionSelectionStore } from '../store/useSessionSelectionStore';
 import styles from './SessionList.module.css';
-
-export function sortByRecency(sessions: Session[]) {
-  return [...sessions].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
-}
 
 function SessionRow({
   session,
@@ -58,14 +53,14 @@ function SessionRow({
   ];
 
   function handleMenuClick(key: string) {
-    if (key === 'pin') {
-      setSessionPinned.mutate({ id: session.id, pinned: !session.pinned });
-    } else if (key === 'rename') {
-      setRenameDraft(session.title);
-      setIsRenaming(true);
-    } else if (key === 'delete') {
-      deleteSession.mutate(session.id);
-    }
+    dispatchMenuAction(key, {
+      pin: () => setSessionPinned.mutate({ id: session.id, pinned: !session.pinned }),
+      rename: () => {
+        setRenameDraft(session.title);
+        setIsRenaming(true);
+      },
+      delete: () => deleteSession.mutate(session.id),
+    });
   }
 
   function commitRename() {
@@ -191,27 +186,10 @@ export function SessionList({
   scheduleCount?: number;
   artifactsCount?: number;
 }) {
-  const { data } = useSessions();
-  const sessions = data ?? [];
-  const pinned = sortByRecency(sessions.filter((session) => session.pinned));
-  const recent = sortByRecency(sessions.filter((session) => !session.pinned));
-
-  const selectedSessionId = useSessionSelectionStore((s) => s.selectedSessionId);
-  const selectSession = useSessionSelectionStore((s) => s.selectSession);
-  const createSession = useCreateSession();
+  const { pinned, recent, selectedSessionId, selectAndNavigate, createAndNavigate } =
+    useSessionGroups();
   const navigate = useNavigate();
   const location = useLocation();
-
-  // Selecting (or creating) a session should always bring the Studio thread
-  // into view — matching the mockup's cwSelectSession, which resets cwView
-  // to "studio" (line 11050). Without this, selecting a session while on
-  // /cowork/artifacts or /cowork/schedule silently updates the store with
-  // nothing visibly changing, since the Outlet there isn't showing the
-  // thread at all.
-  function handleSelectSession(id: string) {
-    selectSession(id);
-    navigate('/cowork');
-  }
 
   return (
     <div className={styles.sessionList}>
@@ -220,10 +198,7 @@ export function SessionList({
           type="primary"
           style={{ flex: '1 1 auto', minWidth: 0 }}
           icon={<PlusOutlined aria-hidden />}
-          onClick={() => {
-            createSession.mutate();
-            navigate('/cowork');
-          }}
+          onClick={createAndNavigate}
         >
           New chat
         </Button>
@@ -262,13 +237,13 @@ export function SessionList({
         label="Pinned"
         sessions={pinned}
         selectedSessionId={selectedSessionId}
-        onSelect={handleSelectSession}
+        onSelect={selectAndNavigate}
       />
       <SessionGroup
         label="Recents"
         sessions={recent}
         selectedSessionId={selectedSessionId}
-        onSelect={handleSelectSession}
+        onSelect={selectAndNavigate}
       />
     </div>
   );
