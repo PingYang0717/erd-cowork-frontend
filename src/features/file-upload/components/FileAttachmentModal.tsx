@@ -11,11 +11,7 @@ import { useRef } from 'react';
 import type { Upload } from '@/types/api';
 import { formatBytes } from '@/utils/formatBytes';
 
-import {
-  ACCEPT_ATTRIBUTE,
-  MAX_ATTACHMENT_COUNT,
-  MAX_ATTACHMENT_TOTAL_BYTES,
-} from '../hooks/useFileAttachments';
+import { ACCEPT_ATTRIBUTE, MAX_ATTACHMENT_COUNT } from '../hooks/useFileAttachments';
 import styles from './FileAttachmentModal.module.css';
 
 function fileExtension(fileName: string) {
@@ -111,10 +107,10 @@ export function FileAttachmentModal({
       >
         <CloudUploadOutlined aria-hidden className={styles.dropzoneIcon} />
         <div>
-          <span className={styles.dropzoneLink}>Click to choose</span> or drop files here
+          <span className={styles.dropzoneLink}>點擊選擇</span> 或把檔案拖拉到這裡
         </div>
         <div className={styles.dropzoneHint}>
-          Max {MAX_ATTACHMENT_COUNT} files · {formatBytes(MAX_ATTACHMENT_TOTAL_BYTES)} total
+          最多 {MAX_ATTACHMENT_COUNT} 個檔案 · 總計上限 5 GB
         </div>
       </div>
 

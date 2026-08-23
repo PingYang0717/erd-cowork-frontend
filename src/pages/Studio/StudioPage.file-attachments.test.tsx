@@ -62,6 +62,10 @@ describe('File attachments', () => {
     renderStudioPage();
     const dialog = await selectASessionAndOpenFileModal(user);
 
+    // The dropzone speaks the mockup's Chinese copy.
+    expect(within(dialog).getByText('點擊選擇')).toBeInTheDocument();
+    expect(within(dialog).getByText('最多 5 個檔案 · 總計上限 5 GB')).toBeInTheDocument();
+
     const input = screen.getByLabelText('Choose files');
     await user.upload(input, fileOfSize('lot-genealogy.csv', 1024));
 
@@ -97,7 +101,7 @@ describe('File attachments', () => {
     const files = Array.from({ length: 6 }, (_, i) => fileOfSize(`file-${i}.csv`, 1024));
     await user.upload(input, files);
 
-    expect(await within(dialog).findByRole('alert')).toHaveTextContent('Max 5 files');
+    expect(await within(dialog).findByRole('alert')).toHaveTextContent('最多 5 個檔案');
     expect(within(dialog).getAllByRole('button', { name: /^Remove file-/ })).toHaveLength(5);
     expect(within(dialog).queryByText('file-5.csv')).not.toBeInTheDocument();
   });
@@ -113,7 +117,7 @@ describe('File attachments', () => {
 
     await user.upload(input, fileOfSize('big-2.csv', 2 * GB));
 
-    expect(await within(dialog).findByRole('alert')).toHaveTextContent('Total size limit is 5 GB');
+    expect(await within(dialog).findByRole('alert')).toHaveTextContent('總計上限 5 GB');
     expect(within(dialog).queryByText('big-2.csv')).not.toBeInTheDocument();
     expect(within(dialog).getByText('big-1.csv')).toBeInTheDocument();
   });

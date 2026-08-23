@@ -140,17 +140,18 @@ function ArtifactPanelContent({ artifactId }: { artifactId: string }) {
             <ReloadOutlined aria-hidden spin={regenerateArtifact.isPending} />
           </button>
         </Tooltip>
-        <button
-          type="button"
-          className={styles.iconButton}
-          aria-label="Open artifact in new tab"
-          title="在新分頁開啟"
-          onClick={() =>
-            window.open(`/cowork/artifact/${artifactId}`, '_blank', 'noopener,noreferrer')
-          }
-        >
-          <ExportOutlined aria-hidden />
-        </button>
+        <Tooltip content="在新分頁開啟預覽">
+          <button
+            type="button"
+            className={styles.iconButton}
+            aria-label="Open artifact in new tab"
+            onClick={() =>
+              window.open(`/cowork/artifact/${artifactId}`, '_blank', 'noopener,noreferrer')
+            }
+          >
+            <ExportOutlined aria-hidden />
+          </button>
+        </Tooltip>
       </div>
       <div className={styles.frameWrapper}>
         <ArtifactFrame html={data.html} theme={theme} />

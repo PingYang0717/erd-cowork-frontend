@@ -70,6 +70,11 @@
   color: var(--erd-color-primary, #1677ff);
 }
 
+.artifactChipHint {
+  color: var(--erd-color-text-tertiary, #8c8c8c);
+  font-size: 11.5px;
+}
+
 /* The mockup keeps the in-flight step list inside a bordered rounded card. */
 .workingSteps {
   display: flex;

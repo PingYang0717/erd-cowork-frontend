@@ -4,7 +4,7 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** done
 
 - [ ] Sort menu labels restored to Chinese ("排序: 釘選優先/最近建立/名稱 A→Z")
 - [ ] Gallery empty-state and attachment Modal copy restored to Chinese (e.g. "點擊選擇 或把檔案拖拉到這裡", "最多 5 個檔案 · 總計上限 5 GB")

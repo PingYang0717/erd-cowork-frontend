@@ -45,11 +45,11 @@ export function useFileAttachments() {
         continue;
       }
       if (count >= MAX_ATTACHMENT_COUNT) {
-        rejections.push(`Max ${MAX_ATTACHMENT_COUNT} files`);
+        rejections.push(`最多 ${MAX_ATTACHMENT_COUNT} 個檔案`);
         break;
       }
       if (total + file.size > MAX_ATTACHMENT_TOTAL_BYTES) {
-        rejections.push('Total size limit is 5 GB');
+        rejections.push('總計上限 5 GB');
         break;
       }
       accepted.push(file);
