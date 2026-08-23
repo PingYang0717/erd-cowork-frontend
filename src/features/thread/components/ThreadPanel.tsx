@@ -1,4 +1,4 @@
-import { ThunderboltFilled } from '@ant-design/icons';
+import { DatabaseOutlined, ThunderboltFilled } from '@ant-design/icons';
 import { useQueryClient } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 import { useEffect, useState } from 'react';
@@ -18,13 +18,20 @@ const STEP_DURATION_MS = 500;
 
 function ThreadHeader() {
   return (
-    <div className={styles.header}>
+    <header className={styles.header} aria-label="Thread header">
       <span className={styles.headerTitle}>
         <ThunderboltFilled aria-hidden className={styles.headerIcon} />
         Cowork · Data studio
       </span>
+      {/* The mockup's data-source chip (its demo is wired to the Inline DB /
+          N5 line fixture); sits beside the ThemeToggle per the scope-trim of
+          the Workspace header (ADR-0003). */}
+      <span className={styles.dataSourceChip}>
+        <DatabaseOutlined aria-hidden />
+        Inline DB · N5 line
+      </span>
       <ThemeToggle />
-    </div>
+    </header>
   );
 }
 

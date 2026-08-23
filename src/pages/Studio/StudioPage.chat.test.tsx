@@ -74,6 +74,16 @@ describe('Chat composer', () => {
 
     expect(screen.queryByRole('textbox', { name: 'Message' })).not.toBeInTheDocument();
   });
+
+  it('shows the data-source chip alongside the theme toggle in the thread header', () => {
+    renderStudioPage();
+
+    const header = screen.getByRole('banner', { name: 'Thread header' });
+    expect(within(header).getByText('Inline DB · N5 line')).toBeInTheDocument();
+    expect(
+      within(header).getByRole('button', { name: /Switch to (dark|light) mode/ }),
+    ).toBeInTheDocument();
+  });
 });
 
 describe('Scenario matching', () => {
