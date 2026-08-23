@@ -33,5 +33,8 @@ export const artifactApi = {
 
   regenerate: (id: string) => apiClient.post<ArtifactVersion>(`/artifacts/${id}/regenerate`),
 
+  generateVersion: (id: string, versionId: string) =>
+    apiClient.post<ArtifactVersion>(`/artifacts/${id}/versions/${versionId}/generate`),
+
   listDirectory: () => apiClient.get<DirectoryEntry[]>('/directory'),
 };

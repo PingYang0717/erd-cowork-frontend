@@ -1,6 +1,7 @@
 import {
   AppstoreOutlined,
   CheckCircleFilled,
+  CheckOutlined,
   DownOutlined,
   ExportOutlined,
   HistoryOutlined,
@@ -17,7 +18,7 @@ import type { ArtifactVersion } from '@/types/api';
 import { formatRelativeTime } from '@/utils/formatRelativeTime';
 
 import { useArtifactContent } from '../hooks/useArtifactContent';
-import { useRegenerateArtifact } from '../hooks/useArtifactMutations';
+import { useGenerateArtifactVersion, useRegenerateArtifact } from '../hooks/useArtifactMutations';
 import { useArtifacts } from '../hooks/useArtifacts';
 import { useArtifactTheme } from '../hooks/useArtifactTheme';
 import { useArtifactVersions } from '../hooks/useArtifactVersions';
@@ -72,6 +73,7 @@ function ArtifactPanelContent({ artifactId }: { artifactId: string }) {
   const { data: artifacts } = useArtifacts();
   const artifact = artifacts?.find((a) => a.id === artifactId);
   const regenerateArtifact = useRegenerateArtifact();
+  const generateVersion = useGenerateArtifactVersion();
 
   if (!data) {
     return <EmptyPanel />;
@@ -90,12 +92,26 @@ function ArtifactPanelContent({ artifactId }: { artifactId: string }) {
             onSelect={setVersionId}
           />
         )}
-        {artifact && (
-          <span className={styles.generatedBadge} title="此版本已生成 Artifact，可用右側分享">
-            <CheckCircleFilled aria-hidden />
-            已生成
-          </span>
-        )}
+        {activeVersion &&
+          (activeVersion.generated ? (
+            <Tooltip content="此版本已生成 Artifact，可用右側分享">
+              <span className={styles.generatedBadge}>
+                <CheckOutlined aria-hidden />
+                已生成
+              </span>
+            </Tooltip>
+          ) : (
+            <button
+              type="button"
+              className={styles.generateButton}
+              disabled={generateVersion.isPending}
+              onClick={() =>
+                generateVersion.mutate({ id: artifactId, versionId: activeVersion.id })
+              }
+            >
+              生成 Artifact
+            </button>
+          ))}
         <button
           type="button"
           className={styles.shareButton}

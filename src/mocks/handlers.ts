@@ -88,22 +88,30 @@ const artifacts = createPersistedResource<StoredArtifact>('erd-cowork:artifacts:
   },
 ]);
 
-const artifactVersions = createPersistedResource<ArtifactVersion>('erd-cowork:artifact-versions', [
-  {
-    id: 'artifact-1-v1',
-    artifactId: 'artifact-1',
-    n: 1,
-    label: 'SPC analysis — Vt (gate CD) (draft)',
-    createdAt: '2026-08-20T09:00:00.000Z',
-  },
-  {
-    id: 'artifact-1-v2',
-    artifactId: 'artifact-1',
-    n: 2,
-    label: 'SPC analysis — Vt (gate CD)',
-    createdAt: '2026-08-20T09:15:00.000Z',
-  },
-]);
+// Storage key is versioned: browsers holding the older seeded shape (without
+// the per-version `generated` flag) reseed instead of resolving every version
+// to "not generated".
+const artifactVersions = createPersistedResource<ArtifactVersion>(
+  'erd-cowork:artifact-versions:v2',
+  [
+    {
+      id: 'artifact-1-v1',
+      artifactId: 'artifact-1',
+      n: 1,
+      label: 'SPC analysis — Vt (gate CD) (draft)',
+      createdAt: '2026-08-20T09:00:00.000Z',
+      generated: true,
+    },
+    {
+      id: 'artifact-1-v2',
+      artifactId: 'artifact-1',
+      n: 2,
+      label: 'SPC analysis — Vt (gate CD)',
+      createdAt: '2026-08-20T09:15:00.000Z',
+      generated: true,
+    },
+  ],
+);
 
 const connectors = createPersistedResource<Connector>('erd-cowork:connectors', [
   {
@@ -280,6 +288,7 @@ export const handlers = [
       n: 1,
       label: artifactName,
       createdAt: new Date().toISOString(),
+      generated: false,
     };
     artifactVersions.write([...artifactVersions.read(), version]);
 
@@ -363,9 +372,21 @@ export const handlers = [
       n: maxN + 1,
       label: artifact.name,
       createdAt: new Date().toISOString(),
+      generated: false,
     };
     artifactVersions.write([...artifactVersions.read(), version]);
     return HttpResponse.json(version, { status: 201 });
+  }),
+
+  http.post('/api/artifacts/:id/versions/:versionId/generate', ({ params }) => {
+    const all = artifactVersions.read();
+    const existing = all.find((v) => v.artifactId === params.id && v.id === params.versionId);
+    if (!existing) {
+      return new HttpResponse(null, { status: 404 });
+    }
+    const updated: ArtifactVersion = { ...existing, generated: true };
+    artifactVersions.write(all.map((v) => (v.id === updated.id ? updated : v)));
+    return HttpResponse.json(updated);
   }),
 
   http.post('/api/artifacts/:id/share', async ({ params, request }) => {
