@@ -199,6 +199,7 @@
   padding: 12px;
   border: 1px solid var(--erd-color-border-secondary, #f0f0f0);
   border-radius: 12px;
+  background: var(--erd-color-bg-container, #fff);
 }
 
 .row[data-connected='true'] {

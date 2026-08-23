@@ -5,6 +5,7 @@ import {
   ThunderboltFilled,
 } from '@ant-design/icons';
 
+import { AttachmentChip } from '@/features/file-upload/components/AttachmentChip';
 import type { Message } from '@/types/api';
 
 import styles from './MessageList.module.css';
@@ -26,9 +27,22 @@ function StepStatusIcon({ status }: { status: 'success' | 'running' | 'pending' 
 
 function MessageBubble({ message }: { message: Message }) {
   if (message.role === 'user') {
+    const attachments = message.attachments ?? [];
+
     return (
       <div className={styles.userRow}>
-        <div className={styles.userBubble}>{message.text}</div>
+        <div className={styles.userMessage}>
+          <div className={styles.userBubble}>{message.text}</div>
+          {attachments.length > 0 && (
+            <ul className={styles.userAttachments} aria-label="Message attachments">
+              {attachments.map((upload) => (
+                <li key={upload.id}>
+                  <AttachmentChip upload={upload} />
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       </div>
     );
   }

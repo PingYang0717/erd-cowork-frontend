@@ -1,0 +1,24 @@
+/* Geometry copied from the mockup's `erd-resize`: the negative margins sit the
+   9px grab area on top of the neighbouring pane's 1px border, so widening the
+   grab target never shifts the layout. */
+.handle {
+  flex: 0 0 auto;
+  width: 9px;
+  margin: 0 -4px;
+  z-index: 8;
+  cursor: col-resize;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+}
+
+.line {
+  width: 1px;
+  background: var(--erd-color-border-secondary, #f0f0f0);
+  transition: background 0.12s;
+}
+
+.handle:hover .line,
+.dragging .line {
+  background: var(--erd-color-primary, #1677ff);
+}

@@ -6,18 +6,29 @@
 
 ## 0. 技術棧總覽
 
-| 類別              | 選擇                                               | 備註                                          |
-| ----------------- | -------------------------------------------------- | --------------------------------------------- |
-| 框架              | React 19.x + Vite                                  | 開啟 React Compiler,減少手動 memoization      |
-| 語言              | TypeScript(先關閉 strict,後續逐步開啟)             | 見第 6 節                                     |
-| UI 元件庫         | Ant Design                                         | 優先使用 antd 現成元件,避免重造輪子           |
-| 路由              | React Router                                       | v6+ 寫法(`createBrowserRouter` / `<Routes>`)  |
-| Client 端全域狀態 | Zustand                                            | 只放 UI 狀態(sidebar 開關、theme、跨頁草稿等) |
-| Server 端資料狀態 | TanStack Query                                     | API 資料一律走這裡,不放進 Zustand             |
-| API 呼叫層        | Axios + 自訂 API client                            | 見第 5 節                                     |
-| 表單              | React Hook Form(輕量用法即可,不強制上 schema 驗證) | 需求不多,先簡單處理                           |
-| Lint / Format     | ESLint 9(flat config)+ Prettier                    | 強制在 commit 前執行                          |
-| Git hook          | Husky + lint-staged                                |                                               |
+| 類別              | 選擇                                           | 備註                                                                  |
+| ----------------- | ---------------------------------------------- | --------------------------------------------------------------------- |
+| 框架              | React 19.x + Vite                              | 開啟 React Compiler(見下方說明),減少手動 memoization                  |
+| 語言              | TypeScript(先關閉 strict,後續逐步開啟)         | 見第 6 節                                                             |
+| UI 元件庫         | Ant Design                                     | 優先使用 antd 現成元件,避免重造輪子                                   |
+| 路由              | React Router                                   | v6+ 寫法(`createBrowserRouter` / `<Routes>`)                          |
+| Client 端全域狀態 | Zustand                                        | 只放 UI 狀態(sidebar 開關、theme、跨頁草稿等)                         |
+| Server 端資料狀態 | TanStack Query                                 | API 資料一律走這裡,不放進 Zustand                                     |
+| API 呼叫層        | Axios + 自訂 API client                        | 見第 5 節                                                             |
+| 表單              | 目前以 `useState` 手刻(未安裝 React Hook Form) | 表單只有分享對話框、connector 新增、session 改名三處;複雜度上來再引入 |
+| Lint / Format     | ESLint 9(flat config)+ Prettier                | 強制在 commit 前執行                                                  |
+| Git hook          | Husky + lint-staged                            |                                                                       |
+
+React Compiler 由 `@vitejs/plugin-react` v6 的 `compiler: true` 開啟(需安裝
+`oxc-transform-react`),設定在 `vite.config.ts`:
+
+```ts
+plugins: [react({ compiler: true })],
+```
+
+編譯器只會優化「完全遵守 React 規則」的元件:元件內若有
+`eslint-disable` 掉 `react-hooks/*` 規則的註解,該元件會被整個略過(build 時會印出
+警告指出是哪一個檔案)。
 
 ---
 
@@ -333,3 +344,43 @@ echo "npx lint-staged" > .husky/pre-commit
 ```
 
 這樣設定後,任何人(或任何 agent)寫的 code,只要進 commit 就會被自動格式化與 lint 修正,風格差異在進 repo 前就會被拉齊。
+
+---
+
+## 8. 主題色票(light / dark)
+
+色票唯一來源是 `src/features/theme/tokens.ts`,整份逐值抄自設計稿
+`eRDWorkspace20260819.html` 的 `:root` / `:root[data-theme="dark"]`(ADR-0004)。
+不要在元件裡寫死顏色,也不要依賴 antd 演算法的預設值 —— 它的 dark 表面色
+(`#000000` / `#141414` / `#1f1f1f`)與設計稿(`#17181c` / `#1f1f22` /
+`#262629`)並不相同。
+
+這張表同時餵兩個消費端:
+
+1. **antd `ConfigProvider` 的 token**(antd 自己畫的元件)
+2. **`--erd-color-*` CSS 自訂屬性**(CSS Modules 讀的那些)
+
+CSS 或 inline style 用到的變數,必須在這張表裡存在;漏掉的話在 dark mode 會
+安靜地停在 fallback 的亮色值。
+
+**餵 antd 時要區分兩種 token**:
+
+- **seed**(`colorPrimary` / `colorSuccess` / `colorWarning` / `colorError`)
+  兩個主題都餵**亮色**值。設計稿的 dark 色盤本來就是 antd 由亮色 seed 推導出來的
+  結果(`#1677ff` → `#1668dc`、`#52c41a` → `#49aa19`),餵已經變暗的值會被再暗一次。
+- **map / alias**(表面、邊框、填色、文字、`colorPrimaryBg` 這類)
+  在推導之後才套用,直接餵當前主題的值即可。
+
+**變數宣告在 `:root`,不要掛在某個 wrapper `<div>` 上。** 對話框(antd Modal)、
+下拉選單(antd Dropdown)、收合後的 chat history flyout 全都 portal 到
+`document.body`,在 React 樹的 wrapper 之外;變數若只設在 wrapper 的 inline style,
+這些表面讀不到,會安靜地退回每個 `var()` 裡寫的亮色 fallback —— 看起來就是「dark
+mode 下對話框還是亮的」。目前 `AppProviders` 直接渲染一段 `<style>` 輸出
+`:root { --erd-color-*: … }`。
+
+antd 自己畫的對話框外框(邊框、陰影、遮罩)CSS Module 碰不到,那幾條放在
+`src/index.css`。注意 antd v6 的對話框面板是 `.ant-modal-container`
+(舊版是 `.ant-modal-content`),選錯就是整條規則靜靜失效。
+
+Artifact 在 iframe 內(ADR-0001)讀不到外層的 CSS 變數,所以
+`src/mocks/artifactFixtures.ts` 自帶一份同值的色票 —— 改色時兩邊要一起改。

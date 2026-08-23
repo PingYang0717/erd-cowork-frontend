@@ -21,3 +21,23 @@
 - [x] Attached file metadata (name, size) is registered via a mock upload endpoint (no binary storage)
 - [x] `docs/api/interface.md` updated with the upload endpoint; `types/api/Upload.ts` finalized
 - [x] Seam test: attach files under/over the limit, assert validation behavior; assert attached file chips appear on the composer
+
+## Comments
+
+**2026-08-23:** Code review found attachments never reached the message: the composer
+called `onSend(text)` with no attachment payload, `POST /sessions/:sessionId/messages`
+had no field for one, and the chips were not cleared after sending — so files were
+registered at `/uploads` and then orphaned. Fixed: the send request now carries
+`attachments`, they are stored on `userMessage.attachments` and rendered as chips under
+the sent message, and the composer clears its own chips on send. Seam test added in
+`StudioPage.file-attachments.test.tsx`.
+
+Still open against the mockup (deliberately deferred, not overlooked) — see
+[ADR-0004](../../../docs/adr/0004-mockup-visual-fidelity-via-ant-design-icons.md):
+
+- [ ] Attachment type filter: the mockup's `cwAddFiles` accepts only `.csv` / `.xlsx` /
+      `.xls` and shows 「僅支援 .csv / .xlsx」 for anything else; `useFileAttachments`
+      currently enforces the count and size limits only, while the composer placeholder
+      already advertises ".csv / .xlsx"
+- [ ] Drag-and-drop on the composer itself: today it works only inside the modal's
+      dropzone

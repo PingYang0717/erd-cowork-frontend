@@ -56,5 +56,10 @@ export function useFileAttachments() {
     setError('');
   }
 
-  return { attachments, error, addFiles, removeFile };
+  function clear() {
+    setAttachments([]);
+    setError('');
+  }
+
+  return { attachments, error, addFiles, removeFile, clear };
 }

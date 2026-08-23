@@ -1,4 +1,5 @@
 import type { ScenarioKey } from '@/types/api/scenario';
+import type { Upload } from '@/types/api/upload';
 
 export type MessageRole = 'user' | 'ai';
 
@@ -17,4 +18,5 @@ export interface Message {
   steps?: MessageStep[];
   artifactName?: string;
   artifactId?: string;
+  attachments?: Upload[];
 }

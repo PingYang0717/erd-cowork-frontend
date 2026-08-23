@@ -28,3 +28,9 @@
 - [x] Status filter chips narrow the list by connection state
 - [x] "Add a custom data source" input creates a new connector via its own mutation
 - [x] Toggling a connector shows a transient "Connecting…" pending state before flipping to Connected
+
+**2026-08-23:** Code review found the fourth AC ("docs updated with connector
+endpoints") still incomplete after the scope expansion above: `POST /connectors`, which
+backs the custom-connector input, was implemented but missing from
+`docs/api/interface.md`. It is now documented (request shape, the slugified `c_<slug>`
+id, and the return-existing-instead-of-duplicating behaviour).

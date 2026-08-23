@@ -54,4 +54,22 @@ describe('Artifact version switcher', () => {
     expect(await screen.findByRole('button', { name: /draft/i })).toBeInTheDocument();
     expect(updatedIframe.getAttribute('srcdoc')).toContain('Draft');
   });
+
+  it('renders content of its own for a regenerated version', async () => {
+    const user = userEvent.setup();
+    renderStudioPage();
+
+    await user.click(await screen.findByRole('button', { name: 'SPC — Vt (gate CD)' }));
+
+    const iframe = (await screen.findByTitle('Artifact preview')) as HTMLIFrameElement;
+    expect(iframe.getAttribute('srcdoc')).toContain('· v2');
+
+    await user.click(screen.getByRole('button', { name: 'Regenerate artifact' }));
+
+    await expect
+      .poll(() =>
+        (screen.getByTitle('Artifact preview') as HTMLIFrameElement).getAttribute('srcdoc'),
+      )
+      .toContain('· v3');
+  });
 });

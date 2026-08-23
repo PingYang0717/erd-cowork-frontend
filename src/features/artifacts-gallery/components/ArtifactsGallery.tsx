@@ -31,23 +31,6 @@ const EMPTY_MESSAGES: Record<FilterCategory, string> = {
   pinned: "You haven't pinned any artifacts yet.",
 };
 
-// A shared Artifact may appear once per session it was shared into; the
-// gallery only needs to show it once per distinct name.
-function dedupeSharedByName(artifacts: Artifact[]) {
-  const seen = new Set<string>();
-  return artifacts.filter((artifact) => {
-    if (!artifact.sharedBy) {
-      return true;
-    }
-    const key = `shared:${artifact.name}`;
-    if (seen.has(key)) {
-      return false;
-    }
-    seen.add(key);
-    return true;
-  });
-}
-
 function filterArtifacts(artifacts: Artifact[], category: FilterCategory) {
   switch (category) {
     case 'yours':
@@ -79,7 +62,7 @@ export function ArtifactsGallery() {
   const [category, setCategory] = useState<FilterCategory>('all');
   const [sort, setSort] = useState<SortKey>('pinned');
 
-  const artifacts = dedupeSharedByName(data ?? []);
+  const artifacts = data ?? [];
   const yoursCount = artifacts.filter((artifact) => artifact.mine).length;
   const sharedCount = artifacts.filter((artifact) => !!artifact.sharedBy).length;
   const pinnedCount = artifacts.filter((artifact) => artifact.pinned).length;

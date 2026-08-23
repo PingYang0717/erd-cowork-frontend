@@ -115,8 +115,7 @@ export function ArtifactCard({
       <ShareArtifactDialog
         open={isShareOpen}
         onClose={() => setIsShareOpen(false)}
-        artifactId={artifact.id}
-        artifactName={artifact.name}
+        artifact={artifact}
       />
     </div>
   );

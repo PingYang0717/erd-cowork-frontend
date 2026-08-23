@@ -7,7 +7,7 @@ import { defineConfig } from 'vitest/config';
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react({ compiler: true })],
   resolve: {
     alias: {
       '@': path.resolve(dirname, 'src'),

@@ -19,15 +19,17 @@ import { selectConnected } from '@/features/connectors/model';
 import { AttachmentChip } from '@/features/file-upload/components/AttachmentChip';
 import { FileAttachmentModal } from '@/features/file-upload/components/FileAttachmentModal';
 import { useFileAttachments } from '@/features/file-upload/hooks/useFileAttachments';
-import type { ScenarioKey } from '@/types/api';
+import type { ArtifactKind, ScenarioKey } from '@/types/api';
 import { dispatchMenuAction } from '@/utils/dispatchMenuAction';
 
+import type { SendMessageInput } from '../api/messageApi';
 import styles from './ChatComposer.module.css';
 
 const SUGGESTED_PROMPTS: {
   label: string;
   text: string;
   scenarioKey: ScenarioKey;
+  artifactKind?: ArtifactKind;
   icon: ReactNode;
 }[] = [
   {
@@ -46,6 +48,7 @@ const SUGGESTED_PROMPTS: {
     label: 'Generate slides',
     text: 'Generate slides from this analysis.',
     scenarioKey: 'spc',
+    artifactKind: 'slides',
     icon: <FilePptOutlined aria-hidden />,
   },
   {
@@ -63,7 +66,7 @@ const SUGGESTED_PROMPTS: {
 ];
 
 interface ChatComposerProps {
-  onSend: (text: string, scenarioKey?: ScenarioKey) => void;
+  onSend: (input: SendMessageInput) => void;
   disabled: boolean;
 }
 
@@ -71,16 +74,27 @@ export function ChatComposer({ onSend, disabled }: ChatComposerProps) {
   const [draft, setDraft] = useState('');
   const [fileModalOpen, setFileModalOpen] = useState(false);
   const [connectorsOpen, setConnectorsOpen] = useState(false);
-  const { attachments, error: attachmentError, addFiles, removeFile } = useFileAttachments();
+  const {
+    attachments,
+    error: attachmentError,
+    addFiles,
+    removeFile,
+    clear: clearAttachments,
+  } = useFileAttachments();
   const { data: connectorsData } = useConnectors();
   const connectedConnectorCount = selectConnected(connectorsData ?? []).length;
+
+  function send(input: SendMessageInput) {
+    onSend({ ...input, attachments: attachments.length > 0 ? attachments : undefined });
+    clearAttachments();
+  }
 
   function submitDraft() {
     const text = draft.trim();
     if (!text || disabled) {
       return;
     }
-    onSend(text);
+    send({ text });
     setDraft('');
   }
 
@@ -94,7 +108,13 @@ export function ChatComposer({ onSend, disabled }: ChatComposerProps) {
             size="small"
             icon={prompt.icon}
             disabled={disabled}
-            onClick={() => onSend(prompt.text, prompt.scenarioKey)}
+            onClick={() =>
+              send({
+                text: prompt.text,
+                scenarioKey: prompt.scenarioKey,
+                artifactKind: prompt.artifactKind,
+              })
+            }
           >
             {prompt.label}
           </Button>

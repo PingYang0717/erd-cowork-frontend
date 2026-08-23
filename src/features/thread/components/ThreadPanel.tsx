@@ -5,8 +5,9 @@ import { useEffect, useState } from 'react';
 
 import { useSessionSelectionStore } from '@/features/session/store/useSessionSelectionStore';
 import { ThemeToggle } from '@/features/theme/components/ThemeToggle';
-import type { Message, ScenarioKey } from '@/types/api';
+import type { Message } from '@/types/api';
 
+import type { SendMessageInput } from '../api/messageApi';
 import { messagesQueryKey, useMessages } from '../hooks/useMessages';
 import { useSendMessage } from '../hooks/useSendMessage';
 import { ChatComposer } from './ChatComposer';
@@ -96,8 +97,8 @@ function ThreadView({ sessionId }: { sessionId: string }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pendingAi?.message.id]);
 
-  async function handleSend(text: string, scenarioKey?: ScenarioKey) {
-    const result = await sendMessage.mutateAsync({ text, scenarioKey });
+  async function handleSend(input: SendMessageInput) {
+    const result = await sendMessage.mutateAsync(input);
     queryClient.setQueryData<Message[]>(messagesQueryKey(sessionId), (prev = []) => [
       ...prev,
       result.userMessage,
