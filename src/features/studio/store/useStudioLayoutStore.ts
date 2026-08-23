@@ -2,12 +2,12 @@ import { create } from 'zustand';
 
 export const SESSION_RAIL_MIN_WIDTH = 200;
 export const SESSION_RAIL_MAX_WIDTH = 460;
-export const SESSION_RAIL_DEFAULT_WIDTH = 280;
+export const SESSION_RAIL_DEFAULT_WIDTH = 270;
 export const SESSION_RAIL_COLLAPSED_WIDTH = 52;
 
 export const THREAD_MIN_WIDTH = 320;
 export const THREAD_MAX_WIDTH = 720;
-export const THREAD_DEFAULT_WIDTH = 480;
+export const THREAD_DEFAULT_WIDTH = 430;
 
 interface StudioLayoutState {
   sessionRailWidth: number;

@@ -39,14 +39,18 @@
   box-shadow: none;
 }
 
+/* The mockup's group header block reads pad 12 16 6 overall; the clickable
+   variant carries margin 0 6 + br6, so the horizontal padding drops to 10px
+   to keep the total inset at 16px. */
 .groupHeadingButton {
   display: flex;
   align-items: center;
   gap: 6px;
-  width: 100%;
-  margin: 8px 0 2px;
-  padding: 2px 4px;
+  width: calc(100% - 12px);
+  margin: 0 6px;
+  padding: 12px 10px 6px;
   border: none;
+  border-radius: 6px;
   background: transparent;
   cursor: pointer;
   color: var(--erd-color-text-tertiary, #8c8c8c);
@@ -68,8 +72,8 @@
 .countBadge {
   font-size: 11px;
   line-height: 1;
-  padding: 2px 7px;
-  border-radius: 999px;
+  padding: 1px 7px;
+  border-radius: 9px;
   background: var(--erd-color-fill-tertiary, rgba(0, 0, 0, 0.06));
   color: var(--erd-color-text-tertiary, #8c8c8c);
 }
@@ -83,11 +87,14 @@
   color: var(--erd-color-text-tertiary, #8c8c8c);
 }
 
+/* The Schedule/Artifacts group closes with the mockup's divider line. */
 .navShortcuts {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  margin: 4px 0;
+  margin: 4px 0 0;
+  padding: 2px 0 10px;
+  border-bottom: 1px solid var(--erd-color-border-secondary, #f0f0f0);
 }
 
 /* The mockup's nav rows: quieter secondary text with tertiary fs16 icons
@@ -165,6 +172,7 @@
   display: flex;
   align-items: center;
   gap: 4px;
+  margin: 0 6px;
 }
 
 .sessionRow {
@@ -176,23 +184,28 @@
   align-items: flex-start;
   gap: 1px;
   text-align: left;
-  padding: 6px 8px;
+  padding: 8px 8px 8px 10px;
   border: 1px solid transparent;
   background: transparent;
-  border-radius: 10px;
+  border-radius: 9px;
   cursor: pointer;
+  font-size: 13px;
   color: var(--erd-color-text, inherit);
 }
 
 .sessionRow:hover {
-  background: var(--erd-color-fill-quaternary, rgba(0, 0, 0, 0.04));
+  background: var(--erd-color-fill-tertiary, rgba(0, 0, 0, 0.04));
 }
 
 /* The mockup's fixed tokens, not a color-mix approximation — the derived
-   values drifted visibly in dark mode (gray-blue vs the token navy). */
+   values drifted visibly in dark mode (gray-blue vs the token navy). The
+   bold weight lands on the title only: the timestamp stays fw400. */
 .sessionRow[aria-current='true'] {
   background: var(--erd-color-primary-bg, #e6f4ff);
   border-color: var(--erd-color-primary-border, #91caff);
+}
+
+.sessionRow[aria-current='true'] .sessionRowTitle {
   font-weight: 600;
 }
 
@@ -206,7 +219,8 @@
 }
 
 .sessionRowTimestamp {
-  font-size: 11.5px;
+  font-size: 11px;
+  font-weight: 400;
   color: var(--erd-color-text-tertiary, #8c8c8c);
 }
 
@@ -232,7 +246,13 @@
   background: var(--erd-color-fill-quaternary, rgba(0, 0, 0, 0.04));
 }
 
-.renameInput {
+/* The mockup's rename field: primary-tinted border, br7. Doubled class
+   specificity outranks antd's base input rule. */
+.sessionRowContainer .renameInput {
   flex: 1 1 auto;
   min-width: 0;
+  border-radius: 7px;
+  border-color: var(--erd-color-primary-border, #91caff);
+  padding: 6px 8px;
+  font-size: 13px;
 }

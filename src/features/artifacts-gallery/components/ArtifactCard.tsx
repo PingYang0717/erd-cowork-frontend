@@ -116,6 +116,7 @@ export function ArtifactCard({
       </button>
       <Dropdown
         trigger={['click']}
+        overlayClassName="erd-menu"
         menu={{ items: menuItems, onClick: ({ key }) => handleMenuClick(key) }}
       >
         <button

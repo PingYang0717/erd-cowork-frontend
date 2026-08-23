@@ -87,6 +87,9 @@ export function ArtifactsGallery() {
 
   const sortMenuItems = SORT_OPTIONS.map((option) => ({
     key: option.key,
+    // The mockup highlights the selected row (primary-bg, primary icon), not
+    // just the checkmark.
+    className: option.key === sort ? styles.sortMenuItemSelected : undefined,
     label: (
       <span className={styles.sortMenuItem}>
         {option.icon}

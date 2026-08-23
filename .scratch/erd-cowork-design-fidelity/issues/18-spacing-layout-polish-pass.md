@@ -4,7 +4,13 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** done
+
+> **Note (verification):** per the spec's testing decision, the pure CSS
+> token values here are verified by side-by-side visual comparison against
+> `eRDWorkspace20260819.html` (ADR-0004); the default panel widths
+> (270/430) are asserted in the existing layout seam tests, which were
+> updated accordingly.
 
 - [ ] Session row padding/margin/border-radius match the mockup; title/time font sizes corrected; selected-row bold weight no longer bleeds into the time text
 - [ ] Thread/Artifact toolbar height and padding match the mockup (h54, pad 0 20); thread title font-size corrected

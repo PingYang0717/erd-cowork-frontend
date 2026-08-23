@@ -5,6 +5,30 @@ body,
   margin: 0;
 }
 
+/* Global chrome from eRDWorkspace20260819.html: antialiased type and the
+   8px custom scrollbar (WebKit/Blink; Firefox keeps its native bar). */
+body {
+  -webkit-font-smoothing: antialiased;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--erd-color-fill-tertiary, rgba(0, 0, 0, 0.15));
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--erd-color-text-quaternary, rgba(0, 0, 0, 0.25));
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
 *,
 *::before,
 *::after {
@@ -24,4 +48,17 @@ body,
 .ant-modal-root .ant-modal-mask {
   background: rgba(0, 0, 0, 0.42);
   backdrop-filter: blur(1px);
+}
+
+/* The mockup's compact dropdown menus (session ⋮ and Artifact card kebab):
+   w150, br10, item pad 9 12 at fs12.5. antd portals the overlay, so this
+   lives outside CSS Modules. */
+.erd-menu .ant-dropdown-menu {
+  width: 150px;
+  border-radius: 10px;
+}
+
+.erd-menu .ant-dropdown-menu-item {
+  padding: 9px 12px;
+  font-size: 12.5px;
 }
