@@ -49,7 +49,7 @@ describe('Artifact panel toolbar', () => {
     expect(await screen.findByRole('dialog', { name: '分享 Artifact' })).toBeInTheDocument();
   });
 
-  it('keeps the "已生成" badge and marks the Share button as shared once the Artifact has been shared', async () => {
+  it('keeps the "已生成" badge and the plain Share button once the Artifact has been shared', async () => {
     const user = userEvent.setup();
     renderStudioPage();
 
@@ -64,7 +64,10 @@ describe('Artifact panel toolbar', () => {
     await user.click(within(dialog).getByRole('button', { name: '完成' }));
 
     expect(screen.getByText('已生成')).toBeInTheDocument();
-    expect(await screen.findByRole('button', { name: 'Artifact shared' })).toBeInTheDocument();
+    // The mockup has no extra shared checkmark on the share button; it stays
+    // the plain, enabled Share control after sharing.
+    expect(screen.getByRole('button', { name: 'Share artifact' })).toBeEnabled();
+    expect(screen.queryByRole('button', { name: 'Artifact shared' })).not.toBeInTheDocument();
   });
 
   it('opens the Artifact’s full-page view in a new tab', async () => {

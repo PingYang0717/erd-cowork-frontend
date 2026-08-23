@@ -1,6 +1,5 @@
 import {
   AppstoreOutlined,
-  CheckCircleFilled,
   CheckOutlined,
   DownOutlined,
   ExportOutlined,
@@ -112,16 +111,20 @@ function ArtifactPanelContent({ artifactId }: { artifactId: string }) {
               生成 Artifact
             </button>
           ))}
-        <button
-          type="button"
-          className={styles.shareButton}
-          aria-label={artifact?.shared ? 'Artifact shared' : 'Share artifact'}
-          title="分享"
-          onClick={() => setIsShareOpen(true)}
+        <Tooltip
+          content={activeVersion?.generated ? '分享' : '請先生成 Artifact'}
+          wrapperClassName={styles.shareButtonSlot}
         >
-          <ShareAltOutlined aria-hidden />
-          {artifact?.shared && <CheckCircleFilled aria-hidden className={styles.sharedIndicator} />}
-        </button>
+          <button
+            type="button"
+            className={styles.shareButton}
+            aria-label="Share artifact"
+            disabled={!activeVersion?.generated}
+            onClick={() => setIsShareOpen(true)}
+          >
+            <ShareAltOutlined aria-hidden />
+          </button>
+        </Tooltip>
         <Tooltip content="重新生成">
           <button
             type="button"

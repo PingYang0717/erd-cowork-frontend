@@ -4,7 +4,7 @@
 
 **Blocked by:** 02 (Per-version 生成/發佈狀態 + 生成動作)
 
-**Status:** ready-for-agent
+**Status:** done
 
 - [ ] Share button is disabled (grayed out, `cursor: not-allowed`) while the current version is not generated, with ticket 01's tooltip reading "請先生成 Artifact"
 - [ ] Share button becomes primary-colored and clickable once the current version is generated
