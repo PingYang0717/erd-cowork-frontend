@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -82,6 +82,23 @@ describe('Artifact panel toolbar', () => {
     );
 
     openSpy.mockRestore();
+  });
+
+  it('shows the custom delayed tooltip on the Regenerate button instead of a native title', async () => {
+    const user = userEvent.setup();
+    renderStudioPage();
+
+    await user.click(await screen.findByRole('button', { name: 'SPC — Vt (gate CD)' }));
+
+    const regenerate = await screen.findByRole('button', { name: 'Regenerate artifact' });
+    expect(regenerate).not.toHaveAttribute('title');
+
+    await user.hover(regenerate);
+    const tip = await screen.findByRole('tooltip');
+    expect(tip).toHaveTextContent('重新生成');
+
+    await user.unhover(regenerate);
+    await waitFor(() => expect(screen.queryByRole('tooltip')).not.toBeInTheDocument());
   });
 
   it('regenerates the Artifact, adding and switching to a new version', async () => {

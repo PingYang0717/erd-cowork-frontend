@@ -4,7 +4,7 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** done
 
 - [ ] New tooltip component renders a dark background (inverted text color), `fs11.5`, `br7`, `shadow-md`, with a 0.35s delayed fade-in on hover/focus
 - [ ] The component is exported in a generically reusable way so later tickets (03 分享鈕 gating, 04 版本選單, 08 全頁工具列) can apply it to their own controls without rebuilding it

@@ -10,6 +10,7 @@ import {
 import { Dropdown } from 'antd';
 import { useState } from 'react';
 
+import { Tooltip } from '@/components/Tooltip';
 import { useSessionSelectionStore } from '@/features/session/store/useSessionSelectionStore';
 import { useMessages } from '@/features/thread/hooks/useMessages';
 import type { ArtifactVersion } from '@/types/api';
@@ -105,18 +106,19 @@ function ArtifactPanelContent({ artifactId }: { artifactId: string }) {
           <ShareAltOutlined aria-hidden />
           {artifact?.shared && <CheckCircleFilled aria-hidden className={styles.sharedIndicator} />}
         </button>
-        <button
-          type="button"
-          className={styles.iconButton}
-          aria-label="Regenerate artifact"
-          title="重新生成"
-          disabled={regenerateArtifact.isPending}
-          onClick={() =>
-            regenerateArtifact.mutate(artifactId, { onSuccess: () => setVersionId(undefined) })
-          }
-        >
-          <ReloadOutlined aria-hidden spin={regenerateArtifact.isPending} />
-        </button>
+        <Tooltip content="重新生成">
+          <button
+            type="button"
+            className={styles.iconButton}
+            aria-label="Regenerate artifact"
+            disabled={regenerateArtifact.isPending}
+            onClick={() =>
+              regenerateArtifact.mutate(artifactId, { onSuccess: () => setVersionId(undefined) })
+            }
+          >
+            <ReloadOutlined aria-hidden spin={regenerateArtifact.isPending} />
+          </button>
+        </Tooltip>
         <button
           type="button"
           className={styles.iconButton}
