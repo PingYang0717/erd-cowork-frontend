@@ -138,7 +138,7 @@ export function ArtifactsGallery() {
             <ArtifactCard
               key={artifact.id}
               artifact={artifact}
-              onOpen={(a) => navigate(`/cowork/artifact/${a.id}`)}
+              onOpen={(a) => navigate(`/cowork/artifact/${a.id}`, { state: { from: 'gallery' } })}
             />
           ))}
         </div>

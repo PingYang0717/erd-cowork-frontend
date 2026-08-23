@@ -77,7 +77,8 @@ describe('Routing shell', () => {
     async () => {
       await renderAppAt('/cowork/artifact/artifact-123');
 
-      expect(await screen.findByRole('heading', { name: 'Artifact' })).toBeInTheDocument();
+      // A direct visit has no recorded origin, so the toolbar leads with Home.
+      expect(await screen.findByRole('button', { name: 'Home' })).toBeInTheDocument();
     },
     RESET_MODULES_TIMEOUT,
   );
