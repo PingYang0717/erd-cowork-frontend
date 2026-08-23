@@ -1,12 +1,22 @@
 import {
+  CopyOutlined,
   DashboardOutlined,
+  DeleteOutlined,
   FilePptOutlined,
+  MoreOutlined,
   PushpinFilled,
   PushpinOutlined,
+  ShareAltOutlined,
   UsergroupAddOutlined,
 } from '@ant-design/icons';
+import { Dropdown } from 'antd';
+import { useState } from 'react';
 
-import { useSetArtifactPinned } from '@/features/artifact/hooks/useArtifactMutations';
+import { ShareArtifactDialog } from '@/features/artifact/components/ShareArtifactDialog';
+import {
+  useDeleteArtifact,
+  useSetArtifactPinned,
+} from '@/features/artifact/hooks/useArtifactMutations';
 import type { Artifact } from '@/types/api';
 import { formatRelativeTime } from '@/utils/formatRelativeTime';
 
@@ -20,6 +30,39 @@ export function ArtifactCard({
   onOpen: (artifact: Artifact) => void;
 }) {
   const setArtifactPinned = useSetArtifactPinned();
+  const deleteArtifact = useDeleteArtifact();
+  const [isShareOpen, setIsShareOpen] = useState(false);
+
+  const menuItems = [
+    {
+      key: 'pin',
+      label: artifact.pinned ? 'Unpin' : 'Pin',
+      icon: artifact.pinned ? <PushpinFilled aria-hidden /> : <PushpinOutlined aria-hidden />,
+    },
+    { key: 'copyLink', label: 'Copy link', icon: <CopyOutlined aria-hidden /> },
+    artifact.sharedBy
+      ? null
+      : { key: 'share', label: 'Share', icon: <ShareAltOutlined aria-hidden /> },
+    { type: 'divider' as const },
+    {
+      key: 'delete',
+      label: 'Delete',
+      danger: true,
+      icon: <DeleteOutlined aria-hidden />,
+    },
+  ].filter((item): item is NonNullable<typeof item> => item !== null);
+
+  function handleMenuClick(key: string) {
+    if (key === 'pin') {
+      setArtifactPinned.mutate({ id: artifact.id, pinned: !artifact.pinned });
+    } else if (key === 'copyLink') {
+      navigator.clipboard.writeText(`${window.location.origin}/cowork/artifact/${artifact.id}`);
+    } else if (key === 'share') {
+      setIsShareOpen(true);
+    } else if (key === 'delete') {
+      deleteArtifact.mutate(artifact.id);
+    }
+  }
 
   return (
     <div className={styles.card} role="listitem">
@@ -57,6 +100,25 @@ export function ArtifactCard({
       >
         {artifact.pinned ? <PushpinFilled aria-hidden /> : <PushpinOutlined aria-hidden />}
       </button>
+      <Dropdown
+        trigger={['click']}
+        menu={{ items: menuItems, onClick: ({ key }) => handleMenuClick(key) }}
+      >
+        <button
+          type="button"
+          className={styles.moreActionsButton}
+          aria-label={`More actions for ${artifact.name}`}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <MoreOutlined aria-hidden />
+        </button>
+      </Dropdown>
+      <ShareArtifactDialog
+        open={isShareOpen}
+        onClose={() => setIsShareOpen(false)}
+        artifactId={artifact.id}
+        artifactName={artifact.name}
+      />
     </div>
   );
 }

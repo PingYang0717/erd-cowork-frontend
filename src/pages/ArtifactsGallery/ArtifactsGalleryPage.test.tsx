@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { ArtifactPage } from '@/pages/Artifact/ArtifactPage';
 
@@ -117,6 +117,80 @@ describe('Artifacts gallery', () => {
       name: 'Unpin SPC analysis — Vt (gate CD)',
     });
     expect(reloadedGalleries.length).toBeGreaterThan(0);
+  });
+
+  it("shows Pin, Copy Link, Share, and Delete in an owned card's more-actions menu", async () => {
+    const user = userEvent.setup();
+    renderGalleryPage();
+    await screen.findByRole('button', { name: 'SPC analysis — Vt (gate CD)' });
+
+    await user.click(
+      screen.getByRole('button', { name: 'More actions for SPC analysis — Vt (gate CD)' }),
+    );
+    expect(screen.getByRole('menuitem', { name: 'Pin' })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'Copy link' })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'Share' })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'Delete' })).toBeInTheDocument();
+  });
+
+  it('hides Share in the more-actions menu of a "Shared to me" card', async () => {
+    const user = userEvent.setup();
+    renderGalleryPage();
+    await screen.findByRole('button', { name: 'Daily monitor (A14)' });
+
+    await user.click(screen.getByRole('button', { name: 'More actions for Daily monitor (A14)' }));
+    expect(screen.getByRole('menuitem', { name: 'Pin' })).toBeInTheDocument();
+    expect(screen.queryByRole('menuitem', { name: 'Share' })).not.toBeInTheDocument();
+  });
+
+  it('deletes an Artifact from its card menu, and the deletion persists across a simulated reload', async () => {
+    const user = userEvent.setup();
+    renderGalleryPage();
+    await screen.findByRole('button', { name: 'SPC analysis — Vt (gate CD)' });
+
+    await user.click(
+      screen.getByRole('button', { name: 'More actions for SPC analysis — Vt (gate CD)' }),
+    );
+    await user.click(screen.getByRole('menuitem', { name: 'Delete' }));
+
+    expect(
+      screen.queryByRole('button', { name: 'SPC analysis — Vt (gate CD)' }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^All/ })).toHaveTextContent('2');
+
+    renderGalleryPage();
+    await screen.findByRole('button', { name: 'Inline dashboard — W12' });
+    expect(screen.queryAllByRole('button', { name: 'SPC analysis — Vt (gate CD)' })).toHaveLength(
+      0,
+    );
+  });
+
+  it("copies an Artifact's link to the clipboard from its card menu", async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    navigator.clipboard.writeText = writeText;
+    const user = userEvent.setup();
+    renderGalleryPage();
+    await screen.findByRole('button', { name: 'SPC analysis — Vt (gate CD)' });
+
+    await user.click(
+      screen.getByRole('button', { name: 'More actions for SPC analysis — Vt (gate CD)' }),
+    );
+    await user.click(screen.getByRole('menuitem', { name: 'Copy link' }));
+
+    expect(writeText).toHaveBeenCalledWith(expect.stringContaining('/cowork/artifact/artifact-1'));
+  });
+
+  it('opens the share dialog for an Artifact from its card menu', async () => {
+    const user = userEvent.setup();
+    renderGalleryPage();
+    await screen.findByRole('button', { name: 'SPC analysis — Vt (gate CD)' });
+
+    await user.click(
+      screen.getByRole('button', { name: 'More actions for SPC analysis — Vt (gate CD)' }),
+    );
+    await user.click(screen.getByRole('menuitem', { name: 'Share' }));
+
+    expect(await screen.findByRole('dialog', { name: '分享 Artifact' })).toBeInTheDocument();
   });
 
   it('opens an Artifact in the full-page view when its card is clicked', async () => {

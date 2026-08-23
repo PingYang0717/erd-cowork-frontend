@@ -1,0 +1,112 @@
+.subtitle {
+  margin: 0 0 12px;
+  font-size: 12.5px;
+  color: var(--erd-color-text-secondary, #595959);
+}
+
+.hiddenInput {
+  display: none;
+}
+
+.dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 8px;
+  padding: 30px 20px;
+  border: 1.5px dashed var(--erd-color-border, #d9d9d9);
+  border-radius: 12px;
+  background: var(--erd-color-fill-quaternary, #fafafa);
+  cursor: pointer;
+  font-size: 13.5px;
+}
+
+.dropzoneIcon {
+  font-size: 24px;
+  color: var(--erd-color-primary, #1677ff);
+}
+
+.dropzoneLink {
+  color: var(--erd-color-primary, #1677ff);
+  font-weight: 600;
+}
+
+.dropzoneHint {
+  font-size: 11.5px;
+  color: var(--erd-color-text-tertiary, #8c8c8c);
+}
+
+.error {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 12px;
+  padding: 8px 11px;
+  font-size: 12px;
+  color: var(--erd-color-error, #ff4d4f);
+  background: rgba(255, 77, 79, 0.1);
+  border: 1px solid rgba(255, 77, 79, 0.3);
+  border-radius: 8px;
+}
+
+.attachedSection {
+  margin-top: 16px;
+}
+
+.attachedHeader {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--erd-color-text-tertiary, #8c8c8c);
+}
+
+.attachedCount {
+  font-size: 11px;
+  font-weight: normal;
+  text-transform: none;
+  letter-spacing: normal;
+  background: var(--erd-color-fill-tertiary, #f5f5f5);
+  border-radius: 8px;
+  padding: 0 7px;
+}
+
+.attachedList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.emptyAttached {
+  padding: 14px;
+  border: 1px dashed var(--erd-color-border, #d9d9d9);
+  border-radius: 9px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--erd-color-text-tertiary, #8c8c8c);
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.footerSummary {
+  font-size: 12px;
+  color: var(--erd-color-text-tertiary, #8c8c8c);
+}
+
+.footer > :last-child {
+  margin-left: auto;
+}

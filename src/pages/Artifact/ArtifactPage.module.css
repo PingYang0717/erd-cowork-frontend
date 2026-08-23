@@ -8,13 +8,29 @@
 .header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 12px;
   padding: 8px 16px;
   background: var(--erd-color-bg-container, #fff);
   border-bottom: 1px solid var(--erd-color-border-secondary, #f0f0f0);
 }
 
+.backButton {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 11px 0 8px;
+  border-radius: 8px;
+  border: 1px solid var(--erd-color-border, #d9d9d9);
+  background: var(--erd-color-bg-container, #fff);
+  color: var(--erd-color-text-secondary, #595959);
+  font-size: 12.5px;
+  cursor: pointer;
+}
+
 .headerTitle {
+  flex: 1 1 auto;
   margin: 0;
   font-size: 15px;
   font-weight: 600;

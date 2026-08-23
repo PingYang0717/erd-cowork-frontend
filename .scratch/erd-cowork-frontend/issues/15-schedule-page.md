@@ -6,6 +6,8 @@
 
 **Status:** ready-for-agent
 
+> **Note (2026-08-23):** Deliberately deferred — hold off starting this one until told otherwise.
+
 - [ ] `/cowork/schedule` lists scheduled jobs with cadence, last-run time, and status (Active/Paused)
 - [ ] Pause/resume control toggles a job's status via MSW PATCH, persisted
 - [ ] `docs/api/interface.md` updated with schedule endpoints; `types/api/ScheduleJob.ts` finalized

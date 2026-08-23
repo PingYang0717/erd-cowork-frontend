@@ -1,0 +1,570 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8" />
+<title>PROTOTYPE — Artifact detail 頁的版本選擇 state model</title>
+<style>
+  :root {
+    --accent: #1677ff;
+    --ink: #1f2430;
+    --ink-soft: #5b6472;
+    --line: #e3e7ee;
+    --bg: #f7f8fb;
+    --card: #ffffff;
+    --warn-bg: #fff7e6;
+    --warn-line: #ffd591;
+    --warn-ink: #ad6800;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, "Segoe UI", "PingFang TC", "Microsoft JhengHei", sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.5;
+  }
+  main {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 32px 20px 80px;
+  }
+  .tag {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: #ad2102;
+    background: #fff1f0;
+    border: 1px solid #ffa39e;
+    border-radius: 999px;
+    padding: 2px 10px;
+    margin-bottom: 12px;
+  }
+  h1 { font-size: 22px; margin: 0 0 6px; }
+  .question {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--accent);
+    border-radius: 8px;
+    padding: 14px 16px;
+    font-size: 14px;
+    color: var(--ink-soft);
+    margin-bottom: 28px;
+  }
+  .question b { color: var(--ink); }
+
+  section { margin-bottom: 28px; }
+  h2 {
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--ink-soft);
+    margin: 0 0 10px;
+  }
+
+  /* --- current state panel --- */
+  .stage {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 18px 20px;
+  }
+  .urlbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--mono);
+    font-size: 13px;
+    background: #f0f2f6;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 8px 12px;
+    margin-bottom: 16px;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+  .urlbar .dot { width: 8px; height: 8px; border-radius: 50%; background: #ff5f57; flex: none; }
+  .urlbar .dot:nth-child(2) { background: #febc2e; }
+  .urlbar .dot:nth-child(3) { background: #28c840; }
+  .urlbar .path { color: var(--accent); font-weight: 600; }
+
+  .headerMock {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: #fff;
+    margin-bottom: 14px;
+  }
+  .backBtn {
+    display: inline-flex; align-items: center; gap: 6px;
+    height: 30px; padding: 0 10px;
+    border-radius: 7px; border: 1px solid var(--line);
+    background: #fff; font-size: 12.5px; color: var(--ink-soft);
+    cursor: pointer;
+  }
+  .versionBtn {
+    display: inline-flex; align-items: center; gap: 6px;
+    height: 30px; padding: 0 10px;
+    border-radius: 7px; border: 1px solid var(--line);
+    background: #f5f8ff; font-size: 12.5px; color: var(--accent);
+    font-weight: 600;
+  }
+  .headerTitle { flex: 1; font-size: 14px; font-weight: 600; color: var(--ink-soft); }
+  .placeholderPane {
+    flex: 1; height: 8px; border-radius: 4px; background: var(--line);
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .field {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 8px 10px;
+    background: #fbfcfe;
+  }
+  .field .k { font-size: 11px; color: var(--ink-soft); text-transform: uppercase; letter-spacing: .04em; }
+  .field .v { font-size: 14px; font-weight: 600; margin-top: 2px; }
+  .field .v.mono { font-family: var(--mono); font-weight: 500; font-size: 13px; }
+
+  .notice {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--warn-bg); border: 1px solid var(--warn-line); color: var(--warn-ink);
+    border-radius: 8px; padding: 8px 12px; font-size: 13px; margin-bottom: 14px;
+  }
+
+  .changeLine {
+    font-size: 12.5px; color: var(--ink-soft); font-style: italic;
+  }
+
+  .historyStrip {
+    display: flex; gap: 6px; flex-wrap: wrap; margin-top: 14px;
+  }
+  .historyStrip .stop {
+    font-family: var(--mono); font-size: 11px; padding: 4px 8px;
+    border-radius: 6px; border: 1px solid var(--line); background: #fff; color: var(--ink-soft);
+  }
+  .historyStrip .stop.current {
+    background: var(--accent); color: #fff; border-color: var(--accent); font-weight: 700;
+  }
+
+  /* --- buttons --- */
+  .btnRow { display: flex; flex-wrap: wrap; gap: 8px; }
+  button.action {
+    font-family: inherit;
+    font-size: 13px;
+    padding: 8px 14px;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    background: #fff;
+    color: var(--ink);
+    cursor: pointer;
+  }
+  button.action:hover { border-color: var(--accent); color: var(--accent); }
+  button.action.danger:hover { border-color: #cf1322; color: #cf1322; }
+  button.action.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+  button.action.primary:hover { opacity: .9; color: #fff; }
+  .subhint { font-size: 12px; color: var(--ink-soft); margin: -4px 0 10px; }
+
+  /* --- tabs --- */
+  .tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+  .tabBtn {
+    font-size: 13px; padding: 7px 12px; border-radius: 999px;
+    border: 1px solid var(--line); background: #fff; color: var(--ink-soft); cursor: pointer;
+  }
+  .tabBtn.active { background: var(--ink); color: #fff; border-color: var(--ink); }
+  .tabPanel { display: none; background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px; }
+  .tabPanel.active { display: block; }
+  .scenarioDesc { font-size: 13.5px; color: var(--ink-soft); margin-bottom: 12px; }
+  .steps { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .steps .arrow { color: var(--line); }
+  .stepBtn {
+    font-size: 12.5px; padding: 6px 10px; border-radius: 6px;
+    border: 1px solid var(--accent); background: #fff; color: var(--accent); cursor: pointer;
+  }
+  .stepBtn:disabled { border-color: var(--line); color: var(--ink-soft); cursor: not-allowed; opacity: .55; }
+  .stepBtn.done { background: var(--accent); color: #fff; }
+  .resetBtn { font-size: 12px; color: var(--ink-soft); text-decoration: underline; background: none; border: none; cursor: pointer; padding: 0; }
+</style>
+</head>
+<body>
+<main>
+  <span class="tag">PROTOTYPE — throwaway, not shipped</span>
+  <h1>Artifact detail 頁：Back 按鈕旁邊的版本選擇器</h1>
+  <div class="question">
+    <b>要驗證的問題：</b>Artifact detail 頁（<code>/cowork/artifact/:artifactId</code>）目前 Back
+    按鈕旁邊沒有版本選擇器。加上去之後，「目前顯示哪個版本」這件事在幾種真實情境下該怎麼定義：
+    剛從 Artifacts 總覽點進來、帶著版本資訊的分享連結／新分頁開啟、Artifact 又跑出新版本（regenerate）、
+    以及瀏覽器上一頁／下一頁 vs. 頁面自己的 Back 按鈕。這個 demo 讓你直接按按鈕，看 state 怎麼變。
+  </div>
+
+  <section>
+    <h2>目前狀態</h2>
+    <div class="stage">
+      <div class="urlbar">
+        <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+        <span class="path" id="urlPath">/cowork/artifacts</span>
+      </div>
+
+      <div class="headerMock" id="headerMock" style="display:none">
+        <button class="backBtn">← Back</button>
+        <button class="versionBtn" id="versionBtnMock">v3 · Added CP Test overlay</button>
+        <span class="placeholderPane"></span>
+      </div>
+
+      <div class="grid">
+        <div class="field"><div class="k">頁面</div><div class="v" id="fPage">Gallery</div></div>
+        <div class="field"><div class="k">版本模式</div><div class="v" id="fMode">—</div></div>
+        <div class="field"><div class="k">顯示版本</div><div class="v" id="fVersion">—</div></div>
+        <div class="field"><div class="k">History 位置</div><div class="v mono" id="fHistIdx">—</div></div>
+      </div>
+
+      <div class="notice" id="noticeBox" style="display:none"></div>
+
+      <div class="changeLine" id="changeLine">尚未有動作。</div>
+
+      <div class="historyStrip" id="historyStrip"></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Free play — 任意順序按按看</h2>
+    <div class="subhint">動作在目前狀態下不合法時（例如還在 Gallery 卻按「切換版本」），會照按但不改變狀態，並在上面「尚未有動作」那行說明為什麼被忽略。</div>
+    <div class="btnRow">
+      <button class="action primary" onclick="dispatch({type:'OPEN_FROM_GALLERY'})">從 Artifacts 總覽點進來</button>
+      <button class="action" onclick="dispatch({type:'OPEN_FROM_SHARE_LINK', versionId:'v2'})">開啟分享連結（指向 v2）</button>
+      <button class="action" onclick="dispatch({type:'OPEN_FROM_SHARE_LINK', versionId:'v99'})">開啟分享連結（指向已不存在的 v99）</button>
+      <button class="action" onclick="dispatch({type:'SELECT_VERSION', versionId:'v1'})">切換到 v1</button>
+      <button class="action" onclick="dispatch({type:'SELECT_VERSION', versionId:'v2'})">切換到 v2</button>
+      <button class="action" onclick="dispatch({type:'SELECT_LATEST'})">切換到「最新版」</button>
+      <button class="action" onclick="dispatch({type:'REGENERATE'})">重新生成（產生新版本）</button>
+      <button class="action danger" onclick="dispatch({type:'BACK_TO_GALLERY'})">按頁面上的 Back 按鈕</button>
+      <button class="action" onclick="dispatch({type:'BROWSER_BACK'})">瀏覽器上一頁 ⟵</button>
+      <button class="action" onclick="dispatch({type:'BROWSER_FORWARD'})">瀏覽器下一頁 ⟶</button>
+    </div>
+  </section>
+
+  <section>
+    <h2>Guided walkthroughs</h2>
+    <div class="tabs" id="tabButtons"></div>
+    <div id="tabPanels"></div>
+  </section>
+</main>
+
+<script>
+// ============================================================================
+// Pure logic module — no DOM, no globals besides what's passed in.
+// This is the part meant to survive past the prototype: the "which version
+// is showing" state model for the Artifact detail page.
+// ============================================================================
+
+const VERSIONS_SEED = [
+  { id: 'v1', n: 1, label: 'Initial run', createdAt: '3 小時前' },
+  { id: 'v2', n: 2, label: 'Adjusted thresholds', createdAt: '2 小時前' },
+  { id: 'v3', n: 3, label: 'Added CP Test overlay', createdAt: '10 分鐘前' },
+];
+
+function initialState() {
+  const snap = { page: 'gallery', mode: 'latest', pinnedVersionId: null };
+  return {
+    versions: VERSIONS_SEED.slice(),
+    page: 'gallery',
+    mode: 'latest',        // 'latest' | 'pinned' — only meaningful when page === 'detail'
+    pinnedVersionId: null, // set only when mode === 'pinned'
+    notice: null,          // transient message, e.g. stale-link fallback
+    lastChange: '尚未有動作。',
+    history: [snap],       // browser history stack: navigational snapshots only
+    historyIndex: 0,
+  };
+}
+
+function latestVersion(versions) {
+  return versions[versions.length - 1];
+}
+
+// The version actually shown is *derived*, never stored directly — this is
+// the thing this prototype is checking: it must stay correct whether you
+// arrived by clicking, by a stale/valid deep link, or by browser back/forward.
+function displayedVersion(state) {
+  if (state.page !== 'detail') return null;
+  if (state.mode === 'latest') return latestVersion(state.versions);
+  return state.versions.find((v) => v.id === state.pinnedVersionId) ?? latestVersion(state.versions);
+}
+
+// Also derived live against the *current* versions list, not frozen at
+// selection time — so a regenerate() that happens while pinned to an old
+// version is reflected immediately, even after navigating away and back.
+function hasNewerVersion(state) {
+  if (state.page !== 'detail' || state.mode !== 'pinned') return false;
+  return latestVersion(state.versions).id !== state.pinnedVersionId;
+}
+
+function snapshot(state) {
+  return { page: state.page, mode: state.mode, pinnedVersionId: state.pinnedVersionId };
+}
+
+function pushHistory(state, snap) {
+  const truncated = state.history.slice(0, state.historyIndex + 1);
+  truncated.push(snap);
+  return { history: truncated, historyIndex: truncated.length - 1 };
+}
+
+// (state, action) => state
+function step(state, action) {
+  switch (action.type) {
+    case 'OPEN_FROM_GALLERY': {
+      const next = { ...state, page: 'detail', mode: 'latest', pinnedVersionId: null, notice: null };
+      return { ...next, ...pushHistory(next, snapshot(next)), lastChange: '從 Gallery 開啟 detail 頁 → 預設顯示最新版，網址不帶版本參數。' };
+    }
+    case 'OPEN_FROM_SHARE_LINK': {
+      const found = state.versions.some((v) => v.id === action.versionId);
+      const next = found
+        ? { ...state, page: 'detail', mode: 'pinned', pinnedVersionId: action.versionId, notice: null }
+        : { ...state, page: 'detail', mode: 'latest', pinnedVersionId: null, notice: `找不到版本 ${action.versionId}，已改顯示最新版。` };
+      return {
+        ...next,
+        ...pushHistory(next, snapshot(next)),
+        lastChange: found
+          ? `帶著 ?v=${action.versionId} 的連結開啟 → 直接鎖定該版本。`
+          : `帶著 ?v=${action.versionId} 的連結開啟，但這個版本已不存在 → 優雅降級為最新版，不當機。`,
+      };
+    }
+    case 'SELECT_VERSION': {
+      if (state.page !== 'detail') return { ...state, lastChange: '不在 detail 頁，「切換版本」被忽略。' };
+      const next = { ...state, mode: 'pinned', pinnedVersionId: action.versionId, notice: null };
+      return { ...next, ...pushHistory(next, snapshot(next)), lastChange: `使用者在下拉選單明確選了 v${state.versions.find(v=>v.id===action.versionId)?.n} → 鎖定該版本，即使它現在正好是最新版，之後也不會自動跟著新版本跑。` };
+    }
+    case 'SELECT_LATEST': {
+      if (state.page !== 'detail') return { ...state, lastChange: '不在 detail 頁，「切換到最新版」被忽略。' };
+      const next = { ...state, mode: 'latest', pinnedVersionId: null, notice: null };
+      return { ...next, ...pushHistory(next, snapshot(next)), lastChange: '切回「最新版」模式 → 之後每次 regenerate 都會自動跟著跑，網址的版本參數被移除。' };
+    }
+    case 'REGENERATE': {
+      if (state.page !== 'detail') return { ...state, lastChange: '不在 detail 頁，「重新生成」被忽略。' };
+      const n = state.versions.length + 1;
+      const versions = [...state.versions, { id: 'v' + n, n, label: `Regenerated run #${n}`, createdAt: '剛剛' }];
+      const stillFollowing = state.mode === 'latest';
+      return {
+        ...state,
+        versions,
+        lastChange: stillFollowing
+          ? `產生了 v${n}。因為目前是「最新版」模式，畫面直接跟著換成 v${n}，不算一次導覽，不佔用瀏覽器歷史紀錄。`
+          : `產生了 v${n}。但目前鎖定在 v${state.versions.find(v=>v.id===state.pinnedVersionId)?.n}，畫面不會被硬切走 —— 只會多顯示「有新版本可查看」的提示。`,
+      };
+    }
+    case 'BACK_TO_GALLERY': {
+      if (state.page !== 'detail') return { ...state, lastChange: '已經在 Gallery 了。' };
+      const next = { ...state, page: 'gallery', mode: 'latest', pinnedVersionId: null, notice: null };
+      return { ...next, ...pushHistory(next, snapshot(next)), lastChange: '按了頁面上的 Back 按鈕 → 不管你之前切換過幾次版本，直接跳回 Gallery（這是刻意的行為，不是「先退回上一個版本」）。' };
+    }
+    case 'BROWSER_BACK': {
+      if (state.historyIndex === 0) return { ...state, lastChange: '已經是瀏覽器歷史的最前面，上一頁沒有作用。' };
+      const idx = state.historyIndex - 1;
+      const snap = state.history[idx];
+      return { ...state, ...snap, historyIndex: idx, notice: null, lastChange: `瀏覽器上一頁 → 回到「${describeSnap(snap, state.versions)}」。每一次版本切換都是獨立的一筆瀏覽器歷史，不是一次全退。` };
+    }
+    case 'BROWSER_FORWARD': {
+      if (state.historyIndex === state.history.length - 1) return { ...state, lastChange: '已經是瀏覽器歷史的最新一筆，下一頁沒有作用。' };
+      const idx = state.historyIndex + 1;
+      const snap = state.history[idx];
+      return { ...state, ...snap, historyIndex: idx, notice: null, lastChange: `瀏覽器下一頁 → 前進到「${describeSnap(snap, state.versions)}」。` };
+    }
+    default:
+      return state;
+  }
+}
+
+function describeSnap(snap, versions) {
+  if (snap.page === 'gallery') return 'Artifacts 總覽';
+  if (snap.mode === 'latest') return '最新版';
+  const v = versions.find((x) => x.id === snap.pinnedVersionId);
+  return v ? `v${v.n}` : '（版本已不存在）';
+}
+
+function urlFor(state) {
+  if (state.page === 'gallery') return '/cowork/artifacts';
+  if (state.mode === 'latest') return '/cowork/artifact/art-1';
+  return `/cowork/artifact/art-1?v=${state.pinnedVersionId}`;
+}
+
+// ============================================================================
+// Thin page shell below this line — throwaway, calls into the pure module
+// above and renders it. Nothing below reaches back into step()/displayedVersion().
+// ============================================================================
+
+let state = initialState();
+
+function dispatch(action) {
+  state = step(state, action);
+  render();
+}
+
+function render() {
+  document.getElementById('urlPath').textContent = urlFor(state);
+
+  document.getElementById('fPage').textContent = state.page === 'gallery' ? 'Artifacts 總覽' : 'Artifact Detail';
+
+  const dv = displayedVersion(state);
+  document.getElementById('fMode').textContent =
+    state.page !== 'detail' ? '—' : state.mode === 'latest' ? '最新版（自動跟隨）' : '鎖定特定版本';
+  document.getElementById('fVersion').textContent = dv ? `v${dv.n} · ${dv.label}` : '—';
+  document.getElementById('fHistIdx').textContent = `${state.historyIndex + 1} / ${state.history.length}`;
+
+  const noticeBox = document.getElementById('noticeBox');
+  const banner = hasNewerVersion(state)
+    ? `有新版本 v${latestVersion(state.versions).n} 可查看 →「切換到最新版」`
+    : state.notice;
+  if (banner) {
+    noticeBox.style.display = 'flex';
+    noticeBox.textContent = '⚠ ' + banner;
+  } else {
+    noticeBox.style.display = 'none';
+  }
+
+  document.getElementById('changeLine').textContent = state.lastChange;
+
+  const headerMock = document.getElementById('headerMock');
+  if (state.page === 'detail') {
+    headerMock.style.display = 'flex';
+    document.getElementById('versionBtnMock').textContent = dv ? `⟲ v${dv.n} · ${dv.label}` : '';
+  } else {
+    headerMock.style.display = 'none';
+  }
+
+  const strip = document.getElementById('historyStrip');
+  strip.innerHTML = '';
+  state.history.forEach((snap, i) => {
+    const el = document.createElement('span');
+    el.className = 'stop' + (i === state.historyIndex ? ' current' : '');
+    el.textContent = describeSnap(snap, state.versions);
+    strip.appendChild(el);
+  });
+}
+
+render();
+
+// ============================================================================
+// Guided walkthroughs
+// ============================================================================
+
+const scenarios = [
+  {
+    title: '① 正常瀏覽最新版',
+    desc: '從 Gallery 點進 Artifact，什麼都沒選，這時候跑了一次 regenerate，畫面該自動跟著換版本，不需要使用者做任何事。',
+    steps: [
+      { label: '從 Gallery 點進來', action: { type: 'OPEN_FROM_GALLERY' } },
+      { label: '重新生成', action: { type: 'REGENERATE' } },
+    ],
+  },
+  {
+    title: '② 鎖定舊版時被 regenerate 蓋過',
+    desc: '使用者特地切到 v2 在看，這時候別人（或自己）觸發了 regenerate 產生 v4。畫面不該被硬切走，但要讓使用者知道「有更新的版本」。',
+    steps: [
+      { label: '從 Gallery 點進來', action: { type: 'OPEN_FROM_GALLERY' } },
+      { label: '切換到 v2', action: { type: 'SELECT_VERSION', versionId: 'v2' } },
+      { label: '重新生成', action: { type: 'REGENERATE' } },
+      { label: '切換到「最新版」', action: { type: 'SELECT_LATEST' } },
+    ],
+  },
+  {
+    title: '③ 分享連結指到有效版本',
+    desc: '從 Studio 的版本選單「在新分頁開啟」時，如果當時看的是舊版本，開出來的 detail 頁應該直接鎖定那個版本，而不是掉回最新版。',
+    steps: [
+      { label: '開啟分享連結（指向 v2）', action: { type: 'OPEN_FROM_SHARE_LINK', versionId: 'v2' } },
+    ],
+  },
+  {
+    title: '④ 分享連結指到不存在的版本',
+    desc: '如果連結是很久以前存的，指向的版本 id 現在對不上（極端情境），畫面不該壞掉，要優雅降級並讓使用者知道發生了什麼事。',
+    steps: [
+      { label: '開啟分享連結（指向已不存在的 v99）', action: { type: 'OPEN_FROM_SHARE_LINK', versionId: 'v99' } },
+    ],
+  },
+  {
+    title: '⑤ 瀏覽器上一頁 vs. 頁面 Back 按鈕',
+    desc: '這是這次要加的功能本身在問的問題：Back 按鈕旁邊多了版本選擇器之後，「返回」到底該退版本、還是退頁面？這裡刻意讓兩者行為不同並攤開來看。',
+    steps: [
+      { label: '從 Gallery 點進來', action: { type: 'OPEN_FROM_GALLERY' } },
+      { label: '切換到 v1', action: { type: 'SELECT_VERSION', versionId: 'v1' } },
+      { label: '切換到 v2', action: { type: 'SELECT_VERSION', versionId: 'v2' } },
+      { label: '瀏覽器上一頁（退回 v1，不是離開頁面）', action: { type: 'BROWSER_BACK' } },
+      { label: '瀏覽器上一頁（退回最新版）', action: { type: 'BROWSER_BACK' } },
+      { label: '瀏覽器上一頁（這次才離開到 Gallery）', action: { type: 'BROWSER_BACK' } },
+      { label: '瀏覽器下一頁（前進回 detail 頁）', action: { type: 'BROWSER_FORWARD' } },
+    ],
+  },
+];
+
+let activeTab = 0;
+let stepIndex = 0;
+
+function renderTabs() {
+  const tabButtons = document.getElementById('tabButtons');
+  tabButtons.innerHTML = '';
+  scenarios.forEach((s, i) => {
+    const b = document.createElement('button');
+    b.className = 'tabBtn' + (i === activeTab ? ' active' : '');
+    b.textContent = s.title;
+    b.onclick = () => { activeTab = i; stepIndex = 0; state = initialState(); render(); renderTabs(); renderPanels(); };
+    tabButtons.appendChild(b);
+  });
+}
+
+function renderPanels() {
+  const panels = document.getElementById('tabPanels');
+  panels.innerHTML = '';
+  scenarios.forEach((s, i) => {
+    const panel = document.createElement('div');
+    panel.className = 'tabPanel' + (i === activeTab ? ' active' : '');
+
+    const desc = document.createElement('div');
+    desc.className = 'scenarioDesc';
+    desc.textContent = s.desc;
+    panel.appendChild(desc);
+
+    const steps = document.createElement('div');
+    steps.className = 'steps';
+    s.steps.forEach((st, si) => {
+      if (si > 0) {
+        const arrow = document.createElement('span');
+        arrow.className = 'arrow';
+        arrow.textContent = '→';
+        steps.appendChild(arrow);
+      }
+      const btn = document.createElement('button');
+      btn.className = 'stepBtn' + (i === activeTab && si < stepIndex ? ' done' : '');
+      btn.textContent = (si + 1) + '. ' + st.label;
+      btn.disabled = !(i === activeTab && si === stepIndex);
+      btn.onclick = () => {
+        dispatch(st.action);
+        stepIndex += 1;
+        renderPanels();
+      };
+      steps.appendChild(btn);
+    });
+    panel.appendChild(steps);
+
+    const reset = document.createElement('button');
+    reset.className = 'resetBtn';
+    reset.style.marginTop = '12px';
+    reset.textContent = '重設這個情境';
+    reset.onclick = () => { stepIndex = 0; state = initialState(); render(); renderPanels(); };
+    panel.appendChild(document.createElement('br'));
+    panel.appendChild(reset);
+
+    panels.appendChild(panel);
+  });
+}
+
+renderTabs();
+renderPanels();
+</script>
+</body>
+</html>

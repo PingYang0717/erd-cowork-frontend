@@ -28,7 +28,7 @@ import { useSessions } from '../hooks/useSessions';
 import { useSessionSelectionStore } from '../store/useSessionSelectionStore';
 import styles from './SessionList.module.css';
 
-function sortByRecency(sessions: Session[]) {
+export function sortByRecency(sessions: Session[]) {
   return [...sessions].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
 }
 
@@ -133,7 +133,7 @@ function SessionRow({
   );
 }
 
-function SessionGroup({
+export function SessionGroup({
   label,
   sessions,
   selectedSessionId,
@@ -164,7 +164,7 @@ function SessionGroup({
           <CaretRightOutlined aria-hidden className={styles.groupHeadingChevron} />
         )}
         <h3 className={styles.groupHeading}>{label}</h3>
-        <span className={styles.countBadge}>{sessions.length}</span>
+        <span className={styles.groupCount}>{sessions.length}</span>
       </button>
       {isExpanded && (
         <ul className={styles.sessionGroupList}>

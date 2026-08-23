@@ -4,10 +4,123 @@
   align-items: center;
   gap: 6px;
   padding: 12px 0;
+  width: 100%;
 }
 
 .divider {
   width: 24px;
-  min-width: 24px;
+  height: 1px;
+  background: var(--erd-color-border-secondary, #f0f0f0);
   margin: 2px 0;
+}
+
+.iconTile {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9px;
+  border: none;
+  background: transparent;
+  color: var(--erd-color-text-secondary, #595959);
+  font-size: 17px;
+  cursor: pointer;
+}
+
+.iconTile:hover {
+  background: var(--erd-color-fill-tertiary, rgba(0, 0, 0, 0.06));
+}
+
+.iconTile[data-active='true'] {
+  background: var(--erd-color-primary-bg, #e6f4ff);
+  color: var(--erd-color-primary, #1677ff);
+}
+
+.primaryTile {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9px;
+  border: none;
+  background: var(--erd-color-primary, #1677ff);
+  color: #fff;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.primaryTile:hover {
+  opacity: 0.9;
+}
+
+.historyWrap {
+  position: relative;
+  display: flex;
+}
+
+.flyoutBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+}
+
+.flyout {
+  position: fixed;
+  z-index: 70;
+  width: 268px;
+  max-height: calc(100vh - 130px);
+  display: flex;
+  flex-direction: column;
+  background: var(--erd-color-bg-elevated, #fff);
+  border: 1px solid var(--erd-color-border-secondary, #f0f0f0);
+  border-radius: 12px;
+  box-shadow: var(--shadow-lg, 0 12px 40px rgba(0, 0, 0, 0.28));
+}
+
+.flyoutHeader {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 12px 11px 14px;
+  border-bottom: 1px solid var(--erd-color-border-secondary, #f0f0f0);
+}
+
+.flyoutHeaderIcon {
+  font-size: 15px;
+  color: var(--erd-color-primary, #1677ff);
+}
+
+.flyoutHeaderTitle {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--erd-color-text, inherit);
+}
+
+.flyoutNewChat {
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 7px;
+  cursor: pointer;
+  color: var(--erd-color-text-secondary, #595959);
+  border: 1px solid var(--erd-color-border, #d9d9d9);
+  background: transparent;
+}
+
+.flyoutNewChat:hover {
+  background: var(--erd-color-fill-tertiary, rgba(0, 0, 0, 0.06));
+}
+
+.flyoutBody {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 0 8px;
 }

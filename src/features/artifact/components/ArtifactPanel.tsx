@@ -1,7 +1,10 @@
 import {
+  AppstoreOutlined,
   CheckCircleFilled,
   DownOutlined,
+  ExportOutlined,
   HistoryOutlined,
+  ReloadOutlined,
   ShareAltOutlined,
 } from '@ant-design/icons';
 import { Dropdown } from 'antd';
@@ -14,6 +17,7 @@ import type { ArtifactTheme, ArtifactVersion } from '@/types/api';
 import { formatRelativeTime } from '@/utils/formatRelativeTime';
 
 import { useArtifactContent } from '../hooks/useArtifactContent';
+import { useRegenerateArtifact } from '../hooks/useArtifactMutations';
 import { useArtifacts } from '../hooks/useArtifacts';
 import { useArtifactVersions } from '../hooks/useArtifactVersions';
 import { ArtifactFrame } from './ArtifactFrame';
@@ -53,6 +57,7 @@ function ArtifactPanelContent({ artifactId }: { artifactId: string }) {
   const { data } = useArtifactContent(artifactId, theme, versionId);
   const { data: artifacts } = useArtifacts();
   const artifact = artifacts?.find((a) => a.id === artifactId);
+  const regenerateArtifact = useRegenerateArtifact();
 
   if (!data) {
     return <div className={styles.empty}>Ask a question to generate an Artifact.</div>;
@@ -71,6 +76,22 @@ function ArtifactPanelContent({ artifactId }: { artifactId: string }) {
             onSelect={setVersionId}
           />
         )}
+        {artifact &&
+          (artifact.shared ? (
+            <span className={styles.generatedBadge}>
+              <CheckCircleFilled aria-hidden />
+              已生成
+            </span>
+          ) : (
+            <button
+              type="button"
+              className={styles.generateButton}
+              onClick={() => setIsShareOpen(true)}
+            >
+              <AppstoreOutlined aria-hidden />
+              生成 Artifact
+            </button>
+          ))}
         <button
           type="button"
           className={styles.shareButton}
@@ -80,6 +101,29 @@ function ArtifactPanelContent({ artifactId }: { artifactId: string }) {
         >
           <ShareAltOutlined aria-hidden />
           {artifact?.shared && <CheckCircleFilled aria-hidden className={styles.sharedIndicator} />}
+        </button>
+        <button
+          type="button"
+          className={styles.iconButton}
+          aria-label="Regenerate artifact"
+          title="重新生成"
+          disabled={regenerateArtifact.isPending}
+          onClick={() =>
+            regenerateArtifact.mutate(artifactId, { onSuccess: () => setVersionId(undefined) })
+          }
+        >
+          <ReloadOutlined aria-hidden spin={regenerateArtifact.isPending} />
+        </button>
+        <button
+          type="button"
+          className={styles.iconButton}
+          aria-label="Open artifact in new tab"
+          title="在新分頁開啟"
+          onClick={() =>
+            window.open(`/cowork/artifact/${artifactId}`, '_blank', 'noopener,noreferrer')
+          }
+        >
+          <ExportOutlined aria-hidden />
         </button>
       </div>
       <div className={styles.frameWrapper}>

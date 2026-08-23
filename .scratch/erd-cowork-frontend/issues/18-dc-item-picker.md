@@ -6,6 +6,8 @@
 
 **Status:** ready-for-agent
 
+> **Note (2026-08-23):** Deliberately deferred — hold off starting this one until told otherwise.
+
 - [ ] DC Item picker: searchable list of predefined items (e.g. Idsat, Vt (gate CD), Contact Rs) with spec limits, multi-select via checkboxes
 - [ ] "Add custom item" input lets the user add a DC Item not in the predefined list
 - [ ] Selected DC Items are attached to the outgoing message/request (consumed by the SPC scenario from ticket 08)

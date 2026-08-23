@@ -1,0 +1,41 @@
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 5px 4px 9px;
+  border-radius: 8px;
+  background: var(--erd-color-primary-bg, #e6f4ff);
+  border: 1px solid var(--erd-color-primary-border, #91caff);
+  color: var(--erd-color-primary, #1677ff);
+  font-size: 12px;
+}
+
+.name {
+  font-weight: 500;
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.size {
+  color: var(--erd-color-text-tertiary, #8c8c8c);
+}
+
+.remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border: none;
+  border-radius: 5px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  padding: 0;
+}
+
+.remove:hover {
+  background: var(--erd-color-fill-tertiary, #f5f5f5);
+}
