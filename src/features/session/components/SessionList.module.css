@@ -84,6 +84,24 @@
   font-weight: 600;
 }
 
+/* Coach highlight after generating an Artifact: pulses the row until the
+   toast is dismissed. */
+.navShortcut[data-coach='true'] {
+  background: var(--erd-color-primary-bg, #e6f4ff);
+  box-shadow: 0 0 0 1px var(--erd-color-primary-border, #91caff) inset;
+  animation: coach-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes coach-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 1px var(--erd-color-primary-border, #91caff) inset;
+  }
+  50% {
+    box-shadow: 0 0 0 2px var(--erd-color-primary, #1677ff) inset;
+  }
+}
+
 .navShortcutLabel {
   flex: 1 1 auto;
   text-align: left;

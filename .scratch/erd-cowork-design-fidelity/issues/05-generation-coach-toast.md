@@ -4,7 +4,7 @@
 
 **Blocked by:** 02 (Per-version 生成/發佈狀態 + 生成動作)
 
-**Status:** ready-for-agent
+**Status:** done
 
 - [ ] Generating a version increments the Artifacts count shown in the left rail's Artifacts nav row
 - [ ] The left-rail Artifacts nav entry receives a coach highlight immediately after generation

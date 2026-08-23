@@ -8,6 +8,7 @@ import {
   ShareAltOutlined,
 } from '@ant-design/icons';
 import { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import { Tooltip } from '@/components/Tooltip';
 import { useSessionSelectionStore } from '@/features/session/store/useSessionSelectionStore';
@@ -20,6 +21,7 @@ import { useGenerateArtifactVersion, useRegenerateArtifact } from '../hooks/useA
 import { useArtifacts } from '../hooks/useArtifacts';
 import { useArtifactTheme } from '../hooks/useArtifactTheme';
 import { useArtifactVersions } from '../hooks/useArtifactVersions';
+import { useGenerateCoachStore } from '../store/useGenerateCoachStore';
 import { ArtifactFrame } from './ArtifactFrame';
 import styles from './ArtifactPanel.module.css';
 import { ShareArtifactDialog } from './ShareArtifactDialog';
@@ -72,6 +74,7 @@ function ArtifactPanelContent({ artifactId }: { artifactId: string }) {
   const artifact = artifacts?.find((a) => a.id === artifactId);
   const regenerateArtifact = useRegenerateArtifact();
   const generateVersion = useGenerateArtifactVersion();
+  const startCoach = useGenerateCoachStore((s) => s.start);
 
   if (!data) {
     return <EmptyPanel />;
@@ -104,7 +107,10 @@ function ArtifactPanelContent({ artifactId }: { artifactId: string }) {
               className={styles.generateButton}
               disabled={generateVersion.isPending}
               onClick={() =>
-                generateVersion.mutate({ id: artifactId, versionId: activeVersion.id })
+                generateVersion.mutate(
+                  { id: artifactId, versionId: activeVersion.id },
+                  { onSuccess: startCoach },
+                )
               }
             >
               生成 Artifact
@@ -159,6 +165,39 @@ function ArtifactPanelContent({ artifactId }: { artifactId: string }) {
           artifact={artifact}
         />
       )}
+      <GeneratedToast />
+    </div>
+  );
+}
+
+// The mockup's post-generate toast: confirms where the Artifact landed and
+// offers a jump to the gallery. The rail's coach highlight shares its state
+// and both clear together on dismiss.
+function GeneratedToast() {
+  const navigate = useNavigate();
+  const isActive = useGenerateCoachStore((s) => s.isActive);
+  const dismiss = useGenerateCoachStore((s) => s.dismiss);
+
+  if (!isActive) {
+    return null;
+  }
+
+  return (
+    <div role="status" aria-label="Artifact 已生成" className={styles.generatedToast}>
+      <span className={styles.generatedToastText}>已生成 — 已加入左側 Artifacts 清單。</span>
+      <button
+        type="button"
+        className={styles.generatedToastPrimary}
+        onClick={() => {
+          dismiss();
+          navigate('/cowork/artifacts');
+        }}
+      >
+        前往 Artifacts
+      </button>
+      <button type="button" className={styles.generatedToastDismiss} onClick={dismiss}>
+        知道了
+      </button>
     </div>
   );
 }
