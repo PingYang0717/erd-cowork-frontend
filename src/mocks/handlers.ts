@@ -42,13 +42,17 @@ const messages = createPersistedResource<Message>('erd-cowork:messages', [
 // resolving every Artifact to "not yours".
 const ALICE_USER_ID = 'u-002';
 
-interface StoredArtifact extends Omit<Artifact, 'mine'> {
+interface StoredArtifact extends Omit<Artifact, 'mine' | 'generated'> {
   ownerId: string;
 }
 
 function toArtifactDto(stored: StoredArtifact): Artifact {
   const { ownerId, ...rest } = stored;
-  return { ...rest, mine: ownerId === currentUser.id };
+  return {
+    ...rest,
+    mine: ownerId === currentUser.id,
+    generated: artifactVersions.read().some((v) => v.artifactId === stored.id && v.generated),
+  };
 }
 
 const artifacts = createPersistedResource<StoredArtifact>('erd-cowork:artifacts:v2', [
@@ -108,6 +112,22 @@ const artifactVersions = createPersistedResource<ArtifactVersion>(
       n: 2,
       label: 'SPC analysis — Vt (gate CD)',
       createdAt: '2026-08-20T09:15:00.000Z',
+      generated: true,
+    },
+    {
+      id: 'artifact-2-v1',
+      artifactId: 'artifact-2',
+      n: 1,
+      label: 'Inline dashboard — W12',
+      createdAt: '2026-08-21T10:00:00.000Z',
+      generated: true,
+    },
+    {
+      id: 'artifact-3-v1',
+      artifactId: 'artifact-3',
+      n: 1,
+      label: 'Daily monitor (A14)',
+      createdAt: '2026-08-19T08:30:00.000Z',
       generated: true,
     },
   ],

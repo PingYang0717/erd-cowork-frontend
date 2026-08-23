@@ -29,7 +29,7 @@ export function StudioShell() {
         ) : (
           <SessionList
             onCollapse={toggleSessionRailCollapsed}
-            artifactsCount={artifacts?.length ?? 0}
+            artifactsCount={artifacts?.filter((a) => a.generated).length ?? 0}
           />
         )}
       </nav>

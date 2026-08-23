@@ -14,6 +14,12 @@ export interface Artifact {
   shared: boolean;
   sharedBy?: string;
   createdAt: string;
+  /**
+   * Derived server-side: whether any of this Artifact's versions has been
+   * generated. The rail's Artifacts badge counts only generated Artifacts —
+   * an ungenerated preview is not yet "in" the Artifacts list.
+   */
+  generated: boolean;
 }
 
 export interface ArtifactVersion {

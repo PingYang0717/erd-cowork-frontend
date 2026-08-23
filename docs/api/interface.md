@@ -66,6 +66,11 @@ composer clears its own chips once the message is sent.
 Artifacts Gallery's filters (All / Yours / Shared to me / Pinned) and sort
 (pinned-first / recent / name), which are applied client-side.
 
+`Artifact.generated` is likewise derived per request: `true` when any of the
+Artifact's versions has been generated (see the per-version `generate` endpoint
+below). The session rail's Artifacts badge counts only generated Artifacts, so an
+ungenerated preview does not bump the count until its 生成 step.
+
 `Artifact.mine` is derived, not stored: the mock backend keeps an `ownerId` on each
 Artifact it holds and resolves `mine` per request against the mock identity in
 `services/currentUser.ts`, so the Gallery's "Yours" filter reflects who is signed in

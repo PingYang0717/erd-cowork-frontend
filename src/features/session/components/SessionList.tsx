@@ -15,6 +15,7 @@ import { Button, Dropdown, Input } from 'antd';
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
+import { useGenerateCoachStore } from '@/features/artifact/store/useGenerateCoachStore';
 import type { Session } from '@/types/api/session';
 import { dispatchMenuAction } from '@/utils/dispatchMenuAction';
 import { formatRelativeTime } from '@/utils/formatRelativeTime';
@@ -188,6 +189,7 @@ export function SessionList({
     useSessionGroups();
   const navigate = useNavigate();
   const location = useLocation();
+  const isCoaching = useGenerateCoachStore((s) => s.isActive);
 
   return (
     <div className={styles.sessionList}>
@@ -223,6 +225,7 @@ export function SessionList({
           type="button"
           className={styles.navShortcut}
           aria-current={location.pathname === '/cowork/artifacts' ? 'page' : undefined}
+          data-coach={isCoaching ? 'true' : undefined}
           onClick={() => navigate('/cowork/artifacts')}
         >
           <AppstoreOutlined aria-hidden />
