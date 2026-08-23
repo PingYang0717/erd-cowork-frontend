@@ -36,7 +36,7 @@ describe('Artifact share dialog', () => {
     useThemeStore.setState(useThemeStore.getInitialState());
   });
 
-  it('shares an Artifact with a searched recipient and reflects the shared state', async () => {
+  it('shares an Artifact with a searched recipient and shows the share link', async () => {
     const user = userEvent.setup();
     renderStudioPage();
 
@@ -56,6 +56,8 @@ describe('Artifact share dialog', () => {
       await within(dialog).findByDisplayValue(/\/cowork\/artifact\/artifact-1$/),
     ).toBeInTheDocument();
 
-    expect(await screen.findByRole('button', { name: 'Artifact shared' })).toBeInTheDocument();
+    // The mockup's share button carries no extra shared checkmark; it stays
+    // the plain Share control after sharing (ticket 03 removed the indicator).
+    expect(screen.getByRole('button', { name: 'Share artifact' })).toBeInTheDocument();
   });
 });

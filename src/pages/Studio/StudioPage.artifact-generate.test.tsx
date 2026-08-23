@@ -53,6 +53,33 @@ describe('Per-version Artifact generation', () => {
     expect(screen.queryByRole('button', { name: '生成 Artifact' })).not.toBeInTheDocument();
   });
 
+  it('gates the Share button on the current version being generated', async () => {
+    const user = userEvent.setup();
+    renderStudioPage();
+
+    await user.click(await screen.findByRole('button', { name: 'SPC — Vt (gate CD)' }));
+    await screen.findByText('已生成');
+
+    // Generated version: share is enabled.
+    expect(screen.getByRole('button', { name: 'Share artifact' })).toBeEnabled();
+
+    // A fresh ungenerated version disables share with an explanatory tooltip.
+    await user.click(await screen.findByRole('button', { name: 'Regenerate artifact' }));
+    await screen.findByRole('button', { name: '生成 Artifact' });
+
+    const share = screen.getByRole('button', { name: 'Share artifact' });
+    expect(share).toBeDisabled();
+
+    await user.hover(share);
+    expect(await screen.findByRole('tooltip')).toHaveTextContent('請先生成 Artifact');
+    await user.unhover(share);
+
+    // Generating unlocks it again.
+    await user.click(screen.getByRole('button', { name: '生成 Artifact' }));
+    await screen.findByText('已生成');
+    expect(screen.getByRole('button', { name: 'Share artifact' })).toBeEnabled();
+  });
+
   it('keeps each version’s generated state independent when switching versions', async () => {
     const user = userEvent.setup();
     renderStudioPage();

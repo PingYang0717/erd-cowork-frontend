@@ -8,6 +8,8 @@ const SHOW_DELAY_MS = 350;
 interface TooltipProps {
   content: string;
   children: ReactNode;
+  /** Extra class for the inline wrapper, for when it participates in a flex row. */
+  wrapperClassName?: string;
 }
 
 /**
@@ -15,7 +17,7 @@ interface TooltipProps {
  * a 0.35s hover/focus delay. Wraps its trigger in an inline container that
  * owns the hover/focus tracking, so the trigger element needs no extra props.
  */
-export function Tooltip({ content, children }: TooltipProps) {
+export function Tooltip({ content, children, wrapperClassName }: TooltipProps) {
   const [open, setOpen] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const tipId = useId();
@@ -33,7 +35,7 @@ export function Tooltip({ content, children }: TooltipProps) {
 
   return (
     <span
-      className={styles.wrapper}
+      className={wrapperClassName ? `${styles.wrapper} ${wrapperClassName}` : styles.wrapper}
       onMouseEnter={show}
       onMouseLeave={hide}
       onFocus={show}
