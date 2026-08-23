@@ -1,10 +1,13 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { http, HttpResponse } from 'msw';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 
+import { server } from '@/mocks/server';
 import { ArtifactPage } from '@/pages/Artifact/ArtifactPage';
+import type { Artifact } from '@/types/api';
 
 import { ArtifactsGalleryPage } from './ArtifactsGalleryPage';
 
@@ -244,6 +247,42 @@ describe('Artifacts gallery', () => {
     await user.click(within(dialog).getByRole('button', { name: '完成' }));
 
     expect(await within(spcCard).findByText('Shared')).toBeInTheDocument();
+  });
+
+  it('de-duplicates "Shared to me" by artifact id without collapsing distinct same-name artifacts', async () => {
+    const shared = (over: Partial<Artifact> & Pick<Artifact, 'id' | 'name'>): Artifact => ({
+      sessionId: 'session-2',
+      kind: 'dashboard',
+      scenario: 'daily',
+      pinned: false,
+      mine: false,
+      shared: false,
+      sharedBy: 'Alice Wu',
+      generated: true,
+      createdAt: '2026-08-19T08:30:00.000Z',
+      ...over,
+    });
+    server.use(
+      http.get('/api/artifacts', () =>
+        HttpResponse.json([
+          // The same artifact shared to the user twice: one row survives.
+          shared({ id: 'artifact-9', name: 'Daily monitor (A14)' }),
+          shared({ id: 'artifact-9', name: 'Daily monitor (A14)' }),
+          // Two different artifacts that happen to share a name: both stay.
+          shared({ id: 'artifact-10', name: 'Q3 report', sharedBy: 'Bob Lin' }),
+          shared({ id: 'artifact-11', name: 'Q3 report', sharedBy: 'Carol Kao' }),
+        ]),
+      ),
+    );
+
+    const user = userEvent.setup();
+    renderGalleryPage();
+
+    await user.click(await screen.findByRole('button', { name: /^Shared to me/ }));
+
+    expect(screen.getAllByRole('button', { name: 'Daily monitor (A14)' })).toHaveLength(1);
+    expect(screen.getAllByRole('button', { name: 'Q3 report' })).toHaveLength(2);
+    expect(screen.getByRole('button', { name: /^Shared to me/ })).toHaveTextContent('3');
   });
 
   it('opens an Artifact in the full-page view when its card is clicked', async () => {
