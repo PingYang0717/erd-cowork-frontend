@@ -1,4 +1,5 @@
-import { useParams } from 'react-router-dom';
+import { ArrowLeftOutlined } from '@ant-design/icons';
+import { useNavigate, useParams } from 'react-router-dom';
 
 import { ArtifactFrame } from '@/features/artifact/components/ArtifactFrame';
 import { useArtifactContent } from '@/features/artifact/hooks/useArtifactContent';
@@ -10,6 +11,7 @@ import styles from './ArtifactPage.module.css';
 
 export function ArtifactPage() {
   const { artifactId } = useParams<{ artifactId: string }>();
+  const navigate = useNavigate();
   const isDarkMode = useThemeStore((s) => s.isDarkMode);
   const theme: ArtifactTheme = isDarkMode ? 'dark' : 'light';
   const { data, isError } = useArtifactContent(artifactId, theme);
@@ -17,6 +19,14 @@ export function ArtifactPage() {
   return (
     <div className={styles.page}>
       <div className={styles.header}>
+        <button
+          type="button"
+          className={styles.backButton}
+          onClick={() => navigate('/cowork/artifacts')}
+        >
+          <ArrowLeftOutlined aria-hidden />
+          Back
+        </button>
         <h1 className={styles.headerTitle}>Artifact</h1>
         <ThemeToggle />
       </div>

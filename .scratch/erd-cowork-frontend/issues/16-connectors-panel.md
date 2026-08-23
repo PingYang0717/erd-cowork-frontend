@@ -4,10 +4,18 @@
 
 **Blocked by:** 08 (對話送出與 Scenario 比對)
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] An entry point in the composer (attach/connect menu) opens a Connectors panel/modal
-- [ ] Lists all connector types (Inline, WAT, CP, Lot Info, Lot Abnormal, Process, Defect, TEM, Recipe, Offline Tool Log) with status (connected/available/expired/no_access)
-- [ ] Connect/disconnect action updates status via MSW PATCH, persisted
-- [ ] `docs/api/interface.md` updated with connector endpoints; `types/api/Connector.ts` finalized
-- [ ] Seam test: open panel, toggle a connector's connection state, reload (simulated), assert it persisted
+> Done together with ticket 17 in the same session: both live behind the same
+> composer entry point (the "+" attach/connect menu), so they were built as
+> one seam. Scope trimmed from the mockup: no category filter chips/search
+> and no "add a custom connector" input (ticket 16 has no AC for either); the
+> mockup's transient "Connecting…" spin-delay before a connector flips to
+> Connected was also dropped — connect/disconnect apply immediately via the
+> PATCH, matching the AC as written.
+
+- [x] An entry point in the composer (attach/connect menu) opens a Connectors panel/modal
+- [x] Lists all connector types (Inline, WAT, CP, Lot Info, Lot Abnormal, Process, Defect, TEM, Recipe, Offline Tool Log) with status (connected/available/expired/no_access)
+- [x] Connect/disconnect action updates status via MSW PATCH, persisted
+- [x] `docs/api/interface.md` updated with connector endpoints; `types/api/Connector.ts` finalized
+- [x] Seam test: open panel, toggle a connector's connection state, reload (simulated), assert it persisted

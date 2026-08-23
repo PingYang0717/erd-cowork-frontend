@@ -25,15 +25,21 @@ function StepStatusIcon({ status }: { status: 'success' | 'running' | 'pending' 
 }
 
 function MessageBubble({ message }: { message: Message }) {
+  if (message.role === 'user') {
+    return (
+      <div className={styles.userRow}>
+        <div className={styles.userBubble}>{message.text}</div>
+      </div>
+    );
+  }
+
   return (
-    <div>
-      {message.role === 'ai' && (
-        <div className={styles.aiLabel}>
-          <ThunderboltFilled aria-hidden className={styles.aiLabelIcon} />
-          eRD AI
-        </div>
-      )}
-      <p>{message.text}</p>
+    <div className={styles.aiRow}>
+      <div className={styles.aiLabel}>
+        <ThunderboltFilled aria-hidden className={styles.aiLabelIcon} />
+        eRD AI
+      </div>
+      <p className={styles.aiText}>{message.text}</p>
       {message.artifactName && (
         <div className={styles.artifactChip}>
           <AppstoreOutlined aria-hidden className={styles.artifactChipIcon} />
@@ -58,13 +64,19 @@ function AiWorkingSteps({ pendingAi }: { pendingAi: PendingAiMessage }) {
   const steps = pendingAi.message.steps ?? [];
 
   return (
-    <div role="status" aria-label="eRD AI is working" className={styles.workingSteps}>
-      {steps.map((step, i) => (
-        <div key={step.key} className={styles.workingStep}>
-          <StepStatusIcon status={stepStatus(i, pendingAi.revealedSteps)} />
-          <span>{step.title}</span>
-        </div>
-      ))}
+    <div className={styles.aiRow}>
+      <div className={styles.aiLabel}>
+        <ThunderboltFilled aria-hidden className={styles.aiLabelIcon} />
+        eRD AI
+      </div>
+      <div role="status" aria-label="eRD AI is working" className={styles.workingSteps}>
+        {steps.map((step, i) => (
+          <div key={step.key} className={styles.workingStep}>
+            <StepStatusIcon status={stepStatus(i, pendingAi.revealedSteps)} />
+            <span>{step.title}</span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

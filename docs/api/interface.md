@@ -37,14 +37,16 @@ remains as a display-only convenience so the chat bubble doesn't need a join).
 
 ## Artifact
 
-| Method | Path                      | Request                                                                                              | Response                              |
-| ------ | ------------------------- | ---------------------------------------------------------------------------------------------------- | ------------------------------------- |
-| GET    | `/artifacts`              | —                                                                                                    | `Artifact[]`                          |
-| GET    | `/artifacts/:id`          | `?theme=light\|dark` (defaults to `light`), `?versionId=` (optional, defaults to the latest version) | `{ html: string }`                    |
-| PATCH  | `/artifacts/:id`          | `Partial<Pick<Artifact, 'pinned'>>`                                                                  | `Artifact`                            |
-| GET    | `/artifacts/:id/versions` | —                                                                                                    | `ArtifactVersion[]`                   |
-| POST   | `/artifacts/:id/share`    | `{ targetIds: string[] }`                                                                            | `{ url: string; artifact: Artifact }` |
-| GET    | `/directory`              | —                                                                                                    | `DirectoryEntry[]`                    |
+| Method | Path                        | Request                                                                                              | Response                              |
+| ------ | --------------------------- | ---------------------------------------------------------------------------------------------------- | ------------------------------------- |
+| GET    | `/artifacts`                | —                                                                                                    | `Artifact[]`                          |
+| GET    | `/artifacts/:id`            | `?theme=light\|dark` (defaults to `light`), `?versionId=` (optional, defaults to the latest version) | `{ html: string }`                    |
+| PATCH  | `/artifacts/:id`            | `Partial<Pick<Artifact, 'pinned'>>`                                                                  | `Artifact`                            |
+| DELETE | `/artifacts/:id`            | —                                                                                                    | 204 No Content                        |
+| GET    | `/artifacts/:id/versions`   | —                                                                                                    | `ArtifactVersion[]`                   |
+| POST   | `/artifacts/:id/share`      | `{ targetIds: string[] }`                                                                            | `{ url: string; artifact: Artifact }` |
+| POST   | `/artifacts/:id/regenerate` | —                                                                                                    | `ArtifactVersion` (201)               |
+| GET    | `/directory`                | —                                                                                                    | `DirectoryEntry[]`                    |
 
 `/artifacts` lists every Artifact (own, pinned, and shared-to-me), backing the
 Artifacts Gallery's filters (All / Yours / Shared to me / Pinned) and sort
@@ -59,6 +61,11 @@ instantly without waiting on a refetch.
 `PATCH /artifacts/:id` toggles the Artifact's pinned state from the Gallery card;
 the pinned flag is persisted (localStorage-backed mock) and survives reload.
 
+`DELETE /artifacts/:id` removes the Artifact permanently (Gallery card's
+more-actions menu); the mock backend does not cascade-delete its versions or
+messages that reference it, since none of those are read once the Artifact
+itself is gone.
+
 `/artifacts/:id/versions` lists the Artifact's past versions (`n`, `label`,
 `createdAt`), newest last. Passing one of those versions' `id` as `?versionId=` on
 `/artifacts/:id` re-renders that historical version's content instead of the latest.
@@ -72,6 +79,12 @@ delivery, it only flips the sender's own Artifact to shared. A recipient's "Shar
 me" view is simulated directly via seed data (`Artifact.sharedBy`), not by this
 endpoint.
 
+`POST /artifacts/:id/regenerate` creates a new `ArtifactVersion` (`n` = latest + 1,
+`label` = the Artifact's current name, `createdAt` = now) reusing the same scenario
+fixture content and appends it to `/artifacts/:id/versions`; the Studio panel's
+"重新生成" button triggers this and then clears its local version selection so the
+switcher and iframe fall back to the newest version.
+
 `GET /directory` returns the searchable department / section / person dataset backing
 the share dialog's recipient picker (`DirectoryEntry.kind` is `'department'`,
 `'section'`, or `'person'`; `label` is the searchable display text — the raw code for
@@ -79,9 +92,17 @@ departments/sections, `"<NT account> · <中文名>"` for people).
 
 ## Connector
 
-| Method | Path | Request | Response |
-| ------ | ---- | ------- | -------- |
-|        |      |         |          |
+| Method | Path              | Request                       | Response      |
+| ------ | ----------------- | ----------------------------- | ------------- |
+| GET    | `/connectors`     | —                             | `Connector[]` |
+| PATCH  | `/connectors/:id` | `{ status: ConnectorStatus }` | `Connector`   |
+
+`Connector.status` is one of `connected` / `available` / `expired` / `no_access`.
+`PATCH /connectors/:id` connects or disconnects a data source from the Studio
+composer's Connectors panel; the new status is persisted (localStorage-backed
+mock) and survives reload. `no_access` connectors cannot be toggled (the panel
+disables their connect control) — the mock backend does not enforce this
+server-side, since only the panel exposes the toggle.
 
 ## Schedule
 
@@ -97,6 +118,12 @@ departments/sections, `"<NT account> · <中文名>"` for people).
 
 ## Upload
 
-| Method | Path | Request | Response |
-| ------ | ---- | ------- | -------- |
-|        |      |         |          |
+| Method | Path       | Request                                   | Response       |
+| ------ | ---------- | ----------------------------------------- | -------------- |
+| POST   | `/uploads` | `{ fileName: string; sizeBytes: number }` | `Upload` (201) |
+
+Registers a file attachment's metadata only — no binary content is sent or
+stored, per [Out of Scope](../../.scratch/erd-cowork-frontend/spec.md). The
+Studio composer's attach-files flow calls this once per file that passes its
+client-side count (max 5) / total-size (max 5 GB) validation; rejected files
+never reach this endpoint.

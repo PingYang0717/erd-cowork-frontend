@@ -6,6 +6,12 @@ import { useThemeStore } from '@/features/theme/store/useThemeStore';
 
 const queryClient = new QueryClient();
 
+// Matches eRDWorkspace20260819.html's `body { font-family: ... }` exactly —
+// antd's own default token stack swaps in 'Noto Sans' + emoji fonts instead
+// of PingFang TC / Microsoft JhengHei, which is close but not the mockup.
+const FONT_FAMILY =
+  '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "PingFang TC", "Microsoft JhengHei", sans-serif';
+
 // ConfigProvider's theme algorithm only affects antd components themselves;
 // plain HTML (body, <h1>, etc.) has no background/text color of its own, so
 // in dark mode its text (colored for a dark surface by antd's global CSS
@@ -45,7 +51,24 @@ export function AppProviders({ children }: { children: ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       <ConfigProvider
-        theme={{ algorithm: isDarkMode ? theme.darkAlgorithm : theme.defaultAlgorithm }}
+        theme={{
+          algorithm: isDarkMode ? theme.darkAlgorithm : theme.defaultAlgorithm,
+          token: {
+            fontFamily: FONT_FAMILY,
+            // The mockup's body text runs 12-13.5px throughout; antd's
+            // default (14) reads noticeably larger/heavier across every
+            // control that doesn't have its own font-size override.
+            fontSize: 13,
+          },
+          components: {
+            // Mockup's modal dialog corners (oh()) are 16px; antd's default
+            // borderRadiusLG (8px) is otherwise fine for Dropdown/Select/etc,
+            // so this is scoped to Modal only rather than changed globally.
+            Modal: { borderRadiusLG: 16 },
+            // Mockup's composer "+" menu panel uses border-radius:11px.
+            Dropdown: { borderRadiusLG: 11 },
+          },
+        }}
       >
         <AntdApp>
           <ThemedSurface>{children}</ThemedSurface>

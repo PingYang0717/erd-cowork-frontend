@@ -8,10 +8,7 @@ interface ExampleWidget {
 }
 
 function fetchExampleWidgets() {
-  // apiClient's response interceptor already unwraps `response.data`, so the
-  // runtime value is `ExampleWidget[]` even though axios's own types still
-  // say `AxiosResponse<ExampleWidget[]>`.
-  return apiClient.get<ExampleWidget[]>('/example-widgets') as unknown as Promise<ExampleWidget[]>;
+  return apiClient.get<ExampleWidget[]>('/example-widgets');
 }
 
 export function ExampleWidgetsPage() {

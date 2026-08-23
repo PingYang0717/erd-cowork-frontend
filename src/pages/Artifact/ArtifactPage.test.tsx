@@ -5,6 +5,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { useThemeStore } from '@/features/theme/store/useThemeStore';
+import { ArtifactsGalleryPage } from '@/pages/ArtifactsGallery/ArtifactsGalleryPage';
 
 import { ArtifactPage } from './ArtifactPage';
 
@@ -16,6 +17,7 @@ function renderArtifactPageAt(path: string) {
     <QueryClientProvider client={queryClient}>
       <MemoryRouter initialEntries={[path]}>
         <Routes>
+          <Route path="/cowork/artifacts" element={<ArtifactsGalleryPage />} />
           <Route path="/cowork/artifact/:artifactId" element={<ArtifactPage />} />
         </Routes>
       </MemoryRouter>
@@ -54,5 +56,15 @@ describe('Artifact full-page view', () => {
 
     const iframe = (await screen.findByTitle('Artifact preview')) as HTMLIFrameElement;
     expect(iframe.getAttribute('srcdoc')).toContain('data-artifact-theme="dark"');
+  });
+
+  it('shows a Back button that returns to the Artifacts gallery', async () => {
+    const user = userEvent.setup();
+    renderArtifactPageAt('/cowork/artifact/artifact-1');
+
+    await screen.findByTitle('Artifact preview');
+    await user.click(screen.getByRole('button', { name: 'Back' }));
+
+    expect(await screen.findByRole('heading', { name: 'Artifacts' })).toBeInTheDocument();
   });
 });

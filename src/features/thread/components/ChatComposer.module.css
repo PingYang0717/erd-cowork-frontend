@@ -1,5 +1,92 @@
 .messageInput {
-  border-radius: 999px;
-  padding-left: 16px;
-  padding-right: 16px;
+  flex: 1;
+  padding: 6px 2px !important;
+  font-size: 13px;
+  line-height: 1.5;
+  background: transparent !important;
+}
+
+.composerBox {
+  border: 1px solid var(--erd-color-border, #d9d9d9);
+  border-radius: 14px;
+  padding: 8px;
+}
+
+.attachmentsRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 2px 2px 8px;
+  list-style: none;
+}
+
+.inputRow {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.iconButton {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9px;
+  border: none;
+  background: transparent;
+  color: var(--erd-color-text-secondary, #595959);
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.iconButton:hover:not(:disabled) {
+  background: var(--erd-color-fill-tertiary, rgba(0, 0, 0, 0.06));
+}
+
+.iconButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.sendButton {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9px;
+  border: none;
+  background: var(--erd-color-primary, #1677ff);
+  color: #fff;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.sendButton:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.sendButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.menuItemLabel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.menuItemBadge {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--erd-color-primary, #1677ff);
+  background: var(--erd-color-primary-bg, #e6f4ff);
+  border-radius: 9px;
+  padding: 1px 7px;
 }
