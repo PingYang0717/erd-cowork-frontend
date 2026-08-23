@@ -4,7 +4,7 @@
 
 **Blocked by:** 01 (自訂 Tooltip 元件)
 
-**Status:** ready-for-agent
+**Status:** done
 
 > **Note:** This deliberately reverses the simplification recorded in ticket 09/13 of `.scratch/erd-cowork-frontend/` ("no separate un-generated state in this app's data model") — a decision the product owner made explicitly after reviewing the mockup diff, not an oversight. Reference this note if a future review questions the scope change.
 

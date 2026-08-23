@@ -22,4 +22,12 @@ export interface ArtifactVersion {
   n: number;
   label: string;
   createdAt: string;
+  /**
+   * Whether the user has committed ("生成") this version. A Scenario run or a
+   * regenerate produces an ungenerated preview first; generating it is what
+   * the mockup's version menu marks with the green "published" check, and it
+   * is what unlocks sharing. Per-version by design — switching versions must
+   * not inherit another version's state.
+   */
+  generated: boolean;
 }
