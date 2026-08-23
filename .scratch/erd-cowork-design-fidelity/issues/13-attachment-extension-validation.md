@@ -4,7 +4,7 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** done
 
 - [ ] Attachment file picker input restricts selection to `.csv`/`.xlsx`/`.xls` (`accept` attribute)
 - [ ] Selecting or dropping an unsupported file type shows the Chinese error "僅支援 .csv / .xlsx" and the file is not added
