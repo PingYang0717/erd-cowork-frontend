@@ -128,6 +128,31 @@ describe('Scenario matching', () => {
     },
   );
 
+  it('labels the run "eRD AI is working…", renders step descriptions in a card, and keeps a collapsible recap after completion', async () => {
+    renderStudioPage();
+    await selectASessionWithFakeTimers();
+
+    fireEvent.click(screen.getByRole('button', { name: 'SPC analysis' }));
+    await advanceTimers(0);
+
+    // While running: the working label and each step's description render.
+    expect(screen.getByText('eRD AI is working…')).toBeInTheDocument();
+    expect(screen.getByText('Inline DB · Vt (gate CD)')).toBeInTheDocument();
+
+    await advanceTimers(500 * 4);
+
+    // Completed: a collapsed "Worked through N steps" recap remains.
+    const recap = screen.getByRole('button', { name: 'Worked through 3 steps' });
+    expect(recap).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.queryByText('Inline DB · Vt (gate CD)')).not.toBeInTheDocument();
+
+    // Expanding shows every step's title and description.
+    fireEvent.click(recap);
+    expect(screen.getByText('Connect data source')).toBeInTheDocument();
+    expect(screen.getByText('Inline DB · Vt (gate CD)')).toBeInTheDocument();
+    expect(screen.getByText('CL / ±3σ, apply Western Electric rules')).toBeInTheDocument();
+  });
+
   it('appends the slides step and names a slides Artifact when clicking "Generate slides"', async () => {
     renderStudioPage();
     await selectASessionWithFakeTimers();

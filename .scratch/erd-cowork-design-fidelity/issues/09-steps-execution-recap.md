@@ -4,7 +4,7 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** done
 
 - [ ] After a Scenario finishes running, a collapsible "Worked through N steps" summary remains in the thread (it currently disappears entirely on completion)
 - [ ] Expanding the summary shows each step's title and description (description data already exists in the response but is not currently rendered)
