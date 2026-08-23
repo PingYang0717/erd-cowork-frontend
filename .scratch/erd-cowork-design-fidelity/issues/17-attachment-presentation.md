@@ -4,7 +4,7 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** done
 
 - [ ] Attachment chips render inside the user's message bubble, above the message text, instead of below the bubble
 - [ ] Attachment Modal's file rows show a type-colored icon (csv = primary, xlsx = success), the filename, a "{TYPE} · {size}" line, and a 26×26 delete button — replacing the reused `AttachmentChip` badge
