@@ -170,6 +170,31 @@ describe('Session rail', () => {
     expect(within(recent).getByRole('button', { name: 'Defect pareto — W12' })).toBeInTheDocument();
   });
 
+  it('keeps the session groups in a scrollable region separate from the fixed New chat and nav rows', async () => {
+    renderStudioPage();
+
+    await screen.findByRole('region', { name: 'Pinned sessions' });
+    const scroll = screen.getByTestId('session-scroll');
+    expect(within(scroll).getByRole('region', { name: 'Pinned sessions' })).toBeInTheDocument();
+    expect(within(scroll).getByRole('region', { name: 'Recents sessions' })).toBeInTheDocument();
+    // The fixed rows stay outside the scrolling region.
+    expect(within(scroll).queryByRole('button', { name: 'New chat' })).not.toBeInTheDocument();
+    expect(within(scroll).queryByRole('button', { name: /^Schedule/ })).not.toBeInTheDocument();
+  });
+
+  it('keeps the Recents header visible when there are no recent sessions, with an empty-state line', async () => {
+    const user = userEvent.setup();
+    renderStudioPage();
+
+    await user.click(
+      await screen.findByRole('button', { name: 'More actions for Defect pareto — W12' }),
+    );
+    await user.click(screen.getByRole('menuitem', { name: 'Delete' }));
+
+    const recents = await screen.findByRole('region', { name: 'Recents sessions' });
+    expect(await within(recents).findByText('No recent chats.')).toBeInTheDocument();
+  });
+
   it('creates a new session via "New chat" and selects it', async () => {
     const user = userEvent.setup();
     renderStudioPage();
@@ -198,7 +223,9 @@ describe('Session rail', () => {
     expect(
       await within(pinned).findByRole('button', { name: 'Defect pareto — W12' }),
     ).toBeInTheDocument();
-    expect(screen.queryByRole('region', { name: 'Recents sessions' })).not.toBeInTheDocument();
+    // The Recents header stays put with its empty-state line (ticket 12).
+    const recents = screen.getByRole('region', { name: 'Recents sessions' });
+    expect(within(recents).getByText('No recent chats.')).toBeInTheDocument();
   });
 
   it('unpins a pinned session from its more-actions menu, moving it into Recent', async () => {
@@ -252,12 +279,15 @@ describe('Session rail', () => {
     const user = userEvent.setup();
     renderStudioPage();
 
-    await screen.findByRole('region', { name: 'Recents sessions' });
-    await user.click(screen.getByRole('button', { name: 'More actions for Defect pareto — W12' }));
+    await user.click(
+      await screen.findByRole('button', { name: 'More actions for Defect pareto — W12' }),
+    );
     await user.click(screen.getByRole('menuitem', { name: 'Delete' }));
 
     expect(screen.queryByRole('button', { name: 'Defect pareto — W12' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('region', { name: 'Recents sessions' })).not.toBeInTheDocument();
+    // The Recents header stays put with its empty-state line (ticket 12).
+    const recents = screen.getByRole('region', { name: 'Recents sessions' });
+    expect(within(recents).getByText('No recent chats.')).toBeInTheDocument();
   });
 
   it('keeps a created, renamed, and pinned session in the right section after a simulated reload', async () => {

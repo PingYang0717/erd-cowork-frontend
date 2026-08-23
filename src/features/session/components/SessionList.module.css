@@ -3,6 +3,23 @@
   flex-direction: column;
   gap: 8px;
   padding: 8px;
+  height: 100%;
+  min-height: 0;
+}
+
+/* New chat + nav rows stay fixed; only the session groups scroll, so every
+   session stays reachable when the list outgrows the rail. */
+.scrollRegion {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.groupEmpty {
+  margin: 2px 0 0;
+  padding: 2px 4px;
+  font-size: 12px;
+  color: var(--erd-color-text-tertiary, #8c8c8c);
 }
 
 .topRow {
