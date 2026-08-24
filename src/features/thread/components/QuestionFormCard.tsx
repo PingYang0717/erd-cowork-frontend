@@ -1,9 +1,13 @@
-import { SendOutlined } from '@ant-design/icons';
+import { InfoCircleOutlined, SendOutlined } from '@ant-design/icons';
 import { useState } from 'react';
 
+import { useConnectorsPanelStore } from '@/features/connectors/store/useConnectorsPanelStore';
 import type { QuestionAnswer, QuestionField, QuestionForm } from '@/types/api';
 
 import styles from './QuestionFormCard.module.css';
+
+/** Above this many options a field gets a search box rather than a wall of chips. */
+const SEARCHABLE_FROM = 4;
 
 export type Answers = Record<string, QuestionAnswer>;
 
@@ -29,23 +33,31 @@ function isAnswered(field: QuestionField, answers: Answers): boolean {
 function ChipGroup({
   field,
   answers,
+  search,
   onToggle,
 }: {
   field: QuestionField;
   answers: Answers;
+  search: string;
   onToggle: (value: string) => void;
 }) {
   const selected = answers[field.key];
   const isSelected = (value: string) =>
     Array.isArray(selected) ? selected.includes(value) : selected === value;
 
+  const needle = search.trim().toLowerCase();
+  const options = (field.options ?? []).filter(
+    (option) => needle === '' || option.label.toLowerCase().includes(needle),
+  );
+
   return (
     <div className={styles.chipRow} role="group" aria-label={field.label}>
-      {(field.options ?? []).map((option) => (
+      {options.map((option) => (
         <button
           key={option.value}
           type="button"
           aria-pressed={isSelected(option.value)}
+          title={option.hint}
           className={isSelected(option.value) ? styles.chipSelected : styles.chip}
           onClick={() => onToggle(option.value)}
         >
@@ -53,6 +65,22 @@ function ChipGroup({
         </button>
       ))}
     </div>
+  );
+}
+
+/** The Data type field is the one place the form points back at the Connectors panel:
+ *  its options ARE the connected connectors, so "none of these" is fixed there. */
+function DataTypeHint({ hint }: { hint: string }) {
+  const openConnectors = useConnectorsPanelStore((store) => store.open);
+
+  return (
+    <p className={styles.fieldHint}>
+      <InfoCircleOutlined aria-hidden />
+      {hint}
+      <button type="button" className={styles.manageLink} onClick={openConnectors}>
+        管理連線
+      </button>
+    </p>
   );
 }
 
@@ -67,6 +95,11 @@ export function QuestionFormCard({
   onSubmit: (answers: Answers) => void;
 }) {
   const [answers, setAnswers] = useState<Answers>({});
+  const [searches, setSearches] = useState<Record<string, string>>({});
+
+  function setFieldText(field: QuestionField, value: string) {
+    setAnswers((previous) => ({ ...previous, [field.key]: value }));
+  }
 
   function toggle(field: QuestionField, value: string) {
     setAnswers((previous) => {
@@ -106,12 +139,64 @@ export function QuestionFormCard({
       <p className={styles.title}>{form.title}</p>
       {form.intro && <p className={styles.intro}>{form.intro}</p>}
 
-      {visibleFields.map((field) => (
-        <div key={field.key} className={styles.field}>
-          <p className={styles.fieldLabel}>{field.label}</p>
-          <ChipGroup field={field} answers={answers} onToggle={(value) => toggle(field, value)} />
-        </div>
-      ))}
+      {visibleFields.map((field) => {
+        const options = field.options ?? [];
+        const isSearchable = field.kind === 'multi' && options.length > SEARCHABLE_FROM;
+        const answer = answers[field.key];
+        // A typed value that no chip offers — the mockup highlights the input for it.
+        const isCustom =
+          field.allowCustom &&
+          typeof answer === 'string' &&
+          answer !== '' &&
+          !options.some((option) => option.value === answer);
+
+        return (
+          <div key={field.key} className={styles.field}>
+            <p className={styles.fieldLabel}>{field.label}</p>
+
+            {isSearchable && (
+              <input
+                aria-label={field.label}
+                placeholder={field.placeholder}
+                value={searches[field.key] ?? ''}
+                className={styles.searchInput}
+                onChange={(event) =>
+                  setSearches((previous) => ({ ...previous, [field.key]: event.target.value }))
+                }
+              />
+            )}
+
+            {field.kind === 'text' ? (
+              <input
+                aria-label={field.label}
+                placeholder={field.placeholder}
+                value={typeof answer === 'string' ? answer : ''}
+                className={styles.textInput}
+                onChange={(event) => setFieldText(field, event.target.value)}
+              />
+            ) : (
+              <ChipGroup
+                field={field}
+                answers={answers}
+                search={isSearchable ? (searches[field.key] ?? '') : ''}
+                onToggle={(value) => toggle(field, value)}
+              />
+            )}
+
+            {field.allowCustom && (
+              <input
+                aria-label={field.label}
+                placeholder={field.placeholder}
+                value={isCustom ? String(answer) : ''}
+                className={isCustom ? styles.customInputActive : styles.customInput}
+                onChange={(event) => setFieldText(field, event.target.value)}
+              />
+            )}
+
+            {field.hint && <DataTypeHint hint={field.hint} />}
+          </div>
+        );
+      })}
 
       <div className={styles.footer}>
         <button

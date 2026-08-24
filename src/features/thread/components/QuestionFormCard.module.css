@@ -92,3 +92,60 @@
   font-size: 11.5px;
   color: var(--erd-color-text-tertiary, #8c8c8c);
 }
+
+.fieldHint {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin: 7px 0 0;
+  font-size: 11px;
+  color: var(--erd-color-text-tertiary, #8c8c8c);
+}
+
+.manageLink {
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  font-size: 11px;
+  color: var(--erd-color-primary, #1677ff);
+  cursor: pointer;
+}
+
+.searchInput,
+.textInput,
+.customInput,
+.customInputActive {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font: inherit;
+  font-size: 12.5px;
+  color: var(--erd-color-text, rgba(0, 0, 0, 0.88));
+  background: var(--erd-color-bg-container, #fff);
+  outline: none;
+}
+
+.searchInput {
+  margin-bottom: 7px;
+  border: 1px solid var(--erd-color-border, #d9d9d9);
+}
+
+.textInput {
+  border: 1px solid var(--erd-color-border, #d9d9d9);
+}
+
+.customInput,
+.customInputActive {
+  margin-top: 8px;
+}
+
+.customInput {
+  border: 1px solid var(--erd-color-border, #d9d9d9);
+}
+
+/* The mockup turns the border primary once a custom range is typed. */
+.customInputActive {
+  border: 1px solid var(--erd-color-primary-border, #91caff);
+}

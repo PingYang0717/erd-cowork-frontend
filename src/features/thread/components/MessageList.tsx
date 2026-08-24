@@ -13,6 +13,7 @@ import { AttachmentChip } from '@/features/file-upload/components/AttachmentChip
 import type { Message, QuestionForm, StepItem, StepStatus } from '@/types/api';
 import { formatDuration } from '@/utils/formatDuration';
 
+import { AnsweredConditions } from './AnsweredConditions';
 import styles from './MessageList.module.css';
 import { type Answers, QuestionFormCard } from './QuestionFormCard';
 import { ReplyText } from './ReplyText';
@@ -92,6 +93,16 @@ function MessageBubble({ message }: { message: Message }) {
           )}
           <span className={styles.userText}>{message.text}</span>
         </div>
+      </div>
+    );
+  }
+
+  // A message that only carries answered conditions is the record of a reask, not a
+  // reply: it has no text and no steps of its own.
+  if (message.answeredForm && message.answers) {
+    return (
+      <div className={styles.aiRow}>
+        <AnsweredConditions form={message.answeredForm} answers={message.answers} />
       </div>
     );
   }
