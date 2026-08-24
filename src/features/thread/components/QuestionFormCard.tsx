@@ -42,8 +42,16 @@ function ChipGroup({
   onToggle: (value: string) => void;
 }) {
   const selected = answers[field.key];
-  const isSelected = (value: string) =>
-    Array.isArray(selected) ? selected.includes(value) : selected === value;
+  const isSelected = (value: string) => {
+    if (Array.isArray(selected)) {
+      return selected.includes(value);
+    }
+    // A boolean field has exactly one chip, and the chip IS the field's value.
+    if (field.kind === 'boolean') {
+      return selected === true;
+    }
+    return selected === value;
+  };
 
   const needle = search.trim().toLowerCase();
   const options = (field.options ?? []).filter(
@@ -104,17 +112,19 @@ export function QuestionFormCard({
   function toggle(field: QuestionField, value: string) {
     setAnswers((previous) => {
       const next: Answers =
-        field.kind === 'multi'
-          ? (() => {
-              const current = (previous[field.key] as string[] | undefined) ?? [];
-              return {
-                ...previous,
-                [field.key]: current.includes(value)
-                  ? current.filter((entry) => entry !== value)
-                  : [...current, value],
-              };
-            })()
-          : { ...previous, [field.key]: value };
+        field.kind === 'boolean'
+          ? { ...previous, [field.key]: previous[field.key] !== true }
+          : field.kind === 'multi'
+            ? (() => {
+                const current = (previous[field.key] as string[] | undefined) ?? [];
+                return {
+                  ...previous,
+                  [field.key]: current.includes(value)
+                    ? current.filter((entry) => entry !== value)
+                    : [...current, value],
+                };
+              })()
+            : { ...previous, [field.key]: value };
 
       // Changing a trigger discards whatever was answered beneath it. Hiding the answer
       // but keeping it would submit a Flow the user can no longer see, under a role it
