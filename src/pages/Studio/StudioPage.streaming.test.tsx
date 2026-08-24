@@ -437,7 +437,7 @@ describe('Streaming a run in the Studio', () => {
       const partIds = screen.getByRole('group', { name: 'Part ID' });
       expect(within(partIds).getByRole('button', { name: 'N5' })).toBeInTheDocument();
 
-      await user.type(screen.getByRole('textbox', { name: 'Part ID' }), 'A14');
+      await user.type(screen.getByRole('textbox', { name: '搜尋 Part ID' }), 'A14');
 
       expect(within(partIds).getByRole('button', { name: 'A14' })).toBeInTheDocument();
       expect(within(partIds).queryByRole('button', { name: 'N5' })).not.toBeInTheDocument();
@@ -525,6 +525,56 @@ describe('Streaming a run in the Studio', () => {
         answers: { mineOnly: true },
         inReplyTo: 'cptest-conditions',
       });
+    });
+
+    it('stops mid-run to ask which DC items to chart first', async () => {
+      const user = userEvent.setup();
+      renderStudioPage();
+
+      await startAnalysis(user);
+
+      // Answer only the opening conditions — the second reask is what this is about.
+      await screen.findByText('分析條件');
+      await user.click(
+        within(screen.getByRole('group', { name: 'Part ID' })).getByRole('button', { name: 'A14' }),
+      );
+      await user.click(
+        within(screen.getByRole('group', { name: 'Time range' })).getByRole('button', {
+          name: 'Last 7 days',
+        }),
+      );
+      await user.click(
+        within(screen.getByRole('group', { name: 'Data type' })).getByRole('button', {
+          name: 'Inline',
+        }),
+      );
+      await user.click(screen.getByRole('button', { name: '送出' }));
+
+      // The scan step ran, found too much, and handed back to the user.
+      expect(await screen.findByText(/要先看哪些 DC Item/)).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /^Worked through/ })).not.toBeInTheDocument();
+
+      const submit = screen.getByRole('button', { name: '先產生這 0 項' });
+      expect(submit).toBeDisabled();
+      expect(screen.getByText('至少選一項')).toBeInTheDocument();
+
+      // Each item carries the spec limits an engineer needs to judge it.
+      const items = screen.getByRole('group', { name: 'DC item' });
+      expect(within(items).getByRole('button', { name: /Vt \(gate CD\)/ })).toHaveAccessibleName(
+        /0\.28 – 0\.34 V/,
+      );
+
+      await user.type(screen.getByRole('textbox', { name: '搜尋 DC item' }), 'Vt');
+      expect(within(items).queryByRole('button', { name: /Idsat/ })).not.toBeInTheDocument();
+
+      await user.click(within(items).getByRole('button', { name: /Vt \(gate CD\)/ }));
+      expect(screen.getByRole('button', { name: '先產生這 1 項' })).toBeEnabled();
+      expect(screen.getByText('已選 1 項')).toBeInTheDocument();
+
+      await user.click(screen.getByRole('button', { name: '先產生這 1 項' }));
+
+      await screen.findByRole('button', { name: /^Worked through \d+ steps$/ });
+      expect(screen.getByText(/Done — recomputed control limits/)).toBeInTheDocument();
     });
 
     it('leaves the answered conditions in the thread, collapsed', async () => {

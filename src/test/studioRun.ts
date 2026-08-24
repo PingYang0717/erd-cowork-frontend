@@ -3,42 +3,48 @@ import type userEvent from '@testing-library/user-event';
 
 type User = ReturnType<typeof userEvent.setup>;
 
-/** Fills in whichever opening reask the Scenario asked for and submits it.
- *  SPC / Inline / CP Test all ask before they run (ADR-0006); Daily monitor does not,
- *  so this is a no-op when no form is on screen. */
-export async function answerAnalysisConditions(user: User): Promise<void> {
-  const submit = screen.queryByRole('button', { name: '送出' });
+const SUBMIT_LABEL = /^(送出|開始分析|先產生這 \d+ 項)$/;
 
-  if (submit) {
-    await user.click(
-      within(screen.getByRole('group', { name: 'Part ID' })).getByRole('button', { name: 'A14' }),
-    );
-    await user.click(
-      within(screen.getByRole('group', { name: 'Time range' })).getByRole('button', {
-        name: 'Last 7 days',
-      }),
-    );
-    await user.click(
-      within(screen.getByRole('group', { name: 'Data type' })).getByRole('button', {
-        name: 'Inline',
-      }),
-    );
-    await user.click(submit);
-    return;
+async function waitForForm(): Promise<HTMLElement | null> {
+  try {
+    return await screen.findByRole('button', { name: SUBMIT_LABEL }, { timeout: 1500 });
+  } catch {
+    return null;
+  }
+}
+
+function chip(groupName: string, chipName: string | RegExp) {
+  return within(screen.getByRole('group', { name: groupName })).getByRole('button', {
+    name: chipName,
+  });
+}
+
+async function answerOneForm(user: User, submit: HTMLElement): Promise<void> {
+  if (screen.queryByRole('group', { name: 'Part ID' })) {
+    await user.click(chip('Part ID', 'A14'));
+    await user.click(chip('Time range', 'Last 7 days'));
+    await user.click(chip('Data type', 'Inline'));
+  } else if (screen.queryByRole('group', { name: '你的角色' })) {
+    await user.click(chip('你的角色', 'INT Baseline'));
+    await user.click(chip('時間區間', '近 7 天'));
+  } else if (screen.queryByRole('group', { name: 'DC item' })) {
+    await user.click(chip('DC item', /Vt \(gate CD\)/));
   }
 
-  const start = screen.queryByRole('button', { name: '開始分析' });
-  if (start) {
-    await user.click(
-      within(screen.getByRole('group', { name: '你的角色' })).getByRole('button', {
-        name: 'INT Baseline',
-      }),
-    );
-    await user.click(
-      within(screen.getByRole('group', { name: '時間區間' })).getByRole('button', {
-        name: '近 7 天',
-      }),
-    );
-    await user.click(start);
+  // The submit label carries a live count, so re-read it rather than reusing the node.
+  await user.click(screen.getByRole('button', { name: SUBMIT_LABEL }));
+  void submit;
+}
+
+/** Answers every reask a run raises, in order, with a plausible set of conditions.
+ *  SPC asks twice (conditions, then which DC items to chart first); Inline and CP Test
+ *  ask once; Daily monitor does not ask at all, so this is a no-op there. */
+export async function answerAnalysisConditions(user: User): Promise<void> {
+  for (let round = 0; round < 3; round += 1) {
+    const submit = await waitForForm();
+    if (!submit) {
+      return;
+    }
+    await answerOneForm(user, submit);
   }
 }

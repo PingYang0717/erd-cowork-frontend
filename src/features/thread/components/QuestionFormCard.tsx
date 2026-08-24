@@ -9,6 +9,29 @@ import styles from './QuestionFormCard.module.css';
 /** Above this many options a field gets a search box rather than a wall of chips. */
 const SEARCHABLE_FROM = 4;
 
+/** How many values the user has picked across the whole form. Drives the submit label
+ *  of a form that asks "how many first?" — the DC item reask counts what it will chart. */
+function countAnswers(answers: Answers): number {
+  return Object.values(answers).reduce<number>((total, answer) => {
+    if (Array.isArray(answer)) {
+      return total + answer.length;
+    }
+    return answer === false || answer === '' || answer === undefined ? total : total + 1;
+  }, 0);
+}
+
+/** A chip's label carries its spec limits when the field has them, so an engineer can
+ *  judge an item without opening anything. */
+function optionLabel(option: { label: string; unit?: string; lo?: number; hi?: number }): string {
+  if (option.lo === undefined || option.hi === undefined || option.unit === undefined) {
+    return option.label;
+  }
+  if (option.unit === '') {
+    return option.label;
+  }
+  return `${option.label} · ${option.lo} – ${option.hi} ${option.unit}`;
+}
+
 export type Answers = Record<string, QuestionAnswer>;
 
 function isVisible(field: QuestionField, answers: Answers): boolean {
@@ -69,7 +92,7 @@ function ChipGroup({
           className={isSelected(option.value) ? styles.chipSelected : styles.chip}
           onClick={() => onToggle(option.value)}
         >
-          {option.label}
+          {optionLabel(option)}
         </button>
       ))}
     </div>
@@ -139,6 +162,8 @@ export function QuestionFormCard({
     });
   }
 
+  const selectedCount = countAnswers(answers);
+  const submitLabel = form.submitLabel.replace('{count}', String(selectedCount));
   const visibleFields = form.fields.filter((field) => isVisible(field, answers));
   const canSubmit = visibleFields
     .filter((field) => field.required)
@@ -151,7 +176,8 @@ export function QuestionFormCard({
 
       {visibleFields.map((field) => {
         const options = field.options ?? [];
-        const isSearchable = field.kind === 'multi' && options.length > SEARCHABLE_FROM;
+        const isSearchable =
+          (field.kind === 'multi' || field.kind === 'dcitem') && options.length > SEARCHABLE_FROM;
         const answer = answers[field.key];
         // A typed value that no chip offers — the mockup highlights the input for it.
         const isCustom =
@@ -166,7 +192,7 @@ export function QuestionFormCard({
 
             {isSearchable && (
               <input
-                aria-label={field.label}
+                aria-label={`搜尋 ${field.label}`}
                 placeholder={field.placeholder}
                 value={searches[field.key] ?? ''}
                 className={styles.searchInput}
@@ -196,7 +222,7 @@ export function QuestionFormCard({
             {field.allowCustom && (
               <input
                 aria-label={field.label}
-                placeholder={field.placeholder}
+                placeholder={field.customPlaceholder ?? field.placeholder}
                 value={isCustom ? String(answer) : ''}
                 className={isCustom ? styles.customInputActive : styles.customInput}
                 onChange={(event) => setFieldText(field, event.target.value)}
@@ -216,9 +242,11 @@ export function QuestionFormCard({
           onClick={() => onSubmit(answers)}
         >
           <SendOutlined aria-hidden />
-          {form.submitLabel}
+          {submitLabel}
         </button>
-        {!canSubmit && <span className={styles.disabledHint}>{form.disabledHint}</span>}
+        <span className={styles.disabledHint}>
+          {canSubmit ? `已選 ${selectedCount} 項` : form.disabledHint}
+        </span>
       </div>
     </div>
   );

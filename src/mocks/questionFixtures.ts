@@ -1,5 +1,6 @@
 import type { QuestionField, QuestionForm } from '@/types/api/agentEvent';
 import type { Connector } from '@/types/api/connector';
+import type { DcItem } from '@/types/api/dcItem';
 import type { ScenarioKey } from '@/types/api/scenario';
 
 // eRDWorkspace20260819.html:9315
@@ -128,4 +129,41 @@ export function openingQuestion(
     return cpTestConditions();
   }
   return null;
+}
+
+/** The reask an SPC run raises mid-flight: the scan found more DC items than are worth
+ *  charting in one go, so the user picks which to see first
+ *  (eRDWorkspace20260819.html:10290-10312, :83224-83480). */
+export function dcItemQuestion(dcItems: DcItem[], rowsPerItem: number): QuestionForm {
+  const total = dcItems.length;
+  const rows = (total * rowsPerItem).toLocaleString('en-US');
+
+  return {
+    formKey: 'dc-item-scope',
+    title: 'DC item',
+    intro:
+      `約 ${total} 個 DC item(約 ${rows} 筆),資料量偏大。要先看哪些 DC Item?可勾選或自行輸入。` +
+      `建議先選 3–5 項快速出圖確認;沒問題我再一次幫你補上其餘或全部 ${total} 項。`,
+    fields: [
+      {
+        key: 'dcItems',
+        label: 'DC item',
+        kind: 'dcitem',
+        required: true,
+        allowCustom: true,
+        placeholder: '搜尋 DC item…',
+        customPlaceholder: '自訂 DC item…',
+        options: dcItems.map((item) => ({
+          value: item.id,
+          label: item.name,
+          unit: item.unit,
+          lo: item.lo,
+          hi: item.hi,
+        })),
+      },
+    ],
+    submitLabel: '先產生這 {count} 項',
+    disabledHint: '至少選一項',
+    summaryLabel: 'DC item',
+  };
 }
