@@ -443,6 +443,90 @@ describe('Streaming a run in the Studio', () => {
       expect(within(partIds).queryByRole('button', { name: 'N5' })).not.toBeInTheDocument();
     });
 
+    it('asks CP Test for its own conditions, swapping the field that depends on the role', async () => {
+      const user = userEvent.setup();
+      renderStudioPage();
+
+      await selectASession(user);
+      await user.click(screen.getByRole('button', { name: 'CP Test status' }));
+
+      await screen.findByText('分析條件');
+      expect(screen.getByRole('group', { name: '你的角色' })).toBeInTheDocument();
+      expect(screen.queryByRole('group', { name: 'Flow' })).not.toBeInTheDocument();
+      expect(screen.getByRole('button', { name: '開始分析' })).toBeDisabled();
+
+      await user.click(screen.getByRole('button', { name: 'INT Baseline' }));
+      expect(screen.getByRole('group', { name: 'Flow' })).toBeInTheDocument();
+
+      await user.click(screen.getByRole('button', { name: '其他' }));
+      expect(screen.queryByRole('group', { name: 'Flow' })).not.toBeInTheDocument();
+      expect(screen.getByRole('textbox', { name: '自行輸入範圍' })).toBeInTheDocument();
+
+      await user.click(screen.getByRole('button', { name: 'INT Loop' }));
+      expect(screen.getByRole('group', { name: 'Loop' })).toBeInTheDocument();
+      await user.click(screen.getByRole('button', { name: 'M1' }));
+
+      await user.click(screen.getByRole('button', { name: '近 7 天' }));
+
+      const mineOnly = screen.getByRole('button', { name: '只看我送測的 (王小明)' });
+      expect(mineOnly).toHaveAttribute('aria-pressed', 'false');
+      await user.click(mineOnly);
+      expect(mineOnly).toHaveAttribute('aria-pressed', 'true');
+
+      await user.click(screen.getByRole('button', { name: '開始分析' }));
+
+      await screen.findByRole('button', { name: /^Worked through \d+ steps$/ });
+      expect(screen.getByText(/CP Test status dashboard is ready/)).toBeInTheDocument();
+    });
+
+    it('sends a boolean field as a boolean, and lets it be switched back off', async () => {
+      const user = userEvent.setup();
+      const stream = mockAgentStream();
+      renderStudioPage();
+
+      await selectASession(user);
+      await user.click(screen.getByRole('button', { name: 'CP Test status' }));
+
+      act(() =>
+        stream.push({
+          type: 'QUESTION',
+          form: {
+            formKey: 'cptest-conditions',
+            title: '分析條件',
+            fields: [
+              {
+                key: 'mineOnly',
+                label: '檢視',
+                kind: 'boolean',
+                required: false,
+                options: [{ value: 'mineOnly', label: '只看我送測的 (王小明)' }],
+              },
+            ],
+            submitLabel: '開始分析',
+            disabledHint: '',
+            summaryLabel: '分析條件',
+          },
+        }),
+      );
+
+      const mineOnly = await screen.findByRole('button', { name: '只看我送測的 (王小明)' });
+      await user.click(mineOnly);
+      expect(mineOnly).toHaveAttribute('aria-pressed', 'true');
+
+      // Clicking it again switches it off rather than re-selecting it.
+      await user.click(mineOnly);
+      expect(mineOnly).toHaveAttribute('aria-pressed', 'false');
+
+      await user.click(mineOnly);
+      await user.click(screen.getByRole('button', { name: '開始分析' }));
+
+      await waitFor(() => expect(stream.requests).toHaveLength(2));
+      expect(stream.requests[1]).toEqual({
+        answers: { mineOnly: true },
+        inReplyTo: 'cptest-conditions',
+      });
+    });
+
     it('leaves the answered conditions in the thread, collapsed', async () => {
       const user = userEvent.setup();
       renderStudioPage();

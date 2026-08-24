@@ -14,6 +14,12 @@ function answerLabels(form: QuestionForm, answers: Record<string, QuestionAnswer
       continue;
     }
 
+    // A boolean field's answer is the field being on, so its single option is the label.
+    if (answer === true) {
+      labels.push(field.options?.[0]?.label ?? field.label);
+      continue;
+    }
+
     const values = Array.isArray(answer) ? answer : [String(answer)];
     for (const value of values) {
       // A value the field offered shows its label; a custom one shows as typed.
