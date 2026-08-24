@@ -158,7 +158,7 @@ function ArtifactPanelContent({ artifactId }: { artifactId: string }) {
         </Tooltip>
       </div>
       <div className={styles.frameWrapper}>
-        <ArtifactFrame html={data.html} theme={theme} />
+        <ArtifactFrame html={data.html} theme={theme} artifactId={artifactId} />
       </div>
       {artifact && (
         <ShareArtifactDialog

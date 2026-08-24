@@ -123,7 +123,9 @@ export function ArtifactFullPageView({ artifactId }: { artifactId: string | unde
       </div>
       <div className={styles.body}>
         {isError && <div className={styles.empty}>Artifact not found.</div>}
-        {data && <ArtifactFrame html={data.html} theme={theme} />}
+        {data && artifactId && (
+          <ArtifactFrame html={data.html} theme={theme} artifactId={artifactId} />
+        )}
       </div>
       {artifact && (
         <ShareArtifactDialog

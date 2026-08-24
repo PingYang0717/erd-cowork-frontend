@@ -3,6 +3,8 @@ import { useQueryClient } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 import { useEffect, useRef } from 'react';
 
+import { useArtifactRepair } from '@/features/artifact/hooks/useArtifactRepair';
+import { useRepairOfferStore } from '@/features/artifact/store/useRepairOfferStore';
 import { useSessionSelectionStore } from '@/features/session/store/useSessionSelectionStore';
 import { ThemeToggle } from '@/features/theme/components/ThemeToggle';
 
@@ -13,6 +15,7 @@ import { useActiveRunStore } from '../store/useActiveRunStore';
 import { ChatComposer } from './ChatComposer';
 import { MessageList } from './MessageList';
 import type { Answers } from './QuestionFormCard';
+import { RepairOfferCard } from './RepairOfferCard';
 import styles from './ThreadPanel.module.css';
 
 function ThreadHeader() {
@@ -72,6 +75,14 @@ function ThreadView({ sessionId }: { sessionId: string }) {
   const messages = data ?? [];
   const { state, send, stop } = useAgentStream(sessionId);
   const setStreamedArtifactId = useActiveRunStore((s) => s.setStreamedArtifactId);
+  const repairOffer = useRepairOfferStore((store) => store.offer);
+  const dismissRepair = useRepairOfferStore((store) => store.dismiss);
+  const clearRepair = useRepairOfferStore((store) => store.clear);
+  const repair = useArtifactRepair();
+
+  // An offer belongs to one artifact in one session. Moving away from that session
+  // leaves it pointing at something the user is no longer looking at.
+  useEffect(() => clearRepair, [sessionId, clearRepair]);
   const bodyRef = useRef<HTMLDivElement>(null);
 
   // Publishing to the Artifact pane is syncing with something outside this tree, and it
@@ -142,6 +153,13 @@ function ThreadView({ sessionId }: { sessionId: string }) {
           <EmptyState
             heading="Start an analysis"
             subtitle={'Try "Daily monitor (A14)" below, or ask for an SPC analysis on Vt.'}
+          />
+        )}
+        {repairOffer && (
+          <RepairOfferCard
+            offer={repairOffer}
+            onConfirm={() => repair(repairOffer.artifactId, repairOffer.errors)}
+            onDismiss={dismissRepair}
           />
         )}
       </div>

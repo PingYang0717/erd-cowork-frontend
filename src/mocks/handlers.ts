@@ -517,6 +517,32 @@ export const handlers = [
     return HttpResponse.json({ html: fixture[theme] });
   }),
 
+  // Rebuilding an artifact whose HTML threw. Every repair here succeeds and bumps a
+  // version — a real backend can also come back empty-handed, which the UI already
+  // handles; tests exercise that path by stubbing this endpoint.
+  http.post('/api/artifacts/:id/repair', ({ params }) => {
+    const artifact = artifacts.read().find((a) => a.id === params.id);
+    if (!artifact) {
+      return new HttpResponse(null, { status: 404 });
+    }
+
+    const versions = artifactVersions.read();
+    const mine = versions.filter((v) => v.artifactId === artifact.id);
+    artifactVersions.write([
+      ...versions,
+      {
+        id: crypto.randomUUID(),
+        artifactId: artifact.id,
+        n: mine.length + 1,
+        label: artifact.name,
+        createdAt: new Date().toISOString(),
+        generated: false,
+      },
+    ]);
+
+    return HttpResponse.json({ repaired: true });
+  }),
+
   http.get('/api/artifacts/:id/versions', ({ params }) => {
     const versions = artifactVersions.read().filter((v) => v.artifactId === params.id);
     return HttpResponse.json(versions);
