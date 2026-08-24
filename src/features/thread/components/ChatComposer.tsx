@@ -1,6 +1,7 @@
 import {
   ApiOutlined,
   ArrowUpOutlined,
+  BorderOutlined,
   DashboardOutlined,
   DotChartOutlined,
   FileAddOutlined,
@@ -68,9 +69,12 @@ const SUGGESTED_PROMPTS: {
 interface ChatComposerProps {
   onSend: (input: SendMessageInput) => void;
   disabled: boolean;
+  /** While a run is streaming the send control becomes a stop control. */
+  isStreaming: boolean;
+  onStop: () => void;
 }
 
-export function ChatComposer({ onSend, disabled }: ChatComposerProps) {
+export function ChatComposer({ onSend, disabled, isStreaming, onStop }: ChatComposerProps) {
   const [draft, setDraft] = useState('');
   const [fileModalOpen, setFileModalOpen] = useState(false);
   const [connectorsOpen, setConnectorsOpen] = useState(false);
@@ -188,16 +192,28 @@ export function ChatComposer({ onSend, disabled }: ChatComposerProps) {
               }
             }}
           />
-          <button
-            type="button"
-            className={styles.sendButton}
-            disabled={disabled}
-            onClick={submitDraft}
-            title="Send message"
-            aria-label="Send message"
-          >
-            <ArrowUpOutlined aria-hidden />
-          </button>
+          {isStreaming ? (
+            <button
+              type="button"
+              className={styles.stopButton}
+              onClick={onStop}
+              title="Stop"
+              aria-label="Stop"
+            >
+              <BorderOutlined aria-hidden />
+            </button>
+          ) : (
+            <button
+              type="button"
+              className={styles.sendButton}
+              disabled={disabled}
+              onClick={submitDraft}
+              title="Send message"
+              aria-label="Send message"
+            >
+              <ArrowUpOutlined aria-hidden />
+            </button>
+          )}
         </div>
       </div>
       <FileAttachmentModal
