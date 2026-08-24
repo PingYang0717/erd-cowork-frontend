@@ -6,6 +6,10 @@
 }
 
 .header {
+  /* Fixed, never squeezed: without this the flex column shrinks the header on a short
+     viewport and it stops lining up with the Artifact panel's toolbar, which does pin
+     itself. Only .body flexes. */
+  flex: 0 0 auto;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -50,6 +54,7 @@
 }
 
 .composer {
+  flex: 0 0 auto;
   padding: 11px 20px 15px;
   background: var(--erd-color-bg-container, #fff);
   border-top: 1px solid var(--erd-color-border-secondary, #f0f0f0);
