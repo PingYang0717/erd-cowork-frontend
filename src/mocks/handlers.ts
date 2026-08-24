@@ -253,9 +253,62 @@ const FILTER_STEP: StepItem = {
   status: 'SUCCESS',
 };
 
+// A run has to arrive over time, not in one blob. Delivered as a single chunk the whole
+// thing lands in one microtask, React batches it into one render, and `isStreaming` goes
+// true → false without ever being painted — so the working card, the step statuses and
+// the typewriter reply are never seen. Tests that need to observe an intermediate state
+// still drive their own stream (`src/test/agentStream.ts`); these delays only exist so
+// mock mode behaves like the backend it stands in for.
+let streamPaceMs = 340;
+let tokenPaceMs = 22;
+
+/** Collapses the pacing for tests. Tests that need to observe an intermediate state
+ *  drive their own stream (`src/test/agentStream.ts`); the rest only care about where a
+ *  run ends up, and should not wait seconds to find out. */
+export function setStreamPace(stepMs: number, tokenMs: number): void {
+  streamPaceMs = stepMs;
+  tokenPaceMs = tokenMs;
+}
+
+function pace(milliseconds: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, milliseconds));
+}
+
 function sseResponse(events: AgentEvent[]) {
-  const sse = events.map((event) => `data: ${JSON.stringify(event)}\n\n`).join('');
-  return new HttpResponse(sse, {
+  const encoder = new TextEncoder();
+  let cancelled = false;
+
+  const body = new ReadableStream<Uint8Array>({
+    async start(controller) {
+      for (const event of events) {
+        // The reader goes away when the user stops the run or leaves the page. Writing
+        // into a controller nobody is reading throws, and an unpaced loop would keep
+        // producing a run that has already been abandoned.
+        if (cancelled) {
+          return;
+        }
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify(event)}\n\n`));
+
+        // Pace 0 means "no pacing at all", not "a zero-length wait": a macrotask per
+        // event is what makes a paced run visible, and tests that do not want the pacing
+        // do not want the scheduling either.
+        const delay = event.type === 'TOKEN' ? tokenPaceMs : streamPaceMs;
+        if (delay > 0) {
+          await pace(delay);
+        }
+      }
+
+      if (!cancelled) {
+        controller.close();
+      }
+    },
+
+    cancel() {
+      cancelled = true;
+    },
+  });
+
+  return new HttpResponse(body, {
     headers: { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache' },
   });
 }
