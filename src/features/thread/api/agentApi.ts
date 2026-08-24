@@ -3,6 +3,18 @@ import { createSseParser } from '@/utils/sseParser';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? '';
 
+/** A refusal the backend reported before the stream opened, carrying its own code so
+ *  the UI can say something better than "request failed". */
+export class AgentStreamHttpError extends Error {
+  readonly code: string;
+
+  constructor(code: string, message: string) {
+    super(message);
+    this.name = 'AgentStreamHttpError';
+    this.code = code;
+  }
+}
+
 export interface SendMessageArgs {
   sessionId: string;
   text: string;
@@ -21,6 +33,23 @@ export async function* streamAgentMessage(
     body: JSON.stringify({ text: args.text }),
     signal: args.signal,
   });
+
+  if (!response.ok) {
+    let code = String(response.status);
+    let message = 'Unknown error';
+    try {
+      const body = (await response.json()) as { code?: string; message?: string };
+      if (body.code) {
+        code = body.code;
+      }
+      if (body.message) {
+        message = body.message;
+      }
+    } catch {
+      // Not a JSON body — the status code alone is all we can report.
+    }
+    throw new AgentStreamHttpError(code, message);
+  }
 
   if (!response.body) {
     return;

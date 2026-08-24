@@ -8,6 +8,11 @@ export interface MockAgentStream {
   push(event: AgentEvent): void;
   /** Closes the stream, which is how a real run ends. */
   close(): void;
+  /** Kills the stream mid-flight, the way a dropped connection does — no close frame,
+   *  the reader just errors. */
+  disconnect(): void;
+  /** Whether the request itself was aborted (user stop, or the component unmounting). */
+  readonly wasAborted: boolean;
 }
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? '';
@@ -18,6 +23,7 @@ const API_BASE = import.meta.env.VITE_API_BASE_URL ?? '';
 export function mockAgentStream(): MockAgentStream {
   const encoder = new TextEncoder();
   let controller: ReadableStreamDefaultController<Uint8Array> | null = null;
+  let aborted = false;
   const buffered: string[] = [];
 
   function write(chunk: string): void {
@@ -29,7 +35,11 @@ export function mockAgentStream(): MockAgentStream {
   }
 
   server.use(
-    http.post(`${API_BASE}/sessions/:sessionId/messages`, () => {
+    http.post(`${API_BASE}/sessions/:sessionId/messages`, ({ request }) => {
+      request.signal.addEventListener('abort', () => {
+        aborted = true;
+      });
+
       const body = new ReadableStream<Uint8Array>({
         start(streamController) {
           controller = streamController;
@@ -53,5 +63,28 @@ export function mockAgentStream(): MockAgentStream {
     close() {
       controller?.close();
     },
+    disconnect() {
+      controller?.error(new Error('socket hang up'));
+    },
+    get wasAborted() {
+      return aborted;
+    },
   };
+}
+
+/** Makes the message endpoint fail before any stream opens, the way a real backend
+ *  reports a refusal: a non-2xx status with a JSON `{ code, message }` body. */
+export function mockAgentStreamRejection(failure: {
+  status: number;
+  code: string;
+  message: string;
+}): void {
+  server.use(
+    http.post(`${API_BASE}/sessions/:sessionId/messages`, () =>
+      HttpResponse.json(
+        { code: failure.code, message: failure.message },
+        { status: failure.status },
+      ),
+    ),
+  );
 }

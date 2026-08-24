@@ -1,8 +1,8 @@
-import { useCallback, useReducer, useRef } from 'react';
+import { useCallback, useEffect, useReducer, useRef } from 'react';
 
-import type { AgentEvent, StepItem } from '@/types/api/agentEvent';
+import type { AgentEvent, QuestionForm, StepItem, TableResult } from '@/types/api/agentEvent';
 
-import { streamAgentMessage } from '../api/agentApi';
+import { AgentStreamHttpError, streamAgentMessage } from '../api/agentApi';
 
 export interface AgentStreamState {
   isStreaming: boolean;
@@ -10,16 +10,48 @@ export interface AgentStreamState {
   stopped: boolean;
   steps: StepItem[];
   liveText: string;
+  answer: string | null;
+  artifact: { artifactId: string; title: string } | null;
+  question: QuestionForm | null;
+  error: { code: string; message: string } | null;
+  /** True only for an unexpected disconnection — never for a user-initiated stop
+   *  or a refusal the backend reported with a code. */
+  networkError: boolean;
+  // Live-only: thinking, code and tables belong to this connection, not to the
+  // thread history (ADR-0005).
+  thinking: string;
+  codeText: string;
+  tables: TableResult[];
+  /** Wall-clock milliseconds the finished run took; null while idle or streaming. */
+  durationMs: number | null;
 }
 
 type Action =
-  { type: 'START' } | { type: 'EVENT'; event: AgentEvent } | { type: 'STOPPED' } | { type: 'DONE' };
+  | { type: 'START' }
+  | { type: 'RESET' }
+  | { type: 'EVENT'; event: AgentEvent }
+  | { type: 'STOPPED' }
+  | { type: 'FAILED'; error: { code: string; message: string } }
+  | { type: 'DISCONNECTED'; durationMs: number }
+  | { type: 'DONE'; durationMs: number };
+
+const NETWORK_ERROR_CODE = 'NETWORK_ERROR';
+const NETWORK_ERROR_MESSAGE = '連線中斷，請重新送出一次';
 
 const initialState: AgentStreamState = {
   isStreaming: false,
   stopped: false,
   steps: [],
   liveText: '',
+  answer: null,
+  artifact: null,
+  question: null,
+  error: null,
+  networkError: false,
+  thinking: '',
+  codeText: '',
+  tables: [],
+  durationMs: null,
 };
 
 /** A step is identified by its `stepKey`: a later event for the same key is a status
@@ -39,6 +71,9 @@ function reducer(state: AgentStreamState, action: Action): AgentStreamState {
     case 'START':
       return { ...initialState, isStreaming: true };
 
+    case 'RESET':
+      return initialState;
+
     case 'EVENT': {
       const agentEvent = action.event;
 
@@ -57,6 +92,48 @@ function reducer(state: AgentStreamState, action: Action): AgentStreamState {
         case 'TOKEN':
           return { ...state, liveText: state.liveText + agentEvent.delta };
 
+        case 'ANSWER':
+          return { ...state, answer: agentEvent.text };
+
+        case 'ARTIFACT':
+          return {
+            ...state,
+            artifact: { artifactId: agentEvent.artifactId, title: agentEvent.title },
+          };
+
+        case 'QUESTION':
+          return { ...state, question: agentEvent.form };
+
+        case 'ERROR':
+          // Deliberately does NOT end the run: the backend keeps emitting its
+          // finalize steps after an ERROR, and the stream closing is what ends
+          // it (ADR-0005). Do not "fix" this into an early exit.
+          return {
+            ...state,
+            error: { code: agentEvent.code, message: agentEvent.message },
+          };
+
+        case 'THINKING':
+          return { ...state, thinking: state.thinking + agentEvent.delta };
+
+        case 'CODE':
+          return { ...state, codeText: state.codeText + agentEvent.delta };
+
+        case 'TABLE':
+          return {
+            ...state,
+            tables: [
+              ...state.tables,
+              {
+                tableId: agentEvent.tableId,
+                intent: agentEvent.intent,
+                columns: agentEvent.columns,
+                rows: agentEvent.rows,
+                truncated: agentEvent.truncated,
+              },
+            ],
+          };
+
         default:
           return state;
       }
@@ -65,8 +142,20 @@ function reducer(state: AgentStreamState, action: Action): AgentStreamState {
     case 'STOPPED':
       return { ...state, stopped: true };
 
+    case 'FAILED':
+      return { ...state, isStreaming: false, error: action.error };
+
+    case 'DISCONNECTED':
+      return {
+        ...state,
+        isStreaming: false,
+        durationMs: action.durationMs,
+        networkError: true,
+        error: { code: NETWORK_ERROR_CODE, message: NETWORK_ERROR_MESSAGE },
+      };
+
     case 'DONE':
-      return { ...state, isStreaming: false };
+      return { ...state, isStreaming: false, durationMs: action.durationMs };
 
     default:
       return state;
@@ -77,13 +166,25 @@ export function useAgentStream(sessionId: string): {
   state: AgentStreamState;
   send(text: string): Promise<void>;
   stop(): void;
+  reset(): void;
 } {
   const [state, dispatch] = useReducer(reducer, initialState);
   const controllerRef = useRef<AbortController | null>(null);
 
+  // Syncing with an external system (an open HTTP connection) is the one thing
+  // useEffect is still for: a run left in flight after unmount holds the socket open
+  // and dispatches into a torn-down reducer.
+  useEffect(
+    () => () => {
+      controllerRef.current?.abort();
+    },
+    [],
+  );
+
   const send = useCallback(
     async (text: string): Promise<void> => {
       dispatch({ type: 'START' });
+      const startedAt = Date.now();
 
       const controller = new AbortController();
       controllerRef.current = controller;
@@ -99,12 +200,23 @@ export function useAgentStream(sessionId: string): {
       } catch (error) {
         // A user-initiated stop is not a failure: the run simply ends where it is,
         // and everything already streamed stays on screen.
-        if (!(error instanceof Error && error.name === 'AbortError')) {
-          throw error;
+        if (error instanceof Error && error.name === 'AbortError') {
+          dispatch({ type: 'DONE', durationMs: Date.now() - startedAt });
+          return;
         }
+
+        if (error instanceof AgentStreamHttpError) {
+          dispatch({ type: 'FAILED', error: { code: error.code, message: error.message } });
+          return;
+        }
+
+        // Anything else is the connection dying under us: not user-initiated, and
+        // not something the backend got to report.
+        dispatch({ type: 'DISCONNECTED', durationMs: Date.now() - startedAt });
+        return;
       }
 
-      dispatch({ type: 'DONE' });
+      dispatch({ type: 'DONE', durationMs: Date.now() - startedAt });
     },
     [sessionId],
   );
@@ -116,5 +228,9 @@ export function useAgentStream(sessionId: string): {
     controllerRef.current?.abort();
   }, []);
 
-  return { state, send, stop };
+  const reset = useCallback((): void => {
+    dispatch({ type: 'RESET' });
+  }, []);
+
+  return { state, send, stop, reset };
 }
