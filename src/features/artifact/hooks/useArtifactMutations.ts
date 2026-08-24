@@ -38,6 +38,19 @@ export function useShareArtifact() {
   });
 }
 
+export function useGenerateArtifactVersion() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, versionId }: { id: string; versionId: string }) =>
+      artifactApi.generateVersion(id, versionId),
+    onSuccess: (_version, { id }) => {
+      queryClient.invalidateQueries({ queryKey: artifactQueryKey(id) });
+      queryClient.invalidateQueries({ queryKey: artifactsQueryKey });
+    },
+  });
+}
+
 export function useRegenerateArtifact() {
   const queryClient = useQueryClient();
 

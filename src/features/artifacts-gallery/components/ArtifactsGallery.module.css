@@ -60,6 +60,17 @@
   flex: 1;
 }
 
+/* Selected sort row: primary-bg highlight with the icon turned primary
+   (the antd item only adds a checkmark on its own). Applied to the antd
+   menu li via the item's className. */
+.sortMenuItemSelected {
+  background: var(--erd-color-primary-bg, #e6f4ff);
+}
+
+.sortMenuItemSelected .sortMenuItem :global(.anticon) {
+  color: var(--erd-color-primary, #1677ff);
+}
+
 .filters {
   margin-top: 16px;
   display: flex;

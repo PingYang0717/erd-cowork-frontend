@@ -19,24 +19,39 @@ type FilterCategory = 'all' | 'yours' | 'shared' | 'pinned';
 type SortKey = 'pinned' | 'recent' | 'name';
 
 const SORT_OPTIONS = [
-  { key: 'pinned', label: 'Pinned first', icon: <PushpinOutlined aria-hidden /> },
-  { key: 'recent', label: 'Most recent', icon: <ClockCircleOutlined aria-hidden /> },
-  { key: 'name', label: 'Name A→Z', icon: <SortAscendingOutlined aria-hidden /> },
+  { key: 'pinned', label: '釘選優先', icon: <PushpinOutlined aria-hidden /> },
+  { key: 'recent', label: '最近建立', icon: <ClockCircleOutlined aria-hidden /> },
+  { key: 'name', label: '名稱 A→Z', icon: <SortAscendingOutlined aria-hidden /> },
 ];
 
 const EMPTY_MESSAGES: Record<FilterCategory, string> = {
-  all: 'No artifacts yet.',
-  yours: "You don't have any artifacts yet.",
-  shared: 'Nothing has been shared with you yet.',
-  pinned: "You haven't pinned any artifacts yet.",
+  all: '目前還沒有 Artifact。',
+  yours: '你還沒有生成任何 Artifact。',
+  shared: '目前沒有分享給你的 Artifact。',
+  pinned: '你還沒有釘選任何 Artifact。',
 };
+
+// An Artifact shared to the user more than once arrives as repeated rows for
+// the same id; one row per id is enough. Keyed by id — not name — so two
+// genuinely different Artifacts that happen to share a name both survive.
+// (Reintroduces, by id, what the earlier name-based dedupe got wrong.)
+function dedupeById(artifacts: Artifact[]) {
+  const seen = new Set<string>();
+  return artifacts.filter((artifact) => {
+    if (seen.has(artifact.id)) {
+      return false;
+    }
+    seen.add(artifact.id);
+    return true;
+  });
+}
 
 function filterArtifacts(artifacts: Artifact[], category: FilterCategory) {
   switch (category) {
     case 'yours':
       return artifacts.filter((artifact) => artifact.mine);
     case 'shared':
-      return artifacts.filter((artifact) => !!artifact.sharedBy);
+      return dedupeById(artifacts.filter((artifact) => !!artifact.sharedBy));
     case 'pinned':
       return artifacts.filter((artifact) => artifact.pinned);
     default:
@@ -64,7 +79,7 @@ export function ArtifactsGallery() {
 
   const artifacts = data ?? [];
   const yoursCount = artifacts.filter((artifact) => artifact.mine).length;
-  const sharedCount = artifacts.filter((artifact) => !!artifact.sharedBy).length;
+  const sharedCount = dedupeById(artifacts.filter((artifact) => !!artifact.sharedBy)).length;
   const pinnedCount = artifacts.filter((artifact) => artifact.pinned).length;
 
   const visible = sortArtifacts(filterArtifacts(artifacts, category), sort);
@@ -72,6 +87,9 @@ export function ArtifactsGallery() {
 
   const sortMenuItems = SORT_OPTIONS.map((option) => ({
     key: option.key,
+    // The mockup highlights the selected row (primary-bg, primary icon), not
+    // just the checkmark.
+    className: option.key === sort ? styles.sortMenuItemSelected : undefined,
     label: (
       <span className={styles.sortMenuItem}>
         {option.icon}
@@ -96,7 +114,7 @@ export function ArtifactsGallery() {
         >
           <button type="button" className={styles.sortTrigger}>
             <SortAscendingOutlined aria-hidden />
-            <span>Sort:</span>
+            <span>排序:</span>
             <span className={styles.sortTriggerValue}>{activeSortOption.label}</span>
             <DownOutlined aria-hidden className={styles.sortTriggerChevron} />
           </button>
@@ -138,7 +156,7 @@ export function ArtifactsGallery() {
             <ArtifactCard
               key={artifact.id}
               artifact={artifact}
-              onOpen={(a) => navigate(`/cowork/artifact/${a.id}`)}
+              onOpen={(a) => navigate(`/cowork/artifact/${a.id}`, { state: { from: 'gallery' } })}
             />
           ))}
         </div>

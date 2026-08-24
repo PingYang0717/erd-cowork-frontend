@@ -1,13 +1,55 @@
-import { CloudUploadOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
+import {
+  CloseOutlined,
+  CloudUploadOutlined,
+  ExclamationCircleOutlined,
+  FileExcelOutlined,
+  FileTextOutlined,
+} from '@ant-design/icons';
 import { Button, Modal } from 'antd';
 import { useRef } from 'react';
 
 import type { Upload } from '@/types/api';
 import { formatBytes } from '@/utils/formatBytes';
 
-import { MAX_ATTACHMENT_COUNT, MAX_ATTACHMENT_TOTAL_BYTES } from '../hooks/useFileAttachments';
-import { AttachmentChip } from './AttachmentChip';
+import { ACCEPT_ATTRIBUTE, MAX_ATTACHMENT_COUNT } from '../hooks/useFileAttachments';
 import styles from './FileAttachmentModal.module.css';
+
+function fileExtension(fileName: string) {
+  const dot = fileName.lastIndexOf('.');
+  return dot === -1 ? '' : fileName.slice(dot + 1).toLowerCase();
+}
+
+// The mockup's file rows color the icon by type: csv = primary,
+// xlsx/xls = success.
+function FileRow({ upload, onRemove }: { upload: Upload; onRemove: () => void }) {
+  const ext = fileExtension(upload.fileName);
+  return (
+    <span className={styles.fileRow}>
+      <span
+        className={styles.fileRowIcon}
+        data-testid="file-type-icon"
+        data-file-type={ext}
+        aria-hidden="true"
+      >
+        {ext === 'csv' ? <FileTextOutlined /> : <FileExcelOutlined />}
+      </span>
+      <span className={styles.fileRowInfo}>
+        <span className={styles.fileRowName}>{upload.fileName}</span>
+        <span className={styles.fileRowMeta}>
+          {ext.toUpperCase()} · {formatBytes(upload.sizeBytes)}
+        </span>
+      </span>
+      <button
+        type="button"
+        className={styles.fileRowRemove}
+        aria-label={`Remove ${upload.fileName}`}
+        onClick={onRemove}
+      >
+        <CloseOutlined aria-hidden />
+      </button>
+    </span>
+  );
+}
 
 export function FileAttachmentModal({
   open,
@@ -35,6 +77,7 @@ export function FileAttachmentModal({
         ref={inputRef}
         type="file"
         multiple
+        accept={ACCEPT_ATTRIBUTE}
         className={styles.hiddenInput}
         aria-label="Choose files"
         onChange={(e) => {
@@ -64,10 +107,10 @@ export function FileAttachmentModal({
       >
         <CloudUploadOutlined aria-hidden className={styles.dropzoneIcon} />
         <div>
-          <span className={styles.dropzoneLink}>Click to choose</span> or drop files here
+          <span className={styles.dropzoneLink}>點擊選擇</span> 或把檔案拖拉到這裡
         </div>
         <div className={styles.dropzoneHint}>
-          Max {MAX_ATTACHMENT_COUNT} files · {formatBytes(MAX_ATTACHMENT_TOTAL_BYTES)} total
+          最多 {MAX_ATTACHMENT_COUNT} 個檔案 · 總計上限 5 GB
         </div>
       </div>
 
@@ -89,7 +132,7 @@ export function FileAttachmentModal({
           <ul className={styles.attachedList}>
             {attachments.map((upload) => (
               <li key={upload.id}>
-                <AttachmentChip upload={upload} onRemove={() => onRemoveFile(upload.fileName)} />
+                <FileRow upload={upload} onRemove={() => onRemoveFile(upload.fileName)} />
               </li>
             ))}
           </ul>

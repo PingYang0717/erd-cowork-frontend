@@ -36,7 +36,23 @@ describe('Artifact share dialog', () => {
     useThemeStore.setState(useThemeStore.getInitialState());
   });
 
-  it('shares an Artifact with a searched recipient and reflects the shared state', async () => {
+  it('shows the Artifact info card in the share dialog', async () => {
+    const user = userEvent.setup();
+    renderStudioPage();
+
+    await user.click(await screen.findByRole('button', { name: 'SPC — Vt (gate CD)' }));
+    await user.click(await screen.findByRole('button', { name: 'Share artifact' }));
+
+    const dialog = await screen.findByRole('dialog', { name: '分享 Artifact' });
+
+    // Info card: icon tile + name + "{kind} · eRD Cowork" + generated chip.
+    const infoCard = within(dialog).getByLabelText('Artifact 資訊');
+    expect(within(infoCard).getByText('SPC analysis — Vt (gate CD)')).toBeInTheDocument();
+    expect(within(infoCard).getByText('Dashboard · eRD Cowork')).toBeInTheDocument();
+    expect(within(infoCard).getByText('已生成')).toBeInTheDocument();
+  });
+
+  it('shares an Artifact with a searched recipient and shows the share link', async () => {
     const user = userEvent.setup();
     renderStudioPage();
 
@@ -56,6 +72,8 @@ describe('Artifact share dialog', () => {
       await within(dialog).findByDisplayValue(/\/cowork\/artifact\/artifact-1$/),
     ).toBeInTheDocument();
 
-    expect(await screen.findByRole('button', { name: 'Artifact shared' })).toBeInTheDocument();
+    // The mockup's share button carries no extra shared checkmark; it stays
+    // the plain Share control after sharing (ticket 03 removed the indicator).
+    expect(screen.getByRole('button', { name: 'Share artifact' })).toBeInTheDocument();
   });
 });

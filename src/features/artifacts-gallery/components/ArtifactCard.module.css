@@ -29,8 +29,47 @@
   color: var(--erd-color-primary, #1677ff);
 }
 
+/* The mockup tells slides decks apart from dashboards by thumbnail color. */
+.thumbnail[data-kind='slides'] {
+  background: var(--erd-color-fill-tertiary, rgba(0, 0, 0, 0.04));
+  color: var(--erd-color-text-secondary, rgba(0, 0, 0, 0.65));
+}
+
 .thumbnailIcon {
   font-size: 34px;
+}
+
+.sharedToMeOverlay {
+  position: absolute;
+  top: 8px;
+  left: 36px;
+  padding: 2px 7px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 600;
+  background: var(--erd-color-bg-container, #fff);
+  color: var(--erd-color-text-secondary, rgba(0, 0, 0, 0.65));
+  box-shadow: var(--shadow-sm, 0 1px 2px rgba(0, 0, 0, 0.05));
+}
+
+.sessionRow {
+  display: block;
+  margin-top: 3px;
+  font-size: 11.5px;
+  color: var(--erd-color-text-tertiary, #8c8c8c);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sharedBadge {
+  flex: none;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--erd-color-primary, #1677ff);
+  background: var(--erd-color-primary-bg, #e6f4ff);
+  border-radius: 5px;
+  padding: 1px 6px;
 }
 
 .body {

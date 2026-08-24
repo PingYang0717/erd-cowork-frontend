@@ -69,13 +69,13 @@ describe('StudioPage three-pane layout', () => {
 
     const rail = screen.getByRole('navigation', { name: 'Session list' });
     const handle = screen.getByRole('separator', { name: 'Resize session rail' });
-    expect(rail.style.width).toBe('280px');
+    expect(rail.style.width).toBe('270px');
 
     fireEvent.mouseDown(handle, { clientX: 300 });
     fireEvent.mouseMove(window, { clientX: 360 });
     fireEvent.mouseUp(window);
 
-    expect(rail.style.width).toBe('340px');
+    expect(rail.style.width).toBe('330px');
 
     fireEvent.mouseDown(handle, { clientX: 360 });
     fireEvent.mouseMove(window, { clientX: 2000 });
@@ -89,13 +89,13 @@ describe('StudioPage three-pane layout', () => {
 
     const thread = screen.getByRole('region', { name: 'Thread' });
     const handle = screen.getByRole('separator', { name: 'Resize thread panel' });
-    expect(thread.style.width).toBe('480px');
+    expect(thread.style.width).toBe('430px');
 
     fireEvent.mouseDown(handle, { clientX: 300 });
     fireEvent.mouseMove(window, { clientX: 200 });
     fireEvent.mouseUp(window);
 
-    expect(thread.style.width).toBe('380px');
+    expect(thread.style.width).toBe('330px');
 
     fireEvent.mouseDown(handle, { clientX: 200 });
     fireEvent.mouseMove(window, { clientX: -1000 });
@@ -134,7 +134,7 @@ describe('StudioPage three-pane layout', () => {
 
     expect(screen.getByRole('button', { name: 'New chat' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Schedule' })).toBeInTheDocument();
-    expect(rail.style.width).toBe('280px');
+    expect(rail.style.width).toBe('270px');
   });
 
   it('keeps panel widths as session-only state that resets on reload, per architecture.md', async () => {
@@ -145,12 +145,12 @@ describe('StudioPage three-pane layout', () => {
     });
     fireEvent.mouseMove(window, { clientX: 360 });
     fireEvent.mouseUp(window);
-    expect(screen.getByRole('navigation', { name: 'Session list' }).style.width).toBe('340px');
+    expect(screen.getByRole('navigation', { name: 'Session list' }).style.width).toBe('330px');
 
     await renderReloadedStudioPage();
 
     expect(screen.getAllByRole('navigation', { name: 'Session list' })[1].style.width).toBe(
-      '280px',
+      '270px',
     );
   });
 });
@@ -168,6 +168,31 @@ describe('Session rail', () => {
 
     const recent = screen.getByRole('region', { name: 'Recents sessions' });
     expect(within(recent).getByRole('button', { name: 'Defect pareto — W12' })).toBeInTheDocument();
+  });
+
+  it('keeps the session groups in a scrollable region separate from the fixed New chat and nav rows', async () => {
+    renderStudioPage();
+
+    await screen.findByRole('region', { name: 'Pinned sessions' });
+    const scroll = screen.getByTestId('session-scroll');
+    expect(within(scroll).getByRole('region', { name: 'Pinned sessions' })).toBeInTheDocument();
+    expect(within(scroll).getByRole('region', { name: 'Recents sessions' })).toBeInTheDocument();
+    // The fixed rows stay outside the scrolling region.
+    expect(within(scroll).queryByRole('button', { name: 'New chat' })).not.toBeInTheDocument();
+    expect(within(scroll).queryByRole('button', { name: /^Schedule/ })).not.toBeInTheDocument();
+  });
+
+  it('keeps the Recents header visible when there are no recent sessions, with an empty-state line', async () => {
+    const user = userEvent.setup();
+    renderStudioPage();
+
+    await user.click(
+      await screen.findByRole('button', { name: 'More actions for Defect pareto — W12' }),
+    );
+    await user.click(screen.getByRole('menuitem', { name: 'Delete' }));
+
+    const recents = await screen.findByRole('region', { name: 'Recents sessions' });
+    expect(await within(recents).findByText('No recent chats.')).toBeInTheDocument();
   });
 
   it('creates a new session via "New chat" and selects it', async () => {
@@ -198,7 +223,9 @@ describe('Session rail', () => {
     expect(
       await within(pinned).findByRole('button', { name: 'Defect pareto — W12' }),
     ).toBeInTheDocument();
-    expect(screen.queryByRole('region', { name: 'Recents sessions' })).not.toBeInTheDocument();
+    // The Recents header stays put with its empty-state line (ticket 12).
+    const recents = screen.getByRole('region', { name: 'Recents sessions' });
+    expect(within(recents).getByText('No recent chats.')).toBeInTheDocument();
   });
 
   it('unpins a pinned session from its more-actions menu, moving it into Recent', async () => {
@@ -252,12 +279,15 @@ describe('Session rail', () => {
     const user = userEvent.setup();
     renderStudioPage();
 
-    await screen.findByRole('region', { name: 'Recents sessions' });
-    await user.click(screen.getByRole('button', { name: 'More actions for Defect pareto — W12' }));
+    await user.click(
+      await screen.findByRole('button', { name: 'More actions for Defect pareto — W12' }),
+    );
     await user.click(screen.getByRole('menuitem', { name: 'Delete' }));
 
     expect(screen.queryByRole('button', { name: 'Defect pareto — W12' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('region', { name: 'Recents sessions' })).not.toBeInTheDocument();
+    // The Recents header stays put with its empty-state line (ticket 12).
+    const recents = screen.getByRole('region', { name: 'Recents sessions' });
+    expect(within(recents).getByText('No recent chats.')).toBeInTheDocument();
   });
 
   it('keeps a created, renamed, and pinned session in the right section after a simulated reload', async () => {

@@ -62,11 +62,34 @@ describe('File attachments', () => {
     renderStudioPage();
     const dialog = await selectASessionAndOpenFileModal(user);
 
+    // The dropzone speaks the mockup's Chinese copy.
+    expect(within(dialog).getByText('點擊選擇')).toBeInTheDocument();
+    expect(within(dialog).getByText('最多 5 個檔案 · 總計上限 5 GB')).toBeInTheDocument();
+
     const input = screen.getByLabelText('Choose files');
     await user.upload(input, fileOfSize('lot-genealogy.csv', 1024));
 
     expect(await within(dialog).findByText('lot-genealogy.csv')).toBeInTheDocument();
     expect(await within(composerAttachments()).findByText('lot-genealogy.csv')).toBeInTheDocument();
+  });
+
+  it('rejects unsupported file types with the Chinese error and an accept attribute on the input', async () => {
+    // applyAccept off simulates a file arriving past the picker (drag & drop).
+    const user = userEvent.setup({ applyAccept: false });
+    renderStudioPage();
+    const dialog = await selectASessionAndOpenFileModal(user);
+
+    const input = screen.getByLabelText('Choose files');
+    expect(input).toHaveAttribute('accept', '.csv,.xlsx,.xls');
+
+    await user.upload(input, fileOfSize('notes.pdf', 1024));
+
+    expect(await within(dialog).findByRole('alert')).toHaveTextContent('僅支援 .csv / .xlsx');
+    expect(within(dialog).queryByText('notes.pdf')).not.toBeInTheDocument();
+
+    // Supported types still go through afterwards.
+    await user.upload(input, fileOfSize('lots.xlsx', 1024));
+    expect(await within(dialog).findByText('lots.xlsx')).toBeInTheDocument();
   });
 
   it('caps attachments at 5 files and warns when more are dropped at once', async () => {
@@ -78,7 +101,7 @@ describe('File attachments', () => {
     const files = Array.from({ length: 6 }, (_, i) => fileOfSize(`file-${i}.csv`, 1024));
     await user.upload(input, files);
 
-    expect(await within(dialog).findByRole('alert')).toHaveTextContent('Max 5 files');
+    expect(await within(dialog).findByRole('alert')).toHaveTextContent('最多 5 個檔案');
     expect(within(dialog).getAllByRole('button', { name: /^Remove file-/ })).toHaveLength(5);
     expect(within(dialog).queryByText('file-5.csv')).not.toBeInTheDocument();
   });
@@ -94,12 +117,37 @@ describe('File attachments', () => {
 
     await user.upload(input, fileOfSize('big-2.csv', 2 * GB));
 
-    expect(await within(dialog).findByRole('alert')).toHaveTextContent('Total size limit is 5 GB');
+    expect(await within(dialog).findByRole('alert')).toHaveTextContent('總計上限 5 GB');
     expect(within(dialog).queryByText('big-2.csv')).not.toBeInTheDocument();
     expect(within(dialog).getByText('big-1.csv')).toBeInTheDocument();
   });
 
-  it('sends attachments with the message and clears the composer', async () => {
+  it('renders modal file rows with a type-colored icon, a type/size line, and a remove button', async () => {
+    const user = userEvent.setup();
+    renderStudioPage();
+    const dialog = await selectASessionAndOpenFileModal(user);
+
+    const input = screen.getByLabelText('Choose files');
+    await user.upload(input, [
+      fileOfSize('lot-genealogy.csv', 1024),
+      fileOfSize('yields.xlsx', 2048),
+    ]);
+
+    const csvRow = (await within(dialog).findByText('lot-genealogy.csv')).closest(
+      'li',
+    ) as HTMLElement;
+    expect(within(csvRow).getByText('CSV · 1.0 KB')).toBeInTheDocument();
+    expect(within(csvRow).getByTestId('file-type-icon')).toHaveAttribute('data-file-type', 'csv');
+    expect(
+      within(csvRow).getByRole('button', { name: 'Remove lot-genealogy.csv' }),
+    ).toBeInTheDocument();
+
+    const xlsxRow = within(dialog).getByText('yields.xlsx').closest('li') as HTMLElement;
+    expect(within(xlsxRow).getByText('XLSX · 2.0 KB')).toBeInTheDocument();
+    expect(within(xlsxRow).getByTestId('file-type-icon')).toHaveAttribute('data-file-type', 'xlsx');
+  });
+
+  it('sends attachments with the message, rendering the chips inside the bubble above the text', async () => {
     const user = userEvent.setup();
     renderStudioPage();
     const dialog = await selectASessionAndOpenFileModal(user);
@@ -112,8 +160,14 @@ describe('File attachments', () => {
     await user.type(screen.getByRole('textbox', { name: 'Message' }), 'Check this lot data');
     await user.keyboard('{Enter}');
 
-    const sent = await screen.findByRole('list', { name: 'Message attachments' });
+    // The chips live inside the blue user bubble, before the message text.
+    const bubbleText = await screen.findByText('Check this lot data');
+    const bubble = bubbleText.parentElement as HTMLElement;
+    const sent = within(bubble).getByRole('list', { name: 'Message attachments' });
     expect(within(sent).getByText('lot-genealogy.csv')).toBeInTheDocument();
+    expect(
+      sent.compareDocumentPosition(bubbleText) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
     expect(screen.queryByRole('list', { name: 'Attached files' })).not.toBeInTheDocument();
   });
 
