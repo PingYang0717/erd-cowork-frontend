@@ -10,10 +10,11 @@ import {
 import { useState } from 'react';
 
 import { AttachmentChip } from '@/features/file-upload/components/AttachmentChip';
-import type { Message, StepItem, StepStatus } from '@/types/api';
+import type { Message, QuestionForm, StepItem, StepStatus } from '@/types/api';
 import { formatDuration } from '@/utils/formatDuration';
 
 import styles from './MessageList.module.css';
+import { type Answers, QuestionFormCard } from './QuestionFormCard';
 import { ReplyText } from './ReplyText';
 import { ThinkingPanel } from './ThinkingPanel';
 
@@ -28,6 +29,8 @@ export interface LiveRun {
   stopped: boolean;
   /** Reasoning streamed so far. Live-only. */
   thinking: string;
+  /** The reask the run is waiting on, if any. */
+  question: QuestionForm | null;
   /** Set when the run ended badly; shown as an alert under whatever it produced. */
   error: { code: string; message: string } | null;
 }
@@ -151,7 +154,7 @@ function liveRunLabel(live: LiveRun): string {
   return live.stopped ? 'eRD AI · stopped' : 'eRD AI';
 }
 
-function LiveRunView({ live }: { live: LiveRun }) {
+function LiveRunView({ live, onAnswer }: { live: LiveRun; onAnswer: (answers: Answers) => void }) {
   const steps = live.steps.map((step) => <StepRow key={step.stepKey} step={step} />);
 
   return (
@@ -169,6 +172,7 @@ function LiveRunView({ live }: { live: LiveRun }) {
       )}
       {live.thinking && <ThinkingPanel thinking={live.thinking} />}
       {live.liveText && <ReplyText text={live.liveText} />}
+      {live.question && <QuestionFormCard form={live.question} onSubmit={onAnswer} />}
       {live.error && (
         <p role="alert" className={styles.runError}>
           {live.error.message}
@@ -184,15 +188,16 @@ interface MessageListProps {
   /** Elapsed time of the run that just finished; a footer under the thread rather than
    *  part of any message, since it is not persisted with the conversation. */
   lastRunDurationMs: number | null;
+  onAnswer: (answers: Answers) => void;
 }
 
-export function MessageList({ messages, live, lastRunDurationMs }: MessageListProps) {
+export function MessageList({ messages, live, lastRunDurationMs, onAnswer }: MessageListProps) {
   return (
     <div>
       {messages.map((message) => (
         <MessageBubble key={message.id} message={message} />
       ))}
-      {live && <LiveRunView live={live} />}
+      {live && <LiveRunView live={live} onAnswer={onAnswer} />}
       {lastRunDurationMs !== null && (
         <p className={styles.runDuration}>Took {formatDuration(lastRunDurationMs)}</p>
       )}
