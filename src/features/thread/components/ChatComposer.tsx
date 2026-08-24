@@ -17,6 +17,7 @@ import { useState } from 'react';
 import { ConnectorsPanel } from '@/features/connectors/components/ConnectorsPanel';
 import { useConnectors } from '@/features/connectors/hooks/useConnectors';
 import { selectConnected } from '@/features/connectors/model';
+import { useConnectorsPanelStore } from '@/features/connectors/store/useConnectorsPanelStore';
 import { AttachmentChip } from '@/features/file-upload/components/AttachmentChip';
 import { FileAttachmentModal } from '@/features/file-upload/components/FileAttachmentModal';
 import { useFileAttachments } from '@/features/file-upload/hooks/useFileAttachments';
@@ -77,7 +78,7 @@ interface ChatComposerProps {
 export function ChatComposer({ onSend, disabled, isStreaming, onStop }: ChatComposerProps) {
   const [draft, setDraft] = useState('');
   const [fileModalOpen, setFileModalOpen] = useState(false);
-  const [connectorsOpen, setConnectorsOpen] = useState(false);
+
   const {
     attachments,
     error: attachmentError,
@@ -86,6 +87,9 @@ export function ChatComposer({ onSend, disabled, isStreaming, onStop }: ChatComp
     clear: clearAttachments,
   } = useFileAttachments();
   const { data: connectorsData } = useConnectors();
+  const connectorsOpen = useConnectorsPanelStore((store) => store.isOpen);
+  const openConnectors = useConnectorsPanelStore((store) => store.open);
+  const closeConnectors = useConnectorsPanelStore((store) => store.close);
   const connectedConnectorCount = selectConnected(connectorsData ?? []).length;
 
   function send(input: SendMessageInput) {
@@ -162,7 +166,7 @@ export function ChatComposer({ onSend, disabled, isStreaming, onStop }: ChatComp
               onClick: ({ key }) =>
                 dispatchMenuAction(key, {
                   attach: () => setFileModalOpen(true),
-                  connectors: () => setConnectorsOpen(true),
+                  connectors: openConnectors,
                 }),
             }}
           >
@@ -224,7 +228,7 @@ export function ChatComposer({ onSend, disabled, isStreaming, onStop }: ChatComp
         onAddFiles={addFiles}
         onRemoveFile={removeFile}
       />
-      <ConnectorsPanel open={connectorsOpen} onClose={() => setConnectorsOpen(false)} />
+      <ConnectorsPanel open={connectorsOpen} onClose={closeConnectors} />
     </div>
   );
 }

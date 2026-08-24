@@ -8,10 +8,23 @@
 
 > 設計稿定義：`eRDWorkspace20260819.html:82887-83010`；Time range 選項陣列 `:9315`
 
-- [ ] Part ID：多選，搜尋／貼上輸入，placeholder「輸入關鍵字搜尋,可多選或貼上…」
-- [ ] Time range：單選 chips `Last 24h` / `Last 7 days` / `Last 30 days` / `Last quarter`，下方自訂輸入，placeholder「或自訂,例如 07/01–07/31、last 3 shifts…」；填了自訂值時輸入框邊框轉為 primary
-- [ ] Data type：多選 chips，選項＝當下 `status === 'connected'` 的 Connector 名稱，無任何連線時 fallback `["Inline"]`
-- [ ] Data type 下方提示「可多選,只顯示已連線的來源。」＋「管理連線」連結，點擊開啟 Connectors modal
-- [ ] 送出鈕 disabled 條件：`partIds.length && timeRange && dataTypes.length`；disabled 時顯示「請先選 part id、time range、data type」
-- [ ] 送出後收合成「已設定 N 項 分析條件」摘要（自 issue 06 移入：摘要必須存在於對話歷史，因為送出答案會開始新的一輪串流並重置 reducer）
-- [ ] Seam test：點 SPC 按鈕→斷言表單出現且 Data type 只列出已連線的 Connector；斷開一個 Connector 後重開→斷言選項少一項；填齊三項→斷言送出鈕啟用、送出後收合成摘要且分析開始跑
+- [x] Part ID：多選，搜尋／貼上輸入，placeholder「輸入關鍵字搜尋,可多選或貼上…」
+- [x] Time range：單選 chips `Last 24h` / `Last 7 days` / `Last 30 days` / `Last quarter`，下方自訂輸入，placeholder「或自訂,例如 07/01–07/31、last 3 shifts…」；填了自訂值時輸入框邊框轉為 primary
+- [x] Data type：多選 chips，選項＝當下 `status === 'connected'` 的 Connector 名稱，無任何連線時 fallback `["Inline"]`
+- [x] Data type 下方提示「可多選,只顯示已連線的來源。」＋「管理連線」連結，點擊開啟 Connectors modal
+- [x] 送出鈕 disabled 條件：`partIds.length && timeRange && dataTypes.length`；disabled 時顯示「請先選 part id、time range、data type」
+- [x] 送出後收合成「已設定 N 項 分析條件」摘要（自 issue 06 移入：摘要必須存在於對話歷史，因為送出答案會開始新的一輪串流並重置 reducer）
+- [x] Seam test：點 SPC 按鈕→斷言表單出現且 Data type 只列出已連線的 Connector；斷開一個 Connector 後重開→斷言選項少一項；填齊三項→斷言送出鈕啟用、送出後收合成摘要且分析開始跑
+
+## Comments
+
+**2026-08-25:** 完成。三件實作時的判斷：
+
+1. **Connectors 面板的開關升成 store**（`useConnectorsPanelStore`）。它原本是 composer
+   的本地 state，而 composer 是唯一入口；現在分析條件表單也有入口（Data type 的
+   「管理連線」），而表單渲染在對話串裡、離 composer 很遠。
+2. **搜尋框只在選項超過 4 個的多選欄位出現。** Part ID 有 5 個所以有，Data type
+   通常 3 個所以沒有——mockup 的 Data type 也確實只是一排 chip。
+3. **摘要是一則獨立的 AI 訊息**（`Message.answeredForm` + `answers`），不是掛在回覆上。
+   理由見 issue 06 的 Comments：答案送出會開始新一輪串流並重置 reducer，摘要必須存在於
+   對話歷史才活得下來。

@@ -385,5 +385,82 @@ describe('Streaming a run in the Studio', () => {
       expect(screen.getByRole('button', { name: '送出' })).toBeDisabled();
       expect(screen.getByText('請先選 part id、time range、data type')).toBeInTheDocument();
     });
+
+    it('offers a way back to the connectors from the Data type field', async () => {
+      const user = userEvent.setup();
+      renderStudioPage();
+
+      await startAnalysis(user);
+      await screen.findByText('分析條件');
+
+      expect(screen.getByText('可多選,只顯示已連線的來源。')).toBeInTheDocument();
+      await user.click(screen.getByRole('button', { name: '管理連線' }));
+
+      expect(await screen.findByRole('dialog', { name: 'Connectors' })).toBeInTheDocument();
+    });
+
+    it('lets the user type a Time range the chips do not offer', async () => {
+      const user = userEvent.setup();
+      renderStudioPage();
+
+      await startAnalysis(user);
+      await screen.findByText('分析條件');
+
+      const custom = screen.getByRole('textbox', { name: 'Time range' });
+      await user.type(custom, '07/01–07/31');
+
+      // Typing a custom range answers the field, so the chips let go of their choice.
+      const chips = screen.getByRole('group', { name: 'Time range' });
+      expect(within(chips).getByRole('button', { name: 'Last 7 days' })).toHaveAttribute(
+        'aria-pressed',
+        'false',
+      );
+
+      await user.click(
+        within(screen.getByRole('group', { name: 'Part ID' })).getByRole('button', { name: 'A14' }),
+      );
+      await user.click(
+        within(screen.getByRole('group', { name: 'Data type' })).getByRole('button', {
+          name: 'Inline',
+        }),
+      );
+      expect(screen.getByRole('button', { name: '送出' })).toBeEnabled();
+    });
+
+    it('narrows a long option list with a search box', async () => {
+      const user = userEvent.setup();
+      renderStudioPage();
+
+      await startAnalysis(user);
+      await screen.findByText('分析條件');
+
+      const partIds = screen.getByRole('group', { name: 'Part ID' });
+      expect(within(partIds).getByRole('button', { name: 'N5' })).toBeInTheDocument();
+
+      await user.type(screen.getByRole('textbox', { name: 'Part ID' }), 'A14');
+
+      expect(within(partIds).getByRole('button', { name: 'A14' })).toBeInTheDocument();
+      expect(within(partIds).queryByRole('button', { name: 'N5' })).not.toBeInTheDocument();
+    });
+
+    it('leaves the answered conditions in the thread, collapsed', async () => {
+      const user = userEvent.setup();
+      renderStudioPage();
+
+      await startAnalysis(user);
+      await answerAnalysisConditions(user);
+      await screen.findByRole('button', { name: /^Worked through \d+ steps$/ });
+
+      // The form is gone; what was set stays, behind a toggle.
+      expect(screen.queryByRole('button', { name: '送出' })).not.toBeInTheDocument();
+      const summary = screen.getByRole('button', { name: '已設定 3 項 分析條件' });
+      expect(summary).toHaveAttribute('aria-expanded', 'false');
+
+      await user.click(summary);
+      const values = screen.getByRole('list', { name: '分析條件' });
+      expect(within(values).getByText('A14')).toBeInTheDocument();
+      expect(within(values).getByText('Last 7 days')).toBeInTheDocument();
+      expect(within(values).getByText('Inline')).toBeInTheDocument();
+    });
   });
 });
