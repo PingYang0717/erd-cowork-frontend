@@ -1,4 +1,4 @@
-import type { ArtifactKind, ScenarioKey, Upload } from '@/types/api';
+import type { ArtifactKind, QuestionAnswer, ScenarioKey, Upload } from '@/types/api';
 import type { AgentEvent } from '@/types/api/agentEvent';
 import { createSseParser } from '@/utils/sseParser';
 
@@ -16,10 +16,14 @@ export class AgentStreamHttpError extends Error {
   }
 }
 
-/** The opening question of a run. Mirrors `docs/api/interface.md` → Message / Chat. */
+/** One turn of a run. Mirrors `docs/api/interface.md` → Message / Chat, which has two
+ *  shapes: the opening question (`text`), and a reply to a reask (`answers` +
+ *  `inReplyTo`). Answers go back structured, never re-serialised into prose (ADR-0006). */
 export interface SendMessageArgs {
   sessionId: string;
-  text: string;
+  text?: string;
+  answers?: Record<string, QuestionAnswer>;
+  inReplyTo?: string;
   scenarioKey?: ScenarioKey;
   artifactKind?: ArtifactKind;
   attachments?: Upload[];
@@ -39,6 +43,8 @@ export async function* streamAgentMessage(
     headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream' },
     body: JSON.stringify({
       text: args.text,
+      answers: args.answers,
+      inReplyTo: args.inReplyTo,
       scenarioKey: args.scenarioKey,
       artifactKind: args.artifactKind,
       attachments: args.attachments,

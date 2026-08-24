@@ -61,6 +61,7 @@
 - **附件維持掛在訊息上**（`Message.attachments`），不改成對方的 session-level 檔案清單
 - **Connector 維持全域**、跨 Session 共用
 - **`MessageStep` 與移植進來的 `StepItem` 合併成一個型別**（`stepKey` / `title` / `description` / `status`）。步驟狀態改由後端明講，因此新增 ERROR 態的視覺
+- **反問表單的文案照 mockup 用中文**（「已設定 N 項 分析條件」「請先選 part id、time range、data type」「先產生這 N 項」「至少選一項」），即使 ThreadPanel 其餘字串是英文。理由：[ADR-0004](../../docs/adr/0004-mockup-visual-fidelity-via-ant-design-icons.md) 明訂文案與視覺對齊設計稿，而這批表單是廠務工程師實際操作的介面。串流狀態的文案（working / stopped / 斷線 / 耗時）維持英文，因為那是既有 ThreadPanel 表面的延伸，mockup 裡沒有對應設計
 - **mock 的 artifact HTML 注入錯誤收集腳本**（移植 `cowork-master` 的 `head-inject.vm`），並提供一個故意壞掉的 artifact fixture，讓修復流程在 mock 下完整演出
 
 ## Testing Decisions

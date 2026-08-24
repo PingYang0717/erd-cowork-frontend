@@ -195,4 +195,167 @@ describe('Streaming a run in the Studio', () => {
     expect(within(findings).getByText('Idsat stable')).toBeInTheDocument();
     expect(screen.getByText('Findings').tagName).toBe('STRONG');
   });
+
+  it('renders the form the run asks for, holding submit back until required fields are filled', async () => {
+    const user = userEvent.setup();
+    const stream = mockAgentStream();
+    renderStudioPage();
+
+    await startAnalysis(user);
+
+    act(() =>
+      stream.push({
+        type: 'QUESTION',
+        form: {
+          formKey: 'spc-conditions',
+          title: '分析條件',
+          fields: [
+            {
+              key: 'partIds',
+              label: 'Part ID',
+              kind: 'multi',
+              required: true,
+              options: [
+                { value: 'A14', label: 'A14' },
+                { value: 'N5', label: 'N5' },
+              ],
+            },
+          ],
+          submitLabel: '送出',
+          disabledHint: '請先選 part id',
+          summaryLabel: '已設定 1 項 分析條件',
+        },
+      }),
+    );
+
+    expect(await screen.findByText('分析條件')).toBeInTheDocument();
+    expect(screen.getByRole('group', { name: 'Part ID' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '送出' })).toBeDisabled();
+    expect(screen.getByText('請先選 part id')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'A14' }));
+
+    expect(screen.getByRole('button', { name: '送出' })).toBeEnabled();
+    expect(screen.queryByText('請先選 part id')).not.toBeInTheDocument();
+  });
+
+  it('shows a dependent field only for its trigger, and clears its answer when the trigger changes', async () => {
+    const user = userEvent.setup();
+    const stream = mockAgentStream();
+    renderStudioPage();
+
+    await startAnalysis(user);
+
+    act(() =>
+      stream.push({
+        type: 'QUESTION',
+        form: {
+          formKey: 'cptest-conditions',
+          title: '分析條件',
+          fields: [
+            {
+              key: 'role',
+              label: '你的角色',
+              kind: 'single',
+              required: true,
+              options: [
+                { value: 'baseline', label: 'INT Baseline' },
+                { value: 'loop', label: 'INT Loop' },
+              ],
+            },
+            {
+              key: 'flow',
+              label: 'Flow',
+              kind: 'single',
+              required: false,
+              visibleWhen: { field: 'role', equals: 'baseline' },
+              options: [{ value: 'FEOL', label: 'FEOL' }],
+            },
+            {
+              key: 'loop',
+              label: 'Loop',
+              kind: 'single',
+              required: false,
+              visibleWhen: { field: 'role', equals: 'loop' },
+              options: [{ value: 'M1', label: 'M1' }],
+            },
+          ],
+          submitLabel: '開始分析',
+          disabledHint: '請先選角色',
+          summaryLabel: '已設定 1 項 分析條件',
+        },
+      }),
+    );
+
+    await screen.findByRole('group', { name: '你的角色' });
+    expect(screen.queryByRole('group', { name: 'Flow' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('group', { name: 'Loop' })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'INT Baseline' }));
+    expect(screen.getByRole('group', { name: 'Flow' })).toBeInTheDocument();
+    expect(screen.queryByRole('group', { name: 'Loop' })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'FEOL' }));
+    expect(screen.getByRole('button', { name: 'FEOL' })).toHaveAttribute('aria-pressed', 'true');
+
+    // Switching the trigger swaps which dependent field is asked...
+    await user.click(screen.getByRole('button', { name: 'INT Loop' }));
+    expect(screen.queryByRole('group', { name: 'Flow' })).not.toBeInTheDocument();
+    expect(screen.getByRole('group', { name: 'Loop' })).toBeInTheDocument();
+
+    // ...and the answer given under the old trigger is gone, not merely hidden.
+    await user.click(screen.getByRole('button', { name: 'INT Baseline' }));
+    expect(screen.getByRole('button', { name: 'FEOL' })).toHaveAttribute('aria-pressed', 'false');
+  });
+
+  it('sends the answers back structured rather than as prose', async () => {
+    const user = userEvent.setup();
+    const stream = mockAgentStream();
+    renderStudioPage();
+
+    await startAnalysis(user);
+
+    act(() =>
+      stream.push({
+        type: 'QUESTION',
+        form: {
+          formKey: 'spc-conditions',
+          title: '分析條件',
+          fields: [
+            {
+              key: 'partIds',
+              label: 'Part ID',
+              kind: 'multi',
+              required: true,
+              options: [
+                { value: 'A14', label: 'A14' },
+                { value: 'N5', label: 'N5' },
+              ],
+            },
+            {
+              key: 'timeRange',
+              label: 'Time range',
+              kind: 'single',
+              required: true,
+              options: [{ value: 'Last 7 days', label: 'Last 7 days' }],
+            },
+          ],
+          submitLabel: '送出',
+          disabledHint: '請先選 part id、time range',
+          summaryLabel: '已設定 2 項 分析條件',
+        },
+      }),
+    );
+
+    await user.click(await screen.findByRole('button', { name: 'A14' }));
+    await user.click(screen.getByRole('button', { name: 'N5' }));
+    await user.click(screen.getByRole('button', { name: 'Last 7 days' }));
+    await user.click(screen.getByRole('button', { name: '送出' }));
+
+    await waitFor(() => expect(stream.requests).toHaveLength(2));
+    expect(stream.requests[1]).toEqual({
+      answers: { partIds: ['A14', 'N5'], timeRange: 'Last 7 days' },
+      inReplyTo: 'spc-conditions',
+    });
+  });
 });

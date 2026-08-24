@@ -13,6 +13,8 @@ export interface MockAgentStream {
   disconnect(): void;
   /** Whether the request itself was aborted (user stop, or the component unmounting). */
   readonly wasAborted: boolean;
+  /** Bodies of every request the endpoint received, in order. */
+  readonly requests: unknown[];
 }
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? '';
@@ -24,6 +26,7 @@ export function mockAgentStream(): MockAgentStream {
   const encoder = new TextEncoder();
   let controller: ReadableStreamDefaultController<Uint8Array> | null = null;
   let aborted = false;
+  const requests: unknown[] = [];
   const buffered: string[] = [];
 
   function write(chunk: string): void {
@@ -35,7 +38,8 @@ export function mockAgentStream(): MockAgentStream {
   }
 
   server.use(
-    http.post(`${API_BASE}/sessions/:sessionId/messages`, ({ request }) => {
+    http.post(`${API_BASE}/sessions/:sessionId/messages`, async ({ request }) => {
+      requests.push(await request.clone().json());
       request.signal.addEventListener('abort', () => {
         aborted = true;
       });
@@ -69,6 +73,7 @@ export function mockAgentStream(): MockAgentStream {
     get wasAborted() {
       return aborted;
     },
+    requests,
   };
 }
 

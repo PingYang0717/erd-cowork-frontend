@@ -12,6 +12,7 @@ import { messagesQueryKey, useMessages } from '../hooks/useMessages';
 import { useActiveRunStore } from '../store/useActiveRunStore';
 import { ChatComposer } from './ChatComposer';
 import { MessageList } from './MessageList';
+import type { Answers } from './QuestionFormCard';
 import styles from './ThreadPanel.module.css';
 
 function ThreadHeader() {
@@ -102,7 +103,14 @@ function ThreadView({ sessionId }: { sessionId: string }) {
   // A run stays on screen after it ends when the ending is something the user needs to
   // see — they stopped it, it took a while, or it broke. A clean finish hands over to
   // the refetched history instead.
-  const runEndedVisibly = state.stopped || state.error !== null;
+  // A reask keeps the run's surface on screen after the stream closes: the agent is
+  // waiting on the user, so there is nothing to hand over to history yet.
+  async function handleAnswer(answers: Answers) {
+    await send({ answers, inReplyTo: state.question?.formKey ?? '' });
+    await queryClient.invalidateQueries({ queryKey: messagesQueryKey(sessionId) });
+  }
+
+  const runEndedVisibly = state.stopped || state.error !== null || state.question !== null;
   const live =
     state.isStreaming || runEndedVisibly
       ? {
@@ -111,6 +119,7 @@ function ThreadView({ sessionId }: { sessionId: string }) {
           liveText: state.liveText,
           stopped: state.stopped,
           thinking: state.thinking,
+          question: state.question,
           error: state.error,
         }
       : null;
@@ -121,7 +130,12 @@ function ThreadView({ sessionId }: { sessionId: string }) {
       <ThreadHeader />
       <div ref={bodyRef} role="log" aria-label="Messages" className={styles.body}>
         {hasContent ? (
-          <MessageList messages={messages} live={live} lastRunDurationMs={state.durationMs} />
+          <MessageList
+            messages={messages}
+            live={live}
+            lastRunDurationMs={state.durationMs}
+            onAnswer={handleAnswer}
+          />
         ) : (
           <EmptyState
             heading="Start an analysis"
