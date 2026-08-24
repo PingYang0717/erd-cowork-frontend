@@ -134,7 +134,8 @@ describe('Scenario matching', () => {
 
     const recap = await runScenario(user, 'SPC analysis');
 
-    expect(recap).toHaveAccessibleName('Worked through 3 steps');
+    // Scan and filter are added by the DC item reask the SPC run raises mid-flight.
+    expect(recap).toHaveAccessibleName('Worked through 5 steps');
     expect(recap).toHaveAttribute('aria-expanded', 'false');
     expect(screen.queryByText('Inline DB · Vt (gate CD)')).not.toBeInTheDocument();
 
@@ -167,7 +168,7 @@ describe('Scenario matching', () => {
 
     const recap = await runScenario(user, 'Generate slides');
 
-    expect(recap).toHaveAccessibleName('Worked through 4 steps');
+    expect(recap).toHaveAccessibleName('Worked through 6 steps');
     await user.click(recap);
     expect(screen.getByText('Title, control chart, Cpk, findings')).toBeInTheDocument();
 

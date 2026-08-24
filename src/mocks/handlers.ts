@@ -1,18 +1,20 @@
 import { http, HttpResponse } from 'msw';
 
 import { currentUser } from '@/services/currentUser';
-import type { AgentEvent, QuestionAnswer, QuestionForm } from '@/types/api/agentEvent';
+import type { AgentEvent, QuestionAnswer, QuestionForm, StepItem } from '@/types/api/agentEvent';
 import type { Artifact, ArtifactKind, ArtifactVersion } from '@/types/api/artifact';
 import type { Connector, ConnectorStatus } from '@/types/api/connector';
+import type { DcItem } from '@/types/api/dcItem';
 import type { Message } from '@/types/api/message';
 import type { ScenarioKey } from '@/types/api/scenario';
 import type { Session } from '@/types/api/session';
 import type { Upload } from '@/types/api/upload';
 
 import { ARTIFACT_VERSION_CONTENT, buildArtifactFixture } from './artifactFixtures';
+import { DC_ITEM_FIXTURES, ROWS_PER_DC_ITEM } from './dcItemFixtures';
 import { DIRECTORY_FIXTURES } from './directoryFixtures';
 import { createPersistedResource } from './persistedResource';
-import { openingQuestion } from './questionFixtures';
+import { dcItemQuestion, openingQuestion } from './questionFixtures';
 import { matchScenario, SCENARIO_FIXTURES, SLIDES_STEP } from './scenarioFixtures';
 
 interface ExampleWidget {
@@ -223,11 +225,32 @@ const sessions = createPersistedResource<Session>('erd-cowork:sessions', [
   },
 ]);
 
-/** A run that has asked its opening question and is waiting on the user. */
-const pendingRuns = new Map<
-  string,
-  { scenarioKey: ScenarioKey; artifactKind: ArtifactKind; form: QuestionForm }
->();
+/** A run that has asked a question and is waiting on the user. `stage` says which
+ *  question it is waiting on: an SPC run asks twice — once for its conditions, then
+ *  again mid-flight once the scan finds more DC items than are worth charting at once. */
+interface PendingRun {
+  scenarioKey: ScenarioKey;
+  artifactKind: ArtifactKind;
+  form: QuestionForm;
+  stage: 'conditions' | 'dc-item-scope';
+}
+
+const pendingRuns = new Map<string, PendingRun>();
+
+/** Steps an SPC run gets through before it has to ask about DC items. */
+const SCAN_STEP: StepItem = {
+  stepKey: 'scan',
+  title: '掃描 wafer / DC item',
+  description: 'Inline DB · 近 7 天',
+  status: 'SUCCESS',
+};
+
+const FILTER_STEP: StepItem = {
+  stepKey: 'filter',
+  title: '過濾至選定 DC item',
+  description: null,
+  status: 'SUCCESS',
+};
 
 function sseResponse(events: AgentEvent[]) {
   const sse = events.map((event) => `data: ${JSON.stringify(event)}\n\n`).join('');
@@ -237,11 +260,17 @@ function sseResponse(events: AgentEvent[]) {
 }
 
 /** Persists what the run produced, then replays it as an event stream. */
-function streamRun(sessionId: string, scenarioKey: ScenarioKey, artifactKind: ArtifactKind) {
+function streamRun(
+  sessionId: string,
+  scenarioKey: ScenarioKey,
+  artifactKind: ArtifactKind,
+  leadingSteps: StepItem[] = [],
+) {
   const fixture = SCENARIO_FIXTURES[scenarioKey];
   const artifactName =
     artifactKind === 'slides' ? `${fixture.artifactName} (slides)` : fixture.artifactName;
-  const steps = artifactKind === 'slides' ? [...fixture.steps, SLIDES_STEP] : fixture.steps;
+  const scenarioSteps = artifactKind === 'slides' ? [...fixture.steps, SLIDES_STEP] : fixture.steps;
+  const steps = [...leadingSteps, ...scenarioSteps];
 
   const artifact: StoredArtifact = {
     id: crypto.randomUUID(),
@@ -295,6 +324,8 @@ function streamRun(sessionId: string, scenarioKey: ScenarioKey, artifactKind: Ar
 
   return sseResponse(events);
 }
+
+const dcItems = createPersistedResource<DcItem>('erd-cowork:dc-items', DC_ITEM_FIXTURES);
 
 export const handlers = [
   http.get('/api/example-widgets', () => {
@@ -369,8 +400,6 @@ export const handlers = [
           { status: 409 },
         );
       }
-      pendingRuns.delete(sessionId);
-
       messages.write([
         ...messages.read(),
         {
@@ -383,7 +412,21 @@ export const handlers = [
         },
       ]);
 
-      return streamRun(sessionId, pending.scenarioKey, pending.artifactKind);
+      // An SPC run scans first, then asks again before charting anything.
+      if (pending.stage === 'conditions' && pending.scenarioKey === 'spc') {
+        const form = dcItemQuestion(dcItems.read(), ROWS_PER_DC_ITEM);
+        pendingRuns.set(sessionId, { ...pending, form, stage: 'dc-item-scope' });
+
+        return sseResponse([
+          { ...SCAN_STEP, type: 'STEP', status: 'RUNNING' },
+          { ...SCAN_STEP, type: 'STEP', status: 'SUCCESS' },
+          { type: 'QUESTION', form },
+        ]);
+      }
+
+      pendingRuns.delete(sessionId);
+      const extraSteps = pending.stage === 'dc-item-scope' ? [SCAN_STEP, FILTER_STEP] : [];
+      return streamRun(sessionId, pending.scenarioKey, pending.artifactKind, extraSteps);
     }
 
     const text = body.text?.trim();
@@ -411,11 +454,27 @@ export const handlers = [
     // A Scenario decides what it needs to ask before it can run (ADR-0006).
     const form = openingQuestion(scenarioKey, connectors.read());
     if (form) {
-      pendingRuns.set(sessionId, { scenarioKey, artifactKind, form });
+      pendingRuns.set(sessionId, { scenarioKey, artifactKind, form, stage: 'conditions' });
       return sseResponse([{ type: 'QUESTION', form }]);
     }
 
     return streamRun(sessionId, scenarioKey, artifactKind);
+  }),
+
+  http.get('/api/dc-items', () => HttpResponse.json(dcItems.read())),
+
+  http.post('/api/dc-items', async ({ request }) => {
+    const { name } = (await request.json()) as { name: string };
+    const id = name.trim().toLowerCase().replace(/\s+/g, '-');
+    const existing = dcItems.read().find((item) => item.id === id);
+    if (existing) {
+      return HttpResponse.json(existing, { status: 200 });
+    }
+
+    // A custom item has no spec limits of its own — it is charted without them.
+    const created: DcItem = { id, name: name.trim(), unit: '', lo: 0, hi: 0, custom: true };
+    dcItems.write([...dcItems.read(), created]);
+    return HttpResponse.json(created, { status: 201 });
   }),
 
   http.get('/api/artifacts', () => {
