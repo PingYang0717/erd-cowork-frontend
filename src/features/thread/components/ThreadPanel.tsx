@@ -68,7 +68,7 @@ function ThreadView({ sessionId }: { sessionId: string }) {
   const queryClient = useQueryClient();
   const { data } = useMessages(sessionId);
   const messages = data ?? [];
-  const { state, send } = useAgentStream(sessionId);
+  const { state, send, stop } = useAgentStream(sessionId);
   const bodyRef = useRef<HTMLDivElement>(null);
 
   // The mockup scrolls the thread to the bottom shortly after a new message
@@ -91,7 +91,20 @@ function ThreadView({ sessionId }: { sessionId: string }) {
     await queryClient.invalidateQueries({ queryKey: messagesQueryKey(sessionId) });
   }
 
-  const live = state.isStreaming ? { steps: state.steps, liveText: state.liveText } : null;
+  // A run stays on screen after it ends when the ending is something the user needs to
+  // see — they stopped it, it took a while, or it broke. A clean finish hands over to
+  // the refetched history instead.
+  const runEndedVisibly = state.stopped || state.error !== null;
+  const live =
+    state.isStreaming || runEndedVisibly
+      ? {
+          isStreaming: state.isStreaming,
+          steps: state.steps,
+          liveText: state.liveText,
+          stopped: state.stopped,
+          error: state.error,
+        }
+      : null;
   const hasContent = messages.length > 0 || live !== null;
 
   return (
@@ -99,7 +112,7 @@ function ThreadView({ sessionId }: { sessionId: string }) {
       <ThreadHeader />
       <div ref={bodyRef} role="log" aria-label="Messages" className={styles.body}>
         {hasContent ? (
-          <MessageList messages={messages} live={live} />
+          <MessageList messages={messages} live={live} lastRunDurationMs={state.durationMs} />
         ) : (
           <EmptyState
             heading="Start an analysis"
@@ -108,7 +121,12 @@ function ThreadView({ sessionId }: { sessionId: string }) {
         )}
       </div>
       <div className={styles.composer}>
-        <ChatComposer onSend={handleSend} disabled={state.isStreaming} />
+        <ChatComposer
+          onSend={handleSend}
+          disabled={state.isStreaming}
+          isStreaming={state.isStreaming}
+          onStop={stop}
+        />
       </div>
     </div>
   );

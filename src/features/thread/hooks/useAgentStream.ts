@@ -39,7 +39,9 @@ type Action =
   | { type: 'DONE'; durationMs: number };
 
 const NETWORK_ERROR_CODE = 'NETWORK_ERROR';
-const NETWORK_ERROR_MESSAGE = '連線中斷，請重新送出一次';
+// English to match every other string on this surface; the mockup's Chinese copy is
+// confined to the clarification forms.
+const NETWORK_ERROR_MESSAGE = 'Connection lost — send it again.';
 
 const initialState: AgentStreamState = {
   isStreaming: false,

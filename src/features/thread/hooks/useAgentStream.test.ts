@@ -233,7 +233,7 @@ describe('useAgentStream', () => {
     });
     expect(result.current.state.error).toEqual({
       code: 'NETWORK_ERROR',
-      message: '連線中斷，請重新送出一次',
+      message: 'Connection lost — send it again.',
     });
     expect(result.current.state.stopped).toBe(false);
     expect(result.current.state.liveText).toBe('Vt is dri');

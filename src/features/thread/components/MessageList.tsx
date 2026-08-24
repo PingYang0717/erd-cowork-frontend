@@ -11,13 +11,21 @@ import { useState } from 'react';
 
 import { AttachmentChip } from '@/features/file-upload/components/AttachmentChip';
 import type { Message, StepItem, StepStatus } from '@/types/api';
+import { formatDuration } from '@/utils/formatDuration';
 
 import styles from './MessageList.module.css';
 
 /** What the current run has produced so far. Null once nothing is streaming. */
 export interface LiveRun {
+  /** Still open. Drives the live region — a run that has ended, however it ended, is
+   *  no longer something a screen reader should announce as in progress. */
+  isStreaming: boolean;
   steps: StepItem[];
   liveText: string;
+  /** The user ended this run early. What it produced stays, but it is no longer working. */
+  stopped: boolean;
+  /** Set when the run ended badly; shown as an alert under whatever it produced. */
+  error: { code: string; message: string } | null;
 }
 
 // Steps used to be revealed by a client-side timer, so a step could only ever be
@@ -132,18 +140,35 @@ function StepsRecap({ steps }: { steps: StepItem[] }) {
   );
 }
 
-function AiWorkingSteps({ live }: { live: LiveRun }) {
+function liveRunLabel(live: LiveRun): string {
+  if (live.isStreaming) {
+    return 'eRD AI is working…';
+  }
+  return live.stopped ? 'eRD AI · stopped' : 'eRD AI';
+}
+
+function LiveRunView({ live }: { live: LiveRun }) {
+  const steps = live.steps.map((step) => <StepRow key={step.stepKey} step={step} />);
+
   return (
     <div className={styles.aiRow}>
       <div className={styles.aiLabel}>
         <ThunderboltFilled aria-hidden className={styles.aiLabelIcon} />
-        eRD AI is working…
+        {liveRunLabel(live)}
       </div>
-      <div role="status" aria-label="eRD AI is working" className={styles.workingSteps}>
-        {live.steps.map((step) => (
-          <StepRow key={step.stepKey} step={step} />
-        ))}
-      </div>
+      {live.isStreaming ? (
+        <div role="status" aria-label="eRD AI is working" className={styles.workingSteps}>
+          {steps}
+        </div>
+      ) : (
+        <div className={styles.workingSteps}>{steps}</div>
+      )}
+      {live.liveText && <p className={styles.aiText}>{live.liveText}</p>}
+      {live.error && (
+        <p role="alert" className={styles.runError}>
+          {live.error.message}
+        </p>
+      )}
     </div>
   );
 }
@@ -151,15 +176,21 @@ function AiWorkingSteps({ live }: { live: LiveRun }) {
 interface MessageListProps {
   messages: Message[];
   live: LiveRun | null;
+  /** Elapsed time of the run that just finished; a footer under the thread rather than
+   *  part of any message, since it is not persisted with the conversation. */
+  lastRunDurationMs: number | null;
 }
 
-export function MessageList({ messages, live }: MessageListProps) {
+export function MessageList({ messages, live, lastRunDurationMs }: MessageListProps) {
   return (
     <div>
       {messages.map((message) => (
         <MessageBubble key={message.id} message={message} />
       ))}
-      {live && <AiWorkingSteps live={live} />}
+      {live && <LiveRunView live={live} />}
+      {lastRunDurationMs !== null && (
+        <p className={styles.runDuration}>Took {formatDuration(lastRunDurationMs)}</p>
+      )}
     </div>
   );
 }

@@ -109,6 +109,29 @@
   cursor: not-allowed;
 }
 
+/* Stop shares the send control's footprint so the composer does not shift when a
+   run starts; the fill drops to a neutral surface because stopping is not the
+   primary action, it is the escape hatch. */
+.stopButton {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9px;
+  border: 1px solid var(--erd-color-border, #d9d9d9);
+  background: var(--erd-color-bg-container, #fff);
+  color: var(--erd-color-text-secondary, #595959);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.stopButton:hover {
+  border-color: var(--erd-color-primary, #1677ff);
+  color: var(--erd-color-primary, #1677ff);
+}
+
 .menuItemLabel {
   display: flex;
   align-items: center;
