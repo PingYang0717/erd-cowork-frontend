@@ -1,0 +1,66 @@
+import type { AgentEvent } from '@/types/api/agentEvent';
+import { createSseParser } from '@/utils/sseParser';
+
+const API_BASE = import.meta.env.VITE_API_BASE_URL ?? '';
+
+export interface SendMessageArgs {
+  sessionId: string;
+  text: string;
+  signal: AbortSignal;
+}
+
+/** POSTs a message and yields decoded agent events until the stream closes.
+ *  Goes through raw `fetch` rather than `services/apiClient.ts`: axios cannot
+ *  surface a response body incrementally. */
+export async function* streamAgentMessage(
+  args: SendMessageArgs,
+): AsyncGenerator<AgentEvent, void, void> {
+  const response = await fetch(`${API_BASE}/sessions/${args.sessionId}/messages`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream' },
+    body: JSON.stringify({ text: args.text }),
+    signal: args.signal,
+  });
+
+  if (!response.body) {
+    return;
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+
+  // A pending read() does not always reject when the request is aborted (a mocked
+  // response body is not wired to the request signal at all), so cancel the reader
+  // explicitly: the in-flight read then resolves as done and the loop ends.
+  const cancelOnAbort = (): void => {
+    void reader.cancel().catch(() => {});
+  };
+  args.signal.addEventListener('abort', cancelOnAbort, { once: true });
+  const ready: AgentEvent[] = [];
+  const parser = createSseParser((event) => ready.push(event));
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) {
+        break;
+      }
+      parser.feed(decoder.decode(value, { stream: true }));
+      while (ready.length > 0) {
+        yield ready.shift()!;
+      }
+    }
+
+    parser.feed(decoder.decode());
+    parser.flush();
+    while (ready.length > 0) {
+      yield ready.shift()!;
+    }
+  } finally {
+    args.signal.removeEventListener('abort', cancelOnAbort);
+    // Cancel before releasing the lock so the connection is freed immediately; the
+    // caller already has everything it needs, so a failure here is not interesting.
+    await reader.cancel().catch(() => {});
+    reader.releaseLock();
+  }
+}
