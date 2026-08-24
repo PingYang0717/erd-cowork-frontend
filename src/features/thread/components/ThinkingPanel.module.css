@@ -1,0 +1,8 @@
+.body {
+  margin: 0;
+  padding: 0 12px 10px;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--erd-color-text-secondary, #595959);
+  white-space: pre-wrap;
+}

@@ -1,6 +1,7 @@
 import {
   ApiOutlined,
   ArrowUpOutlined,
+  BorderOutlined,
   DashboardOutlined,
   DotChartOutlined,
   FileAddOutlined,
@@ -16,6 +17,7 @@ import { useState } from 'react';
 import { ConnectorsPanel } from '@/features/connectors/components/ConnectorsPanel';
 import { useConnectors } from '@/features/connectors/hooks/useConnectors';
 import { selectConnected } from '@/features/connectors/model';
+import { useConnectorsPanelStore } from '@/features/connectors/store/useConnectorsPanelStore';
 import { AttachmentChip } from '@/features/file-upload/components/AttachmentChip';
 import { FileAttachmentModal } from '@/features/file-upload/components/FileAttachmentModal';
 import { useFileAttachments } from '@/features/file-upload/hooks/useFileAttachments';
@@ -68,12 +70,15 @@ const SUGGESTED_PROMPTS: {
 interface ChatComposerProps {
   onSend: (input: SendMessageInput) => void;
   disabled: boolean;
+  /** While a run is streaming the send control becomes a stop control. */
+  isStreaming: boolean;
+  onStop: () => void;
 }
 
-export function ChatComposer({ onSend, disabled }: ChatComposerProps) {
+export function ChatComposer({ onSend, disabled, isStreaming, onStop }: ChatComposerProps) {
   const [draft, setDraft] = useState('');
   const [fileModalOpen, setFileModalOpen] = useState(false);
-  const [connectorsOpen, setConnectorsOpen] = useState(false);
+
   const {
     attachments,
     error: attachmentError,
@@ -82,6 +87,9 @@ export function ChatComposer({ onSend, disabled }: ChatComposerProps) {
     clear: clearAttachments,
   } = useFileAttachments();
   const { data: connectorsData } = useConnectors();
+  const connectorsOpen = useConnectorsPanelStore((store) => store.isOpen);
+  const openConnectors = useConnectorsPanelStore((store) => store.open);
+  const closeConnectors = useConnectorsPanelStore((store) => store.close);
   const connectedConnectorCount = selectConnected(connectorsData ?? []).length;
 
   function send(input: SendMessageInput) {
@@ -158,7 +166,7 @@ export function ChatComposer({ onSend, disabled }: ChatComposerProps) {
               onClick: ({ key }) =>
                 dispatchMenuAction(key, {
                   attach: () => setFileModalOpen(true),
-                  connectors: () => setConnectorsOpen(true),
+                  connectors: openConnectors,
                 }),
             }}
           >
@@ -188,16 +196,28 @@ export function ChatComposer({ onSend, disabled }: ChatComposerProps) {
               }
             }}
           />
-          <button
-            type="button"
-            className={styles.sendButton}
-            disabled={disabled}
-            onClick={submitDraft}
-            title="Send message"
-            aria-label="Send message"
-          >
-            <ArrowUpOutlined aria-hidden />
-          </button>
+          {isStreaming ? (
+            <button
+              type="button"
+              className={styles.stopButton}
+              onClick={onStop}
+              title="Stop"
+              aria-label="Stop"
+            >
+              <BorderOutlined aria-hidden />
+            </button>
+          ) : (
+            <button
+              type="button"
+              className={styles.sendButton}
+              disabled={disabled}
+              onClick={submitDraft}
+              title="Send message"
+              aria-label="Send message"
+            >
+              <ArrowUpOutlined aria-hidden />
+            </button>
+          )}
         </div>
       </div>
       <FileAttachmentModal
@@ -208,7 +228,7 @@ export function ChatComposer({ onSend, disabled }: ChatComposerProps) {
         onAddFiles={addFiles}
         onRemoveFile={removeFile}
       />
-      <ConnectorsPanel open={connectorsOpen} onClose={() => setConnectorsOpen(false)} />
+      <ConnectorsPanel open={connectorsOpen} onClose={closeConnectors} />
     </div>
   );
 }

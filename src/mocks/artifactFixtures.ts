@@ -40,6 +40,21 @@ interface ArtifactContent {
   stats: StatTile[];
 }
 
+// Ported from cowork-master's backend template (artifact/head-inject.vm): the artifact
+// reports its own runtime errors to the host, batched so a loop of failures arrives as
+// one offer rather than hundreds. A real backend injects this at assembly time; the mock
+// injects it here so the repair flow is exercisable without one.
+const ERROR_COLLECTOR = `<script>(function(){var pending=[],timer=null;
+function flush(){if(!pending.length)return;var batch=pending.slice(0,10);pending=[];
+try{parent.postMessage({type:'erd-artifact-error',errors:batch},'*');}catch(e){}}
+function push(message,line,col){if(!message||message==='Script error.')return;
+pending.push({message:String(message).slice(0,500),line:line||0,col:col||0});
+if(timer)clearTimeout(timer);timer=setTimeout(flush,1000);}
+window.addEventListener('error',function(e){push(e.message,e.lineno,e.colno);});
+window.addEventListener('unhandledrejection',function(e){
+push('Unhandled rejection: '+(e.reason&&e.reason.message?e.reason.message:String(e.reason)),0,0);});
+})();</script>`;
+
 // Both artifact kinds ship the same document shell: a theme-colored body plus the
 // postMessage listener ADR-0001 relies on for live theme switching.
 function renderDocument(title: string, theme: ArtifactTheme, css: string, body: string) {
@@ -50,6 +65,7 @@ function renderDocument(title: string, theme: ArtifactTheme, css: string, body: 
 <head>
 <meta charset="utf-8" />
 <title>${title}</title>
+${ERROR_COLLECTOR}
 <style>
   * { box-sizing: border-box; }
   body { margin: 0; padding: 20px; font-family: -apple-system, "Segoe UI", sans-serif; background: ${bg}; color: ${fg}; }

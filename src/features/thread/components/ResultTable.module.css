@@ -1,0 +1,39 @@
+.wrapper {
+  margin-top: 8px;
+}
+
+/* A wide result scrolls inside its own box; the thread itself never scrolls sideways. */
+.table {
+  display: block;
+  width: max-content;
+  max-width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.caption {
+  padding-bottom: 5px;
+  font-size: 11.5px;
+  color: var(--erd-color-text-tertiary, #8c8c8c);
+  text-align: left;
+}
+
+.table th,
+.table td {
+  padding: 5px 10px;
+  border: 1px solid var(--erd-color-border-secondary, #f0f0f0);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.table th {
+  background: var(--erd-color-fill-quaternary, #fafafa);
+  font-weight: 500;
+}
+
+.truncated {
+  margin: 5px 0 0;
+  font-size: 11px;
+  color: var(--erd-color-text-tertiary, #8c8c8c);
+}

@@ -1,16 +1,21 @@
 import { http, HttpResponse } from 'msw';
 
 import { currentUser } from '@/services/currentUser';
+import { isLive } from '@/services/transport';
+import type { AgentEvent, QuestionAnswer, QuestionForm, StepItem } from '@/types/api/agentEvent';
 import type { Artifact, ArtifactKind, ArtifactVersion } from '@/types/api/artifact';
 import type { Connector, ConnectorStatus } from '@/types/api/connector';
+import type { DcItem } from '@/types/api/dcItem';
 import type { Message } from '@/types/api/message';
 import type { ScenarioKey } from '@/types/api/scenario';
 import type { Session } from '@/types/api/session';
 import type { Upload } from '@/types/api/upload';
 
 import { ARTIFACT_VERSION_CONTENT, buildArtifactFixture } from './artifactFixtures';
+import { DC_ITEM_FIXTURES, ROWS_PER_DC_ITEM } from './dcItemFixtures';
 import { DIRECTORY_FIXTURES } from './directoryFixtures';
 import { createPersistedResource } from './persistedResource';
+import { dcItemQuestion, openingQuestion } from './questionFixtures';
 import { matchScenario, SCENARIO_FIXTURES, SLIDES_STEP } from './scenarioFixtures';
 
 interface ExampleWidget {
@@ -221,7 +226,119 @@ const sessions = createPersistedResource<Session>('erd-cowork:sessions', [
   },
 ]);
 
-export const handlers = [
+/** A run that has asked a question and is waiting on the user. `stage` says which
+ *  question it is waiting on: an SPC run asks twice — once for its conditions, then
+ *  again mid-flight once the scan finds more DC items than are worth charting at once. */
+interface PendingRun {
+  scenarioKey: ScenarioKey;
+  artifactKind: ArtifactKind;
+  form: QuestionForm;
+  stage: 'conditions' | 'dc-item-scope';
+}
+
+const pendingRuns = new Map<string, PendingRun>();
+
+/** Steps an SPC run gets through before it has to ask about DC items. */
+const SCAN_STEP: StepItem = {
+  stepKey: 'scan',
+  title: '掃描 wafer / DC item',
+  description: 'Inline DB · 近 7 天',
+  status: 'SUCCESS',
+};
+
+const FILTER_STEP: StepItem = {
+  stepKey: 'filter',
+  title: '過濾至選定 DC item',
+  description: null,
+  status: 'SUCCESS',
+};
+
+function sseResponse(events: AgentEvent[]) {
+  const sse = events.map((event) => `data: ${JSON.stringify(event)}\n\n`).join('');
+  return new HttpResponse(sse, {
+    headers: { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache' },
+  });
+}
+
+/** Persists what the run produced, then replays it as an event stream. */
+function streamRun(
+  sessionId: string,
+  scenarioKey: ScenarioKey,
+  artifactKind: ArtifactKind,
+  leadingSteps: StepItem[] = [],
+) {
+  const fixture = SCENARIO_FIXTURES[scenarioKey];
+  const artifactName =
+    artifactKind === 'slides' ? `${fixture.artifactName} (slides)` : fixture.artifactName;
+  const scenarioSteps = artifactKind === 'slides' ? [...fixture.steps, SLIDES_STEP] : fixture.steps;
+  const steps = [...leadingSteps, ...scenarioSteps];
+
+  const artifact: StoredArtifact = {
+    id: crypto.randomUUID(),
+    sessionId,
+    name: artifactName,
+    kind: artifactKind,
+    scenario: scenarioKey,
+    pinned: false,
+    ownerId: currentUser.id,
+    shared: false,
+    createdAt: new Date().toISOString(),
+  };
+  artifacts.write([...artifacts.read(), artifact]);
+
+  artifactVersions.write([
+    ...artifactVersions.read(),
+    {
+      id: crypto.randomUUID(),
+      artifactId: artifact.id,
+      n: 1,
+      label: artifactName,
+      createdAt: new Date().toISOString(),
+      generated: false,
+    },
+  ]);
+
+  messages.write([
+    ...messages.read(),
+    {
+      id: crypto.randomUUID(),
+      sessionId,
+      role: 'ai',
+      text: fixture.reply,
+      scenario: scenarioKey,
+      steps,
+      artifactName,
+      artifactId: artifact.id,
+    },
+  ]);
+
+  const events: AgentEvent[] = [];
+  for (const step of steps) {
+    events.push({ ...step, type: 'STEP', status: 'RUNNING' });
+    events.push({ ...step, type: 'STEP', status: 'SUCCESS' });
+  }
+  events.push({ type: 'ARTIFACT', artifactId: artifact.id, title: artifactName });
+  for (const word of fixture.reply.split(/(?<=\s)/)) {
+    events.push({ type: 'TOKEN', delta: word });
+  }
+  events.push({ type: 'ANSWER', text: fixture.reply });
+
+  return sseResponse(events);
+}
+
+const dcItems = createPersistedResource<DcItem>('erd-cowork:dc-items', DC_ITEM_FIXTURES);
+
+/** In live mode a real backend serves these, so MSW must stay out of the way; every
+ *  other handler keeps running because nothing else implements them
+ *  (`docs/api/interface.md` → live 端點覆蓋範圍). */
+const LIVE_BACKED = [
+  '/api/sessions',
+  '/api/sessions/:id',
+  '/api/sessions/:sessionId/messages',
+  '/api/uploads',
+];
+
+export const allHandlers = [
   http.get('/api/example-widgets', () => {
     return HttpResponse.json(exampleWidgets.read());
   }),
@@ -269,69 +386,106 @@ export const handlers = [
     return HttpResponse.json(all.filter((message) => message.sessionId === params.sessionId));
   }),
 
+  // A run is delivered as an agent-event stream, not a computed reply (ADR-0005).
+  // The whole scripted run is written at once and the stream closed: tests that need
+  // to observe an intermediate state drive their own stream via `src/test/agentStream.ts`
+  // instead of racing this one.
   http.post('/api/sessions/:sessionId/messages', async ({ params, request }) => {
     const sessionId = params.sessionId as string;
     const body = (await request.json()) as {
-      text: string;
+      text?: string;
       scenarioKey?: ScenarioKey;
       artifactKind?: ArtifactKind;
       attachments?: Upload[];
+      answers?: Record<string, QuestionAnswer>;
+      inReplyTo?: string;
     };
+
+    // Answering a reask resumes the run the reask belongs to, so the scenario is
+    // whatever was pending for this session rather than anything in this request.
+    if (body.answers && body.inReplyTo) {
+      const pending = pendingRuns.get(sessionId);
+      if (!pending) {
+        return HttpResponse.json(
+          { code: 'NO_PENDING_QUESTION', message: 'Nothing was waiting on an answer' },
+          { status: 409 },
+        );
+      }
+      messages.write([
+        ...messages.read(),
+        {
+          id: crypto.randomUUID(),
+          sessionId,
+          role: 'ai',
+          text: '',
+          answeredForm: pending.form,
+          answers: body.answers,
+        },
+      ]);
+
+      // An SPC run scans first, then asks again before charting anything.
+      if (pending.stage === 'conditions' && pending.scenarioKey === 'spc') {
+        const form = dcItemQuestion(dcItems.read(), ROWS_PER_DC_ITEM);
+        pendingRuns.set(sessionId, { ...pending, form, stage: 'dc-item-scope' });
+
+        return sseResponse([
+          { ...SCAN_STEP, type: 'STEP', status: 'RUNNING' },
+          { ...SCAN_STEP, type: 'STEP', status: 'SUCCESS' },
+          { type: 'QUESTION', form },
+        ]);
+      }
+
+      pendingRuns.delete(sessionId);
+      const extraSteps = pending.stage === 'dc-item-scope' ? [SCAN_STEP, FILTER_STEP] : [];
+      return streamRun(sessionId, pending.scenarioKey, pending.artifactKind, extraSteps);
+    }
+
     const text = body.text?.trim();
     if (!text) {
-      return new HttpResponse(null, { status: 400 });
+      return HttpResponse.json(
+        { code: 'EMPTY_MESSAGE', message: 'Message is empty' },
+        { status: 400 },
+      );
     }
 
     const scenarioKey = body.scenarioKey ?? matchScenario(text);
     const artifactKind = body.artifactKind ?? 'dashboard';
-    const fixture = SCENARIO_FIXTURES[scenarioKey];
-    const artifactName =
-      artifactKind === 'slides' ? `${fixture.artifactName} (slides)` : fixture.artifactName;
-    const steps = artifactKind === 'slides' ? [...fixture.steps, SLIDES_STEP] : fixture.steps;
 
-    const artifact: StoredArtifact = {
-      id: crypto.randomUUID(),
-      sessionId,
-      name: artifactName,
-      kind: artifactKind,
-      scenario: scenarioKey,
-      pinned: false,
-      ownerId: currentUser.id,
-      shared: false,
-      createdAt: new Date().toISOString(),
-    };
-    artifacts.write([...artifacts.read(), artifact]);
+    messages.write([
+      ...messages.read(),
+      {
+        id: crypto.randomUUID(),
+        sessionId,
+        role: 'user',
+        text,
+        attachments: body.attachments?.length ? body.attachments : undefined,
+      },
+    ]);
 
-    const version: ArtifactVersion = {
-      id: crypto.randomUUID(),
-      artifactId: artifact.id,
-      n: 1,
-      label: artifactName,
-      createdAt: new Date().toISOString(),
-      generated: false,
-    };
-    artifactVersions.write([...artifactVersions.read(), version]);
+    // A Scenario decides what it needs to ask before it can run (ADR-0006).
+    const form = openingQuestion(scenarioKey, connectors.read());
+    if (form) {
+      pendingRuns.set(sessionId, { scenarioKey, artifactKind, form, stage: 'conditions' });
+      return sseResponse([{ type: 'QUESTION', form }]);
+    }
 
-    const userMessage: Message = {
-      id: crypto.randomUUID(),
-      sessionId,
-      role: 'user',
-      text,
-      attachments: body.attachments?.length ? body.attachments : undefined,
-    };
-    const aiMessage: Message = {
-      id: crypto.randomUUID(),
-      sessionId,
-      role: 'ai',
-      text: fixture.reply,
-      scenario: scenarioKey,
-      steps,
-      artifactName,
-      artifactId: artifact.id,
-    };
+    return streamRun(sessionId, scenarioKey, artifactKind);
+  }),
 
-    messages.write([...messages.read(), userMessage, aiMessage]);
-    return HttpResponse.json({ userMessage, aiMessage }, { status: 201 });
+  http.get('/api/dc-items', () => HttpResponse.json(dcItems.read())),
+
+  http.post('/api/dc-items', async ({ request }) => {
+    const { name } = (await request.json()) as { name: string };
+    const id = name.trim().toLowerCase().replace(/\s+/g, '-');
+    const existing = dcItems.read().find((item) => item.id === id);
+    if (existing) {
+      return HttpResponse.json(existing, { status: 200 });
+    }
+
+    // A custom item has no spec limits of its own — it is charted without them.
+    const created: DcItem = { id, name: name.trim(), unit: '', lo: 0, hi: 0, custom: true };
+    dcItems.write([...dcItems.read(), created]);
+    return HttpResponse.json(created, { status: 201 });
   }),
 
   http.get('/api/artifacts', () => {
@@ -372,6 +526,32 @@ export const handlers = [
       (versionId ? ARTIFACT_VERSION_CONTENT[versionId] : undefined) ??
       buildArtifactFixture(artifact.scenario, artifact.kind, version?.n);
     return HttpResponse.json({ html: fixture[theme] });
+  }),
+
+  // Rebuilding an artifact whose HTML threw. Every repair here succeeds and bumps a
+  // version — a real backend can also come back empty-handed, which the UI already
+  // handles; tests exercise that path by stubbing this endpoint.
+  http.post('/api/artifacts/:id/repair', ({ params }) => {
+    const artifact = artifacts.read().find((a) => a.id === params.id);
+    if (!artifact) {
+      return new HttpResponse(null, { status: 404 });
+    }
+
+    const versions = artifactVersions.read();
+    const mine = versions.filter((v) => v.artifactId === artifact.id);
+    artifactVersions.write([
+      ...versions,
+      {
+        id: crypto.randomUUID(),
+        artifactId: artifact.id,
+        n: mine.length + 1,
+        label: artifact.name,
+        createdAt: new Date().toISOString(),
+        generated: false,
+      },
+    ]);
+
+    return HttpResponse.json({ repaired: true });
   }),
 
   http.get('/api/artifacts/:id/versions', ({ params }) => {
@@ -485,3 +665,8 @@ export const handlers = [
     return HttpResponse.json(upload, { status: 201 });
   }),
 ];
+
+/** What MSW should intercept for the configured transport. */
+export const handlers = isLive
+  ? allHandlers.filter((handler) => !LIVE_BACKED.includes(String(handler.info.path)))
+  : allHandlers;

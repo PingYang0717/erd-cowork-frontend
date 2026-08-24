@@ -11,6 +11,7 @@ import { useNavigate } from 'react-router-dom';
 import { Tooltip } from '@/components/Tooltip';
 import { useSessionSelectionStore } from '@/features/session/store/useSessionSelectionStore';
 import { useMessages } from '@/features/thread/hooks/useMessages';
+import { useActiveRunStore } from '@/features/thread/store/useActiveRunStore';
 
 import { useArtifactContent } from '../hooks/useArtifactContent';
 import { useGenerateArtifactVersion, useRegenerateArtifact } from '../hooks/useArtifactMutations';
@@ -49,9 +50,12 @@ export function ArtifactPanel() {
 
 function ArtifactPanelView({ sessionId }: { sessionId: string }) {
   const { data: messages } = useMessages(sessionId);
+  const streamedArtifactId = useActiveRunStore((s) => s.streamedArtifactId);
 
+  // A run in progress wins: it has just produced this Artifact, and waiting for the
+  // thread history to refetch would leave the pane showing the previous one.
   const latestArtifactMessage = [...(messages ?? [])].reverse().find((m) => m.artifactId);
-  const artifactId = latestArtifactMessage?.artifactId;
+  const artifactId = streamedArtifactId ?? latestArtifactMessage?.artifactId;
 
   if (!artifactId) {
     return <EmptyPanel />;
@@ -154,7 +158,7 @@ function ArtifactPanelContent({ artifactId }: { artifactId: string }) {
         </Tooltip>
       </div>
       <div className={styles.frameWrapper}>
-        <ArtifactFrame html={data.html} theme={theme} />
+        <ArtifactFrame html={data.html} theme={theme} artifactId={artifactId} />
       </div>
       {artifact && (
         <ShareArtifactDialog
