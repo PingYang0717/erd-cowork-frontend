@@ -14,6 +14,8 @@ import type { Message, StepItem, StepStatus } from '@/types/api';
 import { formatDuration } from '@/utils/formatDuration';
 
 import styles from './MessageList.module.css';
+import { ReplyText } from './ReplyText';
+import { ThinkingPanel } from './ThinkingPanel';
 
 /** What the current run has produced so far. Null once nothing is streaming. */
 export interface LiveRun {
@@ -24,6 +26,8 @@ export interface LiveRun {
   liveText: string;
   /** The user ended this run early. What it produced stays, but it is no longer working. */
   stopped: boolean;
+  /** Reasoning streamed so far. Live-only. */
+  thinking: string;
   /** Set when the run ended badly; shown as an alert under whatever it produced. */
   error: { code: string; message: string } | null;
 }
@@ -96,7 +100,7 @@ function MessageBubble({ message }: { message: Message }) {
         eRD AI
       </div>
       {message.steps && message.steps.length > 0 && <StepsRecap steps={message.steps} />}
-      <p className={styles.aiText}>{message.text}</p>
+      <ReplyText text={message.text} />
       {message.artifactName && (
         <div className={styles.artifactChip}>
           <AppstoreOutlined aria-hidden className={styles.artifactChipIcon} />
@@ -163,7 +167,8 @@ function LiveRunView({ live }: { live: LiveRun }) {
       ) : (
         <div className={styles.workingSteps}>{steps}</div>
       )}
-      {live.liveText && <p className={styles.aiText}>{live.liveText}</p>}
+      {live.thinking && <ThinkingPanel thinking={live.thinking} />}
+      {live.liveText && <ReplyText text={live.liveText} />}
       {live.error && (
         <p role="alert" className={styles.runError}>
           {live.error.message}
