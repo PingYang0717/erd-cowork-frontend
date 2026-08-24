@@ -1,12 +1,13 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { act, fireEvent, render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 
 import { useSessionSelectionStore } from '@/features/session/store/useSessionSelectionStore';
 import { StudioShell } from '@/features/studio/components/StudioShell';
 import { useStudioLayoutStore } from '@/features/studio/store/useStudioLayoutStore';
+import { answerAnalysisConditions } from '@/test/studioRun';
 
 import { StudioPage } from './StudioPage';
 
@@ -41,15 +42,12 @@ async function selectASession(user: ReturnType<typeof userEvent.setup>) {
   await screen.findByRole('button', { name: 'New analysis' });
 }
 
-async function advanceTimers(ms: number) {
-  await act(async () => {
-    await vi.advanceTimersByTimeAsync(ms);
-  });
-}
-
-async function selectASessionWithFakeTimers() {
-  fireEvent.click(screen.getByRole('button', { name: 'New chat' }));
-  await advanceTimers(0);
+/** Clicks a suggested prompt and waits for the whole scripted run to land in the thread.
+ *  The mock backend streams the run and closes; there is no timer to advance. */
+async function runScenario(user: ReturnType<typeof userEvent.setup>, label: string) {
+  await user.click(screen.getByRole('button', { name: label }));
+  await answerAnalysisConditions(user);
+  return screen.findByRole('button', { name: /^Worked through \d+ steps$/ });
 }
 
 describe('Chat composer', () => {
@@ -90,11 +88,6 @@ describe('Scenario matching', () => {
   beforeEach(() => {
     useStudioLayoutStore.setState(useStudioLayoutStore.getInitialState());
     useSessionSelectionStore.setState(useSessionSelectionStore.getInitialState());
-    vi.useFakeTimers();
-  });
-
-  afterEach(() => {
-    vi.useRealTimers();
   });
 
   it.each([
@@ -119,18 +112,13 @@ describe('Scenario matching', () => {
       artifactName: 'CP Test status',
     },
   ])(
-    'plays the step animation and shows a final reply referencing an artifact when clicking "$label"',
+    'leaves a reply referencing an artifact in the thread when clicking "$label"',
     async ({ label, replyMatch, artifactName }) => {
+      const user = userEvent.setup();
       renderStudioPage();
-      await selectASessionWithFakeTimers();
+      await selectASession(user);
 
-      fireEvent.click(screen.getByRole('button', { name: label }));
-      await advanceTimers(0);
-
-      expect(screen.getByRole('status', { name: 'eRD AI is working' })).toBeInTheDocument();
-      expect(screen.queryByText(replyMatch)).not.toBeInTheDocument();
-
-      await advanceTimers(500 * 4);
+      await runScenario(user, label);
 
       expect(screen.getByText(replyMatch)).toBeInTheDocument();
       const chip = screen.getByText('shown right →').closest('div') as HTMLElement;
@@ -139,58 +127,50 @@ describe('Scenario matching', () => {
     },
   );
 
-  it('labels the run "eRD AI is working…", renders step descriptions in a card, and keeps a collapsible recap after completion', async () => {
+  it('keeps a collapsible recap of the run once it has finished', async () => {
+    const user = userEvent.setup();
     renderStudioPage();
-    await selectASessionWithFakeTimers();
+    await selectASession(user);
 
-    fireEvent.click(screen.getByRole('button', { name: 'SPC analysis' }));
-    await advanceTimers(0);
+    const recap = await runScenario(user, 'SPC analysis');
 
-    // While running: the working label and each step's description render.
-    expect(screen.getByText('eRD AI is working…')).toBeInTheDocument();
-    expect(screen.getByText('Inline DB · Vt (gate CD)')).toBeInTheDocument();
-
-    await advanceTimers(500 * 4);
-
-    // Completed: a collapsed "Worked through N steps" recap remains.
-    const recap = screen.getByRole('button', { name: 'Worked through 3 steps' });
+    // Scan and filter are added by the DC item reask the SPC run raises mid-flight.
+    expect(recap).toHaveAccessibleName('Worked through 5 steps');
     expect(recap).toHaveAttribute('aria-expanded', 'false');
     expect(screen.queryByText('Inline DB · Vt (gate CD)')).not.toBeInTheDocument();
 
     // Expanding shows every step's title and description.
-    fireEvent.click(recap);
+    await user.click(recap);
     expect(screen.getByText('Connect data source')).toBeInTheDocument();
     expect(screen.getByText('Inline DB · Vt (gate CD)')).toBeInTheDocument();
     expect(screen.getByText('CL / ±3σ, apply Western Electric rules')).toBeInTheDocument();
   });
 
   it('auto-scrolls the thread to the bottom when a new message lands', async () => {
+    const user = userEvent.setup();
     renderStudioPage();
-    await selectASessionWithFakeTimers();
+    await selectASession(user);
 
     const log = screen.getByRole('log', { name: 'Messages' });
     Object.defineProperty(log, 'scrollHeight', { value: 640, configurable: true });
     expect(log.scrollTop).toBe(0);
 
-    fireEvent.click(screen.getByRole('button', { name: 'SPC analysis' }));
-    await advanceTimers(0);
-    // Step playback plus the mockup's 40ms post-render scroll delay.
-    await advanceTimers(500 * 4 + 40);
+    await runScenario(user, 'SPC analysis');
 
-    expect(log.scrollTop).toBe(640);
+    // The mockup's 40ms post-render scroll delay.
+    await waitFor(() => expect(log.scrollTop).toBe(640));
   });
 
   it('appends the slides step and names a slides Artifact when clicking "Generate slides"', async () => {
+    const user = userEvent.setup();
     renderStudioPage();
-    await selectASessionWithFakeTimers();
+    await selectASession(user);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Generate slides' }));
-    await advanceTimers(0);
+    const recap = await runScenario(user, 'Generate slides');
 
-    const working = screen.getByRole('status', { name: 'eRD AI is working' });
-    expect(within(working).getByText('Generate slides')).toBeInTheDocument();
-
-    await advanceTimers(500 * 5);
+    expect(recap).toHaveAccessibleName('Worked through 6 steps');
+    await user.click(recap);
+    expect(screen.getByText('Title, control chart, Cpk, findings')).toBeInTheDocument();
 
     const chip = screen.getByText('shown right →').closest('div') as HTMLElement;
     expect(within(chip).getByText('SPC analysis — Vt (gate CD) (slides)')).toBeInTheDocument();
@@ -218,22 +198,19 @@ describe('Scenario matching', () => {
       artifactName: 'SPC analysis — Vt (gate CD)',
     },
   ])(
-    'matches free text "$text" to a scenario and plays the reply',
+    'matches free text "$text" to a scenario and replies with its artifact',
     async ({ text, replyMatch, artifactName }) => {
+      const user = userEvent.setup();
       renderStudioPage();
-      await selectASessionWithFakeTimers();
+      await selectASession(user);
 
-      fireEvent.change(screen.getByRole('textbox', { name: 'Message' }), {
-        target: { value: text },
-      });
-      fireEvent.click(screen.getByRole('button', { name: 'Send message' }));
-      await advanceTimers(0);
+      await user.type(screen.getByRole('textbox', { name: 'Message' }), text);
+      await user.click(screen.getByRole('button', { name: 'Send message' }));
+      await answerAnalysisConditions(user);
+
+      await screen.findByRole('button', { name: /^Worked through \d+ steps$/ });
 
       expect(screen.getByText(text)).toBeInTheDocument();
-      expect(screen.getByRole('status', { name: 'eRD AI is working' })).toBeInTheDocument();
-
-      await advanceTimers(500 * 4);
-
       expect(screen.getByText(replyMatch)).toBeInTheDocument();
       const chip = screen.getByText('shown right →').closest('div') as HTMLElement;
       expect(within(chip).getByText(artifactName)).toBeInTheDocument();

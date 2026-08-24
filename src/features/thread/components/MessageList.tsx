@@ -1,6 +1,7 @@
 import {
   AppstoreOutlined,
   CheckCircleFilled,
+  CloseCircleFilled,
   DownOutlined,
   LoadingOutlined,
   RightOutlined,
@@ -9,23 +10,75 @@ import {
 import { useState } from 'react';
 
 import { AttachmentChip } from '@/features/file-upload/components/AttachmentChip';
-import type { Message, MessageStep } from '@/types/api';
+import type { Message, QuestionForm, StepItem, StepStatus, TableResult } from '@/types/api';
+import { formatDuration } from '@/utils/formatDuration';
 
+import { AnsweredConditions } from './AnsweredConditions';
+import { HtmlCodePanel } from './HtmlCodePanel';
 import styles from './MessageList.module.css';
+import { type Answers, QuestionFormCard } from './QuestionFormCard';
+import { ReplyText } from './ReplyText';
+import { ResultTable } from './ResultTable';
+import { ThinkingPanel } from './ThinkingPanel';
 
-export interface PendingAiMessage {
-  message: Message;
-  revealedSteps: number;
+/** What the current run has produced so far. Null once nothing is streaming. */
+export interface LiveRun {
+  /** Still open. Drives the live region — a run that has ended, however it ended, is
+   *  no longer something a screen reader should announce as in progress. */
+  isStreaming: boolean;
+  steps: StepItem[];
+  liveText: string;
+  /** The user ended this run early. What it produced stays, but it is no longer working. */
+  stopped: boolean;
+  /** Reasoning streamed so far. Live-only. */
+  thinking: string;
+  /** The reask the run is waiting on, if any. */
+  question: QuestionForm | null;
+  /** Artifact HTML as it is written, and the query results produced on the way.
+   *  Both live-only. */
+  codeText: string;
+  tables: TableResult[];
+  /** Set when the run ended badly; shown as an alert under whatever it produced. */
+  error: { code: string; message: string } | null;
 }
 
-function StepStatusIcon({ status }: { status: 'success' | 'running' | 'pending' }) {
-  if (status === 'success') {
-    return <CheckCircleFilled aria-hidden className={styles.stepIconSuccess} />;
+// Steps used to be revealed by a client-side timer, so a step could only ever be
+// pending, running or done. The backend now reports the status itself, which means a
+// step can also fail — hence the fourth state (ADR-0005).
+const STEP_STATUS_LABEL: Record<StepStatus, string> = {
+  PENDING: 'Pending',
+  RUNNING: 'Running',
+  SUCCESS: 'Done',
+  ERROR: 'Failed',
+};
+
+function StepStatusIcon({ status }: { status: StepStatus }) {
+  const label = STEP_STATUS_LABEL[status];
+
+  if (status === 'SUCCESS') {
+    return <CheckCircleFilled aria-label={label} className={styles.stepIconSuccess} />;
   }
-  if (status === 'running') {
-    return <LoadingOutlined aria-hidden spin className={styles.stepIconRunning} />;
+  if (status === 'RUNNING') {
+    return <LoadingOutlined aria-label={label} spin className={styles.stepIconRunning} />;
   }
-  return <span aria-hidden className={styles.stepIconPending} />;
+  if (status === 'ERROR') {
+    return <CloseCircleFilled aria-label={label} className={styles.stepIconError} />;
+  }
+  return <span aria-label={label} role="img" className={styles.stepIconPending} />;
+}
+
+function StepRow({ step }: { step: StepItem }) {
+  return (
+    <div className={styles.workingStep}>
+      <StepStatusIcon status={step.status} />
+      <span className={styles.stepText}>
+        <span className={styles.stepTitle}>{step.title}</span>
+        {step.description !== null && (
+          <span className={styles.stepDescription}>{step.description}</span>
+        )}
+      </span>
+    </div>
+  );
 }
 
 function MessageBubble({ message }: { message: Message }) {
@@ -50,6 +103,16 @@ function MessageBubble({ message }: { message: Message }) {
     );
   }
 
+  // A message that only carries answered conditions is the record of a reask, not a
+  // reply: it has no text and no steps of its own.
+  if (message.answeredForm && message.answers) {
+    return (
+      <div className={styles.aiRow}>
+        <AnsweredConditions form={message.answeredForm} answers={message.answers} />
+      </div>
+    );
+  }
+
   return (
     <div className={styles.aiRow}>
       <div className={styles.aiLabel}>
@@ -57,7 +120,7 @@ function MessageBubble({ message }: { message: Message }) {
         eRD AI
       </div>
       {message.steps && message.steps.length > 0 && <StepsRecap steps={message.steps} />}
-      <p className={styles.aiText}>{message.text}</p>
+      <ReplyText text={message.text} />
       {message.artifactName && (
         <div className={styles.artifactChip}>
           <AppstoreOutlined aria-hidden className={styles.artifactChipIcon} />
@@ -72,7 +135,7 @@ function MessageBubble({ message }: { message: Message }) {
 // After a run completes, its steps stay behind as the mockup's collapsed
 // "Worked through N steps" card, expandable to each step's title and
 // description.
-function StepsRecap({ steps }: { steps: MessageStep[] }) {
+function StepsRecap({ steps }: { steps: StepItem[] }) {
   const [isExpanded, setIsExpanded] = useState(false);
 
   return (
@@ -93,13 +156,7 @@ function StepsRecap({ steps }: { steps: MessageStep[] }) {
       {isExpanded && (
         <div className={styles.stepsRecapList}>
           {steps.map((step) => (
-            <div key={step.key} className={styles.workingStep}>
-              <CheckCircleFilled aria-hidden className={styles.stepIconSuccess} />
-              <span className={styles.stepText}>
-                <span className={styles.stepTitle}>{step.title}</span>
-                <span className={styles.stepDescription}>{step.description}</span>
-              </span>
-            </div>
+            <StepRow key={step.stepKey} step={step} />
           ))}
         </div>
       )}
@@ -107,52 +164,64 @@ function StepsRecap({ steps }: { steps: MessageStep[] }) {
   );
 }
 
-function stepStatus(index: number, revealedSteps: number) {
-  if (index < revealedSteps) {
-    return 'success';
+function liveRunLabel(live: LiveRun): string {
+  if (live.isStreaming) {
+    return 'eRD AI is working…';
   }
-  if (index === revealedSteps) {
-    return 'running';
-  }
-  return 'pending';
+  return live.stopped ? 'eRD AI · stopped' : 'eRD AI';
 }
 
-function AiWorkingSteps({ pendingAi }: { pendingAi: PendingAiMessage }) {
-  const steps = pendingAi.message.steps ?? [];
+function LiveRunView({ live, onAnswer }: { live: LiveRun; onAnswer: (answers: Answers) => void }) {
+  const steps = live.steps.map((step) => <StepRow key={step.stepKey} step={step} />);
 
   return (
     <div className={styles.aiRow}>
       <div className={styles.aiLabel}>
         <ThunderboltFilled aria-hidden className={styles.aiLabelIcon} />
-        eRD AI is working…
+        {liveRunLabel(live)}
       </div>
-      <div role="status" aria-label="eRD AI is working" className={styles.workingSteps}>
-        {steps.map((step, i) => (
-          <div key={step.key} className={styles.workingStep}>
-            <StepStatusIcon status={stepStatus(i, pendingAi.revealedSteps)} />
-            <span className={styles.stepText}>
-              <span className={styles.stepTitle}>{step.title}</span>
-              <span className={styles.stepDescription}>{step.description}</span>
-            </span>
-          </div>
-        ))}
-      </div>
+      {live.isStreaming ? (
+        <div role="status" aria-label="eRD AI is working" className={styles.workingSteps}>
+          {steps}
+        </div>
+      ) : (
+        <div className={styles.workingSteps}>{steps}</div>
+      )}
+      {live.thinking && <ThinkingPanel thinking={live.thinking} />}
+      {live.codeText && <HtmlCodePanel code={live.codeText} />}
+      {live.tables.map((table) => (
+        <ResultTable key={table.tableId} table={table} />
+      ))}
+      {live.liveText && <ReplyText text={live.liveText} />}
+      {live.question && <QuestionFormCard form={live.question} onSubmit={onAnswer} />}
+      {live.error && (
+        <p role="alert" className={styles.runError}>
+          {live.error.message}
+        </p>
+      )}
     </div>
   );
 }
 
 interface MessageListProps {
   messages: Message[];
-  pendingAi: PendingAiMessage | null;
+  live: LiveRun | null;
+  /** Elapsed time of the run that just finished; a footer under the thread rather than
+   *  part of any message, since it is not persisted with the conversation. */
+  lastRunDurationMs: number | null;
+  onAnswer: (answers: Answers) => void;
 }
 
-export function MessageList({ messages, pendingAi }: MessageListProps) {
+export function MessageList({ messages, live, lastRunDurationMs, onAnswer }: MessageListProps) {
   return (
     <div>
       {messages.map((message) => (
         <MessageBubble key={message.id} message={message} />
       ))}
-      {pendingAi && <AiWorkingSteps pendingAi={pendingAi} />}
+      {live && <LiveRunView live={live} onAnswer={onAnswer} />}
+      {lastRunDurationMs !== null && (
+        <p className={styles.runDuration}>Took {formatDuration(lastRunDurationMs)}</p>
+      )}
     </div>
   );
 }

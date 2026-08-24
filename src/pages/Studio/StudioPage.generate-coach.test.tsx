@@ -9,6 +9,7 @@ import { StudioShell } from '@/features/studio/components/StudioShell';
 import { useStudioLayoutStore } from '@/features/studio/store/useStudioLayoutStore';
 import { useThemeStore } from '@/features/theme/store/useThemeStore';
 import { ArtifactsGalleryPage } from '@/pages/ArtifactsGallery/ArtifactsGalleryPage';
+import { answerAnalysisConditions } from '@/test/studioRun';
 
 import { StudioPage } from './StudioPage';
 
@@ -53,6 +54,7 @@ describe('Generation feedback: badge count, coach highlight, toast', () => {
     await user.click(await screen.findByRole('button', { name: 'New chat' }));
     await screen.findByRole('button', { name: 'New analysis' });
     await user.click(screen.getByRole('button', { name: 'SPC analysis' }));
+    await answerAnalysisConditions(user);
 
     // The new artifact arrives ungenerated once the steps animation finishes.
     const generateButton = await screen.findByRole(
@@ -81,6 +83,7 @@ describe('Generation feedback: badge count, coach highlight, toast', () => {
     await user.click(await screen.findByRole('button', { name: 'New chat' }));
     await screen.findByRole('button', { name: 'New analysis' });
     await user.click(screen.getByRole('button', { name: 'SPC analysis' }));
+    await answerAnalysisConditions(user);
     await user.click(
       await screen.findByRole('button', { name: '生成 Artifact' }, { timeout: 5000 }),
     );

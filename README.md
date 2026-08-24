@@ -113,3 +113,37 @@ src/
 - **Ticket 18 DC Item 選擇器** — 尚未動工，只有 `types/api/dcItem.ts`。
 - **ADR-0004 視覺缺口三項** — Artifact 全頁 header 未顯示名稱與「Shared to me」、附件未做 `.csv` / `.xlsx` 型別過濾、拖放只在 modal 內而非 composer。詳見 ticket 10 與 17 的 Comments。
 - **`ThreadPanel` 未被 React Compiler 優化** — 步驟播放的 effect 帶有 `eslint-disable`，compiler 遇到 rule suppression 會整個元件略過（build 時有警告）。
+
+## 執行模式
+
+前端有兩條傳輸軌道，由 build-time 的環境變數決定（不是 runtime 開關——runtime 開關會
+逼 MSW 進 production bundle，見 [ADR-0005](docs/adr/0005-sse-streaming-replaces-batch-reply.md)）。
+
+先建立 `.env`（`.gitignore` 排除，可從 `.env.example` 複製）：
+
+```
+VITE_API_BASE_URL=/api
+```
+
+**mock 模式（預設）** — 整個 app 由 MSW 服務，單機即可跑完所有流程，包含串流、反問、
+中止、斷線與 Artifact 修復：
+
+```
+npm run dev
+```
+
+**live 模式** — 對話、Session、Artifact HTML 與上傳打真實後端，其餘端點仍由 MSW 服務
+（Artifacts 總覽清單、分享、Directory、Schedule、Connectors、DC item、Artifact 版本，
+真實後端都沒有實作）：
+
+```
+VITE_AGENT_TRANSPORT=live npm run dev
+```
+
+覆蓋範圍與後端 DTO 的轉換見 [`docs/api/interface.md`](docs/api/interface.md) 的
+「傳輸模式與 live 端點覆蓋範圍」。
+
+## 已知環境需求
+
+- Node 22 以上內建的 `localStorage` 會蓋掉 jsdom 的，導致測試全紅。`.npmrc` 已設
+  `node-options=--no-experimental-webstorage` 處理掉這件事。

@@ -1,20 +1,22 @@
 import { DatabaseOutlined, ThunderboltFilled } from '@ant-design/icons';
 import { useQueryClient } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 
+import { useArtifactRepair } from '@/features/artifact/hooks/useArtifactRepair';
+import { useRepairOfferStore } from '@/features/artifact/store/useRepairOfferStore';
 import { useSessionSelectionStore } from '@/features/session/store/useSessionSelectionStore';
 import { ThemeToggle } from '@/features/theme/components/ThemeToggle';
-import type { Message } from '@/types/api';
 
 import type { SendMessageInput } from '../api/messageApi';
+import { useAgentStream } from '../hooks/useAgentStream';
 import { messagesQueryKey, useMessages } from '../hooks/useMessages';
-import { useSendMessage } from '../hooks/useSendMessage';
+import { useActiveRunStore } from '../store/useActiveRunStore';
 import { ChatComposer } from './ChatComposer';
-import { MessageList, type PendingAiMessage } from './MessageList';
+import { MessageList } from './MessageList';
+import type { Answers } from './QuestionFormCard';
+import { RepairOfferCard } from './RepairOfferCard';
 import styles from './ThreadPanel.module.css';
-
-const STEP_DURATION_MS = 500;
 
 function ThreadHeader() {
   return (
@@ -71,9 +73,23 @@ function ThreadView({ sessionId }: { sessionId: string }) {
   const queryClient = useQueryClient();
   const { data } = useMessages(sessionId);
   const messages = data ?? [];
-  const sendMessage = useSendMessage(sessionId);
-  const [pendingAi, setPendingAi] = useState<PendingAiMessage | null>(null);
+  const { state, send, stop } = useAgentStream(sessionId);
+  const setStreamedArtifactId = useActiveRunStore((s) => s.setStreamedArtifactId);
+  const repairOffer = useRepairOfferStore((store) => store.offer);
+  const dismissRepair = useRepairOfferStore((store) => store.dismiss);
+  const clearRepair = useRepairOfferStore((store) => store.clear);
+  const repair = useArtifactRepair();
+
+  // An offer belongs to one artifact in one session. Moving away from that session
+  // leaves it pointing at something the user is no longer looking at.
+  useEffect(() => clearRepair, [sessionId, clearRepair]);
   const bodyRef = useRef<HTMLDivElement>(null);
+
+  // Publishing to the Artifact pane is syncing with something outside this tree, and it
+  // has to happen the moment the ARTIFACT event lands rather than when the run ends.
+  useEffect(() => {
+    setStreamedArtifactId(state.artifact?.artifactId ?? null);
+  }, [state.artifact?.artifactId, setStreamedArtifactId]);
 
   // The mockup scrolls the thread to the bottom shortly after a new message
   // renders (40ms, letting layout settle), so long conversations never leave
@@ -86,64 +102,74 @@ function ThreadView({ sessionId }: { sessionId: string }) {
       }
     }, 40);
     return () => clearTimeout(timer);
-  }, [messages.length, pendingAi]);
-
-  useEffect(() => {
-    if (!pendingAi) {
-      return;
-    }
-    const steps = pendingAi.message.steps ?? [];
-    const timers = steps.map((_, i) =>
-      setTimeout(
-        () => {
-          setPendingAi((prev) => (prev ? { ...prev, revealedSteps: i + 1 } : prev));
-        },
-        STEP_DURATION_MS * (i + 1),
-      ),
-    );
-    timers.push(
-      setTimeout(
-        () => {
-          queryClient.setQueryData<Message[]>(messagesQueryKey(sessionId), (prev = []) => [
-            ...prev,
-            pendingAi.message,
-          ]);
-          setPendingAi(null);
-        },
-        STEP_DURATION_MS * (steps.length + 1),
-      ),
-    );
-    return () => timers.forEach(clearTimeout);
-    // Only the arrival of a new pending AI message should restart the playback timers.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pendingAi?.message.id]);
+  }, [messages.length, state.steps.length, state.liveText]);
 
   async function handleSend(input: SendMessageInput) {
-    const result = await sendMessage.mutateAsync(input);
-    queryClient.setQueryData<Message[]>(messagesQueryKey(sessionId), (prev = []) => [
-      ...prev,
-      result.userMessage,
-    ]);
-    setPendingAi({ message: result.aiMessage, revealedSteps: 0 });
+    await send(input);
+    // The run itself is streamed, but both messages it produced live server-side —
+    // refetch rather than reconstruct them from the events we happened to receive.
+    await queryClient.invalidateQueries({ queryKey: messagesQueryKey(sessionId) });
   }
 
-  const hasContent = messages.length > 0 || pendingAi !== null;
+  // A run stays on screen after it ends when the ending is something the user needs to
+  // see — they stopped it, it took a while, or it broke. A clean finish hands over to
+  // the refetched history instead.
+  // A reask keeps the run's surface on screen after the stream closes: the agent is
+  // waiting on the user, so there is nothing to hand over to history yet.
+  async function handleAnswer(answers: Answers) {
+    await send({ answers, inReplyTo: state.question?.formKey ?? '' });
+    await queryClient.invalidateQueries({ queryKey: messagesQueryKey(sessionId) });
+  }
+
+  const runEndedVisibly = state.stopped || state.error !== null || state.question !== null;
+  const live =
+    state.isStreaming || runEndedVisibly
+      ? {
+          isStreaming: state.isStreaming,
+          steps: state.steps,
+          liveText: state.liveText,
+          stopped: state.stopped,
+          thinking: state.thinking,
+          question: state.question,
+          codeText: state.codeText,
+          tables: state.tables,
+          error: state.error,
+        }
+      : null;
+  const hasContent = messages.length > 0 || live !== null;
 
   return (
     <div className={styles.panel}>
       <ThreadHeader />
       <div ref={bodyRef} role="log" aria-label="Messages" className={styles.body}>
         {hasContent ? (
-          <MessageList messages={messages} pendingAi={pendingAi} />
+          <MessageList
+            messages={messages}
+            live={live}
+            lastRunDurationMs={state.durationMs}
+            onAnswer={handleAnswer}
+          />
         ) : (
           <EmptyState
             heading="Start an analysis"
             subtitle={'Try "Daily monitor (A14)" below, or ask for an SPC analysis on Vt.'}
           />
         )}
+        {repairOffer && (
+          <RepairOfferCard
+            offer={repairOffer}
+            onConfirm={() => repair(repairOffer.artifactId, repairOffer.errors)}
+            onDismiss={dismissRepair}
+          />
+        )}
       </div>
       <div className={styles.composer}>
-        <ChatComposer onSend={handleSend} disabled={sendMessage.isPending || pendingAi !== null} />
+        <ChatComposer
+          onSend={handleSend}
+          disabled={state.isStreaming}
+          isStreaming={state.isStreaming}
+          onStop={stop}
+        />
       </div>
     </div>
   );

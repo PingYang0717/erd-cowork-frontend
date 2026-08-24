@@ -1,31 +1,43 @@
-import type { MessageStep, ScenarioKey } from '@/types/api';
+import type { ScenarioKey, StepItem } from '@/types/api';
 
 interface ScenarioFixture {
   artifactName: string;
-  steps: MessageStep[];
+  steps: StepItem[];
   reply: string;
 }
 
 // A slides request replays its scenario and then adds this step, mirroring
 // eRDWorkspace20260819.html's eR(), which appends "Generate slides" to the
 // same base step list rather than defining a scenario of its own.
-export const SLIDES_STEP: MessageStep = {
-  key: '4',
+export const SLIDES_STEP: StepItem = {
+  stepKey: '4',
   title: 'Generate slides',
   description: 'Title, control chart, Cpk, findings',
+  status: 'SUCCESS',
 };
 
 export const SCENARIO_FIXTURES: Record<ScenarioKey, ScenarioFixture> = {
   spc: {
     artifactName: 'SPC analysis — Vt (gate CD)',
     steps: [
-      { key: '1', title: 'Connect data source', description: 'Inline DB · Vt (gate CD)' },
       {
-        key: '2',
+        stepKey: '1',
+        title: 'Connect data source',
+        description: 'Inline DB · Vt (gate CD)',
+        status: 'SUCCESS',
+      },
+      {
+        stepKey: '2',
         title: 'Compute control limits',
         description: 'CL / ±3σ, apply Western Electric rules',
+        status: 'SUCCESS',
       },
-      { key: '3', title: 'Render control chart', description: 'Assemble SPC dashboard card' },
+      {
+        stepKey: '3',
+        title: 'Render control chart',
+        description: 'Assemble SPC dashboard card',
+        status: 'SUCCESS',
+      },
     ],
     reply:
       'Done — recomputed control limits and applied Western Electric rules. One out-of-control point remains.',
@@ -34,12 +46,23 @@ export const SCENARIO_FIXTURES: Record<ScenarioKey, ScenarioFixture> = {
     artifactName: 'Inline dashboard',
     steps: [
       {
-        key: '1',
+        stepKey: '1',
         title: 'Connect data source',
         description: 'Inline DB · selected DC items',
+        status: 'SUCCESS',
       },
-      { key: '2', title: 'Apply query filters', description: 'Scan wafer / DC item data' },
-      { key: '3', title: 'Assemble dashboard', description: 'Render SPC cards for each item' },
+      {
+        stepKey: '2',
+        title: 'Apply query filters',
+        description: 'Scan wafer / DC item data',
+        status: 'SUCCESS',
+      },
+      {
+        stepKey: '3',
+        title: 'Assemble dashboard',
+        description: 'Render SPC cards for each item',
+        status: 'SUCCESS',
+      },
     ],
     reply:
       'First version of the Inline dashboard is ready — review each item’s control chart and OOC wafers.',
@@ -47,12 +70,23 @@ export const SCENARIO_FIXTURES: Record<ScenarioKey, ScenarioFixture> = {
   daily: {
     artifactName: 'Daily Monitor Dashboard — A14',
     steps: [
-      { key: '1', title: 'Collect Approval Center data', description: 'Hold/Release queue' },
-      { key: '2', title: 'Collect EXP Health data', description: 'Flag abnormal parameters' },
       {
-        key: '3',
+        stepKey: '1',
+        title: 'Collect Approval Center data',
+        description: 'Hold/Release queue',
+        status: 'SUCCESS',
+      },
+      {
+        stepKey: '2',
+        title: 'Collect EXP Health data',
+        description: 'Flag abnormal parameters',
+        status: 'SUCCESS',
+      },
+      {
+        stepKey: '3',
         title: 'Merge Inline SPC data',
         description: 'Assemble daily monitor dashboard',
+        status: 'SUCCESS',
       },
     ],
     reply:
@@ -62,15 +96,22 @@ export const SCENARIO_FIXTURES: Record<ScenarioKey, ScenarioFixture> = {
     artifactName: 'CP Test status',
     steps: [
       {
-        key: '1',
+        stepKey: '1',
         title: 'Connect CP Test data source',
         description: 'Pull submission records',
+        status: 'SUCCESS',
       },
-      { key: '2', title: 'Aggregate by status', description: 'Group by site and progress' },
       {
-        key: '3',
+        stepKey: '2',
+        title: 'Aggregate by status',
+        description: 'Group by site and progress',
+        status: 'SUCCESS',
+      },
+      {
+        stepKey: '3',
         title: 'Render status dashboard',
         description: 'Assemble CP Test dashboard card',
+        status: 'SUCCESS',
       },
     ],
     reply:

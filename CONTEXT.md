@@ -21,8 +21,28 @@ _Avoid_: Chat view, Main view
 _Avoid_: Thread, Conversation, Chat
 
 **Scenario**:
-使用者請求對應到的一套預先定義分析劇本，目前有四種：SPC、Inline dashboard、Daily monitor、CP Test。決定 AI 回覆時要跑哪一段分析流程與產出哪種 Artifact。
-_Avoid_: Workflow, Flow, Intent
+使用者請求對應到的一套預先定義分析劇本，目前有四種：SPC、Inline dashboard、Daily monitor、CP Test。一個 Scenario 決定三件事：**要向使用者反問哪些分析條件**、要跑哪一段分析流程、產出哪種 Artifact。
+_Avoid_: Workflow, Flow, Intent, Prompt preset（Scenario 不只是一段預寫好的提問——它是可被執行的劇本）
+
+**分析條件（Analysis condition）**:
+一次 Scenario 執行前必須先確定的參數，由 Agent 以反問卡向使用者收集，例如 SPC 的 Part ID／Time range／Data type，或 CP Test 的角色／Flow／Loop／時間區間。條件送出後，卡片收合成「已設定 N 項分析條件」摘要，留在對話串中。
+_Avoid_: Parameter, Setting, Filter
+
+**反問（Question form）**:
+Agent 在條件不足時反過來詢問使用者的一張表單，以 QUESTION 事件送達，答案以結構化形式回傳。一次 Scenario 執行中可以反問多次——開場收集分析條件是一次，執行途中發現資料量過大而詢問要先看哪些 DC Item 是另一次。欄位可以互相依賴（例如 CP Test 的 Flow 只在角色為 INT Baseline 時出現）。
+_Avoid_: Prompt, Clarification, Dialog
+
+**Agent event**:
+一次請求執行過程中由後端逐筆推送的事件，是「AI 正在做什麼」的唯一來源。九種：STEP（步驟狀態）、TOKEN（逐字回覆）、ANSWER（完整回覆）、ARTIFACT（產出的 Artifact）、THINKING（思考過程）、QUESTION（反問表單）、CODE（產碼過程）、TABLE（查詢結果表）、ERROR（錯誤）。
+_Avoid_: Message chunk, Delta, Packet
+
+**Thinking**:
+Agent 在給出回覆前的推理過程，以 THINKING 事件串流呈現在可摺疊面板中。只存在於當次連線，不進入對話歷史。
+_Avoid_: Reasoning, Chain of thought
+
+**修復（Repair）**:
+Artifact 的 HTML 在 iframe 中執行時拋出 JS 錯誤後，由系統偵測、向使用者提議、經使用者確認才交由 Agent 重新產生一版可執行 HTML 的流程。
+_Avoid_: Fix, Retry, Regenerate（Regenerate 是使用者主動要新版本，Repair 是錯誤驅動）
 
 **Artifact**:
 一次 Scenario 執行後產生的分析成果，形式是一段完整的 HTML（dashboard 或 slides），在 Studio 右側以 sandboxed iframe 呈現；可被命名、釘選、分享、切版本。
@@ -32,11 +52,11 @@ _Avoid_: Dashboard, Report, Output（這些是 Artifact 的呈現型態，不是
 同一個 Artifact 的歷史產出版本，可在版本切換選單中選擇檢視。
 
 **Connector**:
-一個資料來源的連線狀態（已連線／可連線／已過期／無權限），例如 Inline、WAT、CP、Lot Info、Lot Abnormal、Process、Defect、TEM、Recipe、Offline Tool Log。Scenario 執行時會參照已連線的 Connector 取得資料。
+一個資料來源的連線狀態（已連線／可連線／已過期／無權限），例如 Inline、WAT、CP、Lot Info、Lot Abnormal、Process、Defect、TEM、Recipe、Offline Tool Log。連線狀態是帳號層級的事實，跨 Session 共用。Scenario 執行時會參照已連線的 Connector 取得資料，**也決定分析條件表單上 Data type 有哪些可選**。
 _Avoid_: Data source, Integration
 
 **DC Item**:
-SPC 分析中可選擇的管制項目（量測參數），例如 Idsat、Vt (gate CD)、Contact Rs，各自有上下限（`lo`/`hi`）。
+SPC 分析中可選擇的管制項目（量測參數），例如 Idsat、Vt (gate CD)、Contact Rs，各自有上下限（`lo`/`hi`）。當一次 SPC 執行涉及的 DC Item 過多時，Agent 會以 DC item 卡反問使用者先看哪幾項。
 _Avoid_: Parameter, Metric
 
 ## Semiconductor process language
