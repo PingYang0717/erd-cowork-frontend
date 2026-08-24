@@ -10,4 +10,4 @@
 - [x] `docs/adr/0005-sse-streaming-replaces-batch-reply.md`
 - [x] `docs/adr/0006-scenario-drives-clarification.md`
 - [x] `docs/api/interface.md`：Message / Chat 段落改寫為 SSE 契約（事件表、請求 body、錯誤語意、心跳）；新增 live 模式端點覆蓋表
-- [ ] `.scratch/erd-cowork-frontend/issues/18-dc-item-picker.md` 標記為 superseded，指向本 feature 的 issue 09
+- [x] `.scratch/erd-cowork-frontend/issues/18-dc-item-picker.md` 標記為 superseded，指向本 feature 的 issue 09 — 已標為 wontfix,指向 issue 09
