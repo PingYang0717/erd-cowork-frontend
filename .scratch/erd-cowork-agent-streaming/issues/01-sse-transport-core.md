@@ -11,7 +11,7 @@
 - [x] `src/features/thread/api/agentApi.ts`：`streamAgentMessage()` async generator，raw `fetch`（非 axios），自行接上 `VITE_API_BASE_URL`；`AgentStreamHttpError` 承載串流開始前的非 2xx `{code, message}`；`AbortError` 原樣往上拋
 - [x] `src/features/thread/hooks/useAgentStream.ts`：reducer 移植——`isStreaming` / `stopped` / `networkError` / `steps` / `liveText` / `answer` / `artifact` / `error` / `thinking` / `question` / `codeText` / `tables` / `durationMs` / `startedAt`；`send` / `stop` / `reset`；unmount 時 abort
 - [x] ERROR 事件**不**結束串流（只寫入 `error`，串流由連線關閉結束）
-- [ ] `MessageStep` 與 `StepItem` 合併為單一型別（`stepKey` / `title` / `description` / `status`），`status` 含 `ERROR`
+- [x] `MessageStep` 與 `StepItem` 合併為單一型別（`stepKey` / `title` / `description` / `status`），`status` 含 `ERROR` — 於 issue 03 完成
 - [x] Seam test：餵一段含心跳、跨 chunk 切斷、格式錯誤區塊的 SSE 位元流，斷言 reducer 累積出正確狀態
 
 ## Comments
