@@ -8,27 +8,23 @@
 
 | 類別              | 選擇                                           | 備註                                                                  |
 | ----------------- | ---------------------------------------------- | --------------------------------------------------------------------- |
-| 框架              | React 19.x + Vite                              | 開啟 React Compiler(見下方說明),減少手動 memoization                  |
+| 框架              | React 18.3.1 + Vite 8.1.x                      | 與 `cowork-master` 對齊,共用同一個後端與同一套技術棧                  |
 | 語言              | TypeScript(先關閉 strict,後續逐步開啟)         | 見第 6 節                                                             |
-| UI 元件庫         | Ant Design                                     | 優先使用 antd 現成元件,避免重造輪子                                   |
+| UI 元件庫         | Ant Design 6.x(+ Ant Design X 2.x)             | 優先使用 antd 現成元件,避免重造輪子                                   |
 | 路由              | React Router                                   | v6+ 寫法(`createBrowserRouter` / `<Routes>`)                          |
 | Client 端全域狀態 | Zustand                                        | 只放 UI 狀態(sidebar 開關、theme、跨頁草稿等)                         |
 | Server 端資料狀態 | TanStack Query                                 | API 資料一律走這裡,不放進 Zustand                                     |
 | API 呼叫層        | Axios + 自訂 API client                        | 見第 5 節                                                             |
 | 表單              | 目前以 `useState` 手刻(未安裝 React Hook Form) | 表單只有分享對話框、connector 新增、session 改名三處;複雜度上來再引入 |
-| Lint / Format     | ESLint 9(flat config)+ Prettier                | 強制在 commit 前執行                                                  |
+| Lint / Format     | oxlint 1.71 + Prettier 3.9                     | 強制在 commit 前執行;見第 7 節的 import 排序注意事項                  |
 | Git hook          | Husky + lint-staged                            |                                                                       |
 
-React Compiler 由 `@vitejs/plugin-react` v6 的 `compiler: true` 開啟(需安裝
-`oxc-transform-react`),設定在 `vite.config.ts`:
+**未啟用 React Compiler。** 它以 React 19 為目標,在 18 上需要額外的
+`react-compiler-runtime` polyfill;為了與 `cowork-master` 對齊而降到 18.3.1 之後,
+不值得為此多背一層 runtime。`vite.config.ts` 因此是單純的 `plugins: [react()]`。
 
-```ts
-plugins: [react({ compiler: true })],
-```
-
-編譯器只會優化「完全遵守 React 規則」的元件:元件內若有
-`eslint-disable` 掉 `react-hooks/*` 規則的註解,該元件會被整個略過(build 時會印出
-警告指出是哪一個檔案)。
+這代表 memoization 要自己顧:跨 render 的相等性(`useCallback` / `useMemo`)在需要時
+得手動處理,不再有編譯器兜底。
 
 ---
 
@@ -72,7 +68,7 @@ src/
 
 ## 2. Import 排序規則
 
-由 ESLint(`eslint-plugin-simple-import-sort`)自動排序與分組,存檔/commit 前自動修正,**不需要手動排列**,但分組邏輯如下,寫在這裡是讓 agent 理解「為什麼」:
+**手寫慣例**——oxlint 沒有 `simple-import-sort` 的對等能力(見第 7 節)。分組邏輯如下:
 
 ```ts
 // 1. React / 外部套件
@@ -95,7 +91,7 @@ import './App.css';
 
 ---
 
-## 3. 元件內部結構順序(手動慣例,ESLint 無法強制,靠 review 把關)
+## 3. 元件內部結構順序(手動慣例,linter 無法強制,靠 review 把關)
 
 ```tsx
 export function UserCard({ userId }: UserCardProps) {
@@ -246,106 +242,54 @@ export function useUser(id: string) {
 ## 6. TypeScript 規則
 
 - 目前**不開 strict mode**,但以下幾條先強制:
-  - 禁止 `any`(`@typescript-eslint/no-explicit-any: error`),真的需要時用 `unknown` 再收斂型別
+  - 禁止 `any`(`typescript/no-explicit-any: error`),真的需要時用 `unknown` 再收斂型別
   - 函式的參數與回傳值型別盡量明確標註,不依賴推斷
   - API 回應一律定義 DTO 型別(放 `types/` 或 `features/<功能>/types.ts`)
 - 待專案穩定、型別覆蓋率提高後,再逐步開啟 `strict: true`(建議下一個里程碑就排入)。
 
 ---
 
-## 7. ESLint / Prettier 設定
+## 7. Lint / Format 設定
 
-採用目前(2026)主流做法:**ESLint 9 flat config**,Prettier 只負責格式,不透過 ESLint plugin 跑(避免效能問題與規則衝突),而是用 `eslint-config-prettier` 關掉衝突規則,Prettier 另外獨立執行。
+**oxlint**(Rust 寫的 linter,不需要 plugin 生態)+ Prettier。Prettier 只負責格式,
+與 lint 各司其職。
 
 ### 安裝套件
 
 ```bash
-npm install -D eslint @eslint/js typescript-eslint globals \
-  eslint-plugin-react eslint-plugin-react-hooks eslint-plugin-react-refresh \
-  eslint-plugin-simple-import-sort eslint-plugin-jsx-a11y \
-  eslint-config-prettier prettier \
-  husky lint-staged
+npm install -D oxlint prettier husky lint-staged
 ```
 
-### `eslint.config.js`
+### `.oxlintrc.json`
 
-```js
-import js from '@eslint/js';
-import tseslint from 'typescript-eslint';
-import react from 'eslint-plugin-react';
-import reactHooks from 'eslint-plugin-react-hooks';
-import reactRefresh from 'eslint-plugin-react-refresh';
-import simpleImportSort from 'eslint-plugin-simple-import-sort';
-import jsxA11y from 'eslint-plugin-jsx-a11y';
-import prettierConfig from 'eslint-config-prettier';
-import globals from 'globals';
-
-export default tseslint.config(
-  { ignores: ['dist', 'node_modules'] },
-  js.configs.recommended,
-  ...tseslint.configs.recommended, // 專案穩定後可升級為 recommendedTypeChecked
-  {
-    files: ['**/*.{ts,tsx}'],
-    languageOptions: {
-      ecmaVersion: 2022,
-      globals: globals.browser,
-    },
-    plugins: {
-      react,
-      'react-hooks': reactHooks,
-      'react-refresh': reactRefresh,
-      'simple-import-sort': simpleImportSort,
-      'jsx-a11y': jsxA11y,
-    },
-    settings: {
-      react: { version: 'detect' },
-    },
-    rules: {
-      ...reactHooks.configs.recommended.rules,
-      'react/react-in-jsx-scope': 'off',
-      'react-refresh/only-export-components': 'warn',
-      '@typescript-eslint/no-explicit-any': 'error',
-      '@typescript-eslint/no-unused-vars': 'warn',
-      'simple-import-sort/imports': 'error',
-      'simple-import-sort/exports': 'error',
-    },
+```json
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["react", "typescript", "oxc", "import"],
+  "rules": {
+    "react/rules-of-hooks": "error",
+    "react/exhaustive-deps": "warn",
+    "react/only-export-components": ["warn", { "allowConstantExport": true }],
+    "typescript/no-explicit-any": "error",
+    "typescript/no-unused-vars": "warn",
+    "import/no-unassigned-import": "off"
   },
-  prettierConfig, // 一定放最後,關掉會跟 Prettier 打架的格式規則
-);
-```
-
-### `.prettierrc.json`
-
-```json
-{
-  "semi": true,
-  "singleQuote": true,
-  "trailingComma": "all",
-  "printWidth": 100,
-  "tabWidth": 2,
-  "endOfLine": "lf"
+  "ignorePatterns": ["dist", "coverage", "node_modules"]
 }
 ```
 
-### `.lintstagedrc.json`
+規則集刻意對齊先前的 ESLint 設定,沒有加嚴:當時 `eslint-plugin-jsx-a11y` 只被註冊、
+一條規則都沒開,所以 a11y 實際上不在 lint 範圍內,這裡也維持如此。
+`react/react-in-jsx-scope` 不需要關閉——專案走 automatic JSX runtime,oxlint 會自行
+依 tsconfig 的 `jsx: react-jsx` 判斷。
 
-```json
-{
-  "*.{ts,tsx}": ["eslint --fix", "prettier --write"],
-  "*.{css,less,json,md}": ["prettier --write"]
-}
-```
+### ⚠️ import 排序不再自動化
 
-### Husky 設定
+先前由 `eslint-plugin-simple-import-sort` 自動排序與修正,**oxlint 沒有對等能力**。
+第 2 節描述的分組規則現在是**手寫慣例,靠 review 把關**,與第 3 節的元件內部順序同性質。
 
-```bash
-npx husky init
-echo "npx lint-staged" > .husky/pre-commit
-```
-
-這樣設定後,任何人(或任何 agent)寫的 code,只要進 commit 就會被自動格式化與 lint 修正,風格差異在進 repo 前就會被拉齊。
-
----
+若要恢復自動化,可加 `prettier-plugin-organize-imports`(掛在 Prettier 上,不需要
+回頭裝 ESLint);目前刻意不裝,因為它不在對齊清單裡。
 
 ## 8. 主題色票(light / dark)
 
