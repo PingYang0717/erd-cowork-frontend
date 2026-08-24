@@ -10,13 +10,15 @@ import {
 import { useState } from 'react';
 
 import { AttachmentChip } from '@/features/file-upload/components/AttachmentChip';
-import type { Message, QuestionForm, StepItem, StepStatus } from '@/types/api';
+import type { Message, QuestionForm, StepItem, StepStatus, TableResult } from '@/types/api';
 import { formatDuration } from '@/utils/formatDuration';
 
 import { AnsweredConditions } from './AnsweredConditions';
+import { HtmlCodePanel } from './HtmlCodePanel';
 import styles from './MessageList.module.css';
 import { type Answers, QuestionFormCard } from './QuestionFormCard';
 import { ReplyText } from './ReplyText';
+import { ResultTable } from './ResultTable';
 import { ThinkingPanel } from './ThinkingPanel';
 
 /** What the current run has produced so far. Null once nothing is streaming. */
@@ -32,6 +34,10 @@ export interface LiveRun {
   thinking: string;
   /** The reask the run is waiting on, if any. */
   question: QuestionForm | null;
+  /** Artifact HTML as it is written, and the query results produced on the way.
+   *  Both live-only. */
+  codeText: string;
+  tables: TableResult[];
   /** Set when the run ended badly; shown as an alert under whatever it produced. */
   error: { code: string; message: string } | null;
 }
@@ -182,6 +188,10 @@ function LiveRunView({ live, onAnswer }: { live: LiveRun; onAnswer: (answers: An
         <div className={styles.workingSteps}>{steps}</div>
       )}
       {live.thinking && <ThinkingPanel thinking={live.thinking} />}
+      {live.codeText && <HtmlCodePanel code={live.codeText} />}
+      {live.tables.map((table) => (
+        <ResultTable key={table.tableId} table={table} />
+      ))}
       {live.liveText && <ReplyText text={live.liveText} />}
       {live.question && <QuestionFormCard form={live.question} onSubmit={onAnswer} />}
       {live.error && (

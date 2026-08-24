@@ -120,6 +120,8 @@ function ThreadView({ sessionId }: { sessionId: string }) {
           stopped: state.stopped,
           thinking: state.thinking,
           question: state.question,
+          codeText: state.codeText,
+          tables: state.tables,
           error: state.error,
         }
       : null;
