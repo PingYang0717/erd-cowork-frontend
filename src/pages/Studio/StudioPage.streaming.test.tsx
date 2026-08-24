@@ -8,6 +8,7 @@ import { useSessionSelectionStore } from '@/features/session/store/useSessionSel
 import { StudioShell } from '@/features/studio/components/StudioShell';
 import { useStudioLayoutStore } from '@/features/studio/store/useStudioLayoutStore';
 import { mockAgentStream } from '@/test/agentStream';
+import { answerAnalysisConditions } from '@/test/studioRun';
 
 import { StudioPage } from './StudioPage';
 
@@ -133,6 +134,7 @@ describe('Streaming a run in the Studio', () => {
     renderStudioPage();
 
     await startAnalysis(user);
+    await answerAnalysisConditions(user);
     await screen.findByRole('button', { name: /^Worked through \d+ steps$/ });
 
     expect(screen.getByText(/^Took \d+(\.\d+)?s$/)).toBeInTheDocument();
@@ -356,6 +358,32 @@ describe('Streaming a run in the Studio', () => {
     expect(stream.requests[1]).toEqual({
       answers: { partIds: ['A14', 'N5'], timeRange: 'Last 7 days' },
       inReplyTo: 'spc-conditions',
+    });
+  });
+
+  // Runs against the scripted mock backend: this is about what the backend asks for,
+  // not about holding a stream still.
+  describe('the analysis conditions a Scenario asks for', () => {
+    it('asks before running anything, with Data type drawn from the connected connectors', async () => {
+      const user = userEvent.setup();
+      renderStudioPage();
+
+      await startAnalysis(user);
+
+      expect(await screen.findByText('分析條件')).toBeInTheDocument();
+      expect(screen.getByRole('group', { name: 'Part ID' })).toBeInTheDocument();
+      expect(screen.getByRole('group', { name: 'Time range' })).toBeInTheDocument();
+
+      // Seeded connectors: Inline / WAT / CP are connected, the rest are not.
+      const dataType = screen.getByRole('group', { name: 'Data type' });
+      expect(within(dataType).getByRole('button', { name: 'Inline' })).toBeInTheDocument();
+      expect(within(dataType).getByRole('button', { name: 'WAT' })).toBeInTheDocument();
+      expect(within(dataType).queryByRole('button', { name: 'Defect' })).not.toBeInTheDocument();
+
+      // Nothing has run yet — the agent is waiting on the user.
+      expect(screen.queryByRole('button', { name: /^Worked through/ })).not.toBeInTheDocument();
+      expect(screen.getByRole('button', { name: '送出' })).toBeDisabled();
+      expect(screen.getByText('請先選 part id、time range、data type')).toBeInTheDocument();
     });
   });
 });

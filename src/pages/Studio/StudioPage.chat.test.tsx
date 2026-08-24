@@ -7,6 +7,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { useSessionSelectionStore } from '@/features/session/store/useSessionSelectionStore';
 import { StudioShell } from '@/features/studio/components/StudioShell';
 import { useStudioLayoutStore } from '@/features/studio/store/useStudioLayoutStore';
+import { answerAnalysisConditions } from '@/test/studioRun';
 
 import { StudioPage } from './StudioPage';
 
@@ -45,6 +46,7 @@ async function selectASession(user: ReturnType<typeof userEvent.setup>) {
  *  The mock backend streams the run and closes; there is no timer to advance. */
 async function runScenario(user: ReturnType<typeof userEvent.setup>, label: string) {
   await user.click(screen.getByRole('button', { name: label }));
+  await answerAnalysisConditions(user);
   return screen.findByRole('button', { name: /^Worked through \d+ steps$/ });
 }
 
@@ -203,6 +205,7 @@ describe('Scenario matching', () => {
 
       await user.type(screen.getByRole('textbox', { name: 'Message' }), text);
       await user.click(screen.getByRole('button', { name: 'Send message' }));
+      await answerAnalysisConditions(user);
 
       await screen.findByRole('button', { name: /^Worked through \d+ steps$/ });
 
