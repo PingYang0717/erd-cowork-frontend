@@ -7,7 +7,9 @@ import { defineConfig } from 'vitest/config';
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
-  plugins: [react({ compiler: true })],
+  // React Compiler targets React 19; on 18 it needs the react-compiler-runtime
+  // polyfill, which is not worth carrying for what it buys here.
+  plugins: [react()],
   resolve: {
     alias: {
       '@': path.resolve(dirname, 'src'),

@@ -30,7 +30,7 @@ npm run dev        # 開發伺服器
 | `npm test`           | Vitest 單次執行                  |
 | `npm run test:watch` | Vitest watch 模式                |
 
-Commit 前 Husky + lint-staged 會自動跑 `eslint --fix` 與 `prettier --write`，不需要手動格式化。
+Commit 前 Husky + lint-staged 會自動跑 `oxlint --fix` → `eslint --fix` → `prettier --write`，不需要手動格式化。
 
 > **測試提醒**：機器負載高時，平行執行會讓 `findBy*` 的 5 秒預設逾時被撐爆而出現偽陽性失敗。遇到時改用 `npx vitest run --no-file-parallelism`（較慢但穩定），單檔執行也不受影響。
 
@@ -110,9 +110,9 @@ src/
 已知未完成，皆有紀錄、非疏漏：
 
 - **Ticket 15 Schedule 排程列表** — 刻意延後，`/cowork/schedule` 目前只有標題。
-- **Ticket 18 DC Item 選擇器** — 尚未動工，只有 `types/api/dcItem.ts`。
 - **ADR-0004 視覺缺口三項** — Artifact 全頁 header 未顯示名稱與「Shared to me」、附件未做 `.csv` / `.xlsx` 型別過濾、拖放只在 modal 內而非 composer。詳見 ticket 10 與 17 的 Comments。
-- **`ThreadPanel` 未被 React Compiler 優化** — 步驟播放的 effect 帶有 `eslint-disable`，compiler 遇到 rule suppression 會整個元件略過（build 時有警告）。
+- **未啟用 React Compiler** — 技術棧對齊 `cowork-master` 後降到 React 18.3.1，而 compiler 以 19 為目標，在 18 上需要額外的 `react-compiler-runtime` polyfill。memoization 現在要自己顧。
+- **`@ant-design/x` 已安裝但尚無使用處** — 隨技術棧對齊加入；`cowork-master` 用它做 `StepChain`，本專案有自己的步驟卡，尚未決定採用點。
 
 ## 執行模式
 
