@@ -1,6 +1,7 @@
 import { http, HttpResponse } from 'msw';
 
 import { currentUser } from '@/services/currentUser';
+import type { AgentEvent } from '@/types/api/agentEvent';
 import type { Artifact, ArtifactKind, ArtifactVersion } from '@/types/api/artifact';
 import type { Connector, ConnectorStatus } from '@/types/api/connector';
 import type { Message } from '@/types/api/message';
@@ -269,6 +270,10 @@ export const handlers = [
     return HttpResponse.json(all.filter((message) => message.sessionId === params.sessionId));
   }),
 
+  // A run is delivered as an agent-event stream, not a computed reply (ADR-0005).
+  // The whole scripted run is written at once and the stream closed: tests that need
+  // to observe an intermediate state drive their own stream via `src/test/agentStream.ts`
+  // instead of racing this one.
   http.post('/api/sessions/:sessionId/messages', async ({ params, request }) => {
     const sessionId = params.sessionId as string;
     const body = (await request.json()) as {
@@ -279,7 +284,10 @@ export const handlers = [
     };
     const text = body.text?.trim();
     if (!text) {
-      return new HttpResponse(null, { status: 400 });
+      return HttpResponse.json(
+        { code: 'EMPTY_MESSAGE', message: 'Message is empty' },
+        { status: 400 },
+      );
     }
 
     const scenarioKey = body.scenarioKey ?? matchScenario(text);
@@ -329,9 +337,24 @@ export const handlers = [
       artifactName,
       artifactId: artifact.id,
     };
-
     messages.write([...messages.read(), userMessage, aiMessage]);
-    return HttpResponse.json({ userMessage, aiMessage }, { status: 201 });
+
+    const events: AgentEvent[] = [];
+    for (const step of steps) {
+      events.push({ ...step, type: 'STEP', status: 'RUNNING' });
+      events.push({ ...step, type: 'STEP', status: 'SUCCESS' });
+    }
+    events.push({ type: 'ARTIFACT', artifactId: artifact.id, title: artifactName });
+    for (const word of fixture.reply.split(/(?<=\s)/)) {
+      events.push({ type: 'TOKEN', delta: word });
+    }
+    events.push({ type: 'ANSWER', text: fixture.reply });
+
+    const sse = events.map((event) => `data: ${JSON.stringify(event)}\n\n`).join('');
+
+    return new HttpResponse(sse, {
+      headers: { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache' },
+    });
   }),
 
   http.get('/api/artifacts', () => {
