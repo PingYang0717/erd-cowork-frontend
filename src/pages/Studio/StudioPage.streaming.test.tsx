@@ -127,6 +127,54 @@ describe('Streaming a run in the Studio', () => {
     expect(screen.getByRole('button', { name: 'Send message' })).toBeInTheDocument();
   });
 
+  it('collapses the artifact HTML being written behind a toggle, and keeps it out of the history', async () => {
+    const user = userEvent.setup();
+    const stream = mockAgentStream();
+    renderStudioPage();
+
+    await startAnalysis(user);
+    expect(screen.queryByRole('button', { name: 'HTML' })).not.toBeInTheDocument();
+
+    act(() => stream.push({ type: 'CODE', delta: '<div id="chart"' }));
+    act(() => stream.push({ type: 'CODE', delta: '></div>' }));
+
+    const toggle = await screen.findByRole('button', { name: 'HTML' });
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+
+    await user.click(toggle);
+    expect(screen.getByText('<div id="chart"></div>')).toBeInTheDocument();
+  });
+
+  it('shows the query results the run produced along the way', async () => {
+    const user = userEvent.setup();
+    const stream = mockAgentStream();
+    renderStudioPage();
+
+    await startAnalysis(user);
+
+    act(() =>
+      stream.push({
+        type: 'TABLE',
+        tableId: 't1',
+        intent: 'OOC wafers on A14',
+        columns: ['Lot', 'Wafer', 'Vt'],
+        rows: [
+          ['A14-001', 3, 0.361],
+          ['A14-004', 11, null],
+        ],
+        truncated: true,
+      }),
+    );
+
+    const table = await screen.findByRole('table', { name: 'OOC wafers on A14' });
+    expect(within(table).getByRole('columnheader', { name: 'Wafer' })).toBeInTheDocument();
+    expect(within(table).getByRole('cell', { name: 'A14-001' })).toBeInTheDocument();
+    expect(within(table).getByRole('cell', { name: '0.361' })).toBeInTheDocument();
+    // A null cell renders empty rather than as the word "null".
+    expect(within(table).queryByRole('cell', { name: 'null' })).not.toBeInTheDocument();
+    expect(screen.getByText('已截斷,僅顯示部分結果')).toBeInTheDocument();
+  });
+
   // Runs against the scripted mock backend rather than a hand-driven stream: this is a
   // post-run assertion, so there is no intermediate state to hold still.
   it('reports how long the finished run took', async () => {
