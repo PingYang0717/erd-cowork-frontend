@@ -12,13 +12,7 @@ export interface StepItem {
   status: StepStatus;
 }
 
-export type QuestionFieldKind =
-  | 'single'
-  | 'multi'
-  | 'text'
-  | 'boolean'
-  | 'daterange'
-  | 'dcitem';
+export type QuestionFieldKind = 'single' | 'multi' | 'text' | 'boolean' | 'daterange' | 'dcitem';
 
 export interface QuestionOption {
   value: string;
@@ -76,4 +70,11 @@ export type AgentEvent =
   | { type: 'THINKING'; delta: string }
   | { type: 'QUESTION'; form: QuestionForm }
   | { type: 'CODE'; delta: string }
-  | { type: 'TABLE'; tableId: string; intent: string; columns: string[]; rows: TableCellValue[][]; truncated: boolean };
+  | {
+      type: 'TABLE';
+      tableId: string;
+      intent: string;
+      columns: string[];
+      rows: TableCellValue[][];
+      truncated: boolean;
+    };
