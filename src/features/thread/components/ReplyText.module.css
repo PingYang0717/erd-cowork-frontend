@@ -1,0 +1,63 @@
+/* Matches the plain-paragraph reply this replaced: fs13.5 / lh1.6 from the mockup. */
+.reply {
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--erd-color-text, rgba(0, 0, 0, 0.88));
+}
+
+.reply > :first-child {
+  margin-top: 0;
+}
+
+.reply > :last-child {
+  margin-bottom: 0;
+}
+
+.reply p,
+.reply ul,
+.reply ol {
+  margin: 8px 0;
+}
+
+.reply ul,
+.reply ol {
+  padding-left: 20px;
+}
+
+.reply code {
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: var(--erd-color-fill-tertiary, #f5f5f5);
+  font-size: 12.5px;
+}
+
+.reply pre {
+  margin: 8px 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--erd-color-fill-tertiary, #f5f5f5);
+  overflow-x: auto;
+}
+
+.reply pre code {
+  padding: 0;
+  background: none;
+}
+
+/* A wide table scrolls inside its own box rather than widening the thread. */
+.reply table {
+  display: block;
+  width: max-content;
+  max-width: 100%;
+  margin: 8px 0;
+  border-collapse: collapse;
+  overflow-x: auto;
+  font-size: 12.5px;
+}
+
+.reply th,
+.reply td {
+  padding: 5px 10px;
+  border: 1px solid var(--erd-color-border-secondary, #f0f0f0);
+  text-align: left;
+}

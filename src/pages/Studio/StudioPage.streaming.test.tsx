@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it } from 'vitest';
@@ -155,5 +155,44 @@ describe('Streaming a run in the Studio', () => {
     );
 
     expect(await screen.findByTitle('Artifact preview')).toBeInTheDocument();
+  });
+
+  it("collapses the agent's thinking behind a toggle, and keeps it out of the history", async () => {
+    const user = userEvent.setup();
+    const stream = mockAgentStream();
+    renderStudioPage();
+
+    await startAnalysis(user);
+    expect(screen.queryByRole('button', { name: /thinking/i })).not.toBeInTheDocument();
+
+    act(() => stream.push({ type: 'THINKING', delta: 'The Vt trend ' }));
+    act(() => stream.push({ type: 'THINKING', delta: 'crosses the UCL on wafer 3.' }));
+
+    const toggle = await screen.findByRole('button', { name: 'Thinking' });
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.queryByText(/crosses the UCL/)).not.toBeInTheDocument();
+
+    await user.click(toggle);
+    expect(screen.getByText('The Vt trend crosses the UCL on wafer 3.')).toBeInTheDocument();
+  });
+
+  it('renders a streamed reply as Markdown, and survives half-arrived syntax', async () => {
+    const user = userEvent.setup();
+    const stream = mockAgentStream();
+    renderStudioPage();
+
+    await startAnalysis(user);
+
+    // A list cut mid-syntax must not blow up the renderer.
+    act(() => stream.push({ type: 'TOKEN', delta: '**Findings**\n\n- Vt drift on A14\n- Ids' }));
+    expect(await screen.findByText('Findings')).toBeInTheDocument();
+
+    act(() => stream.push({ type: 'TOKEN', delta: 'at stable\n' }));
+
+    const thread = screen.getByRole('log', { name: 'Messages' });
+    const findings = await within(thread).findByRole('list');
+    expect(within(findings).getByText('Vt drift on A14')).toBeInTheDocument();
+    expect(within(findings).getByText('Idsat stable')).toBeInTheDocument();
+    expect(screen.getByText('Findings').tagName).toBe('STRONG');
   });
 });
