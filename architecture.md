@@ -16,7 +16,7 @@
 | Server 端資料狀態 | TanStack Query                                 | API 資料一律走這裡,不放進 Zustand                                     |
 | API 呼叫層        | Axios + 自訂 API client                        | 見第 5 節                                                             |
 | 表單              | 目前以 `useState` 手刻(未安裝 React Hook Form) | 表單只有分享對話框、connector 新增、session 改名三處;複雜度上來再引入 |
-| Lint / Format     | oxlint 1.71 + Prettier 3.9                     | 強制在 commit 前執行;見第 7 節的 import 排序注意事項                  |
+| Lint / Format     | oxlint 1.71 + ESLint 9 + Prettier 3.9          | 兩個 linter 並存,分工見第 7 節;強制在 commit 前執行                   |
 | Git hook          | Husky + lint-staged                            |                                                                       |
 
 **未啟用 React Compiler。** 它以 React 19 為目標,在 18 上需要額外的
@@ -68,7 +68,7 @@ src/
 
 ## 2. Import 排序規則
 
-**手寫慣例**——oxlint 沒有 `simple-import-sort` 的對等能力(見第 7 節)。分組邏輯如下:
+由 ESLint(`eslint-plugin-simple-import-sort`)自動排序與分組,存檔/commit 前自動修正,**不需要手動排列**,但分組邏輯如下,寫在這裡是讓 agent 理解「為什麼」:
 
 ```ts
 // 1. React / 外部套件
@@ -251,13 +251,36 @@ export function useUser(id: string) {
 
 ## 7. Lint / Format 設定
 
-**oxlint**(Rust 寫的 linter,不需要 plugin 生態)+ Prettier。Prettier 只負責格式,
-與 lint 各司其職。
+**oxlint 與 ESLint 並存**,`npm run lint` 依序跑兩個(`oxlint && eslint .`)。Prettier 只
+負責格式,與 lint 各司其職。
+
+| 工具     | 負責                                            | 為什麼留著                                                                              |
+| -------- | ----------------------------------------------- | --------------------------------------------------------------------------------------- |
+| oxlint   | eslint / typescript / react 的 correctness 規則 | Rust 寫的,毫秒級跑完全專案,當第一道關卡                                                 |
+| ESLint   | oxlint 沒有對等能力的規則                       | 最主要是 `simple-import-sort`——沒有它,第 2 節的 import 排序就從自動化降級成 review 工作 |
+| Prettier | 純格式                                          | 與 lint 分離,避免規則衝突與效能問題                                                     |
+
+### 兩者如何不打架
+
+`eslint.config.js` 最後一項是 `...oxlint.configs['flat/recommended']`(來自
+`eslint-plugin-oxlint`),它會把 oxlint 已經覆蓋的 ESLint 規則全部關掉。所以
+`react-hooks/exhaustive-deps`、`no-unused-vars`、`no-undef` 這些在 ESLint 這邊是 off,
+由 oxlint 報;同一個問題只會被報一次。
+
+**這一項必須放在最後**,否則會被前面的設定覆蓋回去。
+
+`eslint-plugin-oxlint` 的版本要跟著 oxlint 走(peer 是 `~<oxlint 版本>`),升 oxlint 時
+要一起升。
 
 ### 安裝套件
 
 ```bash
-npm install -D oxlint prettier husky lint-staged
+npm install -D oxlint eslint-plugin-oxlint \
+  eslint @eslint/js typescript-eslint globals \
+  eslint-plugin-react eslint-plugin-react-hooks eslint-plugin-react-refresh \
+  eslint-plugin-simple-import-sort eslint-plugin-jsx-a11y \
+  eslint-config-prettier prettier \
+  husky lint-staged
 ```
 
 ### `.oxlintrc.json`
@@ -278,18 +301,13 @@ npm install -D oxlint prettier husky lint-staged
 }
 ```
 
-規則集刻意對齊先前的 ESLint 設定,沒有加嚴:當時 `eslint-plugin-jsx-a11y` 只被註冊、
-一條規則都沒開,所以 a11y 實際上不在 lint 範圍內,這裡也維持如此。
-`react/react-in-jsx-scope` 不需要關閉——專案走 automatic JSX runtime,oxlint 會自行
-依 tsconfig 的 `jsx: react-jsx` 判斷。
+規則集刻意對齊原本的 ESLint 設定,沒有加嚴:`eslint-plugin-jsx-a11y` 一直只被註冊、
+一條規則都沒開,所以 a11y 實際上不在 lint 範圍內,這裡維持如此(要開的話兩邊擇一,
+別同時開)。
 
-### ⚠️ import 排序不再自動化
+### `eslint.config.js`
 
-先前由 `eslint-plugin-simple-import-sort` 自動排序與修正,**oxlint 沒有對等能力**。
-第 2 節描述的分組規則現在是**手寫慣例,靠 review 把關**,與第 3 節的元件內部順序同性質。
-
-若要恢復自動化,可加 `prettier-plugin-organize-imports`(掛在 Prettier 上,不需要
-回頭裝 ESLint);目前刻意不裝,因為它不在對齊清單裡。
+見專案根目錄該檔案,檔頭有分工說明。
 
 ## 8. 主題色票(light / dark)
 
