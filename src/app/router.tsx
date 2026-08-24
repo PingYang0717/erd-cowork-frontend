@@ -1,6 +1,6 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 
-import { StudioShell } from '@/features/studio/components/StudioShell';
+import { StudioShell } from '@/components/layouts/StudioShell';
 import { ArtifactPage } from '@/pages/Artifact/ArtifactPage';
 import { ArtifactsGalleryPage } from '@/pages/ArtifactsGallery/ArtifactsGalleryPage';
 import { SchedulePage } from '@/pages/Schedule/SchedulePage';

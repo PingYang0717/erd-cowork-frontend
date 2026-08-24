@@ -2,8 +2,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { App as AntdApp, ConfigProvider, theme } from 'antd';
 import type { CSSProperties, ReactNode } from 'react';
 
-import { useThemeStore } from '@/features/theme/store/useThemeStore';
-import { THEME_TOKENS, themeCssText, type ThemeTokens } from '@/features/theme/tokens';
+import { useThemeStore } from '@/stores/useThemeStore';
+import { THEME_TOKENS, themeCssText, type ThemeTokens } from '@/theme/tokens';
 
 const queryClient = new QueryClient();
 
@@ -56,7 +56,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
             fontSize: 13,
             // The algorithm gets the palette shape right but not the mockup's
             // exact surfaces, so everything below comes from the one table in
-            // `features/theme/tokens.ts` that also feeds the CSS custom
+            // `theme/tokens.ts` that also feeds the CSS custom
             // properties — antd components and plain elements cannot drift
             // apart in either theme.
             // Seed hues stay light in both themes: the mockup's dark palette

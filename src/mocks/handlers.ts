@@ -1,7 +1,7 @@
 import { http, HttpResponse } from 'msw';
 
-import { currentUser } from '@/services/currentUser';
-import { isLive } from '@/services/transport';
+import { currentUser } from '@/config/currentUser';
+import { isLive } from '@/config/transport';
 import type { AgentEvent, QuestionAnswer, QuestionForm, StepItem } from '@/types/api/agentEvent';
 import type { Artifact, ArtifactKind, ArtifactVersion } from '@/types/api/artifact';
 import type { Connector, ConnectorStatus } from '@/types/api/connector';
