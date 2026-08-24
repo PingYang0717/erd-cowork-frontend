@@ -4,9 +4,9 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { useSessionSelectionStore } from '@/features/session/store/useSessionSelectionStore';
-import { StudioShell } from '@/features/studio/components/StudioShell';
-import { useStudioLayoutStore } from '@/features/studio/store/useStudioLayoutStore';
+import { StudioShell } from '@/components/layouts/StudioShell';
+import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
+import { useStudioLayoutStore } from '@/stores/useStudioLayoutStore';
 import { mockAgentStream } from '@/test/agentStream';
 import { answerAnalysisConditions } from '@/test/studioRun';
 

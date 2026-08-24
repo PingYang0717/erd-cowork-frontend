@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 
-import { apiClient } from '@/services/apiClient';
+import { apiClient } from '@/api/apiClient';
 
 interface ExampleWidget {
   id: string;

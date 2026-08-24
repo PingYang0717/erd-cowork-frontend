@@ -1,4 +1,4 @@
-import { StudioLayout } from '@/features/studio/components/StudioLayout';
+import { StudioLayout } from '@/components/layouts/StudioLayout';
 
 export function StudioPage() {
   return <StudioLayout />;

@@ -4,9 +4,9 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { useSessionSelectionStore } from '@/features/session/store/useSessionSelectionStore';
-import { StudioShell } from '@/features/studio/components/StudioShell';
-import { useStudioLayoutStore } from '@/features/studio/store/useStudioLayoutStore';
+import { StudioShell } from '@/components/layouts/StudioShell';
+import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
+import { useStudioLayoutStore } from '@/stores/useStudioLayoutStore';
 
 import { StudioPage } from './StudioPage';
 
@@ -34,8 +34,7 @@ function renderStudioPage() {
 // "resets on reload" tests to exercise a genuinely fresh store.
 async function renderReloadedStudioPage() {
   vi.resetModules();
-  const { StudioShell: ReloadedStudioShell } =
-    await import('@/features/studio/components/StudioShell');
+  const { StudioShell: ReloadedStudioShell } = await import('@/components/layouts/StudioShell');
   const { StudioPage: ReloadedStudioPage } = await import('./StudioPage');
   const queryClient = new QueryClient();
   return render(

@@ -10,7 +10,7 @@ Everything that is not the agent stream is tested here (confirmed in
 - Render the real page/component tree wrapped in the real `QueryClientProvider`
   (and `RouterProvider` / Zustand store where relevant) — no mocking of
   TanStack Query, Zustand, or child components.
-- MSW intercepts the HTTP calls made through `services/apiClient.ts` and
+- MSW intercepts the HTTP calls made through `api/apiClient.ts` and
   returns fixture data.
 - Assertions go through Testing Library's user-facing queries (`getByRole`,
   `getByText`, ...), never through implementation details.
@@ -28,7 +28,7 @@ seam can drive comfortably (nine event types, user stop, unexpected disconnectio
 backend refusal, elapsed time, ERROR-does-not-end-the-run), so it is tested directly
 via `renderHook`:
 
-- `src/features/thread/hooks/useAgentStream.test.ts` — state combinations
+- `src/hooks/useAgentStream.test.ts` — state combinations
 - `src/utils/sseParser.test.ts` — SSE wire format (a pure function)
 - `src/pages/Studio/StudioPage.*.test.tsx` — the user-facing flow, still at the page seam
 
@@ -54,8 +54,8 @@ opens, and `stream.disconnect()` covers a connection dying mid-run.
 1. Add the feature's handler(s) to `src/mocks/handlers.ts`, backed by
    `createPersistedResource` (`src/mocks/persistedResource.ts`) if the
    resource needs to survive a reload.
-2. Build the feature under `features/<name>/` per `architecture.md` (API
-   function in `api/`, data hooks in `hooks/`), wired into a `pages/` entry.
+2. Build it per `architecture.md`: the endpoint module in `src/api/`, data hooks in
+   `src/hooks/`, the UI under `src/components/<domain>/`, wired into a `pages/` entry.
 3. Test at the page level: render the page with real providers, let MSW
    answer, assert on the rendered DOM.
 

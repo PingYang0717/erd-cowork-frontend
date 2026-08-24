@@ -5,11 +5,11 @@ import { http, HttpResponse } from 'msw';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { useRepairOfferStore } from '@/features/artifact/store/useRepairOfferStore';
-import { useSessionSelectionStore } from '@/features/session/store/useSessionSelectionStore';
-import { StudioShell } from '@/features/studio/components/StudioShell';
-import { useStudioLayoutStore } from '@/features/studio/store/useStudioLayoutStore';
+import { StudioShell } from '@/components/layouts/StudioShell';
 import { server } from '@/mocks/server';
+import { useRepairOfferStore } from '@/stores/useRepairOfferStore';
+import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
+import { useStudioLayoutStore } from '@/stores/useStudioLayoutStore';
 import { answerAnalysisConditions } from '@/test/studioRun';
 
 import { StudioPage } from './StudioPage';

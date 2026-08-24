@@ -1,4 +1,4 @@
-import { ArtifactsGallery } from '@/features/artifacts-gallery/components/ArtifactsGallery';
+import { ArtifactsGallery } from '@/components/gallery/ArtifactsGallery';
 
 export function ArtifactsGalleryPage() {
   return <ArtifactsGallery />;
