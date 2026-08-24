@@ -1,6 +1,7 @@
 import {
   AppstoreOutlined,
   CheckCircleFilled,
+  CloseCircleFilled,
   DownOutlined,
   LoadingOutlined,
   RightOutlined,
@@ -9,23 +10,53 @@ import {
 import { useState } from 'react';
 
 import { AttachmentChip } from '@/features/file-upload/components/AttachmentChip';
-import type { Message, MessageStep } from '@/types/api';
+import type { Message, StepItem, StepStatus } from '@/types/api';
 
 import styles from './MessageList.module.css';
 
-export interface PendingAiMessage {
-  message: Message;
-  revealedSteps: number;
+/** What the current run has produced so far. Null once nothing is streaming. */
+export interface LiveRun {
+  steps: StepItem[];
+  liveText: string;
 }
 
-function StepStatusIcon({ status }: { status: 'success' | 'running' | 'pending' }) {
-  if (status === 'success') {
-    return <CheckCircleFilled aria-hidden className={styles.stepIconSuccess} />;
+// Steps used to be revealed by a client-side timer, so a step could only ever be
+// pending, running or done. The backend now reports the status itself, which means a
+// step can also fail — hence the fourth state (ADR-0005).
+const STEP_STATUS_LABEL: Record<StepStatus, string> = {
+  PENDING: 'Pending',
+  RUNNING: 'Running',
+  SUCCESS: 'Done',
+  ERROR: 'Failed',
+};
+
+function StepStatusIcon({ status }: { status: StepStatus }) {
+  const label = STEP_STATUS_LABEL[status];
+
+  if (status === 'SUCCESS') {
+    return <CheckCircleFilled aria-label={label} className={styles.stepIconSuccess} />;
   }
-  if (status === 'running') {
-    return <LoadingOutlined aria-hidden spin className={styles.stepIconRunning} />;
+  if (status === 'RUNNING') {
+    return <LoadingOutlined aria-label={label} spin className={styles.stepIconRunning} />;
   }
-  return <span aria-hidden className={styles.stepIconPending} />;
+  if (status === 'ERROR') {
+    return <CloseCircleFilled aria-label={label} className={styles.stepIconError} />;
+  }
+  return <span aria-label={label} role="img" className={styles.stepIconPending} />;
+}
+
+function StepRow({ step }: { step: StepItem }) {
+  return (
+    <div className={styles.workingStep}>
+      <StepStatusIcon status={step.status} />
+      <span className={styles.stepText}>
+        <span className={styles.stepTitle}>{step.title}</span>
+        {step.description !== null && (
+          <span className={styles.stepDescription}>{step.description}</span>
+        )}
+      </span>
+    </div>
+  );
 }
 
 function MessageBubble({ message }: { message: Message }) {
@@ -72,7 +103,7 @@ function MessageBubble({ message }: { message: Message }) {
 // After a run completes, its steps stay behind as the mockup's collapsed
 // "Worked through N steps" card, expandable to each step's title and
 // description.
-function StepsRecap({ steps }: { steps: MessageStep[] }) {
+function StepsRecap({ steps }: { steps: StepItem[] }) {
   const [isExpanded, setIsExpanded] = useState(false);
 
   return (
@@ -93,13 +124,7 @@ function StepsRecap({ steps }: { steps: MessageStep[] }) {
       {isExpanded && (
         <div className={styles.stepsRecapList}>
           {steps.map((step) => (
-            <div key={step.key} className={styles.workingStep}>
-              <CheckCircleFilled aria-hidden className={styles.stepIconSuccess} />
-              <span className={styles.stepText}>
-                <span className={styles.stepTitle}>{step.title}</span>
-                <span className={styles.stepDescription}>{step.description}</span>
-              </span>
-            </div>
+            <StepRow key={step.stepKey} step={step} />
           ))}
         </div>
       )}
@@ -107,19 +132,7 @@ function StepsRecap({ steps }: { steps: MessageStep[] }) {
   );
 }
 
-function stepStatus(index: number, revealedSteps: number) {
-  if (index < revealedSteps) {
-    return 'success';
-  }
-  if (index === revealedSteps) {
-    return 'running';
-  }
-  return 'pending';
-}
-
-function AiWorkingSteps({ pendingAi }: { pendingAi: PendingAiMessage }) {
-  const steps = pendingAi.message.steps ?? [];
-
+function AiWorkingSteps({ live }: { live: LiveRun }) {
   return (
     <div className={styles.aiRow}>
       <div className={styles.aiLabel}>
@@ -127,14 +140,8 @@ function AiWorkingSteps({ pendingAi }: { pendingAi: PendingAiMessage }) {
         eRD AI is working…
       </div>
       <div role="status" aria-label="eRD AI is working" className={styles.workingSteps}>
-        {steps.map((step, i) => (
-          <div key={step.key} className={styles.workingStep}>
-            <StepStatusIcon status={stepStatus(i, pendingAi.revealedSteps)} />
-            <span className={styles.stepText}>
-              <span className={styles.stepTitle}>{step.title}</span>
-              <span className={styles.stepDescription}>{step.description}</span>
-            </span>
-          </div>
+        {live.steps.map((step) => (
+          <StepRow key={step.stepKey} step={step} />
         ))}
       </div>
     </div>
@@ -143,16 +150,16 @@ function AiWorkingSteps({ pendingAi }: { pendingAi: PendingAiMessage }) {
 
 interface MessageListProps {
   messages: Message[];
-  pendingAi: PendingAiMessage | null;
+  live: LiveRun | null;
 }
 
-export function MessageList({ messages, pendingAi }: MessageListProps) {
+export function MessageList({ messages, live }: MessageListProps) {
   return (
     <div>
       {messages.map((message) => (
         <MessageBubble key={message.id} message={message} />
       ))}
-      {pendingAi && <AiWorkingSteps pendingAi={pendingAi} />}
+      {live && <AiWorkingSteps live={live} />}
     </div>
   );
 }

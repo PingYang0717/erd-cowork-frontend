@@ -2,7 +2,10 @@ import { useCallback, useEffect, useReducer, useRef } from 'react';
 
 import type { AgentEvent, QuestionForm, StepItem, TableResult } from '@/types/api/agentEvent';
 
-import { AgentStreamHttpError, streamAgentMessage } from '../api/agentApi';
+import { AgentStreamHttpError, type SendMessageArgs, streamAgentMessage } from '../api/agentApi';
+
+/** Everything about a run except which session it belongs to and how it is cancelled. */
+export type SendInput = Omit<SendMessageArgs, 'sessionId' | 'signal'>;
 
 export interface AgentStreamState {
   isStreaming: boolean;
@@ -164,7 +167,7 @@ function reducer(state: AgentStreamState, action: Action): AgentStreamState {
 
 export function useAgentStream(sessionId: string): {
   state: AgentStreamState;
-  send(text: string): Promise<void>;
+  send(input: SendInput): Promise<void>;
   stop(): void;
   reset(): void;
 } {
@@ -182,7 +185,7 @@ export function useAgentStream(sessionId: string): {
   );
 
   const send = useCallback(
-    async (text: string): Promise<void> => {
+    async (input: SendInput): Promise<void> => {
       dispatch({ type: 'START' });
       const startedAt = Date.now();
 
@@ -191,8 +194,8 @@ export function useAgentStream(sessionId: string): {
 
       try {
         for await (const event of streamAgentMessage({
+          ...input,
           sessionId,
-          text,
           signal: controller.signal,
         })) {
           dispatch({ type: 'EVENT', event });

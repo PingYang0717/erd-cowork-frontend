@@ -1,3 +1,4 @@
+import type { ArtifactKind, ScenarioKey, Upload } from '@/types/api';
 import type { AgentEvent } from '@/types/api/agentEvent';
 import { createSseParser } from '@/utils/sseParser';
 
@@ -15,9 +16,15 @@ export class AgentStreamHttpError extends Error {
   }
 }
 
+/** The opening question of a run. Mirrors `docs/api/interface.md` → Message / Chat. */
 export interface SendMessageArgs {
   sessionId: string;
   text: string;
+  scenarioKey?: ScenarioKey;
+  artifactKind?: ArtifactKind;
+  attachments?: Upload[];
+  /** Iterate on an existing Artifact version rather than starting from nothing. */
+  baseArtifactId?: string;
   signal: AbortSignal;
 }
 
@@ -30,7 +37,13 @@ export async function* streamAgentMessage(
   const response = await fetch(`${API_BASE}/sessions/${args.sessionId}/messages`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream' },
-    body: JSON.stringify({ text: args.text }),
+    body: JSON.stringify({
+      text: args.text,
+      scenarioKey: args.scenarioKey,
+      artifactKind: args.artifactKind,
+      attachments: args.attachments,
+      baseArtifactId: args.baseArtifactId,
+    }),
     signal: args.signal,
   });
 

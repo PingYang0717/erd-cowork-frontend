@@ -148,6 +148,10 @@
   color: var(--erd-color-success, #52c41a);
 }
 
+.stepIconError {
+  color: var(--erd-color-error, #ff4d4f);
+}
+
 .stepIconRunning {
   color: var(--erd-color-primary, #1677ff);
 }
