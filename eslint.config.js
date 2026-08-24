@@ -1,6 +1,7 @@
 import js from '@eslint/js';
 import prettierConfig from 'eslint-config-prettier';
 import jsxA11y from 'eslint-plugin-jsx-a11y';
+import oxlint from 'eslint-plugin-oxlint';
 import react from 'eslint-plugin-react';
 import reactHooks from 'eslint-plugin-react-hooks';
 import reactRefresh from 'eslint-plugin-react-refresh';
@@ -8,8 +9,17 @@ import simpleImportSort from 'eslint-plugin-simple-import-sort';
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
+// oxlint and ESLint run side by side, in that order (`npm run lint`).
+//
+// oxlint is the fast pass: it re-implements most of the eslint / typescript / react
+// correctness rules in Rust and finishes in milliseconds. ESLint stays for what oxlint
+// has no equivalent of — above all `simple-import-sort`, which is the only thing that
+// keeps AGENTS.md's import-ordering rule automated rather than a review chore.
+//
+// `oxlint.configs['flat/recommended']` goes LAST and switches off every ESLint rule
+// oxlint already covers, so a finding is reported once, by whichever tool owns it.
 export default tseslint.config(
-  { ignores: ['dist', 'node_modules'] },
+  { ignores: ['dist', 'coverage', 'node_modules'] },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
@@ -39,4 +49,5 @@ export default tseslint.config(
     },
   },
   prettierConfig,
+  ...oxlint.configs['flat/recommended'],
 );

@@ -14,14 +14,17 @@ Single-context layout (root `CONTEXT.md` + `docs/adr/`). See `docs/agents/domain
 
 # AGENTS.md — Agent 開工前必讀
 
-> 詳細架構說明、完整程式碼範例、ESLint/Prettier 設定,見 [`architecture.md`](./architecture.md)。
+> 詳細架構說明、完整程式碼範例、Lint/Format 設定,見 [`architecture.md`](./architecture.md)。
 > 本文件只列「動工時必須遵守」的規則,保持精簡。
 
 ---
 
 ## 技術棧
 
-React 19 + Vite + TypeScript(先不開 strict)+ Ant Design + React Router + Zustand + TanStack Query + Axios。
+React 18.3.1 + Vite 8 + TypeScript 6(先不開 strict)+ Ant Design 6(含 Ant Design X)+ React Router 7 + Zustand + TanStack Query + Axios。
+
+Lint 是 **oxlint + ESLint 並存**(`npm run lint` 依序跑兩個),格式走 Prettier。
+技術棧與 `cowork-master` 對齊——兩邊接同一個後端。
 
 ---
 
@@ -37,6 +40,7 @@ React 19 + Vite + TypeScript(先不開 strict)+ Ant Design + React Router + Zust
    `pages/` 只組裝、不寫邏輯。
 
 4. **Import 排序交給 ESLint 自動處理,不用手動排。**
+   `simple-import-sort` 是 ESLint 留在陣容裡的主要理由——oxlint 沒有對等能力。
 
 5. **元件內部依序寫:hooks → useState → useRef → 衍生值 → useEffect → event handler → early return → JSX。**
 
@@ -62,4 +66,4 @@ src/
 
 ## Commit 前
 
-Husky + lint-staged 會自動跑 `eslint --fix` 與 `prettier --write`,不需要手動格式化。設定方式見 `architecture.md` 第 7 節。
+Husky + lint-staged 會自動跑 `oxlint --fix` → `eslint --fix` → `prettier --write`,不需要手動格式化。設定方式見 `architecture.md` 第 7 節。
