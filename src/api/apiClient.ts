@@ -1,12 +1,17 @@
 import axios, { type AxiosRequestConfig } from 'axios';
 
+import { getAuthHeaders } from '@/api/identity';
+
 const rawClient = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL,
   timeout: 10000,
 });
 
+// Identity travels on every request; the backend filters sessions by it. Attached here
+// so no call site can forget, and mirrored in `agentApi`'s raw fetch (axios cannot
+// stream, so that one path builds its own headers from the same helper).
 rawClient.interceptors.request.use((config) => {
-  // 統一附加 token 等邏輯放這裡,不要讓每個 feature 各自處理
+  Object.assign(config.headers, getAuthHeaders());
   return config;
 });
 
