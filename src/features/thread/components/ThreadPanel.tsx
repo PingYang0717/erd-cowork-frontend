@@ -9,6 +9,7 @@ import { ThemeToggle } from '@/features/theme/components/ThemeToggle';
 import type { SendMessageInput } from '../api/messageApi';
 import { useAgentStream } from '../hooks/useAgentStream';
 import { messagesQueryKey, useMessages } from '../hooks/useMessages';
+import { useActiveRunStore } from '../store/useActiveRunStore';
 import { ChatComposer } from './ChatComposer';
 import { MessageList } from './MessageList';
 import styles from './ThreadPanel.module.css';
@@ -69,7 +70,14 @@ function ThreadView({ sessionId }: { sessionId: string }) {
   const { data } = useMessages(sessionId);
   const messages = data ?? [];
   const { state, send, stop } = useAgentStream(sessionId);
+  const setStreamedArtifactId = useActiveRunStore((s) => s.setStreamedArtifactId);
   const bodyRef = useRef<HTMLDivElement>(null);
+
+  // Publishing to the Artifact pane is syncing with something outside this tree, and it
+  // has to happen the moment the ARTIFACT event lands rather than when the run ends.
+  useEffect(() => {
+    setStreamedArtifactId(state.artifact?.artifactId ?? null);
+  }, [state.artifact?.artifactId, setStreamedArtifactId]);
 
   // The mockup scrolls the thread to the bottom shortly after a new message
   // renders (40ms, letting layout settle), so long conversations never leave

@@ -137,4 +137,23 @@ describe('Streaming a run in the Studio', () => {
 
     expect(screen.getByText(/^Took \d+(\.\d+)?s$/)).toBeInTheDocument();
   });
+
+  it('shows the artifact in the right pane the moment the run reports it', async () => {
+    const user = userEvent.setup();
+    const stream = mockAgentStream();
+    renderStudioPage();
+
+    await startAnalysis(user);
+    expect(screen.queryByTitle('Artifact preview')).not.toBeInTheDocument();
+
+    act(() =>
+      stream.push({
+        type: 'ARTIFACT',
+        artifactId: 'artifact-1',
+        title: 'SPC analysis — Vt (gate CD)',
+      }),
+    );
+
+    expect(await screen.findByTitle('Artifact preview')).toBeInTheDocument();
+  });
 });
