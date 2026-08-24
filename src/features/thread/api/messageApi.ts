@@ -1,6 +1,8 @@
 import { apiClient } from '@/services/apiClient';
 import type { ArtifactKind, Message, ScenarioKey, Upload } from '@/types/api';
 
+/** What the composer hands over for one run. The run itself is streamed by
+ *  `agentApi.streamAgentMessage`; this module only reads the thread's history. */
 export interface SendMessageInput {
   text: string;
   scenarioKey?: ScenarioKey;
@@ -8,14 +10,6 @@ export interface SendMessageInput {
   attachments?: Upload[];
 }
 
-export interface SendMessageResult {
-  userMessage: Message;
-  aiMessage: Message;
-}
-
 export const messageApi = {
   listMessages: (sessionId: string) => apiClient.get<Message[]>(`/sessions/${sessionId}/messages`),
-
-  sendMessage: (sessionId: string, input: SendMessageInput) =>
-    apiClient.post<SendMessageResult>(`/sessions/${sessionId}/messages`, input),
 };
