@@ -1,3 +1,4 @@
+import { getAuthHeaders } from '@/api/identity';
 import type { AgentEvent } from '@/types/api/agentEvent';
 import type { ArtifactKind, QuestionAnswer, ScenarioKey, Upload } from '@/types/api/index';
 import { createSseParser } from '@/utils/sseParser';
@@ -40,7 +41,11 @@ export async function* streamAgentMessage(
 ): AsyncGenerator<AgentEvent, void, void> {
   const response = await fetch(`${API_BASE}/sessions/${args.sessionId}/messages`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream' },
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'text/event-stream',
+      ...getAuthHeaders(),
+    },
     body: JSON.stringify({
       text: args.text,
       answers: args.answers,

@@ -11,6 +11,21 @@ match; the frontend's calling code should not need to change.
 Each feature ticket appends its own endpoints to the relevant section below as
 it implements them.
 
+## 身分
+
+每一個請求都帶 `X-User-Id`。後端依它過濾 session,存取他人資源一律 404。
+
+| 環境     | 誰決定這個值                                                              |
+| -------- | ------------------------------------------------------------------------- |
+| v1(預設) | 瀏覽器:localStorage 的匿名 UUID(`erd-cowork:user-id`),首次使用時產生      |
+| internal | SSO / gateway 在請求經過時注入;前端安裝一個回傳 `{}` 的 provider,不覆蓋它 |
+
+附加的位置只有一處:`api/identity.ts` 的 `getAuthHeaders()`。axios interceptor 與
+`agentApi` 的 raw fetch 共用它——串流那條路不經過 axios,漏掉 header 會被當成另一個
+使用者(或無效使用者)來回應。
+
+`setAuthHeaderProvider()` 是 internal 環境的接縫;傳 `null` 回到匿名 id。
+
 ## Session
 
 | Method | Path            | Request                                       | Response        |
