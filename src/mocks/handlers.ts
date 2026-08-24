@@ -1,7 +1,7 @@
 import { http, HttpResponse } from 'msw';
 
 import { currentUser } from '@/services/currentUser';
-import type { AgentEvent } from '@/types/api/agentEvent';
+import type { AgentEvent, QuestionAnswer, QuestionForm } from '@/types/api/agentEvent';
 import type { Artifact, ArtifactKind, ArtifactVersion } from '@/types/api/artifact';
 import type { Connector, ConnectorStatus } from '@/types/api/connector';
 import type { Message } from '@/types/api/message';
@@ -12,6 +12,7 @@ import type { Upload } from '@/types/api/upload';
 import { ARTIFACT_VERSION_CONTENT, buildArtifactFixture } from './artifactFixtures';
 import { DIRECTORY_FIXTURES } from './directoryFixtures';
 import { createPersistedResource } from './persistedResource';
+import { openingQuestion } from './questionFixtures';
 import { matchScenario, SCENARIO_FIXTURES, SLIDES_STEP } from './scenarioFixtures';
 
 interface ExampleWidget {
@@ -222,6 +223,79 @@ const sessions = createPersistedResource<Session>('erd-cowork:sessions', [
   },
 ]);
 
+/** A run that has asked its opening question and is waiting on the user. */
+const pendingRuns = new Map<
+  string,
+  { scenarioKey: ScenarioKey; artifactKind: ArtifactKind; form: QuestionForm }
+>();
+
+function sseResponse(events: AgentEvent[]) {
+  const sse = events.map((event) => `data: ${JSON.stringify(event)}\n\n`).join('');
+  return new HttpResponse(sse, {
+    headers: { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache' },
+  });
+}
+
+/** Persists what the run produced, then replays it as an event stream. */
+function streamRun(sessionId: string, scenarioKey: ScenarioKey, artifactKind: ArtifactKind) {
+  const fixture = SCENARIO_FIXTURES[scenarioKey];
+  const artifactName =
+    artifactKind === 'slides' ? `${fixture.artifactName} (slides)` : fixture.artifactName;
+  const steps = artifactKind === 'slides' ? [...fixture.steps, SLIDES_STEP] : fixture.steps;
+
+  const artifact: StoredArtifact = {
+    id: crypto.randomUUID(),
+    sessionId,
+    name: artifactName,
+    kind: artifactKind,
+    scenario: scenarioKey,
+    pinned: false,
+    ownerId: currentUser.id,
+    shared: false,
+    createdAt: new Date().toISOString(),
+  };
+  artifacts.write([...artifacts.read(), artifact]);
+
+  artifactVersions.write([
+    ...artifactVersions.read(),
+    {
+      id: crypto.randomUUID(),
+      artifactId: artifact.id,
+      n: 1,
+      label: artifactName,
+      createdAt: new Date().toISOString(),
+      generated: false,
+    },
+  ]);
+
+  messages.write([
+    ...messages.read(),
+    {
+      id: crypto.randomUUID(),
+      sessionId,
+      role: 'ai',
+      text: fixture.reply,
+      scenario: scenarioKey,
+      steps,
+      artifactName,
+      artifactId: artifact.id,
+    },
+  ]);
+
+  const events: AgentEvent[] = [];
+  for (const step of steps) {
+    events.push({ ...step, type: 'STEP', status: 'RUNNING' });
+    events.push({ ...step, type: 'STEP', status: 'SUCCESS' });
+  }
+  events.push({ type: 'ARTIFACT', artifactId: artifact.id, title: artifactName });
+  for (const word of fixture.reply.split(/(?<=\s)/)) {
+    events.push({ type: 'TOKEN', delta: word });
+  }
+  events.push({ type: 'ANSWER', text: fixture.reply });
+
+  return sseResponse(events);
+}
+
 export const handlers = [
   http.get('/api/example-widgets', () => {
     return HttpResponse.json(exampleWidgets.read());
@@ -277,11 +351,41 @@ export const handlers = [
   http.post('/api/sessions/:sessionId/messages', async ({ params, request }) => {
     const sessionId = params.sessionId as string;
     const body = (await request.json()) as {
-      text: string;
+      text?: string;
       scenarioKey?: ScenarioKey;
       artifactKind?: ArtifactKind;
       attachments?: Upload[];
+      answers?: Record<string, QuestionAnswer>;
+      inReplyTo?: string;
     };
+
+    // Answering a reask resumes the run the reask belongs to, so the scenario is
+    // whatever was pending for this session rather than anything in this request.
+    if (body.answers && body.inReplyTo) {
+      const pending = pendingRuns.get(sessionId);
+      if (!pending) {
+        return HttpResponse.json(
+          { code: 'NO_PENDING_QUESTION', message: 'Nothing was waiting on an answer' },
+          { status: 409 },
+        );
+      }
+      pendingRuns.delete(sessionId);
+
+      messages.write([
+        ...messages.read(),
+        {
+          id: crypto.randomUUID(),
+          sessionId,
+          role: 'ai',
+          text: '',
+          answeredForm: pending.form,
+          answers: body.answers,
+        },
+      ]);
+
+      return streamRun(sessionId, pending.scenarioKey, pending.artifactKind);
+    }
+
     const text = body.text?.trim();
     if (!text) {
       return HttpResponse.json(
@@ -292,69 +396,26 @@ export const handlers = [
 
     const scenarioKey = body.scenarioKey ?? matchScenario(text);
     const artifactKind = body.artifactKind ?? 'dashboard';
-    const fixture = SCENARIO_FIXTURES[scenarioKey];
-    const artifactName =
-      artifactKind === 'slides' ? `${fixture.artifactName} (slides)` : fixture.artifactName;
-    const steps = artifactKind === 'slides' ? [...fixture.steps, SLIDES_STEP] : fixture.steps;
 
-    const artifact: StoredArtifact = {
-      id: crypto.randomUUID(),
-      sessionId,
-      name: artifactName,
-      kind: artifactKind,
-      scenario: scenarioKey,
-      pinned: false,
-      ownerId: currentUser.id,
-      shared: false,
-      createdAt: new Date().toISOString(),
-    };
-    artifacts.write([...artifacts.read(), artifact]);
+    messages.write([
+      ...messages.read(),
+      {
+        id: crypto.randomUUID(),
+        sessionId,
+        role: 'user',
+        text,
+        attachments: body.attachments?.length ? body.attachments : undefined,
+      },
+    ]);
 
-    const version: ArtifactVersion = {
-      id: crypto.randomUUID(),
-      artifactId: artifact.id,
-      n: 1,
-      label: artifactName,
-      createdAt: new Date().toISOString(),
-      generated: false,
-    };
-    artifactVersions.write([...artifactVersions.read(), version]);
-
-    const userMessage: Message = {
-      id: crypto.randomUUID(),
-      sessionId,
-      role: 'user',
-      text,
-      attachments: body.attachments?.length ? body.attachments : undefined,
-    };
-    const aiMessage: Message = {
-      id: crypto.randomUUID(),
-      sessionId,
-      role: 'ai',
-      text: fixture.reply,
-      scenario: scenarioKey,
-      steps,
-      artifactName,
-      artifactId: artifact.id,
-    };
-    messages.write([...messages.read(), userMessage, aiMessage]);
-
-    const events: AgentEvent[] = [];
-    for (const step of steps) {
-      events.push({ ...step, type: 'STEP', status: 'RUNNING' });
-      events.push({ ...step, type: 'STEP', status: 'SUCCESS' });
+    // A Scenario decides what it needs to ask before it can run (ADR-0006).
+    const form = openingQuestion(scenarioKey, connectors.read());
+    if (form) {
+      pendingRuns.set(sessionId, { scenarioKey, artifactKind, form });
+      return sseResponse([{ type: 'QUESTION', form }]);
     }
-    events.push({ type: 'ARTIFACT', artifactId: artifact.id, title: artifactName });
-    for (const word of fixture.reply.split(/(?<=\s)/)) {
-      events.push({ type: 'TOKEN', delta: word });
-    }
-    events.push({ type: 'ANSWER', text: fixture.reply });
 
-    const sse = events.map((event) => `data: ${JSON.stringify(event)}\n\n`).join('');
-
-    return new HttpResponse(sse, {
-      headers: { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache' },
-    });
+    return streamRun(sessionId, scenarioKey, artifactKind);
   }),
 
   http.get('/api/artifacts', () => {
