@@ -1,6 +1,7 @@
 import { http, HttpResponse } from 'msw';
 
 import { currentUser } from '@/services/currentUser';
+import { isLive } from '@/services/transport';
 import type { AgentEvent, QuestionAnswer, QuestionForm, StepItem } from '@/types/api/agentEvent';
 import type { Artifact, ArtifactKind, ArtifactVersion } from '@/types/api/artifact';
 import type { Connector, ConnectorStatus } from '@/types/api/connector';
@@ -327,7 +328,17 @@ function streamRun(
 
 const dcItems = createPersistedResource<DcItem>('erd-cowork:dc-items', DC_ITEM_FIXTURES);
 
-export const handlers = [
+/** In live mode a real backend serves these, so MSW must stay out of the way; every
+ *  other handler keeps running because nothing else implements them
+ *  (`docs/api/interface.md` → live 端點覆蓋範圍). */
+const LIVE_BACKED = [
+  '/api/sessions',
+  '/api/sessions/:id',
+  '/api/sessions/:sessionId/messages',
+  '/api/uploads',
+];
+
+export const allHandlers = [
   http.get('/api/example-widgets', () => {
     return HttpResponse.json(exampleWidgets.read());
   }),
@@ -654,3 +665,8 @@ export const handlers = [
     return HttpResponse.json(upload, { status: 201 });
   }),
 ];
+
+/** What MSW should intercept for the configured transport. */
+export const handlers = isLive
+  ? allHandlers.filter((handler) => !LIVE_BACKED.includes(String(handler.info.path)))
+  : allHandlers;

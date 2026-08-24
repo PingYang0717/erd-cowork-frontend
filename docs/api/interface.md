@@ -138,9 +138,31 @@ QuestionOption { value: string; label: string; hint?: string; unit?: string; lo?
 | `/artifacts/:id/versions`、`regenerate`、`generate`            | MSW       | **MSW**   |
 | `/connectors`、`/schedule-jobs`、DC Item 清單                  | MSW       | **MSW**   |
 
-live 模式下後端 DTO 與本專案型別的差異（`sender` vs `role`、`stepsJson` / `questionsJson`
-JSON 字串 vs 真陣列）在 `features/thread/api/agentApi.ts` 的 adapter 層一次轉換，UI 與
-`types/api/` 不受影響。
+live 模式下後端 DTO 與本專案型別的差異在 `features/thread/api/liveAdapter.ts` 一次轉換，
+UI 與 `types/api/` 不受影響：`sender: 'USER' | 'AI'` → `role: 'user' | 'ai'`、
+`stepsJson` / `questionsJson` 的 JSON 字串 → 真陣列（解析失敗時該欄位視為不存在，而不是
+讓整則訊息壞掉）、`artifactTitle` → `artifactName`。
+
+### QUESTION 事件是唯一形狀不同的事件
+
+其餘八種事件在兩邊逐欄一致，這正是事件名維持 SCREAMING_CASE 的用意。但 QUESTION 不是：
+
+| | 本專案 | 既有後端 |
+| --- | --- | --- |
+| 承載 | `{ form: QuestionForm }` | `{ questions: Question[] }` |
+| 欄位種類 | `single` / `multi` / `text` / `boolean` / `daterange` / `dcitem` | 無（一律選項清單） |
+| 欄位相依 | `visibleWhen` | 無 |
+| 選項 | `{ value, label, hint?, unit?, lo?, hi? }` | `string` |
+| 送出鈕 / 未填提示 / 摘要文案 | 由表單帶 | 無 |
+| 答案回傳 | `{ answers, inReplyTo }` 結構化 | 組成一段自然語言當新訊息送出 |
+
+`toQuestionForm()` 能把後端的扁平清單抬升成可渲染的表單，但**只有這個方向可行且會失真**：
+後端表達不了欄位種類（於是全部變成 chip）、欄位相依（於是 CP Test 的 Flow / Loop 無法依
+角色顯示）、選項的附帶資訊（於是 DC item 帶不了規格上下限）。
+
+**要驅動分析條件表單，後端必須改成送出 `QuestionForm` 本身。** 在那之前，live 模式下的
+反問只能退化成一排 chip，`docs/design-diff-eRDWorkspace20260819.md:17` 描述的那三張表單
+在 live 模式下渲染不出來。
 
 ## Artifact
 
