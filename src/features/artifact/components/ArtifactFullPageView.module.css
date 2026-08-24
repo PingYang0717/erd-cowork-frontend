@@ -29,11 +29,78 @@
   cursor: pointer;
 }
 
-.headerTitle {
+.headerCenter {
   flex: 1 1 auto;
-  margin: 0;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+}
+
+.sharedToMeHeader {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.sharedToMeIcon {
+  flex: none;
   font-size: 15px;
+  color: var(--erd-color-text-tertiary, #8c8c8c);
+}
+
+.sharedToMeName {
+  font-size: 13.5px;
   font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sharedToMeBadge {
+  flex: none;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 10.5px;
+  font-weight: 600;
+  background: var(--erd-color-fill-tertiary, rgba(0, 0, 0, 0.04));
+  color: var(--erd-color-text-secondary, rgba(0, 0, 0, 0.65));
+}
+
+.shareButton {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  background: var(--erd-color-primary, #1677ff);
+  color: #fff;
+}
+
+.shareButton:disabled {
+  cursor: not-allowed;
+  background: var(--erd-color-fill-tertiary, rgba(0, 0, 0, 0.04));
+  color: var(--erd-color-text-quaternary, rgba(0, 0, 0, 0.25));
+}
+
+.iconButton {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+  color: var(--erd-color-text-secondary, #595959);
+  border: 1px solid var(--erd-color-border, #d9d9d9);
+  background: var(--erd-color-bg-container, #fff);
 }
 
 .body {

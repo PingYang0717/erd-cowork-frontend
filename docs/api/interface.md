@@ -50,20 +50,26 @@ composer clears its own chips once the message is sent.
 
 ## Artifact
 
-| Method | Path                        | Request                                                                                              | Response                              |
-| ------ | --------------------------- | ---------------------------------------------------------------------------------------------------- | ------------------------------------- |
-| GET    | `/artifacts`                | —                                                                                                    | `Artifact[]`                          |
-| GET    | `/artifacts/:id`            | `?theme=light\|dark` (defaults to `light`), `?versionId=` (optional, defaults to the latest version) | `{ html: string }`                    |
-| PATCH  | `/artifacts/:id`            | `Partial<Pick<Artifact, 'pinned'>>`                                                                  | `Artifact`                            |
-| DELETE | `/artifacts/:id`            | —                                                                                                    | 204 No Content                        |
-| GET    | `/artifacts/:id/versions`   | —                                                                                                    | `ArtifactVersion[]`                   |
-| POST   | `/artifacts/:id/share`      | `{ targetIds: string[] }`                                                                            | `{ url: string; artifact: Artifact }` |
-| POST   | `/artifacts/:id/regenerate` | —                                                                                                    | `ArtifactVersion` (201)               |
-| GET    | `/directory`                | —                                                                                                    | `DirectoryEntry[]`                    |
+| Method | Path                                          | Request                                                                                              | Response                              |
+| ------ | --------------------------------------------- | ---------------------------------------------------------------------------------------------------- | ------------------------------------- |
+| GET    | `/artifacts`                                  | —                                                                                                    | `Artifact[]`                          |
+| GET    | `/artifacts/:id`                              | `?theme=light\|dark` (defaults to `light`), `?versionId=` (optional, defaults to the latest version) | `{ html: string }`                    |
+| PATCH  | `/artifacts/:id`                              | `Partial<Pick<Artifact, 'pinned'>>`                                                                  | `Artifact`                            |
+| DELETE | `/artifacts/:id`                              | —                                                                                                    | 204 No Content                        |
+| GET    | `/artifacts/:id/versions`                     | —                                                                                                    | `ArtifactVersion[]`                   |
+| POST   | `/artifacts/:id/share`                        | `{ targetIds: string[] }`                                                                            | `{ url: string; artifact: Artifact }` |
+| POST   | `/artifacts/:id/regenerate`                   | —                                                                                                    | `ArtifactVersion` (201)               |
+| POST   | `/artifacts/:id/versions/:versionId/generate` | —                                                                                                    | `ArtifactVersion`                     |
+| GET    | `/directory`                                  | —                                                                                                    | `DirectoryEntry[]`                    |
 
 `/artifacts` lists every Artifact (own, pinned, and shared-to-me), backing the
 Artifacts Gallery's filters (All / Yours / Shared to me / Pinned) and sort
 (pinned-first / recent / name), which are applied client-side.
+
+`Artifact.generated` is likewise derived per request: `true` when any of the
+Artifact's versions has been generated (see the per-version `generate` endpoint
+below). The session rail's Artifacts badge counts only generated Artifacts, so an
+ungenerated preview does not bump the count until its 生成 step.
 
 `Artifact.mine` is derived, not stored: the mock backend keeps an `ownerId` on each
 Artifact it holds and resolves `mine` per request against the mock identity in
@@ -87,7 +93,7 @@ messages that reference it, since none of those are read once the Artifact
 itself is gone.
 
 `/artifacts/:id/versions` lists the Artifact's past versions (`n`, `label`,
-`createdAt`), newest last. Passing one of those versions' `id` as `?versionId=` on
+`createdAt`, `generated`), newest last. Passing one of those versions' `id` as `?versionId=` on
 `/artifacts/:id` re-renders that historical version's content instead of the latest.
 Every version renders content of its own: unless a version has hand-authored fixture
 content (the seeded `artifact-1-v1` draft does), it is rendered from the Artifact's
@@ -110,6 +116,16 @@ clears its local version selection so the switcher and iframe fall back to the n
 version. The new version renders as its own content (see above), so the client
 invalidates the whole `['artifacts', id]` key — the version list and the rendered
 content — rather than the version list alone.
+
+`ArtifactVersion.generated` is per-version state: a version produced by a Scenario
+run or by `regenerate` starts `generated: false` (a preview), and
+`POST /artifacts/:id/versions/:versionId/generate` flips that one version to
+`generated: true` — the Studio panel's "生成 Artifact" button triggers this and the
+"已生成" chip / share gating / version menu's green check all read it. Generating one
+version never changes any other version's state. (This deliberately reverses the
+earlier "every Artifact reaching the panel is already generated" simplification —
+see `.scratch/erd-cowork-design-fidelity/spec.md`. The mock's localStorage key is
+`erd-cowork:artifact-versions:v2` so a browser holding the un-flagged shape reseeds.)
 
 `GET /directory` returns the searchable department / section / person dataset backing
 the share dialog's recipient picker (`DirectoryEntry.kind` is `'department'`,

@@ -74,6 +74,16 @@ describe('Chat composer', () => {
 
     expect(screen.queryByRole('textbox', { name: 'Message' })).not.toBeInTheDocument();
   });
+
+  it('shows the data-source chip alongside the theme toggle in the thread header', () => {
+    renderStudioPage();
+
+    const header = screen.getByRole('banner', { name: 'Thread header' });
+    expect(within(header).getByText('Inline DB · N5 line')).toBeInTheDocument();
+    expect(
+      within(header).getByRole('button', { name: /Switch to (dark|light) mode/ }),
+    ).toBeInTheDocument();
+  });
 });
 
 describe('Scenario matching', () => {
@@ -123,10 +133,52 @@ describe('Scenario matching', () => {
       await advanceTimers(500 * 4);
 
       expect(screen.getByText(replyMatch)).toBeInTheDocument();
-      expect(screen.getByText(`Artifact: ${artifactName}`)).toBeInTheDocument();
+      const chip = screen.getByText('shown right →').closest('div') as HTMLElement;
+      expect(within(chip).getByText(artifactName)).toBeInTheDocument();
       expect(screen.queryByRole('status', { name: 'eRD AI is working' })).not.toBeInTheDocument();
     },
   );
+
+  it('labels the run "eRD AI is working…", renders step descriptions in a card, and keeps a collapsible recap after completion', async () => {
+    renderStudioPage();
+    await selectASessionWithFakeTimers();
+
+    fireEvent.click(screen.getByRole('button', { name: 'SPC analysis' }));
+    await advanceTimers(0);
+
+    // While running: the working label and each step's description render.
+    expect(screen.getByText('eRD AI is working…')).toBeInTheDocument();
+    expect(screen.getByText('Inline DB · Vt (gate CD)')).toBeInTheDocument();
+
+    await advanceTimers(500 * 4);
+
+    // Completed: a collapsed "Worked through N steps" recap remains.
+    const recap = screen.getByRole('button', { name: 'Worked through 3 steps' });
+    expect(recap).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.queryByText('Inline DB · Vt (gate CD)')).not.toBeInTheDocument();
+
+    // Expanding shows every step's title and description.
+    fireEvent.click(recap);
+    expect(screen.getByText('Connect data source')).toBeInTheDocument();
+    expect(screen.getByText('Inline DB · Vt (gate CD)')).toBeInTheDocument();
+    expect(screen.getByText('CL / ±3σ, apply Western Electric rules')).toBeInTheDocument();
+  });
+
+  it('auto-scrolls the thread to the bottom when a new message lands', async () => {
+    renderStudioPage();
+    await selectASessionWithFakeTimers();
+
+    const log = screen.getByRole('log', { name: 'Messages' });
+    Object.defineProperty(log, 'scrollHeight', { value: 640, configurable: true });
+    expect(log.scrollTop).toBe(0);
+
+    fireEvent.click(screen.getByRole('button', { name: 'SPC analysis' }));
+    await advanceTimers(0);
+    // Step playback plus the mockup's 40ms post-render scroll delay.
+    await advanceTimers(500 * 4 + 40);
+
+    expect(log.scrollTop).toBe(640);
+  });
 
   it('appends the slides step and names a slides Artifact when clicking "Generate slides"', async () => {
     renderStudioPage();
@@ -140,7 +192,8 @@ describe('Scenario matching', () => {
 
     await advanceTimers(500 * 5);
 
-    expect(screen.getByText('Artifact: SPC analysis — Vt (gate CD) (slides)')).toBeInTheDocument();
+    const chip = screen.getByText('shown right →').closest('div') as HTMLElement;
+    expect(within(chip).getByText('SPC analysis — Vt (gate CD) (slides)')).toBeInTheDocument();
   });
 
   it.each([
@@ -182,7 +235,8 @@ describe('Scenario matching', () => {
       await advanceTimers(500 * 4);
 
       expect(screen.getByText(replyMatch)).toBeInTheDocument();
-      expect(screen.getByText(`Artifact: ${artifactName}`)).toBeInTheDocument();
+      const chip = screen.getByText('shown right →').closest('div') as HTMLElement;
+      expect(within(chip).getByText(artifactName)).toBeInTheDocument();
       expect(screen.queryByRole('status', { name: 'eRD AI is working' })).not.toBeInTheDocument();
     },
   );

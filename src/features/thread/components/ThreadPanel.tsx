@@ -1,7 +1,7 @@
-import { ThunderboltFilled } from '@ant-design/icons';
+import { DatabaseOutlined, ThunderboltFilled } from '@ant-design/icons';
 import { useQueryClient } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { useSessionSelectionStore } from '@/features/session/store/useSessionSelectionStore';
 import { ThemeToggle } from '@/features/theme/components/ThemeToggle';
@@ -18,13 +18,20 @@ const STEP_DURATION_MS = 500;
 
 function ThreadHeader() {
   return (
-    <div className={styles.header}>
+    <header className={styles.header} aria-label="Thread header">
       <span className={styles.headerTitle}>
         <ThunderboltFilled aria-hidden className={styles.headerIcon} />
         Cowork · Data studio
       </span>
+      {/* The mockup's data-source chip (its demo is wired to the Inline DB /
+          N5 line fixture); sits beside the ThemeToggle per the scope-trim of
+          the Workspace header (ADR-0003). */}
+      <span className={styles.dataSourceChip}>
+        <DatabaseOutlined aria-hidden />
+        Inline DB · N5 line
+      </span>
       <ThemeToggle />
-    </div>
+    </header>
   );
 }
 
@@ -66,6 +73,20 @@ function ThreadView({ sessionId }: { sessionId: string }) {
   const messages = data ?? [];
   const sendMessage = useSendMessage(sessionId);
   const [pendingAi, setPendingAi] = useState<PendingAiMessage | null>(null);
+  const bodyRef = useRef<HTMLDivElement>(null);
+
+  // The mockup scrolls the thread to the bottom shortly after a new message
+  // renders (40ms, letting layout settle), so long conversations never leave
+  // the latest reply out of view.
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const body = bodyRef.current;
+      if (body) {
+        body.scrollTop = body.scrollHeight;
+      }
+    }, 40);
+    return () => clearTimeout(timer);
+  }, [messages.length, pendingAi]);
 
   useEffect(() => {
     if (!pendingAi) {
@@ -111,7 +132,7 @@ function ThreadView({ sessionId }: { sessionId: string }) {
   return (
     <div className={styles.panel}>
       <ThreadHeader />
-      <div className={styles.body}>
+      <div ref={bodyRef} role="log" aria-label="Messages" className={styles.body}>
         {hasContent ? (
           <MessageList messages={messages} pendingAi={pendingAi} />
         ) : (

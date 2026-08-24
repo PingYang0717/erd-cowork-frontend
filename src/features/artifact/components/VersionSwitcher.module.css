@@ -1,0 +1,122 @@
+.versionTrigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 32px;
+  padding: 0 11px;
+  min-width: 190px;
+  max-width: 260px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 12.5px;
+  color: var(--erd-color-text-secondary, #595959);
+  border: 1px solid var(--erd-color-border, #d9d9d9);
+  background: var(--erd-color-bg-container, #fff);
+}
+
+.versionTriggerN {
+  flex: none;
+  font-weight: 700;
+  color: var(--erd-color-text, #141414);
+}
+
+.versionTriggerLabel {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--erd-color-text-tertiary, #8c8c8c);
+  text-align: left;
+}
+
+.versionTriggerChevron {
+  flex: none;
+  font-size: 10px;
+  opacity: 0.6;
+}
+
+.versionSwitcher {
+  position: relative;
+  display: inline-flex;
+  min-width: 0;
+}
+
+/* The mockup's custom version menu: 340 wide, header row, current-version
+   highlight, per-row time and a green generated check. */
+.versionMenu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 1050;
+  width: 340px;
+  padding: 4px;
+  border-radius: 10px;
+  border: 1px solid var(--erd-color-border-secondary, #f0f0f0);
+  background: var(--erd-color-bg-elevated, #fff);
+  box-shadow: var(--shadow-lg, 0 12px 40px rgba(0, 0, 0, 0.28));
+}
+
+.versionMenuHeader {
+  padding: 7px 10px 5px;
+  font-size: 11.5px;
+  color: var(--erd-color-text-tertiary, rgba(0, 0, 0, 0.45));
+  border-bottom: 1px solid var(--erd-color-border-secondary, #f0f0f0);
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.versionMenuItem {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12.5px;
+  white-space: nowrap;
+  width: 100%;
+  padding: 7px 10px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--erd-color-text, rgba(0, 0, 0, 0.88));
+  cursor: pointer;
+  text-align: left;
+}
+
+.versionMenuItem:hover {
+  background: var(--erd-color-fill-tertiary, rgba(0, 0, 0, 0.04));
+}
+
+.versionMenuItemCurrent,
+.versionMenuItemCurrent:hover {
+  background: var(--erd-color-primary-bg, #e6f4ff);
+}
+
+.versionMenuItemCurrent .versionMenuItemN {
+  color: var(--erd-color-primary, #1677ff);
+  font-weight: 600;
+}
+
+.versionMenuItemCheck {
+  flex: none;
+  font-size: 12px;
+  color: var(--erd-color-success, #52c41a);
+}
+
+.versionMenuItemN {
+  flex: none;
+  font-weight: 700;
+}
+
+.versionMenuItemLabel {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.versionMenuItemTime {
+  flex: none;
+  color: var(--erd-color-text-tertiary, #8c8c8c);
+}
