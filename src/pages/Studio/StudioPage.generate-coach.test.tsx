@@ -54,6 +54,8 @@ describe('Generation feedback: badge count, coach highlight, toast', () => {
     // artifact needs generating: use a brand-new artifact via the composer.
     await user.click(await screen.findByRole('button', { name: 'New chat' }));
     await screen.findByRole('button', { name: 'New analysis' });
+    // The composer subtree suspends on its queries; wait for it before sync getBy*.
+    await screen.findByRole('textbox', { name: 'Message' });
     await user.click(screen.getByRole('button', { name: 'SPC analysis' }));
     await answerAnalysisConditions(user);
 
@@ -83,6 +85,8 @@ describe('Generation feedback: badge count, coach highlight, toast', () => {
 
     await user.click(await screen.findByRole('button', { name: 'New chat' }));
     await screen.findByRole('button', { name: 'New analysis' });
+    // The composer subtree suspends on its queries; wait for it before sync getBy*.
+    await screen.findByRole('textbox', { name: 'Message' });
     await user.click(screen.getByRole('button', { name: 'SPC analysis' }));
     await answerAnalysisConditions(user);
     await user.click(

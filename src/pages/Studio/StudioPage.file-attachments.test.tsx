@@ -33,6 +33,8 @@ function renderStudioPage() {
 async function selectASessionAndOpenFileModal(user: ReturnType<typeof userEvent.setup>) {
   await user.click(await screen.findByRole('button', { name: 'New chat' }));
   await screen.findByRole('button', { name: 'New analysis' });
+  // The composer subtree suspends on its queries; wait for it before sync getBy*.
+  await screen.findByRole('textbox', { name: 'Message' });
   await user.click(screen.getByRole('button', { name: 'Attach files or connect a data source' }));
   await user.click(screen.getByRole('menuitem', { name: 'Attach files' }));
   return screen.findByRole('dialog', { name: 'Attach files' });
