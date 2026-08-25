@@ -30,41 +30,41 @@
 
 ## 1. 資料夾結構
 
+**依「層」放,不依「功能」放。**
+
 ```
 src/
-  app/                  # 應用程式進入點、Router、Providers 組裝
-    App.tsx
-    router.tsx
-    providers.tsx
-  layouts/              # Sidebar、Header 等版面 layout 元件
-    MainLayout/
-      MainLayout.tsx
-      Sidebar.tsx
-      Sidebar.module.css
-  pages/                # 路由對應的頁面元件(不放商業邏輯)
-    Dashboard/
-      DashboardPage.tsx
-  features/             # 依「功能」切,而非依「檔案類型」切
-    theme/
-      store/useThemeStore.ts
-      components/ThemeToggle.tsx
-    user/
-      api/userApi.ts
-      hooks/useUser.ts
-      components/UserCard.tsx
-  components/           # 跨 feature 共用的通用元件(Button、EmptyState...)
-  hooks/                # 跨 feature 共用的通用 hooks
-  stores/               # 跨 feature 共用的 Zustand store(例如 sidebar 開合狀態)
-  services/
-    apiClient.ts         # Axios instance 與攔截器
-  types/                 # 共用型別
-  utils/                 # 純函式工具
+  api/          apiClient(Axios instance)、identity、各 endpoint module
+                (agentApi / sessionApi / messageApi / artifactApi /
+                 connectorApi / uploadApi / liveAdapter)
+  components/   依 domain 切
+    artifact/   Artifact 面板、全頁檢視、版本選單、分享 dialog
+    chat/       對話串、composer、反問卡、思考/產碼面板、結果表格
+    connectors/ Connectors 面板
+    files/      附件 chip 與上傳 modal
+    gallery/    Artifacts 總覽
+    session/    Session 列表與收合軌
+    common/     Tooltip、ThemeToggle、ErrorBoundary、SuspenseLoader、DataBoundary
+    layouts/    StudioShell、StudioLayout、ResizeHandle
+  config/       執行期設定(transport、currentUser)
+  constants/    共用常數(storage key)
+  hooks/        資料 hook(useSessions…)與跨元件 UI hook(useDebouncedValue…)
+  stores/       Zustand store
+  theme/        design token
+  types/        共用型別
+  utils/        純函式
+  app/          進入點、Router、Providers
+  pages/        路由頁面——只組裝、只放 DataBoundary
+  mocks/ test/  MSW handler 與測試工具
 ```
 
-**原則:新功能優先放進 `features/<功能名稱>/`,不要把邏輯散落在 `pages/` 或 `components/`。**
-`pages/` 只負責組裝 `features/` 裡的元件與 hooks,盡量不寫邏輯。
+一個新功能會同時落在好幾個目錄:endpoint 進 `api/`、資料 hook 進 `hooks/`、UI 進
+`components/<domain>/`。這是刻意的——同一層的東西彼此像,規則(`useSuspenseQuery`、
+`React.FC`、共用 `apiClient`)因此能在整個目錄上一致地成立。
 
----
+`app/` 與 `pages/` 不是「層」,但 router 與 providers 需要落點,而路由入口若混進
+`components/` 就看不出哪些是入口。Zustand store 不放 `hooks/`,否則那個目錄會同時
+裝著資料抓取、UI 邏輯與全域狀態三種東西。
 
 ## 2. Import 排序規則
 
@@ -76,7 +76,7 @@ import { useState } from 'react';
 import { Button } from 'antd';
 
 // 2. 內部別名路徑(@/ 開頭)
-import { useThemeStore } from '@/features/theme/store/useThemeStore';
+import { useThemeStore } from '@/stores/useThemeStore';
 import { apiClient } from '@/services/apiClient';
 
 // 3. 相對路徑
@@ -135,6 +135,60 @@ export function UserCard({ userId }: UserCardProps) {
 
 ---
 
+## 3.5 元件、資料抓取與效能規則
+
+### 元件
+
+一律 `React.FC<Props>` + 具名 props interface,檔案內順序:
+
+```tsx
+interface ThinkingPanelProps { thinking: string }      // 1. props interface
+
+const ThinkingPanel: React.FC<ThinkingPanelProps> = ({ thinking }) => {
+  const [expanded, setExpanded] = useState(false);      // 2. hooks
+  const toggle = useCallback(() => setExpanded(v => !v), []);  // 3. handlers
+  return (/* 4. render */);
+};
+
+export default ThinkingPanel;                           // 5.
+```
+
+`React.lazy(() => import('...'))` + `<SuspenseLoader>` 只用於獨立路由或笨重的第三方
+元件——不是每個元件都要切一份 chunk。
+
+唯一不是 `React.FC` 的是 `ErrorBoundary`:React 沒有 `componentDidCatch` 的 hook 對等物。
+
+### 資料抓取
+
+主要資料抓取一律 `useSuspenseQuery`。呼叫端因此沒有 `isLoading` / `isError` 分支——
+pending 由 `<SuspenseLoader>` 顯示、失敗由 `<ErrorBoundary>` 接,兩者包在 `DataBoundary`
+裡,**放在每個窗格與每個 page 上,而不是整個 app 包一層**:一個壞掉的 Artifact 不該把
+旁邊的對話串一起弄白,而直接 render 單一窗格的測試也拿得到它依賴的邊界。
+
+Mutation 的錯誤走 `onError` callback——它不是 render 期的例外,ErrorBoundary 接不到。
+
+**例外要寫理由。** 目前只有一個:`useArtifactContent` 留在 `useQuery`,因為它的 key 帶著
+theme 與版本,換成 suspense 會讓 iframe 在每次切換時卸載重掛。
+
+### 效能
+
+| 規則                                    | 為什麼                                                                                                                                     |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| 傳給子元件的 handler 一律 `useCallback` | 每次 render 都換新身分會讓子元件的 `React.memo` 失效                                                                                       |
+| 昂貴計算 `useMemo`                      | 例:Gallery 的四趟過濾 + dedupe + 排序                                                                                                      |
+| 昂貴元件 `React.memo`                   | 例:`MessageBubble`——串流時整個清單每個 token 都重繪                                                                                        |
+| 搜尋輸入 debounce 300–500ms             | 用 `useDebouncedValue`;輸入框綁原值、過濾綁 settled 值                                                                                     |
+| `useEffect` 回傳 cleanup                | 只在它建立了存活超過該次 render 的東西時(計時器、監聽、訂閱、對外發佈的狀態)。單純設一次 `scrollTop` 沒有東西可清,補空的 `return` 只是形式 |
+
+### 多使用者身分
+
+所有請求帶 `X-User-Id`,唯一來源是 `api/identity.ts` 的 `getAuthHeaders()`:axios
+interceptor 與 `agentApi` 的 raw fetch 共用它——串流那條路不經過 axios,漏掉 header 會被
+後端當成另一個使用者。v1 是 localStorage 的匿名 UUID;internal 環境安裝一個回傳 `{}` 的
+provider,讓 SSO / gateway 注入的 header 不被覆蓋。
+
+---
+
 ## 4. 狀態管理分類原則(最容易被 agent 混用的地方,務必遵守)
 
 | 狀態類型             | 範例                                                    | 放哪裡                                   |
@@ -164,7 +218,7 @@ export const useUIStore = create<UIState>((set) => ({
 ```
 
 ```ts
-// src/features/theme/store/useThemeStore.ts
+// src/stores/useThemeStore.ts
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
@@ -191,7 +245,7 @@ export const useThemeStore = create<ThemeState>()(
 ## 5. API 呼叫層(Axios + 自訂 API client)
 
 ```ts
-// src/services/apiClient.ts
+// src/api/apiClient.ts
 import axios from 'axios';
 
 export const apiClient = axios.create({
@@ -210,10 +264,10 @@ apiClient.interceptors.response.use(
 );
 ```
 
-**規則:每個 feature 各自的 API function 放在 `features/<功能>/api/`,不要直接在元件內寫 `apiClient.get(...)`。**
+**規則:每個 endpoint module 放在 `src/api/`,不要直接在元件內寫 `apiClient.get(...)`。**
 
 ```ts
-// src/features/user/api/userApi.ts
+// src/api/userApi.ts
 import { apiClient } from '@/services/apiClient';
 import type { UserDTO } from '@/types/user';
 
