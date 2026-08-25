@@ -1,5 +1,6 @@
 import { ArtifactPanel } from '@/components/artifact/ArtifactPanel';
 import { ThreadPanel } from '@/components/chat/ThreadPanel';
+import DataBoundary from '@/components/common/DataBoundary';
 import { useStudioLayoutStore } from '@/stores/useStudioLayoutStore';
 
 import { ResizeHandle } from './ResizeHandle';
@@ -14,7 +15,9 @@ export function StudioLayout() {
   return (
     <div className={styles.studio}>
       <section aria-label="Thread" className={styles.thread} style={{ width: threadWidth }}>
-        <ThreadPanel />
+        <DataBoundary label="Thread">
+          <ThreadPanel />
+        </DataBoundary>
       </section>
 
       <ResizeHandle
@@ -23,7 +26,9 @@ export function StudioLayout() {
       />
 
       <section aria-label="Artifact panel" className={styles.artifactPanel}>
-        <ArtifactPanel />
+        <DataBoundary label="Artifact">
+          <ArtifactPanel />
+        </DataBoundary>
       </section>
     </div>
   );

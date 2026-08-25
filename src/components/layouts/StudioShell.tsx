@@ -1,5 +1,6 @@
 import { Outlet } from 'react-router-dom';
 
+import DataBoundary from '@/components/common/DataBoundary';
 import { CollapsedSessionRail } from '@/components/session/CollapsedSessionRail';
 import { SessionList } from '@/components/session/SessionList';
 import { useArtifacts } from '@/hooks/useArtifacts';
@@ -12,12 +13,24 @@ import styles from './StudioShell.module.css';
 // and Schedule (only the single-Artifact full-page view, routed separately
 // in router.tsx, hides it) — matching the rail's role in the original
 // mockup, where switching cwView never unmounted it.
+// Split out so the shell itself never suspends: the rail is what needs data, and it
+// sits inside its own boundary.
+function ExpandedSessionRail({ onCollapse }: { onCollapse: () => void }) {
+  const { data: artifacts } = useArtifacts();
+
+  return (
+    <SessionList
+      onCollapse={onCollapse}
+      artifactsCount={artifacts.filter((artifact) => artifact.generated).length}
+    />
+  );
+}
+
 export function StudioShell() {
   const sessionRailWidth = useStudioLayoutStore((s) => s.sessionRailWidth);
   const isSessionRailCollapsed = useStudioLayoutStore((s) => s.isSessionRailCollapsed);
   const setSessionRailWidth = useStudioLayoutStore((s) => s.setSessionRailWidth);
   const toggleSessionRailCollapsed = useStudioLayoutStore((s) => s.toggleSessionRailCollapsed);
-  const { data: artifacts } = useArtifacts();
 
   const railWidth = isSessionRailCollapsed ? SESSION_RAIL_COLLAPSED_WIDTH : sessionRailWidth;
 
@@ -27,10 +40,9 @@ export function StudioShell() {
         {isSessionRailCollapsed ? (
           <CollapsedSessionRail onExpand={toggleSessionRailCollapsed} />
         ) : (
-          <SessionList
-            onCollapse={toggleSessionRailCollapsed}
-            artifactsCount={artifacts?.filter((a) => a.generated).length ?? 0}
-          />
+          <DataBoundary label="Sessions">
+            <ExpandedSessionRail onCollapse={toggleSessionRailCollapsed} />
+          </DataBoundary>
         )}
       </nav>
 
@@ -44,7 +56,9 @@ export function StudioShell() {
       )}
 
       <div className={styles.content}>
-        <Outlet />
+        <DataBoundary label="Content">
+          <Outlet />
+        </DataBoundary>
       </div>
     </div>
   );

@@ -108,7 +108,7 @@ describe('StudioPage three-pane layout', () => {
     renderStudioPage();
 
     const rail = screen.getByRole('navigation', { name: 'Session list' });
-    expect(screen.getByRole('button', { name: 'New chat' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'New chat' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Schedule' })).toBeInTheDocument();
     // Expanded rail shows an Artifact count badge in the button, so its
     // accessible name is "Artifacts <n>" rather than the bare label.
@@ -120,7 +120,7 @@ describe('StudioPage three-pane layout', () => {
     // chat" and the Schedule/Artifacts shortcuts survive as icon tiles
     // (present in both rail states, per the mockup), but the session groups
     // disappear.
-    expect(screen.getByRole('button', { name: 'New chat' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'New chat' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Schedule' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Artifacts' })).toBeInTheDocument();
     expect(screen.queryByRole('region', { name: 'Pinned sessions' })).not.toBeInTheDocument();
@@ -131,7 +131,7 @@ describe('StudioPage three-pane layout', () => {
 
     await user.click(screen.getByRole('button', { name: 'Expand session list' }));
 
-    expect(screen.getByRole('button', { name: 'New chat' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'New chat' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Schedule' })).toBeInTheDocument();
     expect(rail.style.width).toBe('270px');
   });
@@ -202,7 +202,7 @@ describe('Session rail', () => {
     const previouslySelected = screen.getByRole('button', { name: 'Defect pareto — W12' });
     expect(previouslySelected).not.toHaveAttribute('aria-current', 'true');
 
-    await user.click(screen.getByRole('button', { name: 'New chat' }));
+    await user.click(await screen.findByRole('button', { name: 'New chat' }));
 
     const recent = screen.getByRole('region', { name: 'Recents sessions' });
     const newSession = await within(recent).findByRole('button', { name: 'New analysis' });
@@ -294,7 +294,7 @@ describe('Session rail', () => {
     renderStudioPage();
 
     await screen.findByRole('region', { name: 'Pinned sessions' });
-    await user.click(screen.getByRole('button', { name: 'New chat' }));
+    await user.click(await screen.findByRole('button', { name: 'New chat' }));
     const created = await screen.findByRole('button', { name: 'New analysis' });
     expect(created).toBeInTheDocument();
 

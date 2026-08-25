@@ -86,11 +86,11 @@ export function ChatComposer({ onSend, disabled, isStreaming, onStop }: ChatComp
     removeFile,
     clear: clearAttachments,
   } = useFileAttachments();
-  const { data: connectorsData } = useConnectors();
+  const { data: connectors } = useConnectors();
   const connectorsOpen = useConnectorsPanelStore((store) => store.isOpen);
   const openConnectors = useConnectorsPanelStore((store) => store.open);
   const closeConnectors = useConnectorsPanelStore((store) => store.close);
-  const connectedConnectorCount = selectConnected(connectorsData ?? []).length;
+  const connectedConnectorCount = selectConnected(connectors).length;
 
   function send(input: SendMessageInput) {
     onSend({ ...input, attachments: attachments.length > 0 ? attachments : undefined });

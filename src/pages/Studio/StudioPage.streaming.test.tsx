@@ -28,7 +28,7 @@ function renderStudioPage() {
 }
 
 async function selectASession(user: ReturnType<typeof userEvent.setup>) {
-  await user.click(screen.getByRole('button', { name: 'New chat' }));
+  await user.click(await screen.findByRole('button', { name: 'New chat' }));
   await screen.findByRole('button', { name: 'New analysis' });
 }
 
