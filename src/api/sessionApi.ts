@@ -1,9 +1,11 @@
-import type { Session } from '@/types/api/session';
+import type { Session, SessionDetail } from '@/types/api/session';
 
 import { apiClient } from './apiClient';
 
 export const sessionApi = {
   listSessions: () => apiClient.get<Session[]>('/sessions'),
+
+  getSession: (id: string) => apiClient.get<SessionDetail>(`/sessions/${id}`),
 
   createSession: () => apiClient.post<Session>('/sessions', {}),
 

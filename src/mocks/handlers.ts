@@ -28,15 +28,31 @@ const exampleWidgets = createPersistedResource<ExampleWidget>('erd-cowork:exampl
   { id: 'w2', name: 'SPC Analysis' },
 ]);
 
-const messages = createPersistedResource<Message>('erd-cowork:messages', [
+// Messages persist in the backend wire shape; sessionId is the mock store's own
+// bookkeeping (the real backend nests messages inside SessionDetail) and is
+// stripped before a Message reaches the client. Key versioned so browsers
+// holding the pre-contract shape reseed.
+interface StoredMessage extends Message {
+  sessionId: string;
+}
+
+function toMessageDto(stored: StoredMessage): Message {
+  const { sessionId: _sessionId, ...rest } = stored;
+  return rest;
+}
+
+const messages = createPersistedResource<StoredMessage>('erd-cowork:messages:v2', [
   {
     id: 'message-1',
     sessionId: 'session-1',
-    role: 'ai',
+    sender: 'AI',
     text: 'Control chart with CL / ±3σ limits and Western Electric rules applied to Vt (gate CD).',
-    scenario: 'spc',
-    artifactName: 'SPC analysis — Vt (gate CD)',
+    stepsJson: null,
     artifactId: 'artifact-1',
+    createdAt: '2026-08-20T09:15:00.000Z',
+    artifactTitle: 'SPC analysis — Vt (gate CD)',
+    questionsJson: null,
+    scenario: 'spc',
   },
 ]);
 
@@ -356,12 +372,14 @@ function streamRun(
     {
       id: crypto.randomUUID(),
       sessionId,
-      role: 'ai',
+      sender: 'AI',
       text: fixture.reply,
-      scenario: scenarioKey,
-      steps,
-      artifactName,
+      stepsJson: JSON.stringify(steps),
       artifactId: artifact.id,
+      createdAt: new Date().toISOString(),
+      artifactTitle: artifactName,
+      questionsJson: null,
+      scenario: scenarioKey,
     },
   ]);
 
@@ -434,9 +452,25 @@ export const allHandlers = [
     return new HttpResponse(null, { status: 204 });
   }),
 
-  http.get('/api/sessions/:sessionId/messages', ({ params }) => {
-    const all = messages.read();
-    return HttpResponse.json(all.filter((message) => message.sessionId === params.sessionId));
+  // The backend has no standalone messages endpoint: a session's messages and
+  // files are nested inside its detail.
+  http.get('/api/sessions/:sessionId', ({ params }) => {
+    const session = sessions.read().find((s) => s.id === params.sessionId);
+    if (!session) {
+      return new HttpResponse(null, { status: 404 });
+    }
+    return HttpResponse.json({
+      id: session.id,
+      title: session.title,
+      // The mock's Session seeds carry no createdAt of their own; updatedAt is
+      // the closest truth it has.
+      createdAt: session.updatedAt,
+      messages: messages
+        .read()
+        .filter((message) => message.sessionId === session.id)
+        .map(toMessageDto),
+      files: [],
+    });
   }),
 
   // A run is delivered as an agent-event stream, not a computed reply (ADR-0005).
@@ -466,8 +500,13 @@ export const allHandlers = [
       {
         id: crypto.randomUUID(),
         sessionId,
-        role: 'user',
+        sender: 'USER',
         text: question,
+        stepsJson: null,
+        artifactId: null,
+        createdAt: new Date().toISOString(),
+        artifactTitle: null,
+        questionsJson: null,
         attachments: body.attachments?.length ? body.attachments : undefined,
       },
     ]);

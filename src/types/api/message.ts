@@ -1,21 +1,22 @@
-import type { QuestionAnswer, QuestionForm, StepItem } from './agentEvent';
 import type { ScenarioKey } from './scenario';
 import type { Upload } from './upload';
 
-export type MessageRole = 'user' | 'ai';
-
+/** The backend's Message verbatim (cowork master): its Mongo document shape leaks into
+ *  the wire — steps and questions arrive as JSON strings — and the UI parses them at
+ *  the point of use rather than through a translation layer. */
 export interface Message {
   id: string;
-  sessionId: string;
-  role: MessageRole;
+  sender: 'USER' | 'AI';
   text: string;
+  /** JSON of StepItem[]; null when the message carries no run. */
+  stepsJson: string | null;
+  artifactId: string | null;
+  createdAt: string;
+  artifactTitle: string | null;
+  /** JSON of the backend's flat Question[]; null when nothing was asked. */
+  questionsJson: string | null;
+  /** 前端-only extension：mock 會回、真後端沒有。 */
   scenario?: ScenarioKey;
-  steps?: StepItem[];
-  artifactName?: string;
-  artifactId?: string;
+  /** 前端-only extension：訊息夾帶檔案的快照（mockup 的 bubble chips），後端尚未支援。 */
   attachments?: Upload[];
-  /** A reask the user has answered. Kept so the thread can show what was set, collapsed
-   *  — the form itself is gone by then, since answering starts the next run. */
-  answeredForm?: QuestionForm;
-  answers?: Record<string, QuestionAnswer>;
 }
