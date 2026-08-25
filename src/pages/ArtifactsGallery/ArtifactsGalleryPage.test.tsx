@@ -7,7 +7,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { server } from '@/mocks/server';
 import { ArtifactPage } from '@/pages/Artifact/ArtifactPage';
-import type { Artifact } from '@/types/api';
+import type { Artifact } from '@/types/api/index';
 
 import { ArtifactsGalleryPage } from './ArtifactsGalleryPage';
 

@@ -1,6 +1,6 @@
-import type { QuestionAnswer, QuestionForm, StepItem } from '@/types/api/agentEvent';
-import type { ScenarioKey } from '@/types/api/scenario';
-import type { Upload } from '@/types/api/upload';
+import type { QuestionAnswer, QuestionForm, StepItem } from './agentEvent';
+import type { ScenarioKey } from './scenario';
+import type { Upload } from './upload';
 
 export type MessageRole = 'user' | 'ai';
 

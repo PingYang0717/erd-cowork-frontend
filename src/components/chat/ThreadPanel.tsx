@@ -1,0 +1,188 @@
+import { DatabaseOutlined, ThunderboltFilled } from '@ant-design/icons';
+import { useQueryClient } from '@tanstack/react-query';
+import type { ReactNode } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
+
+import type { SendMessageInput } from '@/api/messageApi';
+import { ThemeToggle } from '@/components/common/ThemeToggle';
+import { useAgentStream } from '@/hooks/useAgentStream';
+import { useArtifactRepair } from '@/hooks/useArtifactRepair';
+import { messagesQueryKey, useMessages } from '@/hooks/useMessages';
+import { useActiveRunStore } from '@/stores/useActiveRunStore';
+import { useRepairOfferStore } from '@/stores/useRepairOfferStore';
+import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
+
+import { ChatComposer } from './ChatComposer';
+import { MessageList } from './MessageList';
+import type { Answers } from './QuestionFormCard';
+import { RepairOfferCard } from './RepairOfferCard';
+import styles from './ThreadPanel.module.css';
+
+function ThreadHeader() {
+  return (
+    <header className={styles.header} aria-label="Thread header">
+      <span className={styles.headerTitle}>
+        <ThunderboltFilled aria-hidden className={styles.headerIcon} />
+        Cowork · Data studio
+      </span>
+      {/* The mockup's data-source chip (its demo is wired to the Inline DB /
+          N5 line fixture); sits beside the ThemeToggle per the scope-trim of
+          the Workspace header (ADR-0003). */}
+      <span className={styles.dataSourceChip}>
+        <DatabaseOutlined aria-hidden />
+        Inline DB · N5 line
+      </span>
+      <ThemeToggle />
+    </header>
+  );
+}
+
+function EmptyState({ heading, subtitle }: { heading: string; subtitle: ReactNode }) {
+  return (
+    <div className={styles.emptyState}>
+      <div className={styles.emptyStateIcon}>
+        <ThunderboltFilled aria-hidden />
+      </div>
+      <p className={styles.emptyStateHeading}>{heading}</p>
+      <p className={styles.emptyStateSubtitle}>{subtitle}</p>
+    </div>
+  );
+}
+
+const ThreadPanel: React.FC = () => {
+  const selectedSessionId = useSessionSelectionStore((s) => s.selectedSessionId);
+
+  if (!selectedSessionId) {
+    return (
+      <div className={styles.panel}>
+        <ThreadHeader />
+        <div className={styles.body}>
+          <EmptyState
+            heading="Select or start a session"
+            subtitle="Start or select a session from the left to begin an analysis."
+          />
+        </div>
+      </div>
+    );
+  }
+
+  return <ThreadView sessionId={selectedSessionId} />;
+};
+
+function ThreadView({ sessionId }: { sessionId: string }) {
+  const queryClient = useQueryClient();
+  const { data } = useMessages(sessionId);
+  const messages = data ?? [];
+  const { state, send, stop } = useAgentStream(sessionId);
+  const setStreamedArtifactId = useActiveRunStore((s) => s.setStreamedArtifactId);
+  const repairOffer = useRepairOfferStore((store) => store.offer);
+  const dismissRepair = useRepairOfferStore((store) => store.dismiss);
+  const clearRepair = useRepairOfferStore((store) => store.clear);
+  const repair = useArtifactRepair();
+
+  // An offer belongs to one artifact in one session. Moving away from that session
+  // leaves it pointing at something the user is no longer looking at.
+  useEffect(() => clearRepair, [sessionId, clearRepair]);
+  const bodyRef = useRef<HTMLDivElement>(null);
+
+  // Publishing to the Artifact pane is syncing with something outside this tree, and it
+  // has to happen the moment the ARTIFACT event lands rather than when the run ends.
+  useEffect(() => {
+    setStreamedArtifactId(state.artifact?.artifactId ?? null);
+    // Leaving the thread must not leave the Artifact pane pointing at a run that is no
+    // longer on screen.
+    return () => setStreamedArtifactId(null);
+  }, [state.artifact?.artifactId, setStreamedArtifactId]);
+
+  // The mockup scrolls the thread to the bottom shortly after a new message
+  // renders (40ms, letting layout settle), so long conversations never leave
+  // the latest reply out of view.
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const body = bodyRef.current;
+      if (body) {
+        body.scrollTop = body.scrollHeight;
+      }
+    }, 40);
+    return () => clearTimeout(timer);
+  }, [messages.length, state.steps.length, state.liveText]);
+
+  // Handed to ChatComposer; a fresh identity every render would defeat its memoisation.
+  const handleSend = useCallback(
+    async (input: SendMessageInput) => {
+      await send(input);
+      // The run itself is streamed, but both messages it produced live server-side —
+      // refetch rather than reconstruct them from the events we happened to receive.
+      await queryClient.invalidateQueries({ queryKey: messagesQueryKey(sessionId) });
+    },
+    [send, queryClient, sessionId],
+  );
+
+  // A run stays on screen after it ends when the ending is something the user needs to
+  // see — they stopped it, or it broke, or the agent is waiting on an answer. A clean
+  // finish hands over to the refetched history instead.
+  const formKey = state.question?.formKey ?? '';
+  const handleAnswer = useCallback(
+    async (answers: Answers) => {
+      await send({ answers, inReplyTo: formKey });
+      await queryClient.invalidateQueries({ queryKey: messagesQueryKey(sessionId) });
+    },
+    [send, formKey, queryClient, sessionId],
+  );
+
+  const runEndedVisibly = state.stopped || state.error !== null || state.question !== null;
+  const live =
+    state.isStreaming || runEndedVisibly
+      ? {
+          isStreaming: state.isStreaming,
+          steps: state.steps,
+          liveText: state.liveText,
+          stopped: state.stopped,
+          thinking: state.thinking,
+          question: state.question,
+          codeText: state.codeText,
+          tables: state.tables,
+          error: state.error,
+        }
+      : null;
+  const hasContent = messages.length > 0 || live !== null;
+
+  return (
+    <div className={styles.panel}>
+      <ThreadHeader />
+      <div ref={bodyRef} role="log" aria-label="Messages" className={styles.body}>
+        {hasContent ? (
+          <MessageList
+            messages={messages}
+            live={live}
+            lastRunDurationMs={state.durationMs}
+            onAnswer={handleAnswer}
+          />
+        ) : (
+          <EmptyState
+            heading="Start an analysis"
+            subtitle={'Try "Daily monitor (A14)" below, or ask for an SPC analysis on Vt.'}
+          />
+        )}
+        {repairOffer && (
+          <RepairOfferCard
+            offer={repairOffer}
+            onConfirm={() => repair(repairOffer.artifactId, repairOffer.errors)}
+            onDismiss={dismissRepair}
+          />
+        )}
+      </div>
+      <div className={styles.composer}>
+        <ChatComposer
+          onSend={handleSend}
+          disabled={state.isStreaming}
+          isStreaming={state.isStreaming}
+          onStop={stop}
+        />
+      </div>
+    </div>
+  );
+}
+
+export { ThreadPanel };
+export default ThreadPanel;

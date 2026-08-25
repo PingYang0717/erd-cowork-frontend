@@ -1,0 +1,36 @@
+.panel {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 20px;
+  padding: 16px 18px;
+  border: 1px solid var(--erd-color-error-border, #ffccc7);
+  border-radius: 10px;
+  background: var(--erd-color-error-bg, #fff2f0);
+}
+
+.heading {
+  margin: 0;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--erd-color-text, rgba(0, 0, 0, 0.88));
+}
+
+.message {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--erd-color-text-secondary, #595959);
+  word-break: break-word;
+}
+
+.retry {
+  padding: 5px 13px;
+  border: none;
+  border-radius: 7px;
+  font: inherit;
+  font-size: 12.5px;
+  background: var(--erd-color-primary, #1677ff);
+  color: #fff;
+  cursor: pointer;
+}

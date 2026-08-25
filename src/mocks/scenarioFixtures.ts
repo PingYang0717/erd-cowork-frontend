@@ -1,4 +1,4 @@
-import type { ScenarioKey, StepItem } from '@/types/api';
+import type { ScenarioKey, StepItem } from '@/types/api/index';
 
 interface ScenarioFixture {
   artifactName: string;

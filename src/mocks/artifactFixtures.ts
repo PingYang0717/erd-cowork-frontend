@@ -1,6 +1,6 @@
-import type { ArtifactKind, ArtifactTheme, ScenarioKey } from '@/types/api';
+import type { ArtifactKind, ArtifactTheme, ScenarioKey } from '@/types/api/index';
 
-// The same surfaces the app itself uses (features/theme/tokens.ts, copied
+// The same surfaces the app itself uses (theme/tokens.ts, copied
 // from the mockup): the Artifact renders inside an iframe and so cannot read
 // the app's custom properties, but it has to look like it belongs to the page
 // it sits in — in both themes.
