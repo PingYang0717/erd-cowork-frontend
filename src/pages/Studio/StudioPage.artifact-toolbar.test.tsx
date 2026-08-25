@@ -4,10 +4,10 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { useSessionSelectionStore } from '@/features/session/store/useSessionSelectionStore';
-import { StudioShell } from '@/features/studio/components/StudioShell';
-import { useStudioLayoutStore } from '@/features/studio/store/useStudioLayoutStore';
-import { useThemeStore } from '@/features/theme/store/useThemeStore';
+import { StudioShell } from '@/components/layouts/StudioShell';
+import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
+import { useStudioLayoutStore } from '@/stores/useStudioLayoutStore';
+import { useThemeStore } from '@/stores/useThemeStore';
 
 import { StudioPage } from './StudioPage';
 

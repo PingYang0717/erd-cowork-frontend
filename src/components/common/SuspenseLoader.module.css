@@ -1,0 +1,8 @@
+.pending {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  color: var(--erd-color-text-tertiary, #8c8c8c);
+  font-size: 18px;
+}

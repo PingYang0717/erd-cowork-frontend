@@ -4,9 +4,9 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { useSessionSelectionStore } from '@/features/session/store/useSessionSelectionStore';
-import { StudioShell } from '@/features/studio/components/StudioShell';
-import { useStudioLayoutStore } from '@/features/studio/store/useStudioLayoutStore';
+import { StudioShell } from '@/components/layouts/StudioShell';
+import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
+import { useStudioLayoutStore } from '@/stores/useStudioLayoutStore';
 
 import { StudioPage } from './StudioPage';
 
@@ -34,7 +34,7 @@ async function openConnectorsPanel(user: ReturnType<typeof userEvent.setup>) {
 }
 
 async function selectASessionAndOpenConnectors(user: ReturnType<typeof userEvent.setup>) {
-  await user.click(screen.getByRole('button', { name: 'New chat' }));
+  await user.click(await screen.findByRole('button', { name: 'New chat' }));
   await screen.findByRole('button', { name: 'New analysis' });
   await openConnectorsPanel(user);
 }

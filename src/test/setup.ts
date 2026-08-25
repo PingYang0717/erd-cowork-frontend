@@ -1,6 +1,6 @@
 import '@testing-library/jest-dom/vitest';
 
-import { cleanup } from '@testing-library/react';
+import { cleanup, configure } from '@testing-library/react';
 import { afterAll, afterEach, beforeAll } from 'vitest';
 
 import { setStreamPace } from '@/mocks/handlers';
@@ -14,6 +14,11 @@ class ResizeObserverStub {
   disconnect() {}
 }
 global.ResizeObserver = ResizeObserverStub;
+
+// Every pane now suspends before it renders (useSuspenseQuery), so a findBy* waits on
+// one more async hop than it used to. The 1s default is enough on an idle machine and
+// not enough under a parallel run — which is a scheduling artefact, not a real failure.
+configure({ asyncUtilTimeout: 5000 });
 
 beforeAll(() => {
   // The mock backend paces a run so mock mode looks like a real one; tests do not need

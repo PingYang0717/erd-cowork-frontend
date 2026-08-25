@@ -4,11 +4,11 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { useSessionSelectionStore } from '@/features/session/store/useSessionSelectionStore';
-import { StudioShell } from '@/features/studio/components/StudioShell';
-import { useStudioLayoutStore } from '@/features/studio/store/useStudioLayoutStore';
-import { useThemeStore } from '@/features/theme/store/useThemeStore';
+import { StudioShell } from '@/components/layouts/StudioShell';
 import { ArtifactsGalleryPage } from '@/pages/ArtifactsGallery/ArtifactsGalleryPage';
+import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
+import { useStudioLayoutStore } from '@/stores/useStudioLayoutStore';
+import { useThemeStore } from '@/stores/useThemeStore';
 import { answerAnalysisConditions } from '@/test/studioRun';
 
 import { StudioPage } from './StudioPage';
@@ -32,7 +32,7 @@ function renderStudioPage() {
 function artifactsNav() {
   // Name starts with the label ("Artifacts" + badge count); the toast's
   // 前往 Artifacts button doesn't match the anchor.
-  return screen.getByRole('button', { name: /^Artifacts/ });
+  return screen.findByRole('button', { name: /^Artifacts/ });
 }
 
 describe('Generation feedback: badge count, coach highlight, toast', () => {
@@ -47,7 +47,8 @@ describe('Generation feedback: badge count, coach highlight, toast', () => {
     renderStudioPage();
 
     // All three seeded Artifacts are generated.
-    expect(await within(artifactsNav()).findByText('3')).toBeInTheDocument();
+    // The rail suspends until the Artifacts list arrives, so wait for it first.
+    expect(await within(await artifactsNav()).findByText('3')).toBeInTheDocument();
 
     // A regenerated (ungenerated) version does not change the count, but the
     // artifact needs generating: use a brand-new artifact via the composer.
@@ -62,14 +63,14 @@ describe('Generation feedback: badge count, coach highlight, toast', () => {
       { name: '生成 Artifact' },
       { timeout: 5000 },
     );
-    expect(within(artifactsNav()).getByText('3')).toBeInTheDocument();
-    expect(artifactsNav()).not.toHaveAttribute('data-coach');
+    expect(within(await artifactsNav()).getByText('3')).toBeInTheDocument();
+    expect(await artifactsNav()).not.toHaveAttribute('data-coach');
 
     await user.click(generateButton);
 
     // Badge +1, coach highlight on, toast with both actions.
-    expect(await within(artifactsNav()).findByText('4')).toBeInTheDocument();
-    expect(artifactsNav()).toHaveAttribute('data-coach', 'true');
+    expect(await within(await artifactsNav()).findByText('4')).toBeInTheDocument();
+    expect(await artifactsNav()).toHaveAttribute('data-coach', 'true');
 
     const toast = await screen.findByRole('status', { name: 'Artifact 已生成' });
     expect(within(toast).getByRole('button', { name: '前往 Artifacts' })).toBeInTheDocument();
@@ -91,7 +92,7 @@ describe('Generation feedback: badge count, coach highlight, toast', () => {
     const toast = await screen.findByRole('status', { name: 'Artifact 已生成' });
     await user.click(within(toast).getByRole('button', { name: '知道了' }));
     expect(screen.queryByRole('status', { name: 'Artifact 已生成' })).not.toBeInTheDocument();
-    expect(artifactsNav()).not.toHaveAttribute('data-coach');
+    expect(await artifactsNav()).not.toHaveAttribute('data-coach');
 
     // Generate another version to bring the toast back, then navigate.
     await user.click(await screen.findByRole('button', { name: 'Regenerate artifact' }));

@@ -1,8 +1,18 @@
+import React from 'react';
 import { useParams } from 'react-router-dom';
 
-import { ArtifactFullPageView } from '@/features/artifact/components/ArtifactFullPageView';
+import { ArtifactFullPageView } from '@/components/artifact/ArtifactFullPageView';
+import DataBoundary from '@/components/common/DataBoundary';
 
-export function ArtifactPage() {
+const ArtifactPage: React.FC = () => {
   const { artifactId } = useParams<{ artifactId: string }>();
-  return <ArtifactFullPageView artifactId={artifactId} />;
-}
+
+  return (
+    <DataBoundary label="Artifact">
+      <ArtifactFullPageView artifactId={artifactId} />
+    </DataBoundary>
+  );
+};
+
+export { ArtifactPage };
+export default ArtifactPage;

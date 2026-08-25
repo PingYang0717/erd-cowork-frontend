@@ -15,6 +15,8 @@ export interface MockAgentStream {
   readonly wasAborted: boolean;
   /** Bodies of every request the endpoint received, in order. */
   readonly requests: unknown[];
+  /** `X-User-Id` of every request the endpoint received, in order. */
+  readonly userIds: (string | null)[];
 }
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? '';
@@ -27,6 +29,7 @@ export function mockAgentStream(): MockAgentStream {
   let controller: ReadableStreamDefaultController<Uint8Array> | null = null;
   let aborted = false;
   const requests: unknown[] = [];
+  const userIds: (string | null)[] = [];
   const buffered: string[] = [];
 
   function write(chunk: string): void {
@@ -40,6 +43,7 @@ export function mockAgentStream(): MockAgentStream {
   server.use(
     http.post(`${API_BASE}/sessions/:sessionId/messages`, async ({ request }) => {
       requests.push(await request.clone().json());
+      userIds.push(request.headers.get('X-User-Id'));
       request.signal.addEventListener('abort', () => {
         aborted = true;
       });
@@ -74,6 +78,7 @@ export function mockAgentStream(): MockAgentStream {
       return aborted;
     },
     requests,
+    userIds,
   };
 }
 

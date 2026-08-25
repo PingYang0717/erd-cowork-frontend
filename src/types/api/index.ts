@@ -7,13 +7,13 @@ export type {
   StepItem,
   StepStatus,
   TableResult,
-} from '@/types/api/agentEvent';
-export type { Artifact, ArtifactKind, ArtifactTheme, ArtifactVersion } from '@/types/api/artifact';
-export type { Connector, ConnectorStatus } from '@/types/api/connector';
-export type { DcItem } from '@/types/api/dcItem';
-export type { DirectoryEntry, DirectoryEntryKind } from '@/types/api/directory';
-export type { Message, MessageRole } from '@/types/api/message';
-export type { Scenario, ScenarioKey } from '@/types/api/scenario';
-export type { ScheduleJob, ScheduleJobStatus } from '@/types/api/scheduleJob';
-export type { Session } from '@/types/api/session';
-export type { Upload } from '@/types/api/upload';
+} from './agentEvent';
+export type { Artifact, ArtifactKind, ArtifactTheme, ArtifactVersion } from './artifact';
+export type { Connector, ConnectorStatus } from './connector';
+export type { DcItem } from './dcItem';
+export type { DirectoryEntry, DirectoryEntryKind } from './directory';
+export type { Message, MessageRole } from './message';
+export type { Scenario, ScenarioKey } from './scenario';
+export type { ScheduleJob, ScheduleJobStatus } from './scheduleJob';
+export type { Session } from './session';
+export type { Upload } from './upload';

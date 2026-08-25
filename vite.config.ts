@@ -17,6 +17,11 @@ export default defineConfig({
   },
   test: {
     environment: 'jsdom',
+    // Serial by file. Every pane suspends before it renders, so a findBy* waits on one
+    // more async hop than it used to; running 24 files at once starves those waits and
+    // fails tests that pass on their own. A suite that is the acceptance gate has to be
+    // trustworthy before it is fast — `--file-parallelism` re-enables it when needed.
+    fileParallelism: false,
     setupFiles: ['./src/test/setup.ts'],
     globals: false,
   },

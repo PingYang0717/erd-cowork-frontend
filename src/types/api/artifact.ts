@@ -1,4 +1,4 @@
-import type { ScenarioKey } from '@/types/api/scenario';
+import type { ScenarioKey } from './scenario';
 
 export type ArtifactKind = 'dashboard' | 'slides';
 export type ArtifactTheme = 'light' | 'dark';

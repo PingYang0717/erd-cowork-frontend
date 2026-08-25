@@ -1,7 +1,7 @@
 # eRD Cowork API Interface
 
 This is the single source of truth for the mock backend's API contract. Every
-endpoint the frontend calls through `services/apiClient.ts` is mocked by MSW
+endpoint the frontend calls through `api/apiClient.ts` is mocked by MSW
 (`src/mocks/handlers.ts`) against the shape documented here. The corresponding
 TypeScript DTOs live in `src/types/api/`.
 
@@ -10,6 +10,21 @@ match; the frontend's calling code should not need to change.
 
 Each feature ticket appends its own endpoints to the relevant section below as
 it implements them.
+
+## 身分
+
+每一個請求都帶 `X-User-Id`。後端依它過濾 session,存取他人資源一律 404。
+
+| 環境     | 誰決定這個值                                                              |
+| -------- | ------------------------------------------------------------------------- |
+| v1(預設) | 瀏覽器:localStorage 的匿名 UUID(`erd-cowork:user-id`),首次使用時產生      |
+| internal | SSO / gateway 在請求經過時注入;前端安裝一個回傳 `{}` 的 provider,不覆蓋它 |
+
+附加的位置只有一處:`api/identity.ts` 的 `getAuthHeaders()`。axios interceptor 與
+`agentApi` 的 raw fetch 共用它——串流那條路不經過 axios,漏掉 header 會被當成另一個
+使用者(或無效使用者)來回應。
+
+`setAuthHeaderProvider()` 是 internal 環境的接縫;傳 `null` 回到匿名 id。
 
 ## Session
 
@@ -22,10 +37,10 @@ it implements them.
 
 ## Message / Chat
 
-| Method | Path                            | Request                                                                                                                 | Response                          |
-| ------ | ------------------------------- | ----------------------------------------------------------------------------------------------------------------------- | --------------------------------- |
-| GET    | `/sessions/:sessionId/messages` | —                                                                                                                       | `Message[]`                       |
-| POST   | `/sessions/:sessionId/messages` | 見下方兩種 body                                                                                                          | `text/event-stream`（Agent event） |
+| Method | Path                            | Request         | Response                           |
+| ------ | ------------------------------- | --------------- | ---------------------------------- |
+| GET    | `/sessions/:sessionId/messages` | —               | `Message[]`                        |
+| POST   | `/sessions/:sessionId/messages` | 見下方兩種 body | `text/event-stream`（Agent event） |
 
 送出訊息不再一次回傳算好的結果，而是開啟一條 SSE 串流，逐筆推送 Agent event
 （[ADR-0005](../adr/0005-sse-streaming-replaces-batch-reply.md)）。mock 與 live 兩條軌道
@@ -64,17 +79,17 @@ Artifact 的形態而非分析本身：「Generate slides」按鈕帶 `scenarioK
 行是心跳，解析時忽略；無法解析的區塊靜默丟棄。事件名稱維持 SCREAMING_CASE，與
 `cowork-master` 的線路契約逐字一致，live 模式因此不需要轉換層。
 
-| `type`     | 欄位                                                            | 說明                                 | 進入對話歷史 |
-| ---------- | --------------------------------------------------------------- | ------------------------------------ | ------------ |
-| `STEP`     | `stepKey`, `title`, `description \| null`, `status`             | 步驟狀態，同 `stepKey` 後送覆蓋前送   | 是           |
-| `TOKEN`    | `delta`                                                         | 逐字回覆                             | 是（合成 `text`） |
-| `ANSWER`   | `text`                                                          | 完整回覆，收尾用                     | 是           |
-| `ARTIFACT` | `artifactId`, `title`                                           | 本輪產出的 Artifact                  | 是           |
-| `QUESTION` | `form: QuestionForm`                                            | 反問表單                             | 是（含答案） |
-| `THINKING` | `delta`                                                         | 推理過程                             | 否           |
-| `CODE`     | `delta`                                                         | Artifact HTML 產碼過程               | 否           |
-| `TABLE`    | `tableId`, `intent`, `columns`, `rows`, `truncated`             | 查詢結果表                           | 否           |
-| `ERROR`    | `code`, `message`                                               | 執行錯誤                             | 否           |
+| `type`     | 欄位                                                | 說明                                | 進入對話歷史      |
+| ---------- | --------------------------------------------------- | ----------------------------------- | ----------------- |
+| `STEP`     | `stepKey`, `title`, `description \| null`, `status` | 步驟狀態，同 `stepKey` 後送覆蓋前送 | 是                |
+| `TOKEN`    | `delta`                                             | 逐字回覆                            | 是（合成 `text`） |
+| `ANSWER`   | `text`                                              | 完整回覆，收尾用                    | 是                |
+| `ARTIFACT` | `artifactId`, `title`                               | 本輪產出的 Artifact                 | 是                |
+| `QUESTION` | `form: QuestionForm`                                | 反問表單                            | 是（含答案）      |
+| `THINKING` | `delta`                                             | 推理過程                            | 否                |
+| `CODE`     | `delta`                                             | Artifact HTML 產碼過程              | 否                |
+| `TABLE`    | `tableId`, `intent`, `columns`, `rows`, `truncated` | 查詢結果表                          | 否                |
+| `ERROR`    | `code`, `message`                                   | 執行錯誤                            | 否                |
 
 `StepStatus` 是 `'PENDING' | 'RUNNING' | 'SUCCESS' | 'ERROR'`。步驟可以失敗——這是相對於
 舊批次契約最實質的行為改變（舊契約的步驟由前端用 index 推算，不可能失敗）。
@@ -129,16 +144,16 @@ QuestionOption { value: string; label: string; hint?: string; unit?: string; lo?
 切換是 build-time 的環境變數，不是 runtime 開關。live 模式可搭配的後端只實作了下表左半，
 其餘端點在 live 模式下**仍由 MSW 服務**。
 
-| 端點群                                                        | mock 模式 | live 模式 |
-| ------------------------------------------------------------- | --------- | --------- |
-| `/sessions`、`/sessions/:id/messages`（SSE）                   | MSW       | 真後端    |
-| `/artifacts/:id`（HTML）、`/artifacts/:id/repair`              | MSW       | 真後端    |
-| `/uploads`、config                                            | MSW       | 真後端    |
-| `/artifacts` 清單、pin、`/artifacts/:id/share`、`/directory`   | MSW       | **MSW**   |
-| `/artifacts/:id/versions`、`regenerate`、`generate`            | MSW       | **MSW**   |
-| `/connectors`、`/schedule-jobs`、DC Item 清單                  | MSW       | **MSW**   |
+| 端點群                                                       | mock 模式 | live 模式 |
+| ------------------------------------------------------------ | --------- | --------- |
+| `/sessions`、`/sessions/:id/messages`（SSE）                 | MSW       | 真後端    |
+| `/artifacts/:id`（HTML）、`/artifacts/:id/repair`            | MSW       | 真後端    |
+| `/uploads`、config                                           | MSW       | 真後端    |
+| `/artifacts` 清單、pin、`/artifacts/:id/share`、`/directory` | MSW       | **MSW**   |
+| `/artifacts/:id/versions`、`regenerate`、`generate`          | MSW       | **MSW**   |
+| `/connectors`、`/schedule-jobs`、DC Item 清單                | MSW       | **MSW**   |
 
-live 模式下後端 DTO 與本專案型別的差異在 `features/thread/api/liveAdapter.ts` 一次轉換，
+live 模式下後端 DTO 與本專案型別的差異在 `api/liveAdapter.ts` 一次轉換，
 UI 與 `types/api/` 不受影響：`sender: 'USER' | 'AI'` → `role: 'user' | 'ai'`、
 `stepsJson` / `questionsJson` 的 JSON 字串 → 真陣列（解析失敗時該欄位視為不存在，而不是
 讓整則訊息壞掉）、`artifactTitle` → `artifactName`。
@@ -147,14 +162,14 @@ UI 與 `types/api/` 不受影響：`sender: 'USER' | 'AI'` → `role: 'user' | '
 
 其餘八種事件在兩邊逐欄一致，這正是事件名維持 SCREAMING_CASE 的用意。但 QUESTION 不是：
 
-| | 本專案 | 既有後端 |
-| --- | --- | --- |
-| 承載 | `{ form: QuestionForm }` | `{ questions: Question[] }` |
-| 欄位種類 | `single` / `multi` / `text` / `boolean` / `daterange` / `dcitem` | 無（一律選項清單） |
-| 欄位相依 | `visibleWhen` | 無 |
-| 選項 | `{ value, label, hint?, unit?, lo?, hi? }` | `string` |
-| 送出鈕 / 未填提示 / 摘要文案 | 由表單帶 | 無 |
-| 答案回傳 | `{ answers, inReplyTo }` 結構化 | 組成一段自然語言當新訊息送出 |
+|                              | 本專案                                                           | 既有後端                     |
+| ---------------------------- | ---------------------------------------------------------------- | ---------------------------- |
+| 承載                         | `{ form: QuestionForm }`                                         | `{ questions: Question[] }`  |
+| 欄位種類                     | `single` / `multi` / `text` / `boolean` / `daterange` / `dcitem` | 無（一律選項清單）           |
+| 欄位相依                     | `visibleWhen`                                                    | 無                           |
+| 選項                         | `{ value, label, hint?, unit?, lo?, hi? }`                       | `string`                     |
+| 送出鈕 / 未填提示 / 摘要文案 | 由表單帶                                                         | 無                           |
+| 答案回傳                     | `{ answers, inReplyTo }` 結構化                                  | 組成一段自然語言當新訊息送出 |
 
 `toQuestionForm()` 能把後端的扁平清單抬升成可渲染的表單，但**只有這個方向可行且會失真**：
 後端表達不了欄位種類（於是全部變成 chip）、欄位相依（於是 CP Test 的 Flow / Loop 無法依

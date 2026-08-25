@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { useThemeStore } from '@/features/theme/store/useThemeStore';
+import { useThemeStore } from '@/stores/useThemeStore';
 
 import { App } from './App';
 

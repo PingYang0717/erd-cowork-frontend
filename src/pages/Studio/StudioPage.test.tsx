@@ -4,9 +4,9 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { useSessionSelectionStore } from '@/features/session/store/useSessionSelectionStore';
-import { StudioShell } from '@/features/studio/components/StudioShell';
-import { useStudioLayoutStore } from '@/features/studio/store/useStudioLayoutStore';
+import { StudioShell } from '@/components/layouts/StudioShell';
+import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
+import { useStudioLayoutStore } from '@/stores/useStudioLayoutStore';
 
 import { StudioPage } from './StudioPage';
 
@@ -34,8 +34,7 @@ function renderStudioPage() {
 // "resets on reload" tests to exercise a genuinely fresh store.
 async function renderReloadedStudioPage() {
   vi.resetModules();
-  const { StudioShell: ReloadedStudioShell } =
-    await import('@/features/studio/components/StudioShell');
+  const { StudioShell: ReloadedStudioShell } = await import('@/components/layouts/StudioShell');
   const { StudioPage: ReloadedStudioPage } = await import('./StudioPage');
   const queryClient = new QueryClient();
   return render(
@@ -109,7 +108,7 @@ describe('StudioPage three-pane layout', () => {
     renderStudioPage();
 
     const rail = screen.getByRole('navigation', { name: 'Session list' });
-    expect(screen.getByRole('button', { name: 'New chat' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'New chat' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Schedule' })).toBeInTheDocument();
     // Expanded rail shows an Artifact count badge in the button, so its
     // accessible name is "Artifacts <n>" rather than the bare label.
@@ -121,7 +120,7 @@ describe('StudioPage three-pane layout', () => {
     // chat" and the Schedule/Artifacts shortcuts survive as icon tiles
     // (present in both rail states, per the mockup), but the session groups
     // disappear.
-    expect(screen.getByRole('button', { name: 'New chat' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'New chat' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Schedule' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Artifacts' })).toBeInTheDocument();
     expect(screen.queryByRole('region', { name: 'Pinned sessions' })).not.toBeInTheDocument();
@@ -132,7 +131,7 @@ describe('StudioPage three-pane layout', () => {
 
     await user.click(screen.getByRole('button', { name: 'Expand session list' }));
 
-    expect(screen.getByRole('button', { name: 'New chat' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'New chat' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Schedule' })).toBeInTheDocument();
     expect(rail.style.width).toBe('270px');
   });
@@ -203,7 +202,7 @@ describe('Session rail', () => {
     const previouslySelected = screen.getByRole('button', { name: 'Defect pareto — W12' });
     expect(previouslySelected).not.toHaveAttribute('aria-current', 'true');
 
-    await user.click(screen.getByRole('button', { name: 'New chat' }));
+    await user.click(await screen.findByRole('button', { name: 'New chat' }));
 
     const recent = screen.getByRole('region', { name: 'Recents sessions' });
     const newSession = await within(recent).findByRole('button', { name: 'New analysis' });
@@ -295,7 +294,7 @@ describe('Session rail', () => {
     renderStudioPage();
 
     await screen.findByRole('region', { name: 'Pinned sessions' });
-    await user.click(screen.getByRole('button', { name: 'New chat' }));
+    await user.click(await screen.findByRole('button', { name: 'New chat' }));
     const created = await screen.findByRole('button', { name: 'New analysis' });
     expect(created).toBeInTheDocument();
 

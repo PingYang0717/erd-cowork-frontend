@@ -1,5 +1,10 @@
-import { StudioLayout } from '@/features/studio/components/StudioLayout';
+import React from 'react';
 
-export function StudioPage() {
-  return <StudioLayout />;
-}
+import { StudioLayout } from '@/components/layouts/StudioLayout';
+
+/** Route entry. The two panes inside `StudioLayout` own a data boundary each, so one
+ *  failing pane never blanks the other. */
+const StudioPage: React.FC = () => <StudioLayout />;
+
+export { StudioPage };
+export default StudioPage;
