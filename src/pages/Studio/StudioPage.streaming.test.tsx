@@ -1,4 +1,4 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+﻿import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
@@ -258,6 +258,7 @@ describe('Streaming a run in the Studio', () => {
     act(() =>
       stream.push({
         type: 'QUESTION',
+        questions: [],
         form: {
           formKey: 'spc-conditions',
           title: '分析條件',
@@ -301,6 +302,7 @@ describe('Streaming a run in the Studio', () => {
     act(() =>
       stream.push({
         type: 'QUESTION',
+        questions: [],
         form: {
           formKey: 'cptest-conditions',
           title: '分析條件',
@@ -370,6 +372,7 @@ describe('Streaming a run in the Studio', () => {
     act(() =>
       stream.push({
         type: 'QUESTION',
+        questions: [],
         form: {
           formKey: 'spc-conditions',
           title: '分析條件',

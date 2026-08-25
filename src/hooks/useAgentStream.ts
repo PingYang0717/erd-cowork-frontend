@@ -2,6 +2,7 @@ import { useCallback, useEffect, useReducer, useRef } from 'react';
 
 import { AgentStreamHttpError, type SendMessageArgs, streamAgentMessage } from '@/api/agentApi';
 import type { AgentEvent, QuestionForm, StepItem, TableResult } from '@/types/api/agentEvent';
+import { liftQuestions } from '@/utils/liftQuestions';
 
 /** Everything about a run except which session it belongs to and how it is cancelled. */
 export type SendInput = Omit<SendMessageArgs, 'sessionId' | 'signal'>;
@@ -106,7 +107,9 @@ function reducer(state: AgentStreamState, action: Action): AgentStreamState {
           };
 
         case 'QUESTION':
-          return { ...state, question: agentEvent.form };
+          // The wire truth is the flat list; the rich form only rides along from the
+          // mock. Without it, lift the flat list into something renderable.
+          return { ...state, question: agentEvent.form ?? liftQuestions(agentEvent.questions) };
 
         case 'ERROR':
           // Deliberately does NOT end the run: the backend keeps emitting its

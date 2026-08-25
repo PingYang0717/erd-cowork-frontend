@@ -51,6 +51,14 @@ export interface QuestionForm {
 
 export type QuestionAnswer = string | string[] | boolean;
 
+/** The backend's reask verbatim: a flat list of single- or multi-choice questions,
+ *  with no field kinds, no dependencies, and options that are bare strings. */
+export interface Question {
+  text: string;
+  options: string[];
+  multiSelect: boolean;
+}
+
 /** One cell value in a TABLE event's rows — the honest union for what JSON gives us. */
 export type TableCellValue = string | number | boolean | null;
 
@@ -70,7 +78,10 @@ export type AgentEvent =
   | { type: 'ARTIFACT'; artifactId: string; title: string }
   | { type: 'ERROR'; code: string; message: string }
   | { type: 'THINKING'; delta: string }
-  | { type: 'QUESTION'; form: QuestionForm }
+  // `questions` is the wire truth; `form` is a 前端-only extension the mock rides
+  // along so the rich condition forms (six field kinds, visibleWhen) keep working —
+  // a real backend sends only the flat list, which the UI lifts (utils/liftQuestions).
+  | { type: 'QUESTION'; questions: Question[]; form?: QuestionForm }
   | { type: 'CODE'; delta: string }
   | {
       type: 'TABLE';
