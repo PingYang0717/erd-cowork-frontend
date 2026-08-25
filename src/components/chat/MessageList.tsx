@@ -13,7 +13,6 @@ import { AttachmentChip } from '@/components/files/AttachmentChip';
 import type { Message, QuestionForm, StepItem, StepStatus, TableResult } from '@/types/api/index';
 import { formatDuration } from '@/utils/formatDuration';
 
-import { AnsweredConditions } from './AnsweredConditions';
 import { HtmlCodePanel } from './HtmlCodePanel';
 import styles from './MessageList.module.css';
 import { type Answers, QuestionFormCard } from './QuestionFormCard';
@@ -88,7 +87,7 @@ interface MessageBubbleProps {
 // Memoised: a streaming run re-renders the whole list on every token, while a
 // settled message above it never changes.
 const MessageBubble = React.memo<MessageBubbleProps>(({ message }) => {
-  if (message.role === 'user') {
+  if (message.sender === 'USER') {
     const attachments = message.attachments ?? [];
 
     return (
@@ -109,15 +108,7 @@ const MessageBubble = React.memo<MessageBubbleProps>(({ message }) => {
     );
   }
 
-  // A message that only carries answered conditions is the record of a reask, not a
-  // reply: it has no text and no steps of its own.
-  if (message.answeredForm && message.answers) {
-    return (
-      <div className={styles.aiRow}>
-        <AnsweredConditions form={message.answeredForm} answers={message.answers} />
-      </div>
-    );
-  }
+  const steps = parseSteps(message.stepsJson);
 
   return (
     <div className={styles.aiRow}>
@@ -125,12 +116,12 @@ const MessageBubble = React.memo<MessageBubbleProps>(({ message }) => {
         <ThunderboltFilled aria-hidden className={styles.aiLabelIcon} />
         eRD AI
       </div>
-      {message.steps && message.steps.length > 0 && <StepsRecap steps={message.steps} />}
+      {steps.length > 0 && <StepsRecap steps={steps} />}
       <ReplyText text={message.text} />
-      {message.artifactName && (
+      {message.artifactTitle && (
         <div className={styles.artifactChip}>
           <AppstoreOutlined aria-hidden className={styles.artifactChipIcon} />
-          <span>{message.artifactName}</span>
+          <span>{message.artifactTitle}</span>
           <span className={styles.artifactChipHint}>shown right →</span>
         </div>
       )}
@@ -138,6 +129,21 @@ const MessageBubble = React.memo<MessageBubbleProps>(({ message }) => {
   );
 });
 MessageBubble.displayName = 'MessageBubble';
+
+/** The wire carries steps as the backend's JSON string; a malformed one renders as no
+ *  recap rather than a broken thread. Parsed per bubble render — MessageBubble is
+ *  memoised, so a settled message parses once. */
+function parseSteps(stepsJson: string | null): StepItem[] {
+  if (!stepsJson) {
+    return [];
+  }
+  try {
+    const parsed = JSON.parse(stepsJson) as unknown;
+    return Array.isArray(parsed) ? (parsed as StepItem[]) : [];
+  } catch {
+    return [];
+  }
+}
 
 // After a run completes, its steps stay behind as the mockup's collapsed
 // "Worked through N steps" card, expandable to each step's title and

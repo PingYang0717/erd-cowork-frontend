@@ -3,11 +3,10 @@ import { useQueryClient } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 import React, { useCallback, useEffect, useRef } from 'react';
 
-import type { SendMessageInput } from '@/api/messageApi';
 import { ThemeToggle } from '@/components/common/ThemeToggle';
-import { useAgentStream } from '@/hooks/useAgentStream';
+import { type SendInput, useAgentStream } from '@/hooks/useAgentStream';
 import { useArtifactRepair } from '@/hooks/useArtifactRepair';
-import { messagesQueryKey, useMessages } from '@/hooks/useMessages';
+import { sessionDetailQueryKey, useSessionDetail } from '@/hooks/useSessionDetail';
 import { useActiveRunStore } from '@/stores/useActiveRunStore';
 import { useRepairOfferStore } from '@/stores/useRepairOfferStore';
 import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
@@ -72,8 +71,8 @@ const ThreadPanel: React.FC = () => {
 
 function ThreadView({ sessionId }: { sessionId: string }) {
   const queryClient = useQueryClient();
-  const { data } = useMessages(sessionId);
-  const messages = data ?? [];
+  const { data: detail } = useSessionDetail(sessionId);
+  const messages = detail.messages;
   const { state, send, stop } = useAgentStream(sessionId);
   const setStreamedArtifactId = useActiveRunStore((s) => s.setStreamedArtifactId);
   const repairOffer = useRepairOfferStore((store) => store.offer);
@@ -110,11 +109,11 @@ function ThreadView({ sessionId }: { sessionId: string }) {
 
   // Handed to ChatComposer; a fresh identity every render would defeat its memoisation.
   const handleSend = useCallback(
-    async (input: SendMessageInput) => {
+    async (input: SendInput) => {
       await send(input);
       // The run itself is streamed, but both messages it produced live server-side —
       // refetch rather than reconstruct them from the events we happened to receive.
-      await queryClient.invalidateQueries({ queryKey: messagesQueryKey(sessionId) });
+      await queryClient.invalidateQueries({ queryKey: sessionDetailQueryKey(sessionId) });
     },
     [send, queryClient, sessionId],
   );
@@ -128,7 +127,7 @@ function ThreadView({ sessionId }: { sessionId: string }) {
         return;
       }
       await send({ question: composeAnswerText(question, answers) });
-      await queryClient.invalidateQueries({ queryKey: messagesQueryKey(sessionId) });
+      await queryClient.invalidateQueries({ queryKey: sessionDetailQueryKey(sessionId) });
     },
     [send, question, queryClient, sessionId],
   );

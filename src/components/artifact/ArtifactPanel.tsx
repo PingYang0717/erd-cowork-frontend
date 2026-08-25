@@ -14,7 +14,7 @@ import { useGenerateArtifactVersion, useRegenerateArtifact } from '@/hooks/useAr
 import { useArtifacts } from '@/hooks/useArtifacts';
 import { useArtifactTheme } from '@/hooks/useArtifactTheme';
 import { useArtifactVersions } from '@/hooks/useArtifactVersions';
-import { useMessages } from '@/hooks/useMessages';
+import { useSessionDetail } from '@/hooks/useSessionDetail';
 import { useActiveRunStore } from '@/stores/useActiveRunStore';
 import { useGenerateCoachStore } from '@/stores/useGenerateCoachStore';
 import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
@@ -49,12 +49,12 @@ const ArtifactPanel: React.FC = () => {
 };
 
 function ArtifactPanelView({ sessionId }: { sessionId: string }) {
-  const { data: messages } = useMessages(sessionId);
+  const { data: detail } = useSessionDetail(sessionId);
   const streamedArtifactId = useActiveRunStore((s) => s.streamedArtifactId);
 
   // A run in progress wins: it has just produced this Artifact, and waiting for the
   // thread history to refetch would leave the pane showing the previous one.
-  const latestArtifactMessage = [...(messages ?? [])].reverse().find((m) => m.artifactId);
+  const latestArtifactMessage = [...detail.messages].reverse().find((m) => m.artifactId);
   const artifactId = streamedArtifactId ?? latestArtifactMessage?.artifactId;
 
   if (!artifactId) {

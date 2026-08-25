@@ -14,10 +14,10 @@ import { Dropdown, Input } from 'antd';
 import type { ReactNode } from 'react';
 import React, { useState } from 'react';
 
-import type { SendMessageInput } from '@/api/messageApi';
 import { ConnectorsPanel } from '@/components/connectors/ConnectorsPanel';
 import { AttachmentChip } from '@/components/files/AttachmentChip';
 import { FileAttachmentModal } from '@/components/files/FileAttachmentModal';
+import { type SendInput } from '@/hooks/useAgentStream';
 import { useConnectors } from '@/hooks/useConnectors';
 import { useFileAttachments } from '@/hooks/useFileAttachments';
 import { useConnectorsPanelStore } from '@/stores/useConnectorsPanelStore';
@@ -57,7 +57,7 @@ const SUGGESTED_PROMPTS: { label: string; text: string; icon: ReactNode }[] = [
 ];
 
 interface ChatComposerProps {
-  onSend: (input: SendMessageInput) => void;
+  onSend: (input: SendInput) => void;
   disabled: boolean;
   /** While a run is streaming the send control becomes a stop control. */
   isStreaming: boolean;
