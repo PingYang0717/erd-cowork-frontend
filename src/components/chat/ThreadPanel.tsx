@@ -11,6 +11,7 @@ import { messagesQueryKey, useMessages } from '@/hooks/useMessages';
 import { useActiveRunStore } from '@/stores/useActiveRunStore';
 import { useRepairOfferStore } from '@/stores/useRepairOfferStore';
 import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
+import { composeAnswerText } from '@/utils/composeAnswerText';
 
 import { ChatComposer } from './ChatComposer';
 import { MessageList } from './MessageList';
@@ -118,16 +119,18 @@ function ThreadView({ sessionId }: { sessionId: string }) {
     [send, queryClient, sessionId],
   );
 
-  // A run stays on screen after it ends when the ending is something the user needs to
-  // see — they stopped it, or it broke, or the agent is waiting on an answer. A clean
-  // finish hands over to the refetched history instead.
-  const formKey = state.question?.formKey ?? '';
+  // The backend body is question-only, so a reask's answers travel as one prose
+  // sentence composed from the form (labels stand in for values on the wire).
+  const question = state.question;
   const handleAnswer = useCallback(
     async (answers: Answers) => {
-      await send({ answers, inReplyTo: formKey });
+      if (!question) {
+        return;
+      }
+      await send({ question: composeAnswerText(question, answers) });
       await queryClient.invalidateQueries({ queryKey: messagesQueryKey(sessionId) });
     },
-    [send, formKey, queryClient, sessionId],
+    [send, question, queryClient, sessionId],
   );
 
   const runEndedVisibly = state.stopped || state.error !== null || state.question !== null;

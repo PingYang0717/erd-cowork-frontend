@@ -2,7 +2,7 @@ import { http, HttpResponse } from 'msw';
 
 import { currentUser } from '@/config/currentUser';
 import { isLive } from '@/config/transport';
-import type { AgentEvent, QuestionAnswer, QuestionForm, StepItem } from '@/types/api/agentEvent';
+import type { AgentEvent, QuestionForm, StepItem } from '@/types/api/agentEvent';
 import type { Artifact, ArtifactKind, ArtifactVersion } from '@/types/api/artifact';
 import type { Connector, ConnectorStatus } from '@/types/api/connector';
 import type { DcItem } from '@/types/api/dcItem';
@@ -445,37 +445,37 @@ export const allHandlers = [
   // instead of racing this one.
   http.post('/api/sessions/:sessionId/messages', async ({ params, request }) => {
     const sessionId = params.sessionId as string;
+    // The backend body (SendMessageRequest): question plus an optional base artifact.
+    // `attachments` is a 前端-only extension until session-level uploads land.
     const body = (await request.json()) as {
-      text?: string;
-      scenarioKey?: ScenarioKey;
-      artifactKind?: ArtifactKind;
+      question?: string;
+      baseArtifactId?: string;
       attachments?: Upload[];
-      answers?: Record<string, QuestionAnswer>;
-      inReplyTo?: string;
     };
 
-    // Answering a reask resumes the run the reask belongs to, so the scenario is
-    // whatever was pending for this session rather than anything in this request.
-    if (body.answers && body.inReplyTo) {
-      const pending = pendingRuns.get(sessionId);
-      if (!pending) {
-        return HttpResponse.json(
-          { code: 'NO_PENDING_QUESTION', message: 'Nothing was waiting on an answer' },
-          { status: 409 },
-        );
-      }
-      messages.write([
-        ...messages.read(),
-        {
-          id: crypto.randomUUID(),
-          sessionId,
-          role: 'ai',
-          text: '',
-          answeredForm: pending.form,
-          answers: body.answers,
-        },
-      ]);
+    const question = body.question?.trim();
+    if (!question) {
+      return HttpResponse.json(
+        { code: 'EMPTY_MESSAGE', message: 'Message is empty' },
+        { status: 400 },
+      );
+    }
 
+    messages.write([
+      ...messages.read(),
+      {
+        id: crypto.randomUUID(),
+        sessionId,
+        role: 'user',
+        text: question,
+        attachments: body.attachments?.length ? body.attachments : undefined,
+      },
+    ]);
+
+    // A message that arrives while a reask is pending is its answer — the real
+    // backend has no structured answers channel either, its LLM just reads on.
+    const pending = pendingRuns.get(sessionId);
+    if (pending) {
       // An SPC run scans first, then asks again before charting anything.
       if (pending.stage === 'conditions' && pending.scenarioKey === 'spc') {
         const form = dcItemQuestion(dcItems.read(), ROWS_PER_DC_ITEM);
@@ -493,27 +493,15 @@ export const allHandlers = [
       return streamRun(sessionId, pending.scenarioKey, pending.artifactKind, extraSteps);
     }
 
-    const text = body.text?.trim();
-    if (!text) {
-      return HttpResponse.json(
-        { code: 'EMPTY_MESSAGE', message: 'Message is empty' },
-        { status: 400 },
-      );
-    }
-
-    const scenarioKey = body.scenarioKey ?? matchScenario(text);
-    const artifactKind = body.artifactKind ?? 'dashboard';
-
-    messages.write([
-      ...messages.read(),
-      {
-        id: crypto.randomUUID(),
-        sessionId,
-        role: 'user',
-        text,
-        attachments: body.attachments?.length ? body.attachments : undefined,
-      },
-    ]);
+    // A fresh run: iterating on an artifact inherits its scenario and kind, and
+    // everything else is inferred from the question text — the mock's stand-in for
+    // the backend LLM reading the prompt.
+    const baseArtifact = body.baseArtifactId
+      ? artifacts.read().find((artifact) => artifact.id === body.baseArtifactId)
+      : undefined;
+    const scenarioKey = baseArtifact?.scenario ?? matchScenario(question);
+    const artifactKind: ArtifactKind =
+      baseArtifact?.kind ?? (/slides|deck|簡報/i.test(question) ? 'slides' : 'dashboard');
 
     // A Scenario decides what it needs to ask before it can run (ADR-0006).
     const form = openingQuestion(scenarioKey, connectors.read());
