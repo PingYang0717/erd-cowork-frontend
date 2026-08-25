@@ -32,6 +32,8 @@ function renderStudioPage() {
 async function runAnalysis(user: ReturnType<typeof userEvent.setup>) {
   await user.click(await screen.findByRole('button', { name: 'New chat' }));
   await screen.findByRole('button', { name: 'New analysis' });
+  // The composer subtree suspends on its queries; wait for it before sync getBy*.
+  await screen.findByRole('textbox', { name: 'Message' });
   await user.click(screen.getByRole('button', { name: 'SPC analysis' }));
   await answerAnalysisConditions(user);
   return (await screen.findByTitle('Artifact preview')) as HTMLIFrameElement;

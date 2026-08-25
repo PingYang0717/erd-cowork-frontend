@@ -36,6 +36,8 @@ async function openConnectorsPanel(user: ReturnType<typeof userEvent.setup>) {
 async function selectASessionAndOpenConnectors(user: ReturnType<typeof userEvent.setup>) {
   await user.click(await screen.findByRole('button', { name: 'New chat' }));
   await screen.findByRole('button', { name: 'New analysis' });
+  // The composer subtree suspends on its queries; wait for it before sync getBy*.
+  await screen.findByRole('textbox', { name: 'Message' });
   await openConnectorsPanel(user);
 }
 
