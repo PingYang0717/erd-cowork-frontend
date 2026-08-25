@@ -1,9 +1,9 @@
-import { useQuery } from '@tanstack/react-query';
+import { useSuspenseQuery } from '@tanstack/react-query';
 
 import { artifactApi } from '@/api/artifactApi';
 
 export function useDirectory() {
-  return useQuery({
+  return useSuspenseQuery({
     queryKey: ['directory'] as const,
     queryFn: artifactApi.listDirectory,
   });

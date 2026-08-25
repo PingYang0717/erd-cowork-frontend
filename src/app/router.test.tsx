@@ -48,7 +48,7 @@ describe('Routing shell', () => {
       await renderAppAt('/cowork/artifacts');
 
       expect(await screen.findByRole('heading', { name: 'Artifacts' })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: 'New chat' })).toBeInTheDocument();
+      expect(await screen.findByRole('button', { name: 'New chat' })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /^Artifacts/ })).toHaveAttribute(
         'aria-current',
         'page',
@@ -63,7 +63,7 @@ describe('Routing shell', () => {
       await renderAppAt('/cowork/schedule');
 
       expect(await screen.findByRole('heading', { name: 'Schedule' })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: 'New chat' })).toBeInTheDocument();
+      expect(await screen.findByRole('button', { name: 'New chat' })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /^Schedule/ })).toHaveAttribute(
         'aria-current',
         'page',
@@ -105,7 +105,7 @@ describe('Routing shell', () => {
       await user.click(screen.getByRole('button', { name: /^Artifacts/ }));
 
       expect(await screen.findByRole('heading', { name: 'Artifacts' })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: 'New chat' })).toBeInTheDocument();
+      expect(await screen.findByRole('button', { name: 'New chat' })).toBeInTheDocument();
       expect(window.location.pathname).toBe('/cowork/artifacts');
     },
     RESET_MODULES_TIMEOUT,

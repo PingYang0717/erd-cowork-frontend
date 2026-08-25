@@ -30,7 +30,7 @@ function renderStudioPage() {
 }
 
 async function runAnalysis(user: ReturnType<typeof userEvent.setup>) {
-  await user.click(screen.getByRole('button', { name: 'New chat' }));
+  await user.click(await screen.findByRole('button', { name: 'New chat' }));
   await screen.findByRole('button', { name: 'New analysis' });
   await user.click(screen.getByRole('button', { name: 'SPC analysis' }));
   await answerAnalysisConditions(user);
@@ -137,7 +137,7 @@ describe('Artifact repair', () => {
     reportRuntimeError(iframe, 'boom');
     await screen.findByText('⚠ 偵測到儀表板執行錯誤（1 個）');
 
-    await user.click(screen.getByRole('button', { name: 'New chat' }));
+    await user.click(await screen.findByRole('button', { name: 'New chat' }));
 
     await waitFor(() => expect(screen.queryByText(/偵測到儀表板執行錯誤/)).not.toBeInTheDocument());
   });

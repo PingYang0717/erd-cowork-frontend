@@ -31,7 +31,7 @@ function renderStudioPage() {
 }
 
 async function selectASessionAndOpenFileModal(user: ReturnType<typeof userEvent.setup>) {
-  await user.click(screen.getByRole('button', { name: 'New chat' }));
+  await user.click(await screen.findByRole('button', { name: 'New chat' }));
   await screen.findByRole('button', { name: 'New analysis' });
   await user.click(screen.getByRole('button', { name: 'Attach files or connect a data source' }));
   await user.click(screen.getByRole('menuitem', { name: 'Attach files' }));
