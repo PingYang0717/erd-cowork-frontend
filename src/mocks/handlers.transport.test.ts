@@ -10,6 +10,8 @@ const LIVE_BACKED = [
   'POST /api/sessions/:sessionId/messages',
   'POST /api/sessions/:sessionId/files',
   'DELETE /api/sessions/:sessionId/files/:fileId',
+  'GET /api/artifacts/:id',
+  'POST /api/artifacts/:id/repair',
 ];
 
 // Schedule has no endpoint because the page is still a stub — see the gap notes in

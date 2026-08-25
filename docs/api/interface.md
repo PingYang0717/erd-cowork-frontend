@@ -31,16 +31,21 @@ it implements them.
 | Method | Path            | Request                                       | Response        |
 | ------ | --------------- | --------------------------------------------- | --------------- |
 | GET    | `/sessions`     | —                                             | `Session[]`     |
+| GET    | `/sessions/:id` | —                                             | `SessionDetail` |
 | POST   | `/sessions`     | `{}` (title defaults to `"New analysis"`)     | `Session` (201) |
 | PATCH  | `/sessions/:id` | `Partial<Pick<Session, 'title' \| 'pinned'>>` | `Session`       |
 | DELETE | `/sessions/:id` | —                                             | 204 No Content  |
 
+`GET /sessions/:id` 回 `SessionDetail`：session 的 messages 與 files 內嵌其中——後端
+**沒有**獨立的 messages 端點。`POST` / `PATCH` / `DELETE` 與 `Session.pinned` 是前端-only
+（後端的 session 由 client 指定 id、第一次送訊息時 upsert，也沒有改名／釘選／刪除），
+live 模式下仍由 MSW 服務，見「傳輸模式」。
+
 ## Message / Chat
 
-| Method | Path                            | Request         | Response                           |
-| ------ | ------------------------------- | --------------- | ---------------------------------- |
-| GET    | `/sessions/:sessionId/messages` | —               | `Message[]`                        |
-| POST   | `/sessions/:sessionId/messages` | 見下方兩種 body | `text/event-stream`（Agent event） |
+| Method | Path                            | Request                                 | Response                           |
+| ------ | ------------------------------- | --------------------------------------- | ---------------------------------- |
+| POST   | `/sessions/:sessionId/messages` | `{ question: string; baseArtifactId? }` | `text/event-stream`（Agent event） |
 
 送出訊息不再一次回傳算好的結果，而是開啟一條 SSE 串流，逐筆推送 Agent event
 （[ADR-0005](../adr/0005-sse-streaming-replaces-batch-reply.md)）。mock 與 live 兩條軌道
@@ -48,30 +53,21 @@ it implements them.
 
 ### 請求 body
 
-**開場提問**（自由文字或 Composer 的情境按鈕）：
+Body 與後端的 `SendMessageRequest` 逐字一致（[ADR-0007](../adr/0007-verbatim-backend-wire-contract.md)）：
 
 ```
-{ text: string; scenarioKey?: ScenarioKey; artifactKind?: ArtifactKind;
-  attachments?: Upload[]; baseArtifactId?: string }
+{ question: string; baseArtifactId?: string }
 ```
 
-`scenarioKey` 是選填：情境按鈕明確帶上，自由文字由後端（mock）以關鍵字／regex 比對到
-`spc` / `inline` / `daily` / `cptest` 其中之一。`artifactKind`（預設 `dashboard`）選擇產出
-Artifact 的形態而非分析本身：「Generate slides」按鈕帶 `scenarioKey: 'spc'` 與
-`artifactKind: 'slides'`，重播 SPC 劇本、追加第五個「Generate slides」步驟，並產生 `kind` 為
-`slides`、名稱後綴 `(slides)` 的 Artifact。`baseArtifactId` 讓這一輪基於既有的 Artifact 版本
-繼續迭代。`attachments` 是已經透過 `POST /uploads` 註冊的 `Upload` 記錄，存在回傳的
-`userMessage.attachments` 上並渲染成該則訊息下方的 chip。
+`scenarioKey` / `artifactKind` **不在線路上**：後端由 LLM 讀 `question` 推斷，mock 的對應
+機制是關鍵字比對（`spc` / `inline` / `daily` / `cptest`；`slides|deck|簡報` 決定產出形態）。
+`baseArtifactId` 讓這一輪基於既有的 Artifact 迭代——mock 據此沿用該 Artifact 的
+scenario 與 kind，而非重新從文字推斷。
 
-**回覆反問**（反問卡送出）：
-
-```
-{ answers: Record<string, string | string[] | boolean>; inReplyTo: string }
-```
-
-`inReplyTo` 是帶著該 QUESTION 事件的 AI 訊息 id。答案以結構化形式回傳，**不**組成自然
-語言再送一次——對話串上的「已設定 N 項分析條件」摘要由前端從 `answers` 渲染
-（[ADR-0006](../adr/0006-scenario-drives-clarification.md)）。
+**回覆反問**就是下一則訊息：正在等待反問的 session 收到的任何 `question` 都視為答案。
+表單答案由前端組成一段自然語言（`utils/composeAnswerText.ts`，值以選項 label 呈現）當
+新訊息送出；結構化的 `{ answers, inReplyTo }` 已不在線路上，列入
+[後端回饋清單](./backend-feedback.md)。
 
 ### 回應：Agent event 串流
 
@@ -79,17 +75,17 @@ Artifact 的形態而非分析本身：「Generate slides」按鈕帶 `scenarioK
 行是心跳，解析時忽略；無法解析的區塊靜默丟棄。事件名稱維持 SCREAMING_CASE，與
 `cowork-master` 的線路契約逐字一致，live 模式因此不需要轉換層。
 
-| `type`     | 欄位                                                | 說明                                | 進入對話歷史      |
-| ---------- | --------------------------------------------------- | ----------------------------------- | ----------------- |
-| `STEP`     | `stepKey`, `title`, `description \| null`, `status` | 步驟狀態，同 `stepKey` 後送覆蓋前送 | 是                |
-| `TOKEN`    | `delta`                                             | 逐字回覆                            | 是（合成 `text`） |
-| `ANSWER`   | `text`                                              | 完整回覆，收尾用                    | 是                |
-| `ARTIFACT` | `artifactId`, `title`                               | 本輪產出的 Artifact                 | 是                |
-| `QUESTION` | `form: QuestionForm`                                | 反問表單                            | 是（含答案）      |
-| `THINKING` | `delta`                                             | 推理過程                            | 否                |
-| `CODE`     | `delta`                                             | Artifact HTML 產碼過程              | 否                |
-| `TABLE`    | `tableId`, `intent`, `columns`, `rows`, `truncated` | 查詢結果表                          | 否                |
-| `ERROR`    | `code`, `message`                                   | 執行錯誤                            | 否                |
+| `type`     | 欄位                                                | 說明                                 | 進入對話歷史      |
+| ---------- | --------------------------------------------------- | ------------------------------------ | ----------------- |
+| `STEP`     | `stepKey`, `title`, `description \| null`, `status` | 步驟狀態，同 `stepKey` 後送覆蓋前送  | 是                |
+| `TOKEN`    | `delta`                                             | 逐字回覆                             | 是（合成 `text`） |
+| `ANSWER`   | `text`                                              | 完整回覆，收尾用                     | 是                |
+| `ARTIFACT` | `artifactId`, `title`                               | 本輪產出的 Artifact                  | 是                |
+| `QUESTION` | `questions: Question[]`, `form?: QuestionForm`      | 反問（`form` 為前端-only extension） | 否（live-only）   |
+| `THINKING` | `delta`                                             | 推理過程                             | 否                |
+| `CODE`     | `delta`                                             | Artifact HTML 產碼過程               | 否                |
+| `TABLE`    | `tableId`, `intent`, `columns`, `rows`, `truncated` | 查詢結果表                           | 否                |
+| `ERROR`    | `code`, `message`                                   | 執行錯誤                             | 否                |
 
 `StepStatus` 是 `'PENDING' | 'RUNNING' | 'SUCCESS' | 'ERROR'`。步驟可以失敗——這是相對於
 舊批次契約最實質的行為改變（舊契約的步驟由前端用 index 推算，不可能失敗）。
@@ -144,54 +140,47 @@ QuestionOption { value: string; label: string; hint?: string; unit?: string; lo?
 切換是 build-time 的環境變數，不是 runtime 開關。live 模式可搭配的後端只實作了下表左半，
 其餘端點在 live 模式下**仍由 MSW 服務**。
 
-| 端點群                                                       | mock 模式 | live 模式 |
-| ------------------------------------------------------------ | --------- | --------- |
-| `/sessions`、`/sessions/:id/messages`（SSE）                 | MSW       | 真後端    |
-| `/artifacts/:id`（HTML）、`/artifacts/:id/repair`            | MSW       | 真後端    |
-| `/uploads`、config                                           | MSW       | 真後端    |
-| `/artifacts` 清單、pin、`/artifacts/:id/share`、`/directory` | MSW       | **MSW**   |
-| `/artifacts/:id/versions`、`regenerate`、`generate`          | MSW       | **MSW**   |
-| `/connectors`、`/schedule-jobs`、DC Item 清單                | MSW       | **MSW**   |
+| 端點群                                                              | mock 模式 | live 模式 |
+| ------------------------------------------------------------------- | --------- | --------- |
+| `GET /sessions`、`GET /sessions/:id`、`POST /sessions/:id/messages` | MSW       | 真後端    |
+| `POST /sessions/:id/files`、`DELETE /sessions/:id/files/:fileId`    | MSW       | 真後端    |
+| `GET /artifacts/:id`（text/html）、`POST /artifacts/:id/repair`     | MSW       | 真後端    |
+| `POST/PATCH/DELETE /sessions`（建立／改名／釘選／刪除，前端-only）  | MSW       | **MSW**   |
+| `/artifacts` 清單、pin、share、versions、regenerate、generate       | MSW       | **MSW**   |
+| `/connectors`、`/directory`、DC Item 清單、schedule                 | MSW       | **MSW**   |
 
-live 模式下後端 DTO 與本專案型別的差異在 `api/liveAdapter.ts` 一次轉換，
-UI 與 `types/api/` 不受影響：`sender: 'USER' | 'AI'` → `role: 'user' | 'ai'`、
-`stepsJson` / `questionsJson` 的 JSON 字串 → 真陣列（解析失敗時該欄位視為不存在，而不是
-讓整則訊息壞掉）、`artifactTitle` → `artifactName`。
+過濾是 method-aware：`GET /sessions/:id` 放行給真後端的同時，同一路徑上前端-only 的
+`PATCH` / `DELETE` 仍由 MSW 服務。
 
-### QUESTION 事件是唯一形狀不同的事件
+**線路型別即應用型別**（[ADR-0007](../adr/0007-verbatim-backend-wire-contract.md)）：
+`types/api/` 的形狀與後端 DTO 逐字一致（`sender: 'USER' | 'AI'`、`stepsJson` /
+`questionsJson` JSON 字串、`artifactTitle`……），UI 在使用點解析，沒有轉換層。
+前端-only 的欄位（`Session.pinned`、`Message.scenario` / `attachments`、QUESTION 的
+`form`）在型別上明確標註，真後端不回它們時 UI 各自降級。
 
-其餘八種事件在兩邊逐欄一致，這正是事件名維持 SCREAMING_CASE 的用意。但 QUESTION 不是：
+### QUESTION 事件與反問表單的降級
 
-|                              | 本專案                                                           | 既有後端                     |
-| ---------------------------- | ---------------------------------------------------------------- | ---------------------------- |
-| 承載                         | `{ form: QuestionForm }`                                         | `{ questions: Question[] }`  |
-| 欄位種類                     | `single` / `multi` / `text` / `boolean` / `daterange` / `dcitem` | 無（一律選項清單）           |
-| 欄位相依                     | `visibleWhen`                                                    | 無                           |
-| 選項                         | `{ value, label, hint?, unit?, lo?, hi? }`                       | `string`                     |
-| 送出鈕 / 未填提示 / 摘要文案 | 由表單帶                                                         | 無                           |
-| 答案回傳                     | `{ answers, inReplyTo }` 結構化                                  | 組成一段自然語言當新訊息送出 |
+QUESTION 的線路承載是後端的扁平 `Question[]`（純字串選項、`multiSelect`、無欄位種類與
+相依）。mock 額外帶上 `form?: QuestionForm` extension，讓分析條件表單（六種欄位、
+`visibleWhen`、DC item 規格上下限）維持運作；真後端只送扁平清單時，
+`utils/liftQuestions.ts` 把它抬升成一排 chip 的表單——**單向且失真**。
 
-`toQuestionForm()` 能把後端的扁平清單抬升成可渲染的表單，但**只有這個方向可行且會失真**：
-後端表達不了欄位種類（於是全部變成 chip）、欄位相依（於是 CP Test 的 Flow / Loop 無法依
-角色顯示）、選項的附帶資訊（於是 DC item 帶不了規格上下限）。
-
-**要驅動分析條件表單，後端必須改成送出 `QuestionForm` 本身。** 在那之前，live 模式下的
-反問只能退化成一排 chip，`docs/design-diff-eRDWorkspace20260819.md:17` 描述的那三張表單
-在 live 模式下渲染不出來。
+**要在 live 模式驅動完整的分析條件表單，後端必須改送 `QuestionForm` 本身**；連同結構化
+答案 `{ answers, inReplyTo }`，這兩項都在[後端回饋清單](./backend-feedback.md)。
 
 ## Artifact
 
-| Method | Path                                          | Request                                                                                              | Response                              |
-| ------ | --------------------------------------------- | ---------------------------------------------------------------------------------------------------- | ------------------------------------- |
-| GET    | `/artifacts`                                  | —                                                                                                    | `Artifact[]`                          |
-| GET    | `/artifacts/:id`                              | `?theme=light\|dark` (defaults to `light`), `?versionId=` (optional, defaults to the latest version) | `{ html: string }`                    |
-| PATCH  | `/artifacts/:id`                              | `Partial<Pick<Artifact, 'pinned'>>`                                                                  | `Artifact`                            |
-| DELETE | `/artifacts/:id`                              | —                                                                                                    | 204 No Content                        |
-| GET    | `/artifacts/:id/versions`                     | —                                                                                                    | `ArtifactVersion[]`                   |
-| POST   | `/artifacts/:id/share`                        | `{ targetIds: string[] }`                                                                            | `{ url: string; artifact: Artifact }` |
-| POST   | `/artifacts/:id/regenerate`                   | —                                                                                                    | `ArtifactVersion` (201)               |
-| POST   | `/artifacts/:id/versions/:versionId/generate` | —                                                                                                    | `ArtifactVersion`                     |
-| GET    | `/directory`                                  | —                                                                                                    | `DirectoryEntry[]`                    |
+| Method | Path                                          | Request                                                                          | Response                              |
+| ------ | --------------------------------------------- | -------------------------------------------------------------------------------- | ------------------------------------- |
+| GET    | `/artifacts`                                  | —                                                                                | `Artifact[]`                          |
+| GET    | `/artifacts/:id`                              | `?theme=light\|dark`、`?versionId=`（皆為前端-only query extension，真後端忽略） | `text/html`（HTML 字串）              |
+| PATCH  | `/artifacts/:id`                              | `Partial<Pick<Artifact, 'pinned'>>`                                              | `Artifact`                            |
+| DELETE | `/artifacts/:id`                              | —                                                                                | 204 No Content                        |
+| GET    | `/artifacts/:id/versions`                     | —                                                                                | `ArtifactVersion[]`                   |
+| POST   | `/artifacts/:id/share`                        | `{ targetIds: string[] }`                                                        | `{ url: string; artifact: Artifact }` |
+| POST   | `/artifacts/:id/regenerate`                   | —                                                                                | `ArtifactVersion` (201)               |
+| POST   | `/artifacts/:id/versions/:versionId/generate` | —                                                                                | `ArtifactVersion`                     |
+| GET    | `/directory`                                  | —                                                                                | `DirectoryEntry[]`                    |
 
 `/artifacts` lists every Artifact (own, pinned, and shared-to-me), backing the
 Artifacts Gallery's filters (All / Yours / Shared to me / Pinned) and sort
@@ -295,16 +284,17 @@ are `custom: true`, category `Custom`, and start `connected`.
 | ------ | ---- | ------- | -------- |
 |        |      |         |          |
 
-## Upload
+## Session files（上傳）
 
-| Method | Path       | Request                                   | Response       |
-| ------ | ---------- | ----------------------------------------- | -------------- |
-| POST   | `/uploads` | `{ fileName: string; sizeBytes: number }` | `Upload` (201) |
+| Method | Path                                 | Request              | Response                   |
+| ------ | ------------------------------------ | -------------------- | -------------------------- |
+| POST   | `/sessions/:sessionId/files`         | multipart（`files`） | `UploadedFileInfo[]` (201) |
+| DELETE | `/sessions/:sessionId/files/:fileId` | —                    | 204 No Content             |
 
-Registers a file attachment's metadata only — no binary content is sent or
-stored, per [Out of Scope](../../.scratch/erd-cowork-frontend/spec.md). The
-Studio composer's attach-files flow calls this once per file that passes its
-client-side count (max 5) / total-size (max 5 GB) validation; rejected files
-never reach this endpoint. The `Upload` records it returns are then sent as the
-`attachments` of `POST /sessions/:sessionId/messages`, which is what binds a file to
-a message.
+檔案掛在 session 上（後端契約），清單內嵌於 `SessionDetail.files`。Composer 的
+attach-files 流程先過 client-side 驗證（副檔名白名單、最多 5 檔、總計 5 GB，
+`utils/uploadValidation.ts`），通過才上傳；multipart body 由 `api/fileApi.ts` 自組。
+送出訊息時 mock 把當下的 session 檔案**快照**到該則 user message 的
+`attachments`（前端-only extension，支撐 mockup 的 bubble chips）並清空 session 檔案，
+所以 composer 的 chips 列在送出後清空。`UploadedFileInfo.expired`（保留期）已入型別，
+對應的警示 UI 尚未實作。

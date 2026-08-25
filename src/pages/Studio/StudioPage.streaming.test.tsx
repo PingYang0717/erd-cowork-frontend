@@ -545,6 +545,7 @@ describe('Streaming a run in the Studio', () => {
       act(() =>
         stream.push({
           type: 'QUESTION',
+          questions: [],
           form: {
             formKey: 'cptest-conditions',
             title: '分析條件',

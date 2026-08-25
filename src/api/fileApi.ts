@@ -46,7 +46,9 @@ export const fileApi = {
     const response = await fetch(`${API_BASE}/sessions/${sessionId}/files`, {
       method: 'POST',
       headers: { 'Content-Type': contentType, ...getAuthHeaders() },
-      body,
+      // The freshly-built Uint8Array owns its exact-size buffer; TS's DOM lib just
+      // does not accept Uint8Array as BodyInit.
+      body: body.buffer as ArrayBuffer,
     });
     if (!response.ok) {
       throw new Error(`Failed to upload files: ${response.status}`);
