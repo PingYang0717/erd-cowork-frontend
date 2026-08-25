@@ -2,11 +2,82 @@
 
 - **設計稿**:`eRDWorkspace20260819.html`(UI/UX 提供,打包後的 React app,以靜態伺服器實際執行比對)
 - **現有實作**:本 repo(`npm run dev`)
-- **比對日期**:2026-08-23
-- **方法**:兩邊並排實際執行,逐畫面截圖、以 `getComputedStyle` 抓取對應元件實際數值,並輔以設計稿 bundle 原始碼(inline style 可讀)與實作的 CSS Modules/TSX 逐檔交叉核對。
-- **涵蓋範圍**:Studio 三欄、Session 列表(展開/收合)、對話串與訊息流程、Composer 與「+」選單、Artifact 面板與工具列、版本選單、分享 Dialog、Artifacts 總覽、Schedule、全頁 Artifact 檢視、Connectors、附件上傳、深色模式。
+- **本次比對日期**:2026-08-25(樣式軸)。上一版為 2026-08-23,其後 ticket 14–19 與
+  08-24/08-25 的 thread／streaming 批次陸續進來,原本列的樣式差異多數已在那些票裡修掉,
+  因此本次把樣式軸整段重量。
+- **方法**:兩邊並排實際執行,拉到同一個狀態(同一個 session、同一輪已完成的對話),
+  對同一組元件以 `getComputedStyle` 逐值取樣,淺色與深色各測一次;數值差異再回頭對
+  CSS Modules 逐檔核對。
+- **本次涵蓋範圍**:Studio 三欄的實際畫面 —— Session 列表、thread header、對話訊息、
+  steps 摺疊卡、Artifact chip、context chips、Composer、Artifact 工具列。
+
+> 只有「樣式(Style)」一節是 2026-08-25 重新量測的結果。功能／排版／文案三節維持
+> 2026-08-23 的紀錄,**本次未重新驗證**,見文末。
 
 ---
+
+## 樣式(Style)— 本次修正
+
+量到的每一項都已修正。「設計稿」欄是從 `eRDWorkspace20260819.html`
+實際跑起來取到的 computed 值。
+
+| 項目                   | 設計稿                                                                                 | 修正前                                           | 修正後                               | 檔案                                                       |
+| ---------------------- | -------------------------------------------------------------------------------------- | ------------------------------------------------ | ------------------------------------ | ---------------------------------------------------------- |
+| **Steps 摺疊卡底色**   | `bg-container`(淺 `#fff` / 深 `#1f1f22`)                                               | `fill-quaternary`(`rgba(0,0,0,.02)` / `.03`)     | 逐值一致                             | `components/chat/MessageList.module.css` `.stepsRecap`     |
+| **Steps 摺疊卡圖示**   | 左 14px 綠 check-circle(`#52c41a`)+ 右 11px chevron(收合 down／展開 up,**換圖不旋轉**) | 只有左側一個 10px 灰 chevron,無狀態圖示          | 逐值一致(綠勾 xoff 13、chevron 靠右) | `components/chat/MessageList.tsx` `StepsRecap`             |
+| **Composer 外框底色**  | `bg-container`(`#fff` / `#1f1f22`)                                                     | 未設 `background` → 透明                         | 逐值一致                             | `components/chat/ChatComposer.module.css` `.composerBox`   |
+| **資料來源 chip 字色** | `text-tertiary`(`.45`)                                                                 | `text-secondary`(`.65`)                          | 逐值一致                             | `components/chat/ThreadPanel.module.css` `.dataSourceChip` |
+| **小元件 line-height** | `normal`                                                                               | 繼承 antd 的 1.5714,高度多 4–6px                 | 見下表                               | 同上 + `MessageList.module.css`                            |
+| **左欄 nav 列字級**    | 13px                                                                                   | 13.333px(antd Button 預設)                       | 13px                                 | `components/session/SessionList.module.css` `.navShortcut` |
+| **`body` font-family** | 設計稿寫在 `body` 上                                                                   | 無規則 → `lang="zh-Hant"` 讓瀏覽器給 PingFang TC | 與 `FONT_FAMILY` 對齊                | `index.css`                                                |
+
+### line-height 造成的高度偏差(修正前 → 修正後,設計稿值)
+
+| 元件               | 修正前 | 修正後 | 設計稿 |
+| ------------------ | ------ | ------ | ------ |
+| 資料來源 chip      | 27px   | 21px   | 21px   |
+| Thread header 標題 | 23px   | 17px   | 17px   |
+| `eRD AI` label     | 19px   | 15px   | 15px   |
+| Artifact chip      | 38px   | 33px   | 34px¹  |
+
+¹ 剩下的 1px 是兩邊 chip 內文字不同造成的,非樣式差異。
+
+**深色模式是這批修正的主要動機**:前兩項在淺色下因為底色都接近白色而看不出來,深色下
+設計稿是兩張浮起來的卡(`#1f1f22`),實作卻是糊在 `#17181c` 頁面底上的一層淺影/完全透明。
+
+## 樣式 — 檢查後判定不需修正
+
+| 項目                            | 情況                                                                                                                                                    |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| New chat 鈕 padding             | 設計稿 `pad 0`,實作被 antd 帶上 `0 15px` 與 1px 透明邊框。但按鈕是滿版寬、內容置中,`height:38px` 又是固定的,**渲染結果完全相同**,加規則只是噪音。       |
+| `.workingSteps`(執行中的步驟卡) | 設計稿該狀態的底色本次沒能穩定取樣到(mockup 的 run 太短),因此**沒有跟著改**。若之後確認設計稿執行中也是 `bg-container`,要一併調整以免完成前後底色跳動。 |
+
+## 已對齊(本次逐值量測確認一致)
+
+- **Session 列表**:New chat 鈕(h38/r9/fs13/w500/gap7)、選取中 session 列
+  (淺 `#e6f4ff`+`#91caff`、深 `#111a2c`+`#15325b`,**與設計稿 token 逐字相同**)、
+  群組標頭(fs11/w600/ls0.66/uppercase/`.45`)、session 時間(fs11/w400/`.45`,
+  選取時不再變粗)、計數 badge、nav 列的 pad/margin/gap/radius。
+- **Thread**:header(h54/pad 0 20、標題 fs14 w600)、user bubble(pad 10 13、
+  r 14 14 4、fs13/1.55)、AI 內文(fs13.5/1.6)、steps 摺疊列文字(fs12.5/pad 9 12/gap 8)、
+  Artifact chip(pad 8 12/r9/`fill-quaternary` +「shown right →」)。
+- **Composer**:外框 r14/pad 8、textarea fs13/lh1.5/pad 6 2、context chips
+  (h28/r14/fs12/`.65`/白底+border)、「+」與送出鈕 32×32。
+- **Artifact 工具列**:版本 pill(h32/r8/pad 0 11/fs12.5)、生成 Artifact 鈕
+  (h32/fs12.5/w500/r8)。
+- **全域**:字體 stack(app 樹內兩邊 computed 完全相同)、`-webkit-font-smoothing`、
+  8px 自訂捲軸。
+
+> **Workspace 外殼**(頂列 header／搜尋／EN／通知／頭像、左側 Home 與 App 分類 rail)
+> 依 [ADR-0003](adr/0003-scope-limited-to-erd-cowork-app.md) 不在實作範圍,不列為差異。
+
+---
+
+## 以下為 2026-08-23 版紀錄,本次未重新驗證
+
+⚠️ 這三節寫於 ticket 14–19 與 08-24/08-25 的 thread／streaming 批次**之前**。抽查時已發現
+其中數項(例如版本選單的標題行、Artifact chip 的「shown right →」提示、「生成 Artifact」
+兩段式流程)在那之後已經實作。要據此開票前,請先重新驗證。
 
 ## 功能(Function)
 
@@ -32,36 +103,6 @@
 | 功能 | Copy Link 內容                 | 複製 `https://erd.cowork.app/a/...`(artifact 短網址)                                                                                                                                                                                                                                                              | 複製 app route(`window.location.origin/cowork/artifact/:id`)                                                                        | 連結格式不同                                                            | 低(待確認)                                        |
 | 功能 | 「+」選單彈出方向              | 固定向上(`bottom:40px`)                                                                                                                                                                                                                                                                                           | antd 預設 placement(自動翻轉)                                                                                                       | 多數情況仍會向上,行為近似                                               | 低                                                |
 
-## 樣式(Style)
-
-| 分類 | 項目                            | 設計稿                                                                                                                                                                                                   | 現有實作                                                                                                 | 差異說明                                                                                          | 優先級 |
-| ---- | ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- | ------ |
-| 樣式 | 選取中 session 列配色           | bg `--erd-color-primary-bg`(#e6f4ff / 深色 #111a2c)、border `--erd-color-primary-border`(#91caff / #15325b)                                                                                              | `color-mix(primary 12%)` 當底、`color-mix(primary 45%)` 當框                                             | 淺色近似(≈#e2eeff vs #e6f4ff、≈#9bc1ff vs #91caff)但非同 hex;深色模式偏差更明顯(灰藍 vs 深海軍藍) | 中     |
-| 樣式 | 左欄 nav 列(Schedule/Artifacts) | pad `8px 10px`、margin `0 8px`、br 9、gap 10、文字 `text-secondary`(0.65)、icon fs16 tertiary;active:bg primary-bg、文字/icon/badge 全轉 primary、fw600                                                  | pad 8px、br 8、gap 8、文字 `text`(0.88)、icon 同文字色;active:bg `color-mix(primary 12%)`,badge 維持灰色 | 未選取文字過深、active 底色與 badge 色不符                                                        | 中     |
-| 樣式 | New chat 按鈕                   | h38、br9、fs13、fw500、gap7、無陰影                                                                                                                                                                      | antd 預設:h32、br6、fw400、pad 0 15、antd 陰影                                                           | 明顯較矮、圓角較小                                                                                | 中     |
-| 樣式 | 情境 chips(Inline dashboard 等) | h28、pad `5px 10px`、br14、fs12、字色 secondary、gap5、白底+border                                                                                                                                       | antd `round small`:h24、pad 0 7、fs13、字色 text(0.88)+antd 陰影                                         | 高度/字級/字色皆不同                                                                              | 中     |
-| 樣式 | Thread 空狀態                   | icon 磚 52×52、br14、**bg primary-bg(藍底)**、icon fs26、mb12;標題 fs14.5;副標 fs12.5、max-w 280、mt5                                                                                                    | 44×44、br12、**bg fill-tertiary(灰底)**、fs20;標題 fs15;副標 fs13、max-w 320、gap12                      | 藍底 vs 灰底最顯眼(`ThreadPanel.module.css:53-63`)                                                | 中     |
-| 樣式 | Gallery 卡片                    | 縮圖:dashboard=primary-bg/primary、**slides=fill-tertiary/secondary**;卡上有 session 名稱行(fs11.5 tertiary);sharedBy 時縮圖左上另有「Shared to me」overlay 徽章;`shared` 時 meta 列有主色「Shared」徽章 | 兩種 kind 縮圖都用 primary-bg/primary;無 session 行;無 overlay 徽章;無「Shared」徽章                     | slides 卡與 dashboard 卡無法從縮圖分辨;卡片資訊少一行                                             | 中     |
-| 樣式 | Connector 切換鈕狀態色          | connected=實心 primary 圓鈕(白勾)、connecting=primary-bg+primary-border+spinner、expired=warning 邊框、其餘=1.5px 灰邊框                                                                                 | antd `shape=circle` 預設樣式,`data-connected` 屬性存在但無對應 CSS                                       | 連線狀態在按鈕上無視覺區分                                                                        | 中     |
-| 樣式 | 自訂 tooltip                    | `.erd-tip`:深色底(文字色反轉)、fs11.5、br7、shadow-md、0.35s 延遲淡入(用於分享/重新生成/開新頁/切換版本/已生成)                                                                                          | 原生 `title` 屬性                                                                                        | 提示外觀與出現時機完全不同                                                                        | 低-中  |
-| 樣式 | Session 列細節                  | pad `8 8 8 10`、margin 0 6、br9;title fs13;time fs11 恆 fw400                                                                                                                                            | pad 6 8、br10;title 13.33px(button 預設字級);selected 時整列 fw600 → **時間也變粗**                      | 多處 1–2px 級偏差;選取時時間變粗較顯眼                                                            | 低     |
-| 樣式 | hover 底色                      | `.erd-navrow/.erd-tile:hover` = fill-tertiary(0.04)                                                                                                                                                      | navShortcut/sessionRow hover = fill-quaternary(0.02)                                                     | hover 回饋較淡                                                                                    | 低     |
-| 樣式 | Thread/Artifact 工具列高度      | 兩者皆 h54、pad 0 20;thread 標題 fs14                                                                                                                                                                    | thread header pad 8 16(h≈49)、標題 fs13;artifact 工具列 pad 8 12(h49)                                    | 高度與留白略小                                                                                    | 低     |
-| 樣式 | Thread 捲動區 padding           | `6px 20px 16px`                                                                                                                                                                                          | `16px`                                                                                                   | 左右留白不同                                                                                      | 低     |
-| 樣式 | Composer 區塊                   | pad `11px 20px 15px`、chips 列 mb10                                                                                                                                                                      | pad `12px 16px 16px`、chips mb8                                                                          | 細部間距                                                                                          | 低     |
-| 樣式 | 訊息附件位置                    | 附件 chips 在藍色 user bubble **內**(文字上方,mb8)                                                                                                                                                       | 附件在 bubble **外**下方                                                                                 | 版面歸屬不同                                                                                      | 低     |
-| 樣式 | 已生成 chip icon                | `check-outlined`(細勾)                                                                                                                                                                                   | `CheckCircleFilled`(實心圓勾)                                                                            | icon 不同                                                                                         | 低     |
-| 樣式 | 群組標頭(PINNED/RECENTS)        | pad `12px 16px 6px`(可點時 margin 0 6、br6)                                                                                                                                                              | margin `8px 0 2px`、pad `2px 4px`                                                                        | 間距不同;字級/uppercase/字距一致                                                                  | 低     |
-| 樣式 | 計數 badge                      | pad `1px 7px`、br 9px                                                                                                                                                                                    | pad `2px 7px`、br 999px                                                                                  | 幾乎不可辨                                                                                        | 低     |
-| 樣式 | Rename 輸入框                   | 自訂:br7、border primary-border、pad 6 8、fs13                                                                                                                                                           | antd Input 預設(br6、灰框)                                                                               | 外觀不同                                                                                          | 低     |
-| 樣式 | Session ⋮ 選單                  | 自訂:w150、br10、item pad `9px 12px` fs12.5、項目間分隔線                                                                                                                                                | antd Dropdown(自適應寬、無分隔線)                                                                        | 結構相同、外觀略異;Pin icon 設計稿固定 outline,實作 pinned 時用 filled                            | 低     |
-| 樣式 | nav 區塊分隔線                  | Schedule/Artifacts 群組下方 border-bottom + pad `2 0 10`                                                                                                                                                 | 無                                                                                                       | 少一條分隔線                                                                                      | 低     |
-| 樣式 | 全域捲軸/字體平滑               | `::-webkit-scrollbar` 8px 自訂 thumb;`-webkit-font-smoothing:antialiased`                                                                                                                                | 皆無                                                                                                     | 全域細節                                                                                          | 低     |
-| 樣式 | 附件清單列(Modal 內)            | 檔案卡:icon 依類型配色(csv=primary、xlsx=success)、名稱+「CSV · 大小」+ 26×26 刪除鈕                                                                                                                     | 沿用藍色 AttachmentChip 小徽章                                                                           | 同資料不同呈現                                                                                    | 低     |
-| 樣式 | 分享 Dialog 資訊卡              | icon 磚 40×40 primary-bg + 名稱 + 「Dashboard · eRD Cowork」+ 成功色「已生成」chip                                                                                                                       | 純文字 artifact 名稱一行                                                                                 | 資訊卡缺失                                                                                        | 低     |
-| 樣式 | Connectors 搜尋框               | pad `9px 12px`(較高)                                                                                                                                                                                     | pad `4px 12px` + antd input                                                                              | 高度略矮                                                                                          | 低     |
-| 樣式 | Modal 寬度                      | 分享 460、附件 520、Connectors 720                                                                                                                                                                       | antd 預設 520、520、720                                                                                  | 分享 dialog 寬 60px 差                                                                            | 低     |
-
 ## 排版(Layout)
 
 | 分類 | 項目                      | 設計稿                                                       | 現有實作                              | 差異說明                | 優先級     |
@@ -78,28 +119,9 @@
 | 功能 | Artifact chip 文案 | 「{名稱}」+ 灰色「shown right →」提示                                                                                                                                                 | 「Artifact: {名稱}」,無提示                           | 文案不同                 | 低                   |
 | 功能 | 開新頁 tooltip     | 「在新分頁開啟預覽」                                                                                                                                                                  | 「在新分頁開啟」                                      | 一字之差                 | 低                   |
 
----
-
 ## 已確認為「刻意調整」、不列為差異的項目
 
 - **Workspace 外殼**(頂部 header、搜尋、EN/主題切換/通知/頭像、左側 Home/My Favorites/App Categories):ADR-0003 明訂範圍僅 eRD Cowork,故不比對。ThemeToggle 移到 thread header 是此裁切的必然結果(但 header 右側原本的資料來源 chip 因此消失,已列於上表)。
 - **「在新分頁開啟」機制**:設計稿是 clone DOM + ECharts 轉圖片的靜態預覽;實作走 `/cowork/artifact/:id` route(ADR-0002 route 化的刻意決定)。
 - **開場未選 session**(「Select or start a session」狀態):設計稿 demo 固定預選;實作由 URL 驅動,屬合理增補狀態。
 - **Artifact 內容本身**(控制圖、pareto、分佈圖等圖表):實作 fixture 刻意不含真圖表(僅 stat 磚),為既定的 mock 範圍,不列入。
-
-## 無差異、已確認一致
-
-- **色彩 token**:`--erd-color-*` 淺/深兩套 28 個變數與設計稿逐字相同(`tokens.ts` 即從設計稿抄錄);antd 種子色策略正確(深色由 #1677ff 推導出 #1668dc)。
-- **字體**:`font-family` stack 與設計稿完全一致(antd 預設已被覆寫);全域 fontSize 13 對齊設計稿的 12–13.5px 密度。
-- **Composer 本體**:外框 border/br14/pad8、textarea fs13 lh1.5 pad 6 2 max-height、「+」鈕 32×32 br9、送出鈕 32×32 br9 主色、Enter 送出/Shift+Enter 換行 — 全部一致。
-- **訊息**:user bubble(primary、`14 14 4 14`、pad 10 13、fs13、lh1.55、max-w 78%、margin 14 0)、eRD AI label(fs12/gap7/mb7/閃電主色)、AI 內文(fs13.5/lh1.6)、artifact chip 樣式(pad 8 12/br9/fill-quaternary)一致。
-- **Artifact 空狀態**:56×56/br14/primary-bg、標題 fs15、副標 fs13 max-w 330 — 逐值一致。
-- **Artifact 工具列元件**:版本 pill(h32/br8/pad 0 11/min-w 190/max-w 260/fs12.5/vN fw700)、已生成 chip(h32/pad 0 13/primary-bg/primary-border/fs12.5 fw500)、icon 鈕(32×32/br8/fs16/border)尺寸一致。
-- **拖曳分隔線**:9px 寬、margin 0 -4、1px 線、hover/dragging 轉 primary — 幾何與行為完全一致;min/max 320–720 / 200–460 一致。
-- **收合 session rail**:52px 欄、36×36 磚、divider、主色 New chat 磚、Chat history flyout(268 寬、br12、shadow-lg、標頭 pad 12 12 11 14、26×26 新 chat 鈕)一致。
-- **Artifacts 總覽版面**:max-w 920/pad 28 32、標題 22/600、副標、排序觸發鈕(h34/br9/pad 0 12)、filter pills(fs12.5/pad 6 13/br16/active 主色+白字/count 徽章含 active 24% 白底)、grid `minmax(240px,1fr)` gap14、卡片 br12/縮圖 h104/pin 鈕 22×22 — 一致。
-- **Connectors Modal**:寬 720、Selected sources 區(fill-quaternary 框、chip primary-bg+border、Clear all)、搜尋、分類 chips 與計數、雙欄卡片(38×38 icon 磚、cat/custom 標籤、狀態 pill 圓點)、自訂來源新增列、footer「Showing N of M」+ Done — 結構與樣式一致。
-- **附件 Modal**:dropzone(1.5px 虛線/br12/雲朵 icon 46 磚)、錯誤列(error-bg/border/br8)、ATTACHED 標頭+計數、「No files yet」虛線空狀態、footer 計數 — 一致;5 個檔案/5GB 上限與去重邏輯一致。
-- **對話 Dialog 外框**:br16、elevated 底、footer 色帶、遮罩 42% 黑 + 1px blur — 已在 `providers.tsx`/`index.css` 對齊。
-- **深色模式**:整體表面色(#17181c/#1f1f22/#262629)與各元件深色表現一致(僅上表 color-mix 選取色一項例外)。
-- **Session 選單功能**(Pin/Unpin、Rename(Enter/Escape/blur)、Delete 紅色)、artifact 卡選單(Pin/Copy/Share/分隔線/Delete)行為一致。
