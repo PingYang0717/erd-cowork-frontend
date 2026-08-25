@@ -6,7 +6,7 @@ import {
   SortAscendingOutlined,
 } from '@ant-design/icons';
 import { Dropdown } from 'antd';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { useArtifacts } from '@/hooks/useArtifacts';
@@ -77,12 +77,22 @@ const ArtifactsGallery: React.FC = () => {
   const [category, setCategory] = useState<FilterCategory>('all');
   const [sort, setSort] = useState<SortKey>('pinned');
 
-  const artifacts = data ?? [];
-  const yoursCount = artifacts.filter((artifact) => artifact.mine).length;
-  const sharedCount = dedupeById(artifacts.filter((artifact) => !!artifact.sharedBy)).length;
-  const pinnedCount = artifacts.filter((artifact) => artifact.pinned).length;
+  const artifacts = data;
 
-  const visible = sortArtifacts(filterArtifacts(artifacts, category), sort);
+  // Four passes over the list plus a dedupe and a sort — recomputed on every keystroke
+  // elsewhere in the tree otherwise.
+  const counts = useMemo(
+    () => ({
+      yours: artifacts.filter((artifact) => artifact.mine).length,
+      shared: dedupeById(artifacts.filter((artifact) => !!artifact.sharedBy)).length,
+      pinned: artifacts.filter((artifact) => artifact.pinned).length,
+    }),
+    [artifacts],
+  );
+  const visible = useMemo(
+    () => sortArtifacts(filterArtifacts(artifacts, category), sort),
+    [artifacts, category, sort],
+  );
   const activeSortOption = SORT_OPTIONS.find((option) => option.key === sort) ?? SORT_OPTIONS[0];
 
   const sortMenuItems = SORT_OPTIONS.map((option) => ({
@@ -130,20 +140,20 @@ const ArtifactsGallery: React.FC = () => {
         />
         <FilterPill
           label="Yours"
-          count={yoursCount}
+          count={counts.yours}
           active={category === 'yours'}
           onClick={() => setCategory('yours')}
         />
         <FilterPill
           label="Shared to me"
-          count={sharedCount}
+          count={counts.shared}
           active={category === 'shared'}
           onClick={() => setCategory('shared')}
         />
-        {pinnedCount > 0 && (
+        {counts.pinned > 0 && (
           <FilterPill
             label="Pinned"
-            count={pinnedCount}
+            count={counts.pinned}
             active={category === 'pinned'}
             onClick={() => setCategory('pinned')}
           />

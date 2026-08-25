@@ -487,8 +487,11 @@ describe('Streaming a run in the Studio', () => {
 
       await user.type(screen.getByRole('textbox', { name: '搜尋 Part ID' }), 'A14');
 
+      // Filtering is debounced, so the narrowed list arrives a beat after the keystrokes.
+      await waitFor(() =>
+        expect(within(partIds).queryByRole('button', { name: 'N5' })).not.toBeInTheDocument(),
+      );
       expect(within(partIds).getByRole('button', { name: 'A14' })).toBeInTheDocument();
-      expect(within(partIds).queryByRole('button', { name: 'N5' })).not.toBeInTheDocument();
     });
 
     it('asks CP Test for its own conditions, swapping the field that depends on the role', async () => {
@@ -613,7 +616,9 @@ describe('Streaming a run in the Studio', () => {
       );
 
       await user.type(screen.getByRole('textbox', { name: '搜尋 DC item' }), 'Vt');
-      expect(within(items).queryByRole('button', { name: /Idsat/ })).not.toBeInTheDocument();
+      await waitFor(() =>
+        expect(within(items).queryByRole('button', { name: /Idsat/ })).not.toBeInTheDocument(),
+      );
 
       await user.click(within(items).getByRole('button', { name: /Vt \(gate CD\)/ }));
       expect(screen.getByRole('button', { name: '先產生這 1 項' })).toBeEnabled();

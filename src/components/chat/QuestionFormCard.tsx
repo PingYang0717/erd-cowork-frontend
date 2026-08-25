@@ -1,6 +1,7 @@
 import { InfoCircleOutlined, SendOutlined } from '@ant-design/icons';
 import React, { useState } from 'react';
 
+import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { useConnectorsPanelStore } from '@/stores/useConnectorsPanelStore';
 import type { QuestionAnswer, QuestionField, QuestionForm } from '@/types/api/index';
 
@@ -126,6 +127,8 @@ interface QuestionFormCardProps {
 const QuestionFormCard: React.FC<QuestionFormCardProps> = ({ form, onSubmit }) => {
   const [answers, setAnswers] = useState<Answers>({});
   const [searches, setSearches] = useState<Record<string, string>>({});
+  // One debounce for the whole card: only one field is ever searchable at a time.
+  const settledSearches = useDebouncedValue(searches);
 
   function setFieldText(field: QuestionField, value: string) {
     setAnswers((previous) => ({ ...previous, [field.key]: value }));
@@ -213,7 +216,7 @@ const QuestionFormCard: React.FC<QuestionFormCardProps> = ({ form, onSubmit }) =
               <ChipGroup
                 field={field}
                 answers={answers}
-                search={isSearchable ? (searches[field.key] ?? '') : ''}
+                search={isSearchable ? (settledSearches[field.key] ?? '') : ''}
                 onToggle={(value) => toggle(field, value)}
               />
             )}

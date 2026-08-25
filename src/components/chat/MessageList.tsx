@@ -81,7 +81,13 @@ function StepRow({ step }: { step: StepItem }) {
   );
 }
 
-function MessageBubble({ message }: { message: Message }) {
+interface MessageBubbleProps {
+  message: Message;
+}
+
+// Memoised: a streaming run re-renders the whole list on every token, while a
+// settled message above it never changes.
+const MessageBubble = React.memo<MessageBubbleProps>(({ message }) => {
   if (message.role === 'user') {
     const attachments = message.attachments ?? [];
 
@@ -130,7 +136,8 @@ function MessageBubble({ message }: { message: Message }) {
       )}
     </div>
   );
-}
+});
+MessageBubble.displayName = 'MessageBubble';
 
 // After a run completes, its steps stay behind as the mockup's collapsed
 // "Worked through N steps" card, expandable to each step's title and

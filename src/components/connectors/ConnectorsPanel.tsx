@@ -24,6 +24,7 @@ import React, { useState } from 'react';
 
 import { useAddConnector, useSetConnectorStatus } from '@/hooks/useConnectorMutations';
 import { useConnectors } from '@/hooks/useConnectors';
+import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import type { Connector, ConnectorStatus } from '@/types/api/index';
 import { selectConnected } from '@/utils/connectorSelectors';
 
@@ -118,7 +119,9 @@ const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ open, onClose }) => {
   const connectedConnectors = selectConnected(connectors);
   const connectedCount = connectedConnectors.length;
 
-  const normalizedSearch = search.trim().toLowerCase();
+  // The list filters on the settled value while the input stays on the raw one, so
+  // typing never feels delayed — only the filtering behind it is.
+  const normalizedSearch = useDebouncedValue(search).trim().toLowerCase();
   const visibleConnectors = connectors.filter(
     (connector) =>
       matchesFilter(connector, statusFilter) &&

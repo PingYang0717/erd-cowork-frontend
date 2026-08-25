@@ -1,7 +1,7 @@
 import { DatabaseOutlined, ThunderboltFilled } from '@ant-design/icons';
 import { useQueryClient } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
-import React, { useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 
 import type { SendMessageInput } from '@/api/messageApi';
 import { ThemeToggle } from '@/components/common/ThemeToggle';
@@ -89,6 +89,9 @@ function ThreadView({ sessionId }: { sessionId: string }) {
   // has to happen the moment the ARTIFACT event lands rather than when the run ends.
   useEffect(() => {
     setStreamedArtifactId(state.artifact?.artifactId ?? null);
+    // Leaving the thread must not leave the Artifact pane pointing at a run that is no
+    // longer on screen.
+    return () => setStreamedArtifactId(null);
   }, [state.artifact?.artifactId, setStreamedArtifactId]);
 
   // The mockup scrolls the thread to the bottom shortly after a new message
@@ -104,22 +107,28 @@ function ThreadView({ sessionId }: { sessionId: string }) {
     return () => clearTimeout(timer);
   }, [messages.length, state.steps.length, state.liveText]);
 
-  async function handleSend(input: SendMessageInput) {
-    await send(input);
-    // The run itself is streamed, but both messages it produced live server-side —
-    // refetch rather than reconstruct them from the events we happened to receive.
-    await queryClient.invalidateQueries({ queryKey: messagesQueryKey(sessionId) });
-  }
+  // Handed to ChatComposer; a fresh identity every render would defeat its memoisation.
+  const handleSend = useCallback(
+    async (input: SendMessageInput) => {
+      await send(input);
+      // The run itself is streamed, but both messages it produced live server-side —
+      // refetch rather than reconstruct them from the events we happened to receive.
+      await queryClient.invalidateQueries({ queryKey: messagesQueryKey(sessionId) });
+    },
+    [send, queryClient, sessionId],
+  );
 
   // A run stays on screen after it ends when the ending is something the user needs to
-  // see — they stopped it, it took a while, or it broke. A clean finish hands over to
-  // the refetched history instead.
-  // A reask keeps the run's surface on screen after the stream closes: the agent is
-  // waiting on the user, so there is nothing to hand over to history yet.
-  async function handleAnswer(answers: Answers) {
-    await send({ answers, inReplyTo: state.question?.formKey ?? '' });
-    await queryClient.invalidateQueries({ queryKey: messagesQueryKey(sessionId) });
-  }
+  // see — they stopped it, or it broke, or the agent is waiting on an answer. A clean
+  // finish hands over to the refetched history instead.
+  const formKey = state.question?.formKey ?? '';
+  const handleAnswer = useCallback(
+    async (answers: Answers) => {
+      await send({ answers, inReplyTo: formKey });
+      await queryClient.invalidateQueries({ queryKey: messagesQueryKey(sessionId) });
+    },
+    [send, formKey, queryClient, sessionId],
+  );
 
   const runEndedVisibly = state.stopped || state.error !== null || state.question !== null;
   const live =
