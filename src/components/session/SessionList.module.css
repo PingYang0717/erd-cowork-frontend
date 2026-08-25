@@ -110,6 +110,8 @@
   background: transparent;
   border-radius: 9px;
   cursor: pointer;
+  /* Without this the row inherits antd's 13.333px button size; the mockup is 13. */
+  font-size: 13px;
   color: var(--erd-color-text-secondary, rgba(0, 0, 0, 0.65));
 }
 

@@ -46,6 +46,7 @@
   gap: 7px;
   margin-bottom: 7px;
   font-size: 12px;
+  line-height: normal;
   color: var(--erd-color-text-tertiary, #8c8c8c);
 }
 
@@ -64,6 +65,7 @@
   border-radius: 9px;
   background: var(--erd-color-fill-quaternary, rgba(0, 0, 0, 0.02));
   font-size: 12.5px;
+  line-height: normal;
 }
 
 .artifactChipIcon {
@@ -111,11 +113,14 @@
   color: var(--erd-color-text-tertiary, #8c8c8c);
 }
 
+/* The mockup's completed-run card is a raised surface (bg-container), not a
+   tint of the page: on the dark theme a fill-quaternary wash reads as a smudge
+   rather than a card. */
 .stepsRecap {
   margin-bottom: 10px;
   border: 1px solid var(--erd-color-border-secondary, #f0f0f0);
   border-radius: 10px;
-  background: var(--erd-color-fill-quaternary, rgba(0, 0, 0, 0.02));
+  background: var(--erd-color-bg-container, #fff);
 }
 
 .stepsRecapToggle {
@@ -132,9 +137,16 @@
   text-align: left;
 }
 
+/* The run's outcome leads the row in the mockup, and the chevron sits hard
+   against the right edge rather than next to the label. */
+.stepsRecapStatus {
+  font-size: 14px;
+}
+
 .stepsRecapChevron {
-  font-size: 10px;
-  color: var(--erd-color-text-tertiary, #8c8c8c);
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--erd-color-text-secondary, rgba(0, 0, 0, 0.65));
 }
 
 .stepsRecapList {
