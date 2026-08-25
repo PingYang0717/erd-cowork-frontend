@@ -1,6 +1,6 @@
 import { getAuthHeaders } from '@/api/identity';
 import type { AgentEvent } from '@/types/api/agentEvent';
-import type { ArtifactKind, QuestionAnswer, ScenarioKey, Upload } from '@/types/api/index';
+import type { Upload } from '@/types/api/index';
 import { createSseParser } from '@/utils/sseParser';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? '';
@@ -17,19 +17,17 @@ export class AgentStreamHttpError extends Error {
   }
 }
 
-/** One turn of a run. Mirrors `docs/api/interface.md` → Message / Chat, which has two
- *  shapes: the opening question (`text`), and a reply to a reask (`answers` +
- *  `inReplyTo`). Answers go back structured, never re-serialised into prose (ADR-0006). */
+/** One turn of a run, in the backend's own body shape: `{ question, baseArtifactId? }`
+ *  (SendMessageRequest on the Java side). Everything the UI knows beyond the question —
+ *  scenario, artifact kind, structured answers — stays client-side; a reask's answers
+ *  travel as prose composed by `utils/composeAnswerText`. */
 export interface SendMessageArgs {
   sessionId: string;
-  text?: string;
-  answers?: Record<string, QuestionAnswer>;
-  inReplyTo?: string;
-  scenarioKey?: ScenarioKey;
-  artifactKind?: ArtifactKind;
-  attachments?: Upload[];
+  question: string;
   /** Iterate on an existing Artifact version rather than starting from nothing. */
   baseArtifactId?: string;
+  /** 前端-only extension:訊息夾帶檔案。真後端忽略;session-level 上傳契約落地後移除。 */
+  attachments?: Upload[];
   signal: AbortSignal;
 }
 
@@ -47,13 +45,9 @@ export async function* streamAgentMessage(
       ...getAuthHeaders(),
     },
     body: JSON.stringify({
-      text: args.text,
-      answers: args.answers,
-      inReplyTo: args.inReplyTo,
-      scenarioKey: args.scenarioKey,
-      artifactKind: args.artifactKind,
-      attachments: args.attachments,
+      question: args.question,
       baseArtifactId: args.baseArtifactId,
+      attachments: args.attachments,
     }),
     signal: args.signal,
   });

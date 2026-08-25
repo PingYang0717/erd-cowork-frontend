@@ -1,4 +1,4 @@
-import { act, renderHook, waitFor } from '@testing-library/react';
+﻿import { act, renderHook, waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
 import { mockAgentStream, mockAgentStreamRejection } from '@/test/agentStream';
@@ -11,7 +11,7 @@ describe('useAgentStream', () => {
     const { result } = renderHook(() => useAgentStream('session-1'));
 
     act(() => {
-      void result.current.send({ text: 'Run an SPC analysis on Vt (gate CD).' });
+      void result.current.send({ question: 'Run an SPC analysis on Vt (gate CD).' });
     });
 
     stream.push({ type: 'TOKEN', delta: 'Vt ' });
@@ -29,7 +29,7 @@ describe('useAgentStream', () => {
     expect(result.current.state.isStreaming).toBe(false);
 
     act(() => {
-      void result.current.send({ text: 'Run an SPC analysis on Vt (gate CD).' });
+      void result.current.send({ question: 'Run an SPC analysis on Vt (gate CD).' });
     });
     await waitFor(() => expect(result.current.state.isStreaming).toBe(true));
 
@@ -46,7 +46,7 @@ describe('useAgentStream', () => {
     const { result } = renderHook(() => useAgentStream('session-1'));
 
     act(() => {
-      void result.current.send({ text: 'Run an SPC analysis on Vt (gate CD).' });
+      void result.current.send({ question: 'Run an SPC analysis on Vt (gate CD).' });
     });
 
     stream.push({
@@ -96,7 +96,7 @@ describe('useAgentStream', () => {
     const { result } = renderHook(() => useAgentStream('session-1'));
 
     act(() => {
-      void result.current.send({ text: 'Run an SPC analysis on Vt (gate CD).' });
+      void result.current.send({ question: 'Run an SPC analysis on Vt (gate CD).' });
     });
     stream.push({ type: 'TOKEN', delta: 'Vt is dri' });
     await waitFor(() => expect(result.current.state.liveText).toBe('Vt is dri'));
@@ -115,7 +115,7 @@ describe('useAgentStream', () => {
     const { result } = renderHook(() => useAgentStream('session-1'));
 
     act(() => {
-      void result.current.send({ text: 'Run an SPC analysis on Vt (gate CD).' });
+      void result.current.send({ question: 'Run an SPC analysis on Vt (gate CD).' });
     });
 
     stream.push({ type: 'THINKING', delta: 'The Vt trend ' });
@@ -173,7 +173,7 @@ describe('useAgentStream', () => {
     const { result } = renderHook(() => useAgentStream('session-1'));
 
     act(() => {
-      void result.current.send({ text: 'Run an SPC analysis on Vt (gate CD).' });
+      void result.current.send({ question: 'Run an SPC analysis on Vt (gate CD).' });
     });
 
     stream.push({ type: 'ERROR', code: 'QUERY_TIMEOUT', message: '查詢逾時' });
@@ -204,7 +204,7 @@ describe('useAgentStream', () => {
     const { result } = renderHook(() => useAgentStream('session-1'));
 
     await act(async () => {
-      await result.current.send({ text: 'Run an SPC analysis on Vt (gate CD).' });
+      await result.current.send({ question: 'Run an SPC analysis on Vt (gate CD).' });
     });
 
     expect(result.current.state.error).toEqual({
@@ -220,7 +220,7 @@ describe('useAgentStream', () => {
     const { result } = renderHook(() => useAgentStream('session-1'));
 
     act(() => {
-      void result.current.send({ text: 'Run an SPC analysis on Vt (gate CD).' });
+      void result.current.send({ question: 'Run an SPC analysis on Vt (gate CD).' });
     });
     stream.push({ type: 'TOKEN', delta: 'Vt is dri' });
     await waitFor(() => expect(result.current.state.liveText).toBe('Vt is dri'));
@@ -246,7 +246,7 @@ describe('useAgentStream', () => {
     expect(result.current.state.durationMs).toBeNull();
 
     act(() => {
-      void result.current.send({ text: 'Run an SPC analysis on Vt (gate CD).' });
+      void result.current.send({ question: 'Run an SPC analysis on Vt (gate CD).' });
     });
     await waitFor(() => expect(result.current.state.isStreaming).toBe(true));
     expect(result.current.state.durationMs).toBeNull();
@@ -262,7 +262,7 @@ describe('useAgentStream', () => {
     const { result } = renderHook(() => useAgentStream('session-1'));
 
     act(() => {
-      void result.current.send({ text: 'Run an SPC analysis on Vt (gate CD).' });
+      void result.current.send({ question: 'Run an SPC analysis on Vt (gate CD).' });
     });
     stream.push({ type: 'ANSWER', text: 'Vt is drifting on A14.' });
     stream.push({ type: 'THINKING', delta: 'noted' });
@@ -282,7 +282,7 @@ describe('useAgentStream', () => {
     const { result, unmount } = renderHook(() => useAgentStream('session-1'));
 
     act(() => {
-      void result.current.send({ text: 'Run an SPC analysis on Vt (gate CD).' });
+      void result.current.send({ question: 'Run an SPC analysis on Vt (gate CD).' });
     });
     stream.push({ type: 'TOKEN', delta: 'Vt ' });
     await waitFor(() => expect(result.current.state.liveText).toBe('Vt '));

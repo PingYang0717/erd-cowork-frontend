@@ -21,48 +21,37 @@ import { FileAttachmentModal } from '@/components/files/FileAttachmentModal';
 import { useConnectors } from '@/hooks/useConnectors';
 import { useFileAttachments } from '@/hooks/useFileAttachments';
 import { useConnectorsPanelStore } from '@/stores/useConnectorsPanelStore';
-import type { ArtifactKind, ScenarioKey } from '@/types/api/index';
 import { selectConnected } from '@/utils/connectorSelectors';
 import { dispatchMenuAction } from '@/utils/dispatchMenuAction';
 
 import styles from './ChatComposer.module.css';
 
-const SUGGESTED_PROMPTS: {
-  label: string;
-  text: string;
-  scenarioKey: ScenarioKey;
-  artifactKind?: ArtifactKind;
-  icon: ReactNode;
-}[] = [
+// The backend infers everything from the question text (its body is question-only),
+// so a prompt is just its text — the mock mirrors that inference by keyword.
+const SUGGESTED_PROMPTS: { label: string; text: string; icon: ReactNode }[] = [
   {
     label: 'Inline dashboard',
     text: 'Generate an Inline dashboard.',
-    scenarioKey: 'inline',
     icon: <DotChartOutlined aria-hidden />,
   },
   {
     label: 'SPC analysis',
     text: 'Run an SPC analysis on Vt (gate CD).',
-    scenarioKey: 'spc',
     icon: <LineChartOutlined aria-hidden />,
   },
   {
     label: 'Generate slides',
     text: 'Generate slides from this analysis.',
-    scenarioKey: 'spc',
-    artifactKind: 'slides',
     icon: <FilePptOutlined aria-hidden />,
   },
   {
     label: 'Daily monitor (A14)',
     text: 'Generate the Daily Monitor dashboard for A14.',
-    scenarioKey: 'daily',
     icon: <DashboardOutlined aria-hidden />,
   },
   {
     label: 'CP Test status',
     text: 'What is the CP Test status?',
-    scenarioKey: 'cptest',
     icon: <PieChartOutlined aria-hidden />,
   },
 ];
@@ -92,8 +81,8 @@ const ChatComposer: React.FC<ChatComposerProps> = ({ onSend, disabled, isStreami
   const closeConnectors = useConnectorsPanelStore((store) => store.close);
   const connectedConnectorCount = selectConnected(connectors).length;
 
-  function send(input: SendMessageInput) {
-    onSend({ ...input, attachments: attachments.length > 0 ? attachments : undefined });
+  function send(question: string) {
+    onSend({ question, attachments: attachments.length > 0 ? attachments : undefined });
     clearAttachments();
   }
 
@@ -102,7 +91,7 @@ const ChatComposer: React.FC<ChatComposerProps> = ({ onSend, disabled, isStreami
     if (!text || disabled) {
       return;
     }
-    send({ text });
+    send(text);
     setDraft('');
   }
 
@@ -115,13 +104,7 @@ const ChatComposer: React.FC<ChatComposerProps> = ({ onSend, disabled, isStreami
             type="button"
             className={styles.suggestChip}
             disabled={disabled}
-            onClick={() =>
-              send({
-                text: prompt.text,
-                scenarioKey: prompt.scenarioKey,
-                artifactKind: prompt.artifactKind,
-              })
-            }
+            onClick={() => send(prompt.text)}
           >
             {prompt.icon}
             {prompt.label}

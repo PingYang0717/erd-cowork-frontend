@@ -360,7 +360,7 @@ describe('Streaming a run in the Studio', () => {
     expect(screen.getByRole('button', { name: 'FEOL' })).toHaveAttribute('aria-pressed', 'false');
   });
 
-  it('sends the answers back structured rather than as prose', async () => {
+  it('sends the answers back composed as a prose question (backend body is question-only)', async () => {
     const user = userEvent.setup();
     const stream = mockAgentStream();
     renderStudioPage();
@@ -406,8 +406,7 @@ describe('Streaming a run in the Studio', () => {
 
     await waitFor(() => expect(stream.requests).toHaveLength(2));
     expect(stream.requests[1]).toEqual({
-      answers: { partIds: ['A14', 'N5'], timeRange: 'Last 7 days' },
-      inReplyTo: 'spc-conditions',
+      question: 'Part ID：A14、N5；Time range：Last 7 days',
     });
   });
 
@@ -532,7 +531,7 @@ describe('Streaming a run in the Studio', () => {
       expect(screen.getByText(/CP Test status dashboard is ready/)).toBeInTheDocument();
     });
 
-    it('sends a boolean field as a boolean, and lets it be switched back off', async () => {
+    it('sends a true boolean as its option label in the prose answer, and lets it be switched back off', async () => {
       const user = userEvent.setup();
       const stream = mockAgentStream();
       renderStudioPage();
@@ -575,8 +574,7 @@ describe('Streaming a run in the Studio', () => {
 
       await waitFor(() => expect(stream.requests).toHaveLength(2));
       expect(stream.requests[1]).toEqual({
-        answers: { mineOnly: true },
-        inReplyTo: 'cptest-conditions',
+        question: '檢視：只看我送測的 (王小明)',
       });
     });
 
@@ -632,7 +630,7 @@ describe('Streaming a run in the Studio', () => {
       expect(screen.getByText(/Done — recomputed control limits/)).toBeInTheDocument();
     });
 
-    it('leaves the answered conditions in the thread, collapsed', async () => {
+    it('leaves the answered conditions in the thread as a prose user message', async () => {
       const user = userEvent.setup();
       renderStudioPage();
 
@@ -640,16 +638,12 @@ describe('Streaming a run in the Studio', () => {
       await answerAnalysisConditions(user);
       await screen.findByRole('button', { name: /^Worked through \d+ steps$/ });
 
-      // The form is gone; what was set stays, behind a toggle.
+      // The form is gone; the answers went over the wire as one prose question and
+      // come back from history as an ordinary user message.
       expect(screen.queryByRole('button', { name: '送出' })).not.toBeInTheDocument();
-      const summary = screen.getByRole('button', { name: '已設定 3 項 分析條件' });
-      expect(summary).toHaveAttribute('aria-expanded', 'false');
-
-      await user.click(summary);
-      const values = screen.getByRole('list', { name: '分析條件' });
-      expect(within(values).getByText('A14')).toBeInTheDocument();
-      expect(within(values).getByText('Last 7 days')).toBeInTheDocument();
-      expect(within(values).getByText('Inline')).toBeInTheDocument();
+      expect(
+        screen.getByText('Part ID：A14；Time range：Last 7 days；Data type：Inline'),
+      ).toBeInTheDocument();
     });
   });
 });
