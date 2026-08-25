@@ -6,6 +6,15 @@
   background: transparent !important;
 }
 
+/* antd 6 draws an activeBorderColor outline on a borderless input's
+   :focus-visible, and clicking into a textarea always matches it — the
+   mockup's textarea is outline:none, with no focus ring at all. */
+.messageInput:focus,
+.messageInput:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
 .suggestRow {
   display: flex;
   flex-wrap: wrap;
