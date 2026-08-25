@@ -1,5 +1,6 @@
 export type {
   AgentEvent,
+  Question,
   QuestionAnswer,
   QuestionField,
   QuestionForm,

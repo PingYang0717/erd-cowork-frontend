@@ -137,6 +137,7 @@ describe('useAgentStream', () => {
     });
     stream.push({
       type: 'QUESTION',
+      questions: [{ text: 'DC item', options: [], multiSelect: true }],
       form: {
         formKey: 'dc-item-scope',
         title: 'DC item',
@@ -166,6 +167,27 @@ describe('useAgentStream', () => {
       title: 'SPC analysis — Vt (gate CD)',
     });
     expect(result.current.state.question?.formKey).toBe('dc-item-scope');
+  });
+
+  it('lifts a flat backend QUESTION into a renderable form when no form extension rides along', async () => {
+    const stream = mockAgentStream();
+    const { result } = renderHook(() => useAgentStream('session-1'));
+
+    act(() => {
+      void result.current.send({ question: 'What is the CP Test status?' });
+    });
+
+    stream.push({
+      type: 'QUESTION',
+      questions: [{ text: 'Which lots?', options: ['A14', 'N5'], multiSelect: true }],
+    });
+
+    await waitFor(() => expect(result.current.state.question).not.toBeNull());
+    expect(result.current.state.question?.formKey).toBe('backend-question');
+    expect(result.current.state.question?.fields[0]).toMatchObject({
+      label: 'Which lots?',
+      kind: 'multi',
+    });
   });
 
   it('records an ERROR event without ending the run, and still takes the steps after it', async () => {

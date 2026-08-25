@@ -15,7 +15,7 @@ import { ARTIFACT_VERSION_CONTENT, buildArtifactFixture } from './artifactFixtur
 import { DC_ITEM_FIXTURES, ROWS_PER_DC_ITEM } from './dcItemFixtures';
 import { DIRECTORY_FIXTURES } from './directoryFixtures';
 import { createPersistedResource } from './persistedResource';
-import { dcItemQuestion, openingQuestion } from './questionFixtures';
+import { dcItemQuestion, flattenQuestionForm, openingQuestion } from './questionFixtures';
 import { matchScenario, SCENARIO_FIXTURES, SLIDES_STEP } from './scenarioFixtures';
 
 interface ExampleWidget {
@@ -523,7 +523,7 @@ export const allHandlers = [
         return sseResponse([
           { ...SCAN_STEP, type: 'STEP', status: 'RUNNING' },
           { ...SCAN_STEP, type: 'STEP', status: 'SUCCESS' },
-          { type: 'QUESTION', form },
+          { type: 'QUESTION', questions: flattenQuestionForm(form), form },
         ]);
       }
 
@@ -546,7 +546,7 @@ export const allHandlers = [
     const form = openingQuestion(scenarioKey, connectors.read());
     if (form) {
       pendingRuns.set(sessionId, { scenarioKey, artifactKind, form, stage: 'conditions' });
-      return sseResponse([{ type: 'QUESTION', form }]);
+      return sseResponse([{ type: 'QUESTION', questions: flattenQuestionForm(form), form }]);
     }
 
     return streamRun(sessionId, scenarioKey, artifactKind);

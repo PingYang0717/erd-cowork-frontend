@@ -1,4 +1,4 @@
-import type { QuestionField, QuestionForm } from '@/types/api/agentEvent';
+import type { Question, QuestionField, QuestionForm } from '@/types/api/agentEvent';
 import type { Connector } from '@/types/api/connector';
 import type { DcItem } from '@/types/api/dcItem';
 import type { ScenarioKey } from '@/types/api/scenario';
@@ -166,4 +166,15 @@ export function dcItemQuestion(dcItems: DcItem[], rowsPerItem: number): Question
     disabledHint: '至少選一項',
     summaryLabel: 'DC item',
   };
+}
+
+/** The wire truth for a QUESTION event: the backend sends only a flat Question[].
+ *  The mock derives it from the rich form it also rides along as an extension, so
+ *  the event stays verbatim-compatible with a real backend's. */
+export function flattenQuestionForm(form: QuestionForm): Question[] {
+  return form.fields.map((field) => ({
+    text: field.label,
+    options: (field.options ?? []).map((option) => option.label),
+    multiSelect: field.kind === 'multi' || field.kind === 'dcitem',
+  }));
 }
