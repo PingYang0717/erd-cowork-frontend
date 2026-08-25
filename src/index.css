@@ -6,9 +6,16 @@ body,
 }
 
 /* Global chrome from eRDWorkspace20260819.html: antialiased type and the
-   8px custom scrollbar (WebKit/Blink; Firefox keeps its native bar). */
+   8px custom scrollbar (WebKit/Blink; Firefox keeps its native bar).
+   The stack must stay in step with `FONT_FAMILY` in `app/providers.tsx`, which
+   is what antd puts on its own subtree: without a rule here `body` falls back
+   to whatever the browser picks for `lang="zh-Hant"` (PingFang TC on macOS),
+   which anything rendered outside that subtree would then inherit. */
 body {
   -webkit-font-smoothing: antialiased;
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'PingFang TC',
+    'Microsoft JhengHei', sans-serif;
 }
 
 ::-webkit-scrollbar {

@@ -40,10 +40,13 @@
   opacity: 0.55;
 }
 
+/* A surface of its own, not a hole cut in the composer strip — on the dark
+   theme a transparent box loses the input entirely against the page. */
 .composerBox {
   border: 1px solid var(--erd-color-border, #d9d9d9);
   border-radius: 14px;
   padding: 8px;
+  background: var(--erd-color-bg-container, #fff);
 }
 
 .attachmentsRow {

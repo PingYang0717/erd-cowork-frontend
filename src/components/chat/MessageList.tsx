@@ -4,8 +4,8 @@ import {
   CloseCircleFilled,
   DownOutlined,
   LoadingOutlined,
-  RightOutlined,
   ThunderboltFilled,
+  UpOutlined,
 } from '@ant-design/icons';
 import React, { useState } from 'react';
 
@@ -144,6 +144,10 @@ MessageBubble.displayName = 'MessageBubble';
 // description.
 function StepsRecap({ steps }: { steps: StepItem[] }) {
   const [isExpanded, setIsExpanded] = useState(false);
+  // The mockup leads the row with the run's outcome. A recap is only ever
+  // rendered for a finished run, so the only question left is whether any step
+  // failed.
+  const hasFailure = steps.some((step) => step.status === 'ERROR');
 
   return (
     <div className={styles.stepsRecap}>
@@ -153,12 +157,26 @@ function StepsRecap({ steps }: { steps: StepItem[] }) {
         aria-expanded={isExpanded}
         onClick={() => setIsExpanded((v) => !v)}
       >
-        {isExpanded ? (
-          <DownOutlined aria-hidden className={styles.stepsRecapChevron} />
+        {/* Decorative, like every other icon on this surface: the toggle's
+            accessible name has to stay exactly its label, and each step's own
+            status is announced by `StepStatusIcon` once expanded. */}
+        {hasFailure ? (
+          <CloseCircleFilled
+            aria-hidden
+            className={`${styles.stepsRecapStatus} ${styles.stepIconError}`}
+          />
         ) : (
-          <RightOutlined aria-hidden className={styles.stepsRecapChevron} />
+          <CheckCircleFilled
+            aria-hidden
+            className={`${styles.stepsRecapStatus} ${styles.stepIconSuccess}`}
+          />
         )}
         Worked through {steps.length} steps
+        {isExpanded ? (
+          <UpOutlined aria-hidden className={styles.stepsRecapChevron} />
+        ) : (
+          <DownOutlined aria-hidden className={styles.stepsRecapChevron} />
+        )}
       </button>
       {isExpanded && (
         <div className={styles.stepsRecapList}>
