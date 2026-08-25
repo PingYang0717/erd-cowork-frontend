@@ -76,7 +76,7 @@ describe('multi-user identity', () => {
 
     const events = streamAgentMessage({
       sessionId: 'session-1',
-      text: 'Generate the Daily Monitor dashboard for A14.',
+      question: 'Generate the Daily Monitor dashboard for A14.',
       signal: new AbortController().signal,
     });
     const started = events.next();

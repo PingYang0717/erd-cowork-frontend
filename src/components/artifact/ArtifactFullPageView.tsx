@@ -127,9 +127,7 @@ const ArtifactFullPageView: React.FC<ArtifactFullPageViewProps> = ({ artifactId 
       </div>
       <div className={styles.body}>
         {isError && <div className={styles.empty}>Artifact not found.</div>}
-        {data && artifactId && (
-          <ArtifactFrame html={data.html} theme={theme} artifactId={artifactId} />
-        )}
+        {data && artifactId && <ArtifactFrame html={data} theme={theme} artifactId={artifactId} />}
       </div>
       {artifact && (
         <ShareArtifactDialog

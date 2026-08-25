@@ -64,7 +64,7 @@ describe('session file endpoints', () => {
     const response = await fetch(`${API_BASE}/sessions/session-2`);
     const detail = (await response.json()) as SessionDetail;
 
-    const userMessage = detail.messages.findLast((m: Message) => m.sender === 'USER');
+    const userMessage = [...detail.messages].reverse().find((m: Message) => m.sender === 'USER');
     expect(userMessage?.attachments?.map((file) => file.name)).toEqual(['lot-genealogy.csv']);
     // Consumed: the composer's chips row empties once the message carries them.
     expect(detail.files).toHaveLength(0);

@@ -457,6 +457,8 @@ const LIVE_BACKED = [
   'POST /api/sessions/:sessionId/messages',
   'POST /api/sessions/:sessionId/files',
   'DELETE /api/sessions/:sessionId/files/:fileId',
+  'GET /api/artifacts/:id',
+  'POST /api/artifacts/:id/repair',
 ];
 
 export const allHandlers = [
@@ -690,7 +692,9 @@ export const allHandlers = [
     const fixture =
       (versionId ? ARTIFACT_VERSION_CONTENT[versionId] : undefined) ??
       buildArtifactFixture(artifact.scenario, artifact.kind, version?.n);
-    return HttpResponse.json({ html: fixture[theme] });
+    // The backend serves text/html directly, not { html } JSON; theme and versionId
+    // are query extensions only the mock reads (a real backend ignores them).
+    return new HttpResponse(fixture[theme], { headers: { 'Content-Type': 'text/html' } });
   }),
 
   // Rebuilding an artifact whose HTML threw. Every repair here succeeds and bumps a

@@ -2,10 +2,6 @@ import type { Artifact, ArtifactTheme, ArtifactVersion, DirectoryEntry } from '@
 
 import { apiClient } from './apiClient';
 
-export interface ArtifactContent {
-  html: string;
-}
-
 export interface ArtifactShareResult {
   url: string;
   artifact: Artifact;
@@ -14,8 +10,11 @@ export interface ArtifactShareResult {
 export const artifactApi = {
   listArtifacts: () => apiClient.get<Artifact[]>('/artifacts'),
 
+  /** The backend returns the artifact's HTML as text/html directly. theme and
+   *  versionId are 前端-only query extensions the mock reads; a real backend
+   *  ignores them (dark mode swaps in-frame via postMessage, ADR-0001). */
   getContent: (artifactId: string, theme: ArtifactTheme, versionId?: string) =>
-    apiClient.get<ArtifactContent>(`/artifacts/${artifactId}`, {
+    apiClient.get<string>(`/artifacts/${artifactId}`, {
       params: { theme, versionId },
     }),
 
