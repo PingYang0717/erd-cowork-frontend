@@ -85,21 +85,20 @@ describe('Artifact full-page view', () => {
     expect(await screen.findByRole('button', { name: 'New chat' })).toBeInTheDocument();
   });
 
-  it('switches versions from the toolbar version menu', async () => {
+  it('lists the session-derived versions in the toolbar version menu', async () => {
     const user = userEvent.setup();
     renderArtifactPageAt('/cowork/artifact/artifact-1');
 
-    const iframe = (await screen.findByTitle('Artifact preview')) as HTMLIFrameElement;
-    expect(iframe.getAttribute('srcdoc')).not.toContain('Draft');
+    await screen.findByTitle('Artifact preview');
 
+    // Versions derive from the artifact's session history: session-1 seeds one
+    // artifact-bearing message, so artifact-1 is its v1 (and its only version).
+    // Switching between versions is covered in the Studio panel's suite.
     await user.click(await screen.findByRole('button', { name: '切換版本' }));
-    await user.click(await screen.findByRole('menuitem', { name: /draft/i }));
-
-    await expect
-      .poll(() =>
-        (screen.getByTitle('Artifact preview') as HTMLIFrameElement).getAttribute('srcdoc'),
-      )
-      .toContain('Draft');
+    const items = await screen.findAllByRole('menuitem');
+    expect(items).toHaveLength(1);
+    expect(items[0]).toHaveTextContent('SPC analysis — Vt (gate CD)');
+    expect(items[0]).toHaveAttribute('aria-current', 'true');
   });
 
   it('shows the Shared to me header instead of the version menu for an Artifact shared by someone else', async () => {

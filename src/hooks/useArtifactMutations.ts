@@ -39,28 +39,14 @@ export function useShareArtifact() {
   });
 }
 
-export function useGenerateArtifactVersion() {
+export function useGenerateArtifact() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, versionId }: { id: string; versionId: string }) =>
-      artifactApi.generateVersion(id, versionId),
-    onSuccess: (_version, { id }) => {
+    mutationFn: (id: string) => artifactApi.generate(id),
+    onSuccess: (_artifact, id) => {
       queryClient.invalidateQueries({ queryKey: artifactQueryKey(id) });
       queryClient.invalidateQueries({ queryKey: artifactsQueryKey });
-    },
-  });
-}
-
-export function useRegenerateArtifact() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (id: string) => artifactApi.regenerate(id),
-    onSuccess: (_version, id) => {
-      // The new version has content of its own, so the panel needs a fresh
-      // render as well as a fresh version list.
-      queryClient.invalidateQueries({ queryKey: artifactQueryKey(id) });
     },
   });
 }

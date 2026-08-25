@@ -1,8 +1,12 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useReducer, useRef } from 'react';
 
 import { AgentStreamHttpError, type SendMessageArgs, streamAgentMessage } from '@/api/agentApi';
 import type { AgentEvent, QuestionForm, StepItem, TableResult } from '@/types/api/agentEvent';
 import { liftQuestions } from '@/utils/liftQuestions';
+
+import { sessionDetailQueryKey } from './useSessionDetail';
+import { sessionsQueryKey } from './useSessions';
 
 /** Everything about a run except which session it belongs to and how it is cancelled. */
 export type SendInput = Omit<SendMessageArgs, 'sessionId' | 'signal'>;
@@ -176,7 +180,19 @@ export function useAgentStream(sessionId: string): {
   reset(): void;
 } {
   const [state, dispatch] = useReducer(reducer, initialState);
+  const queryClient = useQueryClient();
   const controllerRef = useRef<AbortController | null>(null);
+
+  // Both messages a run produced live server-side; the sessions list also moves
+  // (last-activity ordering), so both refetch together.
+  const invalidateSessionData = useCallback(
+    () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: sessionDetailQueryKey(sessionId) }),
+        queryClient.invalidateQueries({ queryKey: sessionsQueryKey }),
+      ]),
+    [queryClient, sessionId],
+  );
 
   // Syncing with an external system (an open HTTP connection) is the one thing
   // useEffect is still for: a run left in flight after unmount holds the socket open
@@ -206,9 +222,17 @@ export function useAgentStream(sessionId: string): {
         }
       } catch (error) {
         // A user-initiated stop is not a failure: the run simply ends where it is,
-        // and everything already streamed stays on screen.
+        // and everything already streamed stays on screen. The backend persists an
+        // aborted run asynchronously (doOnCancel), so refetch in two delayed stages
+        // instead of racing it now.
         if (error instanceof Error && error.name === 'AbortError') {
           dispatch({ type: 'DONE', durationMs: Date.now() - startedAt });
+          setTimeout(() => {
+            void invalidateSessionData();
+            setTimeout(() => {
+              void invalidateSessionData();
+            }, 800);
+          }, 800);
           return;
         }
 
@@ -223,9 +247,12 @@ export function useAgentStream(sessionId: string): {
         return;
       }
 
+      // Await before DONE: dispatching first would clear the live bubble while the
+      // history is still stale, flashing the previous thread state.
+      await invalidateSessionData();
       dispatch({ type: 'DONE', durationMs: Date.now() - startedAt });
     },
-    [sessionId],
+    [sessionId, invalidateSessionData],
   );
 
   const stop = useCallback((): void => {

@@ -146,7 +146,7 @@ QuestionOption { value: string; label: string; hint?: string; unit?: string; lo?
 | `POST /sessions/:id/files`、`DELETE /sessions/:id/files/:fileId`    | MSW       | 真後端    |
 | `GET /artifacts/:id`（text/html）、`POST /artifacts/:id/repair`     | MSW       | 真後端    |
 | `POST/PATCH/DELETE /sessions`（建立／改名／釘選／刪除，前端-only）  | MSW       | **MSW**   |
-| `/artifacts` 清單、pin、share、versions、regenerate、generate       | MSW       | **MSW**   |
+| `/artifacts` 清單、pin、share、generate                             | MSW       | **MSW**   |
 | `/connectors`、`/directory`、DC Item 清單、schedule                 | MSW       | **MSW**   |
 
 過濾是 method-aware：`GET /sessions/:id` 放行給真後端的同時，同一路徑上前端-only 的
@@ -170,33 +170,36 @@ QUESTION 的線路承載是後端的扁平 `Question[]`（純字串選項、`mul
 
 ## Artifact
 
-| Method | Path                                          | Request                                                                          | Response                              |
-| ------ | --------------------------------------------- | -------------------------------------------------------------------------------- | ------------------------------------- |
-| GET    | `/artifacts`                                  | —                                                                                | `Artifact[]`                          |
-| GET    | `/artifacts/:id`                              | `?theme=light\|dark`、`?versionId=`（皆為前端-only query extension，真後端忽略） | `text/html`（HTML 字串）              |
-| PATCH  | `/artifacts/:id`                              | `Partial<Pick<Artifact, 'pinned'>>`                                              | `Artifact`                            |
-| DELETE | `/artifacts/:id`                              | —                                                                                | 204 No Content                        |
-| GET    | `/artifacts/:id/versions`                     | —                                                                                | `ArtifactVersion[]`                   |
-| POST   | `/artifacts/:id/share`                        | `{ targetIds: string[] }`                                                        | `{ url: string; artifact: Artifact }` |
-| POST   | `/artifacts/:id/regenerate`                   | —                                                                                | `ArtifactVersion` (201)               |
-| POST   | `/artifacts/:id/versions/:versionId/generate` | —                                                                                | `ArtifactVersion`                     |
-| GET    | `/directory`                                  | —                                                                                | `DirectoryEntry[]`                    |
+| Method | Path                      | Request                                                       | Response                              |
+| ------ | ------------------------- | ------------------------------------------------------------- | ------------------------------------- |
+| GET    | `/artifacts`              | —                                                             | `Artifact[]`                          |
+| GET    | `/artifacts/:id`          | `?theme=light\|dark`（前端-only query extension，真後端忽略） | `text/html`（HTML 字串）              |
+| PATCH  | `/artifacts/:id`          | `Partial<Pick<Artifact, 'pinned'>>`                           | `Artifact`                            |
+| DELETE | `/artifacts/:id`          | —                                                             | 204 No Content                        |
+| POST   | `/artifacts/:id/share`    | `{ targetIds: string[] }`                                     | `{ url: string; artifact: Artifact }` |
+| POST   | `/artifacts/:id/generate` | —                                                             | `Artifact`（前端-only）               |
+| GET    | `/directory`              | —                                                             | `DirectoryEntry[]`                    |
 
 `/artifacts` lists every Artifact (own, pinned, and shared-to-me), backing the
 Artifacts Gallery's filters (All / Yours / Shared to me / Pinned) and sort
 (pinned-first / recent / name), which are applied client-side.
 
-`Artifact.generated` is likewise derived per request: `true` when any of the
-Artifact's versions has been generated (see the per-version `generate` endpoint
-below). The session rail's Artifacts badge counts only generated Artifacts, so an
-ungenerated preview does not bump the count until its 生成 step.
+**版本不是端點，是推導**（cowork master 的模型）：session 裡每一則帶 `artifactId` 的訊息
+就是一個版本，依出現順序編號（`utils/deriveArtifactVersions.ts`）；每個版本就是一個獨立的
+Artifact。迭代（含「重新生成」按鈕）是送一則帶 `baseArtifactId` 的訊息，新一輪產生的
+artifact 落成下一個版本。版本選單切換的是 artifactId；串流中剛產生、歷史還沒 refetch 到的
+artifact 以「下一號」併入清單。
+
+`Artifact.generated` 是前端-only 的 per-artifact 狀態（版本即 artifact，所以天生就是
+per-version）：Scenario 產生的是未生成的預覽，`POST /artifacts/:id/generate` 把它標為已生成
+——「已生成」chip、分享 gating、版本選單綠勾與 rail 徽章計數都讀它。
 
 `Artifact.mine` is derived, not stored: the mock backend keeps an `ownerId` on each
 Artifact it holds and resolves `mine` per request against the mock identity in
-`services/currentUser.ts`, so the Gallery's "Yours" filter reflects who is signed in
+`config/currentUser.ts`, so the Gallery's "Yours" filter reflects who is signed in
 rather than a hard-coded fixture flag. `ownerId` never crosses the wire. (The mock's
-localStorage key is `erd-cowork:artifacts:v2`; the earlier key held the pre-`ownerId`
-shape and is left alone so an old browser reseeds instead of showing nothing as yours.)
+localStorage key is `erd-cowork:artifacts:v3` — bumped for the stored `generated`
+flag — so an old browser reseeds instead of showing stale state.)
 
 Returns the sandboxed-iframe-ready HTML for the Artifact's current content, colored
 for the requested theme ([ADR-0001](../adr/0001-artifact-rendered-via-sandboxed-iframe.md)).
@@ -212,14 +215,6 @@ more-actions menu); the mock backend does not cascade-delete its versions or
 messages that reference it, since none of those are read once the Artifact
 itself is gone.
 
-`/artifacts/:id/versions` lists the Artifact's past versions (`n`, `label`,
-`createdAt`, `generated`), newest last. Passing one of those versions' `id` as `?versionId=` on
-`/artifacts/:id` re-renders that historical version's content instead of the latest.
-Every version renders content of its own: unless a version has hand-authored fixture
-content (the seeded `artifact-1-v1` draft does), it is rendered from the Artifact's
-scenario and kind with its version number carried into the subtitle, so switching
-versions always changes what the iframe shows.
-
 `POST /artifacts/:id/share` marks the Artifact as shared (`Artifact.shared` flips to
 `true`, persisted) and returns a shareable URL pointing at its full-page view
 (`/cowork/artifact/:id`, [ADR-0002](../adr/0002-react-router-despite-state-driven-mockup.md)).
@@ -228,24 +223,6 @@ NT account) from `GET /directory`; the mock backend does not model per-recipient
 delivery, it only flips the sender's own Artifact to shared. A recipient's "Shared to
 me" view is simulated directly via seed data (`Artifact.sharedBy`), not by this
 endpoint.
-
-`POST /artifacts/:id/regenerate` creates a new `ArtifactVersion` (`n` = latest + 1,
-`label` = the Artifact's current name, `createdAt` = now) and appends it to
-`/artifacts/:id/versions`; the Studio panel's "重新生成" button triggers this and then
-clears its local version selection so the switcher and iframe fall back to the newest
-version. The new version renders as its own content (see above), so the client
-invalidates the whole `['artifacts', id]` key — the version list and the rendered
-content — rather than the version list alone.
-
-`ArtifactVersion.generated` is per-version state: a version produced by a Scenario
-run or by `regenerate` starts `generated: false` (a preview), and
-`POST /artifacts/:id/versions/:versionId/generate` flips that one version to
-`generated: true` — the Studio panel's "生成 Artifact" button triggers this and the
-"已生成" chip / share gating / version menu's green check all read it. Generating one
-version never changes any other version's state. (This deliberately reverses the
-earlier "every Artifact reaching the panel is already generated" simplification —
-see `.scratch/erd-cowork-design-fidelity/spec.md`. The mock's localStorage key is
-`erd-cowork:artifact-versions:v2` so a browser holding the un-flagged shape reseeds.)
 
 `GET /directory` returns the searchable department / section / person dataset backing
 the share dialog's recipient picker (`DirectoryEntry.kind` is `'department'`,

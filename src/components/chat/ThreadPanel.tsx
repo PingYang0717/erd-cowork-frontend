@@ -1,13 +1,13 @@
 import { DatabaseOutlined, ThunderboltFilled } from '@ant-design/icons';
-import { useQueryClient } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import { ThemeToggle } from '@/components/common/ThemeToggle';
 import { type SendInput, useAgentStream } from '@/hooks/useAgentStream';
 import { useArtifactRepair } from '@/hooks/useArtifactRepair';
-import { sessionDetailQueryKey, useSessionDetail } from '@/hooks/useSessionDetail';
+import { useSessionDetail } from '@/hooks/useSessionDetail';
 import { useActiveRunStore } from '@/stores/useActiveRunStore';
+import { usePendingPromptStore } from '@/stores/usePendingPromptStore';
 import { useRepairOfferStore } from '@/stores/useRepairOfferStore';
 import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
 import { composeAnswerText } from '@/utils/composeAnswerText';
@@ -70,11 +70,21 @@ const ThreadPanel: React.FC = () => {
 };
 
 function ThreadView({ sessionId }: { sessionId: string }) {
-  const queryClient = useQueryClient();
   const { data: detail } = useSessionDetail(sessionId);
   const messages = detail.messages;
   const { state, send, stop } = useAgentStream(sessionId);
-  const setStreamedArtifactId = useActiveRunStore((s) => s.setStreamedArtifactId);
+  const setStreamedArtifact = useActiveRunStore((s) => s.setStreamedArtifact);
+  const displayedArtifactId = useActiveRunStore((s) => s.displayedArtifactId);
+  // The user's words go on screen the moment they send; cleared once the refetched
+  // history carries them (streaming flips false after the hook's await-then-DONE).
+  const [pendingQuestion, setPendingQuestion] = useState<string | null>(null);
+  const prevStreamingRef = useRef(false);
+  useEffect(() => {
+    if (prevStreamingRef.current && !state.isStreaming) {
+      setPendingQuestion(null);
+    }
+    prevStreamingRef.current = state.isStreaming;
+  }, [state.isStreaming]);
   const repairOffer = useRepairOfferStore((store) => store.offer);
   const dismissRepair = useRepairOfferStore((store) => store.dismiss);
   const clearRepair = useRepairOfferStore((store) => store.clear);
@@ -87,12 +97,13 @@ function ThreadView({ sessionId }: { sessionId: string }) {
 
   // Publishing to the Artifact pane is syncing with something outside this tree, and it
   // has to happen the moment the ARTIFACT event lands rather than when the run ends.
+  const streamedArtifact = state.artifact;
   useEffect(() => {
-    setStreamedArtifactId(state.artifact?.artifactId ?? null);
+    setStreamedArtifact(streamedArtifact);
     // Leaving the thread must not leave the Artifact pane pointing at a run that is no
     // longer on screen.
-    return () => setStreamedArtifactId(null);
-  }, [state.artifact?.artifactId, setStreamedArtifactId]);
+    return () => setStreamedArtifact(null);
+  }, [streamedArtifact, setStreamedArtifact]);
 
   // The mockup scrolls the thread to the bottom shortly after a new message
   // renders (40ms, letting layout settle), so long conversations never leave
@@ -108,14 +119,18 @@ function ThreadView({ sessionId }: { sessionId: string }) {
   }, [messages.length, state.steps.length, state.liveText]);
 
   // Handed to ChatComposer; a fresh identity every render would defeat its memoisation.
+  // Refetching after the run lives inside useAgentStream (awaited before DONE); the
+  // artifact on display rides along as baseArtifactId so the run builds on it.
+  const isStreaming = state.isStreaming;
   const handleSend = useCallback(
     async (input: SendInput) => {
-      await send(input);
-      // The run itself is streamed, but both messages it produced live server-side —
-      // refetch rather than reconstruct them from the events we happened to receive.
-      await queryClient.invalidateQueries({ queryKey: sessionDetailQueryKey(sessionId) });
+      if (isStreaming) {
+        return;
+      }
+      setPendingQuestion(input.question);
+      await send({ baseArtifactId: displayedArtifactId ?? undefined, ...input });
     },
-    [send, queryClient, sessionId],
+    [send, displayedArtifactId, isStreaming],
   );
 
   // The backend body is question-only, so a reask's answers travel as one prose
@@ -126,11 +141,23 @@ function ThreadView({ sessionId }: { sessionId: string }) {
       if (!question) {
         return;
       }
-      await send({ question: composeAnswerText(question, answers) });
-      await queryClient.invalidateQueries({ queryKey: sessionDetailQueryKey(sessionId) });
+      await handleSend({ question: composeAnswerText(question, answers) });
     },
-    [send, question, queryClient, sessionId],
+    [handleSend, question],
   );
+
+  // Prompts pushed from other panels (the Artifact panel's regenerate button) enter
+  // the same send pipeline: the thread registers its sender with the store, so the
+  // panel's click is a plain event-handler call into it.
+  const registerPromptSender = usePendingPromptStore((s) => s.register);
+  const unregisterPromptSender = usePendingPromptStore((s) => s.unregister);
+  useEffect(() => {
+    const sender = (prompt: { question: string; baseArtifactId?: string }) => {
+      void handleSend(prompt);
+    };
+    registerPromptSender(sender);
+    return () => unregisterPromptSender(sender);
+  }, [handleSend, registerPromptSender, unregisterPromptSender]);
 
   const runEndedVisibly = state.stopped || state.error !== null || state.question !== null;
   const live =
@@ -147,7 +174,14 @@ function ThreadView({ sessionId }: { sessionId: string }) {
           error: state.error,
         }
       : null;
-  const hasContent = messages.length > 0 || live !== null;
+
+  // Suppress the optimistic bubble once the refetched history already ends with it.
+  const lastMessage = messages[messages.length - 1];
+  const lastHistoryQuestion = lastMessage?.sender === 'USER' ? lastMessage.text : null;
+  const optimisticUserText =
+    pendingQuestion !== null && pendingQuestion !== lastHistoryQuestion ? pendingQuestion : null;
+
+  const hasContent = messages.length > 0 || live !== null || optimisticUserText !== null;
 
   return (
     <div className={styles.panel}>
@@ -157,6 +191,7 @@ function ThreadView({ sessionId }: { sessionId: string }) {
           <MessageList
             messages={messages}
             live={live}
+            optimisticUserText={optimisticUserText}
             lastRunDurationMs={state.durationMs}
             onAnswer={handleAnswer}
           />

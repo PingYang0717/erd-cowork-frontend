@@ -237,6 +237,9 @@ function LiveRunView({ live, onAnswer }: { live: LiveRun; onAnswer: (answers: An
 interface MessageListProps {
   messages: Message[];
   live: LiveRun | null;
+  /** The question just sent, shown as a user bubble before the refetched history
+   *  carries it — a run takes seconds and the user's own words must not vanish. */
+  optimisticUserText: string | null;
   /** Elapsed time of the run that just finished; a footer under the thread rather than
    *  part of any message, since it is not persisted with the conversation. */
   lastRunDurationMs: number | null;
@@ -246,6 +249,7 @@ interface MessageListProps {
 const MessageList: React.FC<MessageListProps> = ({
   messages,
   live,
+  optimisticUserText,
   lastRunDurationMs,
   onAnswer,
 }) => {
@@ -254,6 +258,13 @@ const MessageList: React.FC<MessageListProps> = ({
       {messages.map((message) => (
         <MessageBubble key={message.id} message={message} />
       ))}
+      {optimisticUserText !== null && (
+        <div className={styles.userRow}>
+          <div className={styles.userBubble}>
+            <span className={styles.userText}>{optimisticUserText}</span>
+          </div>
+        </div>
+      )}
       {live && <LiveRunView live={live} onAnswer={onAnswer} />}
       {lastRunDurationMs !== null && (
         <p className={styles.runDuration}>Took {formatDuration(lastRunDurationMs)}</p>

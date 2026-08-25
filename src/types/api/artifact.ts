@@ -15,25 +15,22 @@ export interface Artifact {
   sharedBy?: string;
   createdAt: string;
   /**
-   * Derived server-side: whether any of this Artifact's versions has been
-   * generated. The rail's Artifacts badge counts only generated Artifacts —
-   * an ungenerated preview is not yet "in" the Artifacts list.
+   * 前端-only: whether the user has committed ("生成") this Artifact. A Scenario
+   * run produces an ungenerated preview first; generating it is what the mockup
+   * marks with the green check, unlocks sharing, and puts it in the rail's
+   * Artifacts badge count. Every version IS its own Artifact (see
+   * ArtifactVersion), so this is naturally per-version state.
    */
   generated: boolean;
 }
 
+/** Backend contract shape (cowork master): a version is an artifact-bearing message,
+ *  derived client-side from the session's history — there is no versions endpoint.
+ *  `createdAt` and `generated` are 前端-only enrichments for the mockup's menu. */
 export interface ArtifactVersion {
-  id: string;
   artifactId: string;
-  n: number;
-  label: string;
-  createdAt: string;
-  /**
-   * Whether the user has committed ("生成") this version. A Scenario run or a
-   * regenerate produces an ungenerated preview first; generating it is what
-   * the mockup's version menu marks with the green "published" check, and it
-   * is what unlocks sharing. Per-version by design — switching versions must
-   * not inherit another version's state.
-   */
-  generated: boolean;
+  title: string;
+  version: number;
+  createdAt?: string;
+  generated?: boolean;
 }
