@@ -185,3 +185,56 @@ request interceptor 是空的。
 
 **不建議做的**：把 Connector、Artifacts 總覽、分享、Artifact 版本這些搬去遷就後端。
 它們是本專案相對於 `cowork-master` 的全部領域價值，正確的方向是後端補上，而不是前端砍掉。
+
+---
+
+## 6. Chat panel 流程比對(UI 層)
+
+比對日期：2026-08-25。前面幾節談的是**契約**落差；這一節談的是同樣接得上串流之後，
+兩邊 chat panel 在**畫面流程**上的差異。對照檔案：
+
+|      | 本專案                             | `cowork-master`                                         |
+| ---- | ---------------------------------- | ------------------------------------------------------- |
+| 容器 | `components/chat/ThreadPanel.tsx`  | `components/chat/ChatPanel.tsx`                         |
+| 列表 | `components/chat/MessageList.tsx`  | `components/chat/MessageList.tsx` + `MessageBubble.tsx` |
+| 輸入 | `components/chat/ChatComposer.tsx` | `QuickChips.tsx` + `PromptSender.tsx`                   |
+| 串流 | `hooks/useAgentStream.ts`          | `hooks/useAgentStream.ts`                               |
+
+### 幾乎一致的部分
+
+`useAgentStream` 的 reducer 骨架兩邊近乎逐行對應：`START` / `EVENT` / `DONE` /
+`STOPPED` / `RESET`、`STEP` 依 `stepKey` upsert（同一個 key 是狀態轉移不是新步驟）、
+`TOKEN`／`THINKING`／`CODE` 累加、`ARTIFACT`／`ANSWER`／`TABLE` 覆寫，以及
+**`ERROR` 事件刻意不結束 run**（後端在 ERROR 之後還會送 finalize 步驟，是串流關閉才算結束）。
+`AbortController` 存在 ref、unmount 時 abort、`stop()` 先 dispatch `STOPPED` 再 abort，
+兩邊連理由都一樣。Enter 送出／Shift+Enter 換行、「+」選單、串流中送出鈕變停止鈕也一致。
+
+### 流程差異
+
+| #   | 項目                      | `cowork-master`                                                                                                                                    | 本專案                                                                                                                                       |
+| --- | ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | **Quick chips**           | `onPick` → `setPrefill()`，**把字填進輸入框**讓使用者確認／修改後再送                                                                              | 點了**直接送出**，且帶 `scenarioKey` / `artifactKind`（[ADR-0006](adr/0006-scenario-drives-clarification.md)，對方沒有這個概念）             |
+| 2   | **樂觀 user bubble**      | `pendingQuestion` 立刻畫出使用者的泡泡，再與 history 尾巴比對去重                                                                                  | **沒有**。整輪跑完並 refetch 之前，使用者剛送的那句話不在畫面上                                                                              |
+| 3   | **尾巴重複抑制**          | live 已結束但還在畫面上時，`displayMessages` 砍掉 history 最後一則 AI                                                                              | 改用 `runEndedVisibly`（stopped／error／question）決定 live 留不留；乾淨結束就交棒給 history                                                 |
+| 4   | **`reset()`**             | 串流 true→false 時呼叫，但**有 questions 時刻意延後**，讓卡片還能互動                                                                              | **完全沒呼叫**（`ThreadView` 沒解構 `reset`）。stopped／error 的 live 區塊會留到下一次 `send` 才被 `START` 清掉                              |
+| 5   | **耗時**                  | 掛在**該輪的 AI 泡泡**上；串流中另有 `timerStartedAt` 即時計時                                                                                     | 整串**底部一行** `Took Xs`，不屬於任何訊息；串流中無即時計時                                                                                 |
+| 6   | **反問資料模型**          | `Question[]` 陣列，從 `questionsJson` parse；回答**組成自然語言**當新訊息送出                                                                      | 單一 schema-driven `QuestionForm`（含 `formKey`）；回答送結構化 `{ answers, inReplyTo }`，並以 `AnsweredConditions` 摘要落成訊息             |
+| 7   | **Artifact 發布**         | ChatPanel 自己管：`onArtifactChange` + **history fallback**（找最後一則有 `artifactId` 的訊息）+ 從 history 推版本清單（`index+1`）                | zustand `setStreamedArtifactId`，只發布 **live** artifact；fallback 與版本推導在 artifact hooks，不在 chat panel                             |
+| 8   | **附件**                  | **session 層級、伺服器保存**：`session.files`、`deleteFile`、footer `FileChips`、header `AttachmentsPopover`；**過期檔會擋住送出**並顯示保留期警告 | **單則訊息、純前端**：`useFileAttachments`，chip 在 composer 內，送出即清；無過期概念                                                        |
+| 9   | **中止後的資料同步**      | `AbortError` 後**兩段延遲 invalidate（800ms → 再 800ms）**，追後端非同步 `doOnCancel` 落庫                                                         | 只有 `handleSend` 裡一次 invalidate，沒有補追                                                                                                |
+| 10  | **invalidate 範圍／時機** | `['session', id]` **和** `['sessions']`，且在 dispatch `DONE` **之前** await（註解寫明是為了避免 live→history 交棒時閃爍）                         | 只 invalidate `messagesQueryKey(sessionId)`，且在 `DONE` **之後**                                                                            |
+| 11  | **自動捲動**              | MessageList 捲自己的容器，依賴 `[messages, live, optimisticUserText, bottomSlot]`，立即                                                            | ThreadPanel 捲 `.body`，**40ms timeout**（對齊 mockup），依賴 `[messages.length, steps.length, liveText]`                                    |
+| 12  | **Steps 渲染**            | `@ant-design/x` 的 `ThoughtChain`                                                                                                                  | 手刻 `StepRow` / `StepsRecap` + `@ant-design/icons`（為對齊 mockup，見 [ADR-0004](adr/0004-mockup-visual-fidelity-via-ant-design-icons.md)） |
+| 13  | **Header／空狀態**        | 標題 + 副標「Import data, prompt eRD AI…」+ AttachmentsPopover；空狀態一行純文字                                                                   | 標題 + 資料來源 chip + ThemeToggle；空狀態 icon 磚 + 標題 + 副標（對齊 mockup）                                                              |
+| 14  | **斷線文案**              | `連線中斷，請重新送出一次`                                                                                                                         | `Connection lost — send it again.`（刻意英文，見第 4 節的文案討論）                                                                          |
+
+### 建議
+
+- **#2 樂觀 user bubble ——建議補**。一輪分析要跑好幾秒，這段期間使用者看不到自己剛送出的
+  內容，是這次比對裡體感最差的一項。
+- **#10 沒有 invalidate `sessions` ——建議補**。跑完之後左欄 session 的最後活動時間與排序
+  不會更新，成本只是多一個 query key。
+- **#9** 只有在後端真的非同步落庫時才會咬到，等 live 模式接起來再看。
+- **#4** 目前不是 bug（`START` 會清乾淨），但 stopped／error 的殘留區塊會跨越使用者的其他
+  操作，值得順手補一個 `reset()`。
+- 其餘各項多半是本專案刻意的設計（#1、#6、#7、#8、#11、#12、#13），維持現狀。
