@@ -10,8 +10,6 @@ import { useStudioLayoutStore } from '@/stores/useStudioLayoutStore';
 
 import { StudioPage } from './StudioPage';
 
-const GB = 1024 * 1024 * 1024;
-
 // StudioPage is only the /cowork index route's content now; the session
 // rail lives in StudioShell, the route's shared parent (router.tsx). This
 // mirrors that nesting so the rendered tree matches production.
@@ -47,10 +45,10 @@ function composerAttachments() {
   return screen.getByRole('list', { name: 'Attached files' });
 }
 
+// Real bytes, not a faked size property: uploads now travel as multipart form
+// data through the mock endpoint, which measures the actual part bytes.
 function fileOfSize(name: string, sizeBytes: number): File {
-  const file = new File([''], name, { type: 'text/csv' });
-  Object.defineProperty(file, 'size', { value: sizeBytes });
-  return file;
+  return new File([new Uint8Array(sizeBytes)], name, { type: 'text/csv' });
 }
 
 describe('File attachments', () => {
@@ -108,21 +106,9 @@ describe('File attachments', () => {
     expect(within(dialog).queryByText('file-5.csv')).not.toBeInTheDocument();
   });
 
-  it('rejects a file that would push the total over 5 GB', async () => {
-    const user = userEvent.setup();
-    renderStudioPage();
-    const dialog = await selectASessionAndOpenFileModal(user);
-
-    const input = screen.getByLabelText('Choose files');
-    await user.upload(input, fileOfSize('big-1.csv', 4 * GB));
-    await within(dialog).findByText('big-1.csv');
-
-    await user.upload(input, fileOfSize('big-2.csv', 2 * GB));
-
-    expect(await within(dialog).findByRole('alert')).toHaveTextContent('總計上限 5 GB');
-    expect(within(dialog).queryByText('big-2.csv')).not.toBeInTheDocument();
-    expect(within(dialog).getByText('big-1.csv')).toBeInTheDocument();
-  });
+  // The 5 GB total-size rule lives in planFileAdditions and is covered by
+  // utils/uploadValidation.test.ts — multi-GB File objects cannot ride a real
+  // multipart body in tests.
 
   it('renders modal file rows with a type-colored icon, a type/size line, and a remove button', async () => {
     const user = userEvent.setup();

@@ -1,80 +1,42 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 
-import type { Upload } from '@/types/api/index';
+import { fileApi } from '@/api/fileApi';
+import { planFileAdditions } from '@/utils/uploadValidation';
 
-import { useCreateUpload } from './useCreateUpload';
+import { sessionDetailQueryKey, useSessionDetail } from './useSessionDetail';
 
-export const MAX_ATTACHMENT_COUNT = 5;
-export const MAX_ATTACHMENT_TOTAL_BYTES = 5 * 1024 * 1024 * 1024;
-// The analyses only consume spreadsheet data; the mockup enforces the same
-// whitelist on the picker (`accept`) and on dropped files.
-export const ACCEPTED_FILE_EXTENSIONS = ['.csv', '.xlsx', '.xls'] as const;
-export const ACCEPT_ATTRIBUTE = ACCEPTED_FILE_EXTENSIONS.join(',');
+export {
+  ACCEPT_ATTRIBUTE,
+  ACCEPTED_FILE_EXTENSIONS,
+  MAX_ATTACHMENT_COUNT,
+  MAX_ATTACHMENT_TOTAL_BYTES,
+} from '@/utils/uploadValidation';
 
-function hasAcceptedExtension(fileName: string) {
-  const lower = fileName.toLowerCase();
-  return ACCEPTED_FILE_EXTENSIONS.some((ext) => lower.endsWith(ext));
-}
-
-interface FileLike {
-  name: string;
-  size: number;
-}
-
-export function useFileAttachments() {
-  const [attachments, setAttachments] = useState<Upload[]>([]);
+/** Session-level attachments per the backend contract: files live on the session
+ *  (POST /sessions/{id}/files) and surface through SessionDetail.files. Count, size
+ *  and extension limits are validated client-side before anything is uploaded. */
+export function useFileAttachments(sessionId: string) {
   const [error, setError] = useState('');
-  const createUpload = useCreateUpload();
+  const queryClient = useQueryClient();
+  const { data: detail } = useSessionDetail(sessionId);
+  const attachments = detail.files;
 
-  async function addFiles(files: Iterable<FileLike>) {
-    const existingNames = new Set(attachments.map((a) => a.fileName));
-    let count = attachments.length;
-    let total = attachments.reduce((sum, a) => sum + a.sizeBytes, 0);
+  async function addFiles(files: Iterable<File>) {
+    const plan = planFileAdditions(attachments, files);
+    setError(plan.error);
 
-    const accepted: FileLike[] = [];
-    const rejections: string[] = [];
-
-    for (const file of Array.from(files)) {
-      if (existingNames.has(file.name)) {
-        continue;
-      }
-      if (!hasAcceptedExtension(file.name)) {
-        if (!rejections.includes('僅支援 .csv / .xlsx')) {
-          rejections.push('僅支援 .csv / .xlsx');
-        }
-        continue;
-      }
-      if (count >= MAX_ATTACHMENT_COUNT) {
-        rejections.push(`最多 ${MAX_ATTACHMENT_COUNT} 個檔案`);
-        break;
-      }
-      if (total + file.size > MAX_ATTACHMENT_TOTAL_BYTES) {
-        rejections.push('總計上限 5 GB');
-        break;
-      }
-      accepted.push(file);
-      existingNames.add(file.name);
-      count += 1;
-      total += file.size;
-    }
-
-    setError(rejections.join(' · '));
-
-    for (const file of accepted) {
-      const upload = await createUpload.mutateAsync({ fileName: file.name, sizeBytes: file.size });
-      setAttachments((prev) => [...prev, upload]);
+    if (plan.accepted.length > 0) {
+      await fileApi.uploadFiles(sessionId, plan.accepted);
+      await queryClient.invalidateQueries({ queryKey: sessionDetailQueryKey(sessionId) });
     }
   }
 
-  function removeFile(fileName: string) {
-    setAttachments((prev) => prev.filter((a) => a.fileName !== fileName));
+  async function removeFile(fileId: string) {
+    await fileApi.deleteFile(sessionId, fileId);
     setError('');
+    await queryClient.invalidateQueries({ queryKey: sessionDetailQueryKey(sessionId) });
   }
 
-  function clear() {
-    setAttachments([]);
-    setError('');
-  }
-
-  return { attachments, error, addFiles, removeFile, clear };
+  return { attachments, error, addFiles, removeFile };
 }

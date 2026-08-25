@@ -1,5 +1,5 @@
 import type { ScenarioKey } from './scenario';
-import type { Upload } from './upload';
+import type { UploadedFileInfo } from './upload';
 
 /** The backend's Message verbatim (cowork master): its Mongo document shape leaks into
  *  the wire — steps and questions arrive as JSON strings — and the UI parses them at
@@ -17,6 +17,7 @@ export interface Message {
   questionsJson: string | null;
   /** 前端-only extension：mock 會回、真後端沒有。 */
   scenario?: ScenarioKey;
-  /** 前端-only extension：訊息夾帶檔案的快照（mockup 的 bubble chips），後端尚未支援。 */
-  attachments?: Upload[];
+  /** 前端-only extension：送出當下 session 檔案的快照（mockup 的 bubble chips），
+   *  後端尚未支援。 */
+  attachments?: UploadedFileInfo[];
 }

@@ -176,6 +176,7 @@ function ThreadView({ sessionId }: { sessionId: string }) {
       </div>
       <div className={styles.composer}>
         <ChatComposer
+          sessionId={sessionId}
           onSend={handleSend}
           disabled={state.isStreaming}
           isStreaming={state.isStreaming}
