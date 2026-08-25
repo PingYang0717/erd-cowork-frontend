@@ -1,5 +1,5 @@
 import { CheckOutlined, DownOutlined, HistoryOutlined } from '@ant-design/icons';
-import { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 import { Tooltip } from '@/components/common/Tooltip';
 import type { ArtifactVersion } from '@/types/api/index';
@@ -11,15 +11,13 @@ import styles from './VersionSwitcher.module.css';
 // primary-bg highlight + primary vN on the current version, per-row relative
 // time and a green generated check. Shared by the Studio panel and the
 // full-page view's toolbar.
-export function VersionSwitcher({
-  versions,
-  activeVersion,
-  onSelect,
-}: {
+interface VersionSwitcherProps {
   versions: ArtifactVersion[];
   activeVersion: ArtifactVersion | undefined;
   onSelect: (id: string) => void;
-}) {
+}
+
+const VersionSwitcher: React.FC<VersionSwitcherProps> = ({ versions, activeVersion, onSelect }) => {
   const [isOpen, setIsOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
 
@@ -102,4 +100,7 @@ export function VersionSwitcher({
       )}
     </div>
   );
-}
+};
+
+export { VersionSwitcher };
+export default VersionSwitcher;

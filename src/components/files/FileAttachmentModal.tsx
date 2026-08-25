@@ -6,7 +6,7 @@ import {
   FileTextOutlined,
 } from '@ant-design/icons';
 import { Button, Modal } from 'antd';
-import { useRef } from 'react';
+import React, { useRef } from 'react';
 
 import { ACCEPT_ATTRIBUTE, MAX_ATTACHMENT_COUNT } from '@/hooks/useFileAttachments';
 import type { Upload } from '@/types/api/index';
@@ -51,21 +51,23 @@ function FileRow({ upload, onRemove }: { upload: Upload; onRemove: () => void })
   );
 }
 
-export function FileAttachmentModal({
-  open,
-  onClose,
-  attachments,
-  error,
-  onAddFiles,
-  onRemoveFile,
-}: {
+interface FileAttachmentModalProps {
   open: boolean;
   onClose: () => void;
   attachments: Upload[];
   error: string;
   onAddFiles: (files: FileList) => void;
   onRemoveFile: (fileName: string) => void;
-}) {
+}
+
+const FileAttachmentModal: React.FC<FileAttachmentModalProps> = ({
+  open,
+  onClose,
+  attachments,
+  error,
+  onAddFiles,
+  onRemoveFile,
+}) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const totalBytes = attachments.reduce((sum, a) => sum + a.sizeBytes, 0);
 
@@ -151,4 +153,7 @@ export function FileAttachmentModal({
       </div>
     </Modal>
   );
-}
+};
+
+export { FileAttachmentModal };
+export default FileAttachmentModal;

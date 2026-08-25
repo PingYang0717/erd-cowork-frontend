@@ -12,7 +12,7 @@ import {
 } from '@ant-design/icons';
 import { Dropdown, Input } from 'antd';
 import type { ReactNode } from 'react';
-import { useState } from 'react';
+import React, { useState } from 'react';
 
 import type { SendMessageInput } from '@/api/messageApi';
 import { ConnectorsPanel } from '@/components/connectors/ConnectorsPanel';
@@ -75,7 +75,7 @@ interface ChatComposerProps {
   onStop: () => void;
 }
 
-export function ChatComposer({ onSend, disabled, isStreaming, onStop }: ChatComposerProps) {
+const ChatComposer: React.FC<ChatComposerProps> = ({ onSend, disabled, isStreaming, onStop }) => {
   const [draft, setDraft] = useState('');
   const [fileModalOpen, setFileModalOpen] = useState(false);
 
@@ -231,4 +231,7 @@ export function ChatComposer({ onSend, disabled, isStreaming, onStop }: ChatComp
       <ConnectorsPanel open={connectorsOpen} onClose={closeConnectors} />
     </div>
   );
-}
+};
+
+export { ChatComposer };
+export default ChatComposer;

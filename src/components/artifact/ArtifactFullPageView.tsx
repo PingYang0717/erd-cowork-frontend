@@ -7,7 +7,7 @@ import {
   UsergroupAddOutlined,
 } from '@ant-design/icons';
 import { useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import { ThemeToggle } from '@/components/common/ThemeToggle';
@@ -29,7 +29,11 @@ interface FullPageLocationState {
   from?: 'gallery' | 'studio';
 }
 
-export function ArtifactFullPageView({ artifactId }: { artifactId: string | undefined }) {
+interface ArtifactFullPageViewProps {
+  artifactId: string | undefined;
+}
+
+const ArtifactFullPageView: React.FC<ArtifactFullPageViewProps> = ({ artifactId }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const queryClient = useQueryClient();
@@ -136,4 +140,7 @@ export function ArtifactFullPageView({ artifactId }: { artifactId: string | unde
       )}
     </div>
   );
-}
+};
+
+export { ArtifactFullPageView };
+export default ArtifactFullPageView;

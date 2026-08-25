@@ -6,7 +6,7 @@ import {
   SortAscendingOutlined,
 } from '@ant-design/icons';
 import { Dropdown } from 'antd';
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { useArtifacts } from '@/hooks/useArtifacts';
@@ -71,7 +71,7 @@ function sortArtifacts(artifacts: Artifact[], sort: SortKey) {
   return sorted;
 }
 
-export function ArtifactsGallery() {
+const ArtifactsGallery: React.FC = () => {
   const { data } = useArtifacts();
   const navigate = useNavigate();
   const [category, setCategory] = useState<FilterCategory>('all');
@@ -165,7 +165,7 @@ export function ArtifactsGallery() {
       )}
     </div>
   );
-}
+};
 
 function FilterPill({
   label,
@@ -190,3 +190,6 @@ function FilterPill({
     </button>
   );
 }
+
+export { ArtifactsGallery };
+export default ArtifactsGallery;

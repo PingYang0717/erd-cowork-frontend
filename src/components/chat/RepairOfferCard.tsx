@@ -1,4 +1,5 @@
 import { LoadingOutlined } from '@ant-design/icons';
+import React from 'react';
 
 import type { RepairOffer } from '@/stores/useRepairOfferStore';
 
@@ -6,18 +7,16 @@ import styles from './RepairOfferCard.module.css';
 
 const MAX_MESSAGE = 120;
 
-/** Offers to rebuild an artifact whose HTML threw while running. It sits in the thread
- *  rather than the Artifact pane because repairing is something the agent does, and the
- *  thread is where the agent's work is. */
-export function RepairOfferCard({
-  offer,
-  onConfirm,
-  onDismiss,
-}: {
+interface RepairOfferCardProps {
   offer: RepairOffer;
   onConfirm: () => void;
   onDismiss: () => void;
-}) {
+}
+
+/** Offers to rebuild an artifact whose HTML threw while running. It sits in the thread
+ *  rather than the Artifact pane because repairing is something the agent does, and the
+ *  thread is where the agent's work is. */
+const RepairOfferCard: React.FC<RepairOfferCardProps> = ({ offer, onConfirm, onDismiss }) => {
   const firstMessage = offer.errors[0]?.message ?? '';
   const shown =
     firstMessage.length > MAX_MESSAGE ? `${firstMessage.slice(0, MAX_MESSAGE)}…` : firstMessage;
@@ -58,4 +57,7 @@ export function RepairOfferCard({
       )}
     </div>
   );
-}
+};
+
+export { RepairOfferCard };
+export default RepairOfferCard;

@@ -5,7 +5,7 @@ import {
   MenuUnfoldOutlined,
   PlusOutlined,
 } from '@ant-design/icons';
-import { useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useLocation, useNavigate } from 'react-router-dom';
 
@@ -18,7 +18,7 @@ interface CollapsedSessionRailProps {
   onExpand: () => void;
 }
 
-export function CollapsedSessionRail({ onExpand }: CollapsedSessionRailProps) {
+const CollapsedSessionRail: React.FC<CollapsedSessionRailProps> = ({ onExpand }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [historyOpen, setHistoryOpen] = useState(false);
@@ -141,4 +141,7 @@ export function CollapsedSessionRail({ onExpand }: CollapsedSessionRailProps) {
       </div>
     </div>
   );
-}
+};
+
+export { CollapsedSessionRail };
+export default CollapsedSessionRail;

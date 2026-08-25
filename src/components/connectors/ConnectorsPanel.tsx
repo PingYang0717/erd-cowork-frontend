@@ -20,7 +20,7 @@ import {
 } from '@ant-design/icons';
 import { Button, Input, Modal } from 'antd';
 import type { ReactNode } from 'react';
-import { useState } from 'react';
+import React, { useState } from 'react';
 
 import { useAddConnector, useSetConnectorStatus } from '@/hooks/useConnectorMutations';
 import { useConnectors } from '@/hooks/useConnectors';
@@ -101,7 +101,12 @@ function toggleTitle(status: ConnectorStatus, isPending: boolean) {
 
 const EMPTY_CONNECTORS: Connector[] = [];
 
-export function ConnectorsPanel({ open, onClose }: { open: boolean; onClose: () => void }) {
+interface ConnectorsPanelProps {
+  open: boolean;
+  onClose: () => void;
+}
+
+const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ open, onClose }) => {
   const { data } = useConnectors();
   const connectors = data ?? EMPTY_CONNECTORS;
   const setStatus = useSetConnectorStatus();
@@ -316,4 +321,7 @@ export function ConnectorsPanel({ open, onClose }: { open: boolean; onClose: () 
       </div>
     </Modal>
   );
-}
+};
+
+export { ConnectorsPanel };
+export default ConnectorsPanel;

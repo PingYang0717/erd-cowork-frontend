@@ -6,7 +6,7 @@ import {
   LinkOutlined,
 } from '@ant-design/icons';
 import { Button, Input, Modal, Select } from 'antd';
-import { useState } from 'react';
+import React, { useState } from 'react';
 
 import { useShareArtifact } from '@/hooks/useArtifactMutations';
 import { useDirectory } from '@/hooks/useDirectory';
@@ -14,15 +14,13 @@ import type { Artifact } from '@/types/api/index';
 
 import styles from './ShareArtifactDialog.module.css';
 
-export function ShareArtifactDialog({
-  open,
-  onClose,
-  artifact,
-}: {
+interface ShareArtifactDialogProps {
   open: boolean;
   onClose: () => void;
   artifact: Artifact;
-}) {
+}
+
+const ShareArtifactDialog: React.FC<ShareArtifactDialogProps> = ({ open, onClose, artifact }) => {
   const { data: directory } = useDirectory();
   const shareArtifact = useShareArtifact();
   const [targetIds, setTargetIds] = useState<string[]>([]);
@@ -137,4 +135,7 @@ export function ShareArtifactDialog({
       </div>
     </Modal>
   );
-}
+};
+
+export { ShareArtifactDialog };
+export default ShareArtifactDialog;

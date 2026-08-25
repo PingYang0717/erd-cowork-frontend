@@ -5,7 +5,7 @@ import {
   ReloadOutlined,
   ShareAltOutlined,
 } from '@ant-design/icons';
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { Tooltip } from '@/components/common/Tooltip';
@@ -38,7 +38,7 @@ function EmptyPanel() {
   );
 }
 
-export function ArtifactPanel() {
+const ArtifactPanel: React.FC = () => {
   const selectedSessionId = useSessionSelectionStore((s) => s.selectedSessionId);
 
   if (!selectedSessionId) {
@@ -46,7 +46,7 @@ export function ArtifactPanel() {
   }
 
   return <ArtifactPanelView sessionId={selectedSessionId} />;
-}
+};
 
 function ArtifactPanelView({ sessionId }: { sessionId: string }) {
   const { data: messages } = useMessages(sessionId);
@@ -203,3 +203,6 @@ function GeneratedToast() {
     </div>
   );
 }
+
+export { ArtifactPanel };
+export default ArtifactPanel;

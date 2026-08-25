@@ -1,3 +1,5 @@
+import React from 'react';
+
 import { ArtifactPanel } from '@/components/artifact/ArtifactPanel';
 import { ThreadPanel } from '@/components/chat/ThreadPanel';
 import DataBoundary from '@/components/common/DataBoundary';
@@ -8,7 +10,7 @@ import styles from './StudioLayout.module.css';
 
 // The thread + Artifact panel two-pane layout — mounted as the /cowork
 // index route's content inside StudioShell's session rail + <Outlet/>.
-export function StudioLayout() {
+const StudioLayout: React.FC = () => {
   const threadWidth = useStudioLayoutStore((s) => s.threadWidth);
   const setThreadWidth = useStudioLayoutStore((s) => s.setThreadWidth);
 
@@ -32,4 +34,7 @@ export function StudioLayout() {
       </section>
     </div>
   );
-}
+};
+
+export { StudioLayout };
+export default StudioLayout;

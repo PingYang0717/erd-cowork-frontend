@@ -1,7 +1,7 @@
 import { DatabaseOutlined, ThunderboltFilled } from '@ant-design/icons';
 import { useQueryClient } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
-import { useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 
 import type { SendMessageInput } from '@/api/messageApi';
 import { ThemeToggle } from '@/components/common/ThemeToggle';
@@ -49,7 +49,7 @@ function EmptyState({ heading, subtitle }: { heading: string; subtitle: ReactNod
   );
 }
 
-export function ThreadPanel() {
+const ThreadPanel: React.FC = () => {
   const selectedSessionId = useSessionSelectionStore((s) => s.selectedSessionId);
 
   if (!selectedSessionId) {
@@ -67,7 +67,7 @@ export function ThreadPanel() {
   }
 
   return <ThreadView sessionId={selectedSessionId} />;
-}
+};
 
 function ThreadView({ sessionId }: { sessionId: string }) {
   const queryClient = useQueryClient();
@@ -174,3 +174,6 @@ function ThreadView({ sessionId }: { sessionId: string }) {
     </div>
   );
 }
+
+export { ThreadPanel };
+export default ThreadPanel;

@@ -1,12 +1,17 @@
 import { DownOutlined, RightOutlined } from '@ant-design/icons';
 import type { ReactNode } from 'react';
-import { useState } from 'react';
+import React, { useState } from 'react';
 
 import styles from './CollapsiblePanel.module.css';
 
+interface CollapsiblePanelProps {
+  label: string;
+  children: ReactNode;
+}
+
 /** The shape every live-only side channel of a run uses: a labelled toggle over
  *  something that belongs to this connection, not to the conversation (ADR-0005). */
-export function CollapsiblePanel({ label, children }: { label: string; children: ReactNode }) {
+const CollapsiblePanel: React.FC<CollapsiblePanelProps> = ({ label, children }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
   return (
@@ -27,4 +32,7 @@ export function CollapsiblePanel({ label, children }: { label: string; children:
       {isExpanded && children}
     </div>
   );
-}
+};
+
+export { CollapsiblePanel };
+export default CollapsiblePanel;

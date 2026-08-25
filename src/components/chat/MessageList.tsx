@@ -7,7 +7,7 @@ import {
   RightOutlined,
   ThunderboltFilled,
 } from '@ant-design/icons';
-import { useState } from 'react';
+import React, { useState } from 'react';
 
 import { AttachmentChip } from '@/components/files/AttachmentChip';
 import type { Message, QuestionForm, StepItem, StepStatus, TableResult } from '@/types/api/index';
@@ -212,7 +212,12 @@ interface MessageListProps {
   onAnswer: (answers: Answers) => void;
 }
 
-export function MessageList({ messages, live, lastRunDurationMs, onAnswer }: MessageListProps) {
+const MessageList: React.FC<MessageListProps> = ({
+  messages,
+  live,
+  lastRunDurationMs,
+  onAnswer,
+}) => {
   return (
     <div>
       {messages.map((message) => (
@@ -224,4 +229,7 @@ export function MessageList({ messages, live, lastRunDurationMs, onAnswer }: Mes
       )}
     </div>
   );
-}
+};
+
+export { MessageList };
+export default MessageList;

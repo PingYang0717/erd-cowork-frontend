@@ -1,5 +1,5 @@
 import { InfoCircleOutlined, SendOutlined } from '@ant-design/icons';
-import { useState } from 'react';
+import React, { useState } from 'react';
 
 import { useConnectorsPanelStore } from '@/stores/useConnectorsPanelStore';
 import type { QuestionAnswer, QuestionField, QuestionForm } from '@/types/api/index';
@@ -115,16 +115,15 @@ function DataTypeHint({ hint }: { hint: string }) {
   );
 }
 
+interface QuestionFormCardProps {
+  form: QuestionForm;
+  onSubmit: (answers: Answers) => void;
+}
+
 /** One reask from the agent: the fields it needs answered before it can carry on.
  *  Which fields appear is the Scenario's contract; what is in `options` is resolved
  *  when the run happens (ADR-0006). */
-export function QuestionFormCard({
-  form,
-  onSubmit,
-}: {
-  form: QuestionForm;
-  onSubmit: (answers: Answers) => void;
-}) {
+const QuestionFormCard: React.FC<QuestionFormCardProps> = ({ form, onSubmit }) => {
   const [answers, setAnswers] = useState<Answers>({});
   const [searches, setSearches] = useState<Record<string, string>>({});
 
@@ -250,4 +249,7 @@ export function QuestionFormCard({
       </div>
     </div>
   );
-}
+};
+
+export { QuestionFormCard };
+export default QuestionFormCard;

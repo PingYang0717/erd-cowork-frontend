@@ -1,5 +1,5 @@
 import { CheckCircleFilled, DownOutlined, RightOutlined } from '@ant-design/icons';
-import { useState } from 'react';
+import React, { useState } from 'react';
 
 import type { QuestionAnswer, QuestionForm } from '@/types/api/index';
 
@@ -31,15 +31,14 @@ function answerLabels(form: QuestionForm, answers: Record<string, QuestionAnswer
   return labels;
 }
 
-/** What the user set in a reask, once the run has moved on. The form itself is gone by
- *  then — answering starts the next run — so this reads from the persisted message. */
-export function AnsweredConditions({
-  form,
-  answers,
-}: {
+interface AnsweredConditionsProps {
   form: QuestionForm;
   answers: Record<string, QuestionAnswer>;
-}) {
+}
+
+/** What the user set in a reask, once the run has moved on. The form itself is gone by
+ *  then — answering starts the next run — so this reads from the persisted message. */
+const AnsweredConditions: React.FC<AnsweredConditionsProps> = ({ form, answers }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const labels = answerLabels(form, answers);
 
@@ -72,4 +71,7 @@ export function AnsweredConditions({
       )}
     </div>
   );
-}
+};
+
+export { AnsweredConditions };
+export default AnsweredConditions;
