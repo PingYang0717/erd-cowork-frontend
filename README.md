@@ -79,7 +79,7 @@ src/
 
 `src/mocks/handlers.ts` 以 MSW 攔截所有 `/api/*` 請求，dev 模式走 browser worker、測試走 node server，共用同一份 handlers。集合資料透過 `createPersistedResource` 存在 `localStorage`，重新整理不會遺失。
 
-**API 契約的唯一來源是 [`docs/api/interface.md`](./docs/api/interface.md)** —— 換成真實後端時照著實作，前端呼叫端不需要改。Artifact 的擁有者只存在 mock 端（`ownerId`），對外只以 `Artifact.mine` 呈現，依 `services/currentUser.ts` 的 mock 身分解析。
+**API 契約的唯一來源是 [`docs/api/interface.md`](./docs/api/interface.md)** —— 換成真實後端時照著實作，前端呼叫端不需要改。Artifact 的擁有者只存在 mock 端（`ownerId`），對外只以 `Artifact.mine` 呈現，依 `config/currentUser.ts` 的 mock 身分解析。
 
 ---
 

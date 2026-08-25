@@ -77,7 +77,7 @@ import { Button } from 'antd';
 
 // 2. 內部別名路徑(@/ 開頭)
 import { useThemeStore } from '@/stores/useThemeStore';
-import { apiClient } from '@/services/apiClient';
+import { apiClient } from '@/api/apiClient';
 
 // 3. 相對路徑
 import { Sidebar } from '../Sidebar';
@@ -268,7 +268,7 @@ apiClient.interceptors.response.use(
 
 ```ts
 // src/api/userApi.ts
-import { apiClient } from '@/services/apiClient';
+import { apiClient } from '@/api/apiClient';
 import type { UserDTO } from '@/types/user';
 
 export const userApi = {
