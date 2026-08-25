@@ -279,7 +279,7 @@ export const userApi = {
 ```
 
 ```ts
-// src/features/user/hooks/useUser.ts
+// src/hooks/useUser.ts
 import { useQuery } from '@tanstack/react-query';
 import { userApi } from '../api/userApi';
 
@@ -298,7 +298,7 @@ export function useUser(id: string) {
 - 目前**不開 strict mode**,但以下幾條先強制:
   - 禁止 `any`(`typescript/no-explicit-any: error`),真的需要時用 `unknown` 再收斂型別
   - 函式的參數與回傳值型別盡量明確標註,不依賴推斷
-  - API 回應一律定義 DTO 型別(放 `types/` 或 `features/<功能>/types.ts`)
+  - API 回應一律定義 DTO 型別(放 `src/types/api/`)
 - 待專案穩定、型別覆蓋率提高後,再逐步開啟 `strict: true`(建議下一個里程碑就排入)。
 
 ---
@@ -365,7 +365,7 @@ npm install -D oxlint eslint-plugin-oxlint \
 
 ## 8. 主題色票(light / dark)
 
-色票唯一來源是 `src/features/theme/tokens.ts`,整份逐值抄自設計稿
+色票唯一來源是 `src/theme/tokens.ts`,整份逐值抄自設計稿
 `eRDWorkspace20260819.html` 的 `:root` / `:root[data-theme="dark"]`(ADR-0004)。
 不要在元件裡寫死顏色,也不要依賴 antd 演算法的預設值 —— 它的 dark 表面色
 (`#000000` / `#141414` / `#1f1f1f`)與設計稿(`#17181c` / `#1f1f22` /
