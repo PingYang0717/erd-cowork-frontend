@@ -57,6 +57,7 @@ const SUGGESTED_PROMPTS: { label: string; text: string; icon: ReactNode }[] = [
 ];
 
 interface ChatComposerProps {
+  sessionId: string;
   onSend: (input: SendInput) => void;
   disabled: boolean;
   /** While a run is streaming the send control becomes a stop control. */
@@ -64,7 +65,13 @@ interface ChatComposerProps {
   onStop: () => void;
 }
 
-const ChatComposer: React.FC<ChatComposerProps> = ({ onSend, disabled, isStreaming, onStop }) => {
+const ChatComposer: React.FC<ChatComposerProps> = ({
+  sessionId,
+  onSend,
+  disabled,
+  isStreaming,
+  onStop,
+}) => {
   const [draft, setDraft] = useState('');
   const [fileModalOpen, setFileModalOpen] = useState(false);
 
@@ -73,17 +80,17 @@ const ChatComposer: React.FC<ChatComposerProps> = ({ onSend, disabled, isStreami
     error: attachmentError,
     addFiles,
     removeFile,
-    clear: clearAttachments,
-  } = useFileAttachments();
+  } = useFileAttachments(sessionId);
   const { data: connectors } = useConnectors();
   const connectorsOpen = useConnectorsPanelStore((store) => store.isOpen);
   const openConnectors = useConnectorsPanelStore((store) => store.open);
   const closeConnectors = useConnectorsPanelStore((store) => store.close);
   const connectedConnectorCount = selectConnected(connectors).length;
 
+  // Attachments do not travel with the message: they already live on the session
+  // (uploaded on attach), and the mock snapshots them onto the sent message.
   function send(question: string) {
-    onSend({ question, attachments: attachments.length > 0 ? attachments : undefined });
-    clearAttachments();
+    onSend({ question });
   }
 
   function submitDraft() {
@@ -116,7 +123,7 @@ const ChatComposer: React.FC<ChatComposerProps> = ({ onSend, disabled, isStreami
           <ul className={styles.attachmentsRow} aria-label="Attached files">
             {attachments.map((upload) => (
               <li key={upload.id}>
-                <AttachmentChip upload={upload} onRemove={() => removeFile(upload.fileName)} />
+                <AttachmentChip upload={upload} onRemove={() => void removeFile(upload.id)} />
               </li>
             ))}
           </ul>
@@ -208,8 +215,8 @@ const ChatComposer: React.FC<ChatComposerProps> = ({ onSend, disabled, isStreami
         onClose={() => setFileModalOpen(false)}
         attachments={attachments}
         error={attachmentError}
-        onAddFiles={addFiles}
-        onRemoveFile={removeFile}
+        onAddFiles={(files) => void addFiles(files)}
+        onRemoveFile={(fileId) => void removeFile(fileId)}
       />
       <ConnectorsPanel open={connectorsOpen} onClose={closeConnectors} />
     </div>

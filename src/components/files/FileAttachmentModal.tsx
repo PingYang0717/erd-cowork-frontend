@@ -1,4 +1,4 @@
-import {
+﻿import {
   CloseOutlined,
   CloudUploadOutlined,
   ExclamationCircleOutlined,
@@ -9,7 +9,7 @@ import { Button, Modal } from 'antd';
 import React, { useRef } from 'react';
 
 import { ACCEPT_ATTRIBUTE, MAX_ATTACHMENT_COUNT } from '@/hooks/useFileAttachments';
-import type { Upload } from '@/types/api/index';
+import type { UploadedFileInfo } from '@/types/api/index';
 import { formatBytes } from '@/utils/formatBytes';
 
 import styles from './FileAttachmentModal.module.css';
@@ -21,8 +21,8 @@ function fileExtension(fileName: string) {
 
 // The mockup's file rows color the icon by type: csv = primary,
 // xlsx/xls = success.
-function FileRow({ upload, onRemove }: { upload: Upload; onRemove: () => void }) {
-  const ext = fileExtension(upload.fileName);
+function FileRow({ upload, onRemove }: { upload: UploadedFileInfo; onRemove: () => void }) {
+  const ext = fileExtension(upload.name);
   return (
     <span className={styles.fileRow}>
       <span
@@ -34,7 +34,7 @@ function FileRow({ upload, onRemove }: { upload: Upload; onRemove: () => void })
         {ext === 'csv' ? <FileTextOutlined /> : <FileExcelOutlined />}
       </span>
       <span className={styles.fileRowInfo}>
-        <span className={styles.fileRowName}>{upload.fileName}</span>
+        <span className={styles.fileRowName}>{upload.name}</span>
         <span className={styles.fileRowMeta}>
           {ext.toUpperCase()} · {formatBytes(upload.sizeBytes)}
         </span>
@@ -42,7 +42,7 @@ function FileRow({ upload, onRemove }: { upload: Upload; onRemove: () => void })
       <button
         type="button"
         className={styles.fileRowRemove}
-        aria-label={`Remove ${upload.fileName}`}
+        aria-label={`Remove ${upload.name}`}
         onClick={onRemove}
       >
         <CloseOutlined aria-hidden />
@@ -54,10 +54,10 @@ function FileRow({ upload, onRemove }: { upload: Upload; onRemove: () => void })
 interface FileAttachmentModalProps {
   open: boolean;
   onClose: () => void;
-  attachments: Upload[];
+  attachments: UploadedFileInfo[];
   error: string;
   onAddFiles: (files: FileList) => void;
-  onRemoveFile: (fileName: string) => void;
+  onRemoveFile: (fileId: string) => void;
 }
 
 const FileAttachmentModal: React.FC<FileAttachmentModalProps> = ({
@@ -134,7 +134,7 @@ const FileAttachmentModal: React.FC<FileAttachmentModalProps> = ({
           <ul className={styles.attachedList}>
             {attachments.map((upload) => (
               <li key={upload.id}>
-                <FileRow upload={upload} onRemove={() => onRemoveFile(upload.fileName)} />
+                <FileRow upload={upload} onRemove={() => onRemoveFile(upload.id)} />
               </li>
             ))}
           </ul>

@@ -9,7 +9,7 @@ import type { DcItem } from '@/types/api/dcItem';
 import type { Message } from '@/types/api/message';
 import type { ScenarioKey } from '@/types/api/scenario';
 import type { Session } from '@/types/api/session';
-import type { Upload } from '@/types/api/upload';
+import type { UploadedFileInfo } from '@/types/api/upload';
 
 import { ARTIFACT_VERSION_CONTENT, buildArtifactFixture } from './artifactFixtures';
 import { DC_ITEM_FIXTURES, ROWS_PER_DC_ITEM } from './dcItemFixtures';
@@ -227,6 +227,54 @@ const connectors = createPersistedResource<Connector>('erd-cowork:connectors', [
   },
 ]);
 
+// Session-level files per the backend contract (POST /sessions/{id}/files).
+// sessionId is mock bookkeeping, stripped before a file reaches the client.
+interface StoredFile extends UploadedFileInfo {
+  sessionId: string;
+}
+
+function toFileDto(stored: StoredFile): UploadedFileInfo {
+  const { sessionId: _sessionId, ...rest } = stored;
+  return rest;
+}
+
+const sessionFiles = createPersistedResource<StoredFile>('erd-cowork:session-files', []);
+
+/** Byte-level multipart parser: request.formData() can't be used here because undici
+ *  brand-checks File entries and rejects jsdom's File in tests. latin1 maps one char
+ *  per byte, so part sizes stay exact. Only metadata is kept — the mock never stores
+ *  file contents. */
+async function parseMultipartFiles(
+  request: Request,
+): Promise<{ name: string; size: number; type: string }[]> {
+  const contentType = request.headers.get('content-type') ?? '';
+  const boundaryMatch = contentType.match(/boundary=(?:"([^"]+)"|([^;]+))/i);
+  if (!boundaryMatch) {
+    return [];
+  }
+  const boundary = `--${(boundaryMatch[1] ?? boundaryMatch[2]).trim()}`;
+  const text = new TextDecoder('latin1').decode(await request.arrayBuffer());
+  const parts = text.split(boundary).slice(1, -1);
+  const files: { name: string; size: number; type: string }[] = [];
+  for (const part of parts) {
+    const headerEnd = part.indexOf('\r\n\r\n');
+    if (headerEnd === -1) {
+      continue;
+    }
+    const headers = part.slice(0, headerEnd);
+    const filenameMatch = headers.match(/filename="([^"]*)"/i);
+    if (!filenameMatch) {
+      continue;
+    }
+    const typeMatch = headers.match(/content-type:\s*([^\r\n]+)/i);
+    // The part body runs from after the blank line to the \r\n preceding the
+    // next boundary marker.
+    const body = part.slice(headerEnd + 4, part.length - 2);
+    files.push({ name: filenameMatch[1], size: body.length, type: (typeMatch?.[1] ?? '').trim() });
+  }
+  return files;
+}
+
 const sessions = createPersistedResource<Session>('erd-cowork:sessions', [
   {
     id: 'session-1',
@@ -399,14 +447,16 @@ function streamRun(
 
 const dcItems = createPersistedResource<DcItem>('erd-cowork:dc-items', DC_ITEM_FIXTURES);
 
-/** In live mode a real backend serves these, so MSW must stay out of the way; every
- *  other handler keeps running because nothing else implements them
- *  (`docs/api/interface.md` → live 端點覆蓋範圍). */
+/** What the live backend serves, as "METHOD path" pairs. Filtering is method-aware:
+ *  GET /sessions/{id} is live-backed while PATCH and DELETE on the same session path
+ *  (rename, pin, delete — features the backend does not have) stay mocked even in
+ *  live mode (`docs/api/interface.md` → live 端點覆蓋範圍). */
 const LIVE_BACKED = [
-  '/api/sessions',
-  '/api/sessions/:id',
-  '/api/sessions/:sessionId/messages',
-  '/api/uploads',
+  'GET /api/sessions',
+  'GET /api/sessions/:sessionId',
+  'POST /api/sessions/:sessionId/messages',
+  'POST /api/sessions/:sessionId/files',
+  'DELETE /api/sessions/:sessionId/files/:fileId',
 ];
 
 export const allHandlers = [
@@ -469,8 +519,38 @@ export const allHandlers = [
         .read()
         .filter((message) => message.sessionId === session.id)
         .map(toMessageDto),
-      files: [],
+      files: sessionFiles
+        .read()
+        .filter((file) => file.sessionId === session.id)
+        .map(toFileDto),
     });
+  }),
+
+  http.post('/api/sessions/:sessionId/files', async ({ params, request }) => {
+    const sessionId = params.sessionId as string;
+    const incoming = await parseMultipartFiles(request);
+    if (incoming.length === 0) {
+      return new HttpResponse(null, { status: 400 });
+    }
+    const existingCount = sessionFiles.read().filter((f) => f.sessionId === sessionId).length;
+    const created: StoredFile[] = incoming.map((file, index) => ({
+      id: crypto.randomUUID(),
+      sessionId,
+      name: file.name,
+      alias: `t${existingCount + index + 1}`,
+      sizeBytes: file.size,
+      type: file.type || 'text/csv',
+      rowCount: null,
+      expired: false,
+    }));
+    sessionFiles.write([...sessionFiles.read(), ...created]);
+    return HttpResponse.json(created.map(toFileDto), { status: 201 });
+  }),
+
+  http.delete('/api/sessions/:sessionId/files/:fileId', ({ params }) => {
+    const all = sessionFiles.read();
+    sessionFiles.write(all.filter((file) => file.id !== params.fileId));
+    return new HttpResponse(null, { status: 204 });
   }),
 
   // A run is delivered as an agent-event stream, not a computed reply (ADR-0005).
@@ -479,13 +559,9 @@ export const allHandlers = [
   // instead of racing this one.
   http.post('/api/sessions/:sessionId/messages', async ({ params, request }) => {
     const sessionId = params.sessionId as string;
-    // The backend body (SendMessageRequest): question plus an optional base artifact.
-    // `attachments` is a 前端-only extension until session-level uploads land.
-    const body = (await request.json()) as {
-      question?: string;
-      baseArtifactId?: string;
-      attachments?: Upload[];
-    };
+    // The backend body (SendMessageRequest) verbatim: question plus an optional
+    // base artifact.
+    const body = (await request.json()) as { question?: string; baseArtifactId?: string };
 
     const question = body.question?.trim();
     if (!question) {
@@ -493,6 +569,15 @@ export const allHandlers = [
         { code: 'EMPTY_MESSAGE', message: 'Message is empty' },
         { status: 400 },
       );
+    }
+
+    // Snapshot the session's files onto the user message (the 前端-only extension
+    // behind the mockup's in-bubble chips), then consume them so the composer's
+    // chips row empties — mirrors eRDWorkspace20260819.html.
+    const allFiles = sessionFiles.read();
+    const consumedFiles = allFiles.filter((file) => file.sessionId === sessionId);
+    if (consumedFiles.length > 0) {
+      sessionFiles.write(allFiles.filter((file) => file.sessionId !== sessionId));
     }
 
     messages.write([
@@ -507,7 +592,7 @@ export const allHandlers = [
         createdAt: new Date().toISOString(),
         artifactTitle: null,
         questionsJson: null,
-        attachments: body.attachments?.length ? body.attachments : undefined,
+        attachments: consumedFiles.length > 0 ? consumedFiles.map(toFileDto) : undefined,
       },
     ]);
 
@@ -734,19 +819,19 @@ export const allHandlers = [
     connectors.write([...all, created]);
     return HttpResponse.json(created, { status: 201 });
   }),
-
-  http.post('/api/uploads', async ({ request }) => {
-    const body = (await request.json()) as { fileName: string; sizeBytes: number };
-    const upload: Upload = {
-      id: crypto.randomUUID(),
-      fileName: body.fileName,
-      sizeBytes: body.sizeBytes,
-    };
-    return HttpResponse.json(upload, { status: 201 });
-  }),
 ];
 
+/** What MSW should intercept for the given transport. Exported as a function so the
+ *  transport test can check both modes without rebuilding the module. */
+export function handlersForTransport(mode: 'mock' | 'live') {
+  if (mode === 'mock') {
+    return allHandlers;
+  }
+  return allHandlers.filter(
+    (handler) =>
+      !LIVE_BACKED.includes(`${String(handler.info.method)} ${String(handler.info.path)}`),
+  );
+}
+
 /** What MSW should intercept for the configured transport. */
-export const handlers = isLive
-  ? allHandlers.filter((handler) => !LIVE_BACKED.includes(String(handler.info.path)))
-  : allHandlers;
+export const handlers = handlersForTransport(isLive ? 'live' : 'mock');

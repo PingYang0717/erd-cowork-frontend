@@ -1,6 +1,5 @@
 import { getAuthHeaders } from '@/api/identity';
 import type { AgentEvent } from '@/types/api/agentEvent';
-import type { Upload } from '@/types/api/index';
 import { createSseParser } from '@/utils/sseParser';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? '';
@@ -26,8 +25,6 @@ export interface SendMessageArgs {
   question: string;
   /** Iterate on an existing Artifact version rather than starting from nothing. */
   baseArtifactId?: string;
-  /** 前端-only extension:訊息夾帶檔案。真後端忽略;session-level 上傳契約落地後移除。 */
-  attachments?: Upload[];
   signal: AbortSignal;
 }
 
@@ -47,7 +44,6 @@ export async function* streamAgentMessage(
     body: JSON.stringify({
       question: args.question,
       baseArtifactId: args.baseArtifactId,
-      attachments: args.attachments,
     }),
     signal: args.signal,
   });

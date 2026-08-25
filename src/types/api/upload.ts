@@ -1,9 +1,3 @@
-export interface Upload {
-  id: string;
-  fileName: string;
-  sizeBytes: number;
-}
-
 /** Backend contract shape (cowork master): POST /sessions/{id}/files response and
  *  SessionDetail.files. */
 export interface UploadedFileInfo {
