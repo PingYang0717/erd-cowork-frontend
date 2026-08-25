@@ -57,8 +57,8 @@ const VersionSwitcher: React.FC<VersionSwitcherProps> = ({ versions, activeVersi
           onClick={() => setIsOpen((v) => !v)}
         >
           <HistoryOutlined aria-hidden />
-          <span className={styles.versionTriggerN}>v{activeVersion?.n ?? 1}</span>
-          <span className={styles.versionTriggerLabel}>{activeVersion?.label ?? ''}</span>
+          <span className={styles.versionTriggerN}>v{activeVersion?.version ?? 1}</span>
+          <span className={styles.versionTriggerLabel}>{activeVersion?.title ?? ''}</span>
           <DownOutlined aria-hidden className={styles.versionTriggerChevron} />
         </button>
       </Tooltip>
@@ -68,10 +68,10 @@ const VersionSwitcher: React.FC<VersionSwitcherProps> = ({ versions, activeVersi
             版本 · 共 {versions.length} 個，可切換後再生成
           </div>
           {newestFirst.map((v) => {
-            const isCurrent = v.id === activeVersion?.id;
+            const isCurrent = v.artifactId === activeVersion?.artifactId;
             return (
               <button
-                key={v.id}
+                key={v.artifactId}
                 type="button"
                 role="menuitem"
                 aria-current={isCurrent ? 'true' : undefined}
@@ -81,14 +81,14 @@ const VersionSwitcher: React.FC<VersionSwitcherProps> = ({ versions, activeVersi
                     : styles.versionMenuItem
                 }
                 onClick={() => {
-                  onSelect(v.id);
+                  onSelect(v.artifactId);
                   setIsOpen(false);
                 }}
               >
-                <span className={styles.versionMenuItemN}>v{v.n}</span>
-                <span className={styles.versionMenuItemLabel}>{v.label}</span>
+                <span className={styles.versionMenuItemN}>v{v.version}</span>
+                <span className={styles.versionMenuItemLabel}>{v.title}</span>
                 <span className={styles.versionMenuItemTime}>
-                  {formatRelativeTime(v.createdAt)}
+                  {v.createdAt ? formatRelativeTime(v.createdAt) : ''}
                 </span>
                 {v.generated && (
                   <CheckOutlined aria-label="已生成" className={styles.versionMenuItemCheck} />

@@ -184,23 +184,6 @@ function buildFixture(content: ArtifactContent, kind: ArtifactKind = 'dashboard'
   };
 }
 
-// Content for specific historical Artifact versions, keyed by ArtifactVersion.id.
-// A versionId with no entry here is rendered by buildArtifactFixture from the
-// scenario and kind of the Artifact it belongs to, tagged with its version number.
-export const ARTIFACT_VERSION_CONTENT: Record<string, ArtifactFixture> = {
-  'artifact-1-v1': buildFixture({
-    title: 'SPC analysis — Vt (gate CD)',
-    subtitle: 'Inline DB · N5 line · Draft',
-    description:
-      'Control chart with CL / ±3σ limits applied to Vt (gate CD); Western Electric rules not yet applied.',
-    tags: ['Control chart', 'Draft'],
-    stats: [
-      { label: 'Mean Vt', value: '0.421 V', sub: 'target 0.420' },
-      { label: 'Lots', value: '18', sub: 'N5 line' },
-    ],
-  }),
-};
-
 const SCENARIO_CONTENT: Record<ScenarioKey, ArtifactContent> = {
   spc: {
     title: 'SPC analysis — Vt (gate CD)',

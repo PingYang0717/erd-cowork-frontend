@@ -1,14 +1,24 @@
-﻿import { act, renderHook, waitFor } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+﻿import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { act, renderHook, waitFor } from '@testing-library/react';
+import { createElement, type ReactNode } from 'react';
+import { describe, expect, it, vi } from 'vitest';
 
 import { mockAgentStream, mockAgentStreamRejection } from '@/test/agentStream';
 
 import { useAgentStream } from './useAgentStream';
 
+/** The hook now owns the post-run invalidation, so it needs a QueryClient around it. */
+function renderAgentStream(sessionId = 'session-1') {
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const wrapper = ({ children }: { children: ReactNode }) =>
+    createElement(QueryClientProvider, { client: queryClient }, children);
+  return { queryClient, ...renderHook(() => useAgentStream(sessionId), { wrapper }) };
+}
+
 describe('useAgentStream', () => {
   it('accumulates TOKEN deltas into the live reply text while streaming', async () => {
     const stream = mockAgentStream();
-    const { result } = renderHook(() => useAgentStream('session-1'));
+    const { result } = renderAgentStream();
 
     act(() => {
       void result.current.send({ question: 'Run an SPC analysis on Vt (gate CD).' });
@@ -24,7 +34,7 @@ describe('useAgentStream', () => {
 
   it('is streaming from send() until the stream closes', async () => {
     const stream = mockAgentStream();
-    const { result } = renderHook(() => useAgentStream('session-1'));
+    const { result } = renderAgentStream();
 
     expect(result.current.state.isStreaming).toBe(false);
 
@@ -43,7 +53,7 @@ describe('useAgentStream', () => {
 
   it('appends a new step and replaces an existing one in place, keeping arrival order', async () => {
     const stream = mockAgentStream();
-    const { result } = renderHook(() => useAgentStream('session-1'));
+    const { result } = renderAgentStream();
 
     act(() => {
       void result.current.send({ question: 'Run an SPC analysis on Vt (gate CD).' });
@@ -93,7 +103,7 @@ describe('useAgentStream', () => {
 
   it('ends the run and keeps what was already produced when the user stops it', async () => {
     const stream = mockAgentStream();
-    const { result } = renderHook(() => useAgentStream('session-1'));
+    const { result } = renderAgentStream();
 
     act(() => {
       void result.current.send({ question: 'Run an SPC analysis on Vt (gate CD).' });
@@ -112,7 +122,7 @@ describe('useAgentStream', () => {
 
   it('lands each streamed event in its own part of the state', async () => {
     const stream = mockAgentStream();
-    const { result } = renderHook(() => useAgentStream('session-1'));
+    const { result } = renderAgentStream();
 
     act(() => {
       void result.current.send({ question: 'Run an SPC analysis on Vt (gate CD).' });
@@ -171,7 +181,7 @@ describe('useAgentStream', () => {
 
   it('lifts a flat backend QUESTION into a renderable form when no form extension rides along', async () => {
     const stream = mockAgentStream();
-    const { result } = renderHook(() => useAgentStream('session-1'));
+    const { result } = renderAgentStream();
 
     act(() => {
       void result.current.send({ question: 'What is the CP Test status?' });
@@ -192,7 +202,7 @@ describe('useAgentStream', () => {
 
   it('records an ERROR event without ending the run, and still takes the steps after it', async () => {
     const stream = mockAgentStream();
-    const { result } = renderHook(() => useAgentStream('session-1'));
+    const { result } = renderAgentStream();
 
     act(() => {
       void result.current.send({ question: 'Run an SPC analysis on Vt (gate CD).' });
@@ -223,7 +233,7 @@ describe('useAgentStream', () => {
       code: 'CONNECTOR_EXPIRED',
       message: 'Inline 連線已過期',
     });
-    const { result } = renderHook(() => useAgentStream('session-1'));
+    const { result } = renderAgentStream();
 
     await act(async () => {
       await result.current.send({ question: 'Run an SPC analysis on Vt (gate CD).' });
@@ -239,7 +249,7 @@ describe('useAgentStream', () => {
 
   it('reports an unexpected disconnection distinctly from a user-initiated stop', async () => {
     const stream = mockAgentStream();
-    const { result } = renderHook(() => useAgentStream('session-1'));
+    const { result } = renderAgentStream();
 
     act(() => {
       void result.current.send({ question: 'Run an SPC analysis on Vt (gate CD).' });
@@ -263,7 +273,7 @@ describe('useAgentStream', () => {
 
   it("reports the finished run's elapsed time, and nothing while idle or streaming", async () => {
     const stream = mockAgentStream();
-    const { result } = renderHook(() => useAgentStream('session-1'));
+    const { result } = renderAgentStream();
 
     expect(result.current.state.durationMs).toBeNull();
 
@@ -281,7 +291,7 @@ describe('useAgentStream', () => {
 
   it('clears everything from the previous run when reset', async () => {
     const stream = mockAgentStream();
-    const { result } = renderHook(() => useAgentStream('session-1'));
+    const { result } = renderAgentStream();
 
     act(() => {
       void result.current.send({ question: 'Run an SPC analysis on Vt (gate CD).' });
@@ -301,7 +311,7 @@ describe('useAgentStream', () => {
 
   it('aborts the in-flight request when the component unmounts', async () => {
     const stream = mockAgentStream();
-    const { result, unmount } = renderHook(() => useAgentStream('session-1'));
+    const { result, unmount } = renderAgentStream();
 
     act(() => {
       void result.current.send({ question: 'Run an SPC analysis on Vt (gate CD).' });
@@ -312,5 +322,91 @@ describe('useAgentStream', () => {
     unmount();
 
     await waitFor(() => expect(stream.wasAborted).toBe(true));
+  });
+
+  it('refreshes the session detail and the sessions list before reporting the run done', async () => {
+    const stream = mockAgentStream();
+    const { result, queryClient } = renderAgentStream('sess-42');
+    let resolveInvalidate!: () => void;
+    const gate = new Promise<void>((resolve) => {
+      resolveInvalidate = resolve;
+    });
+    const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries').mockReturnValue(gate);
+
+    act(() => {
+      void result.current.send({ question: 'Run an SPC analysis on Vt (gate CD).' });
+    });
+    stream.push({ type: 'TOKEN', delta: 'x' });
+    await waitFor(() => expect(result.current.state.liveText).toBe('x'));
+
+    act(() => stream.close());
+
+    // Stream fully read, but DONE waits on the invalidation so the live bubble
+    // never hands over to a stale history (no flicker).
+    await waitFor(() =>
+      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['sessions', 'sess-42'] }),
+    );
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['sessions'] });
+    expect(result.current.state.isStreaming).toBe(true);
+
+    await act(async () => {
+      resolveInvalidate();
+    });
+    await waitFor(() => expect(result.current.state.isStreaming).toBe(false));
+  });
+
+  it('after an aborted run, re-fetches history in two delayed stages to catch async persistence', async () => {
+    vi.useFakeTimers();
+    try {
+      const { result, queryClient } = renderAgentStream('sess-stop');
+      const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries').mockResolvedValue(undefined);
+
+      // A stream that yields one token, then dies with AbortError — the live path a
+      // real backend takes when the user stops a run mid-flight.
+      const encoder = new TextEncoder();
+      let readCount = 0;
+      const abortingBody = {
+        getReader: () => ({
+          read: async () => {
+            readCount += 1;
+            if (readCount === 1) {
+              return {
+                value: encoder.encode('data: {"type":"TOKEN","delta":"partial"}\n\n'),
+                done: false,
+              };
+            }
+            throw Object.assign(new Error('The user aborted a request.'), { name: 'AbortError' });
+          },
+          cancel: async () => undefined,
+          releaseLock: () => undefined,
+        }),
+      };
+      vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, body: abortingBody }));
+
+      await act(async () => {
+        await result.current.send({ question: 'Run an SPC analysis on Vt (gate CD).' });
+      });
+
+      // What streamed stays; DONE is immediate; nothing refetched yet — the backend
+      // persists an aborted run asynchronously (doOnCancel), so refetching now races it.
+      expect(result.current.state.liveText).toBe('partial');
+      expect(result.current.state.isStreaming).toBe(false);
+      expect(invalidateSpy).not.toHaveBeenCalled();
+
+      await act(async () => {
+        vi.advanceTimersByTime(800);
+      });
+      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['sessions', 'sess-stop'] });
+      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['sessions'] });
+      expect(invalidateSpy).toHaveBeenCalledTimes(2);
+
+      await act(async () => {
+        vi.advanceTimersByTime(800);
+      });
+      expect(invalidateSpy).toHaveBeenCalledTimes(4);
+    } finally {
+      vi.useRealTimers();
+      vi.unstubAllGlobals();
+    }
   });
 });

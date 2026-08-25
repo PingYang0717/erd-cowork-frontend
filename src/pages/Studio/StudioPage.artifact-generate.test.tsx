@@ -1,4 +1,4 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+﻿import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
@@ -90,14 +90,14 @@ describe('Per-version Artifact generation', () => {
     await user.click(await screen.findByRole('button', { name: 'Regenerate artifact' }));
     await screen.findByRole('button', { name: '生成 Artifact' });
 
-    // Switch back to the seeded, already-generated v2: the chip returns.
+    // Switch back to the seeded, already-generated v1: the chip returns.
     await user.click(await screen.findByRole('button', { name: '切換版本' }));
-    await user.click(await screen.findByRole('menuitem', { name: /v2/ }));
+    await user.click(await screen.findByRole('menuitem', { name: /v1/ }));
     expect(await screen.findByText('已生成')).toBeInTheDocument();
 
-    // And v3 is still ungenerated when switching to it again.
+    // And v2 is still ungenerated when switching to it again.
     await user.click(await screen.findByRole('button', { name: '切換版本' }));
-    await user.click(await screen.findByRole('menuitem', { name: /v3/ }));
+    await user.click(await screen.findByRole('menuitem', { name: /v2/ }));
     expect(await screen.findByRole('button', { name: '生成 Artifact' })).toBeInTheDocument();
   });
 });

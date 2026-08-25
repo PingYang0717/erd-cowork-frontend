@@ -106,19 +106,22 @@ describe('Artifact panel toolbar', () => {
     await waitFor(() => expect(screen.queryByRole('tooltip')).not.toBeInTheDocument());
   });
 
-  it('regenerates the Artifact, adding and switching to a new version', async () => {
+  it('regenerates the Artifact via a chat turn, adding and switching to a new version', async () => {
     const user = userEvent.setup();
     renderStudioPage();
 
     await user.click(await screen.findByRole('button', { name: 'SPC — Vt (gate CD)' }));
 
+    // The seeded session derives a single version from its one artifact message.
     await user.click(await screen.findByRole('button', { name: '切換版本' }));
-    expect(screen.getAllByRole('menuitem')).toHaveLength(2);
+    expect(screen.getAllByRole('menuitem')).toHaveLength(1);
     await user.keyboard('{Escape}');
 
+    // Regenerate streams a new run whose artifact becomes v2 and takes over.
     await user.click(await screen.findByRole('button', { name: 'Regenerate artifact' }));
+    await screen.findByRole('button', { name: '生成 Artifact' });
 
     await user.click(await screen.findByRole('button', { name: '切換版本' }));
-    await expect.poll(() => screen.getAllByRole('menuitem')).toHaveLength(3);
+    await expect.poll(() => screen.getAllByRole('menuitem')).toHaveLength(2);
   });
 });

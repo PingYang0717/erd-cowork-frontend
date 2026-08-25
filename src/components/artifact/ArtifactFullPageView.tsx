@@ -7,7 +7,7 @@ import {
   UsergroupAddOutlined,
 } from '@ant-design/icons';
 import { useQueryClient } from '@tanstack/react-query';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import { ThemeToggle } from '@/components/common/ThemeToggle';
@@ -15,7 +15,9 @@ import { Tooltip } from '@/components/common/Tooltip';
 import { useArtifactContent } from '@/hooks/useArtifactContent';
 import { artifactQueryKey, useArtifacts } from '@/hooks/useArtifacts';
 import { useArtifactTheme } from '@/hooks/useArtifactTheme';
-import { useArtifactVersions } from '@/hooks/useArtifactVersions';
+import { useSessionDetail } from '@/hooks/useSessionDetail';
+import type { Artifact, ArtifactVersion } from '@/types/api/index';
+import { deriveArtifactVersions } from '@/utils/deriveArtifactVersions';
 
 import { ArtifactFrame } from './ArtifactFrame';
 import styles from './ArtifactFullPageView.module.css';
@@ -39,16 +41,18 @@ const ArtifactFullPageView: React.FC<ArtifactFullPageViewProps> = ({ artifactId 
   const queryClient = useQueryClient();
   const theme = useArtifactTheme();
 
-  const [versionId, setVersionId] = useState<string | undefined>(undefined);
+  const [selectedArtifactId, setSelectedArtifactId] = useState<string | null>(null);
   const [isShareOpen, setIsShareOpen] = useState(false);
-  const { data, isError } = useArtifactContent(artifactId, theme, versionId);
-  const { data: versions } = useArtifactVersions(artifactId);
   const { data: artifacts } = useArtifacts();
-  const artifact = artifacts?.find((a) => a.id === artifactId);
+  const routeArtifact = artifacts?.find((a) => a.id === artifactId);
+
+  // Versions are the artifact-bearing messages of the artifact's own session, so
+  // the switcher can jump between sibling artifacts (each version IS an artifact).
+  const displayedArtifactId = selectedArtifactId ?? artifactId;
+  const displayedArtifact = artifacts?.find((a) => a.id === displayedArtifactId);
+  const { data, isError } = useArtifactContent(displayedArtifactId, theme);
 
   const origin = (location.state as FullPageLocationState | null)?.from;
-  const activeVersion =
-    versions?.find((v) => v.id === versionId) ?? versions?.[versions.length - 1];
 
   return (
     <div className={styles.page}>
@@ -70,30 +74,30 @@ const ArtifactFullPageView: React.FC<ArtifactFullPageViewProps> = ({ artifactId 
         )}
 
         <div className={styles.headerCenter}>
-          {artifact?.sharedBy ? (
+          {routeArtifact?.sharedBy ? (
             <div className={styles.sharedToMeHeader} aria-label="Shared to me">
               <UsergroupAddOutlined aria-hidden className={styles.sharedToMeIcon} />
-              <span className={styles.sharedToMeName}>{artifact.sharedBy}</span>
+              <span className={styles.sharedToMeName}>{routeArtifact.sharedBy}</span>
               <span className={styles.sharedToMeBadge}>Shared to me</span>
             </div>
           ) : (
-            versions &&
-            versions.length > 0 && (
-              <VersionSwitcher
-                versions={versions}
-                activeVersion={activeVersion}
-                onSelect={setVersionId}
+            routeArtifact && (
+              <SessionVersionSwitcher
+                artifact={routeArtifact}
+                artifacts={artifacts ?? []}
+                displayedArtifactId={displayedArtifactId}
+                onSelect={setSelectedArtifactId}
               />
             )
           )}
         </div>
 
-        <Tooltip content={activeVersion?.generated ? '分享' : '請先生成 Artifact'}>
+        <Tooltip content={displayedArtifact?.generated ? '分享' : '請先生成 Artifact'}>
           <button
             type="button"
             className={styles.shareButton}
             aria-label="Share artifact"
-            disabled={!activeVersion?.generated}
+            disabled={!displayedArtifact?.generated}
             onClick={() => setIsShareOpen(true)}
           >
             <ShareAltOutlined aria-hidden />
@@ -105,7 +109,9 @@ const ArtifactFullPageView: React.FC<ArtifactFullPageViewProps> = ({ artifactId 
             className={styles.iconButton}
             aria-label="Refresh artifact"
             onClick={() =>
-              queryClient.invalidateQueries({ queryKey: artifactQueryKey(artifactId as string) })
+              queryClient.invalidateQueries({
+                queryKey: artifactQueryKey(displayedArtifactId as string),
+              })
             }
           >
             <ReloadOutlined aria-hidden />
@@ -117,7 +123,11 @@ const ArtifactFullPageView: React.FC<ArtifactFullPageViewProps> = ({ artifactId 
             className={styles.iconButton}
             aria-label="Open artifact in new tab"
             onClick={() =>
-              window.open(`/cowork/artifact/${artifactId}`, '_blank', 'noopener,noreferrer')
+              window.open(
+                `/cowork/artifact/${displayedArtifactId}`,
+                '_blank',
+                'noopener,noreferrer',
+              )
             }
           >
             <ExportOutlined aria-hidden />
@@ -127,18 +137,54 @@ const ArtifactFullPageView: React.FC<ArtifactFullPageViewProps> = ({ artifactId 
       </div>
       <div className={styles.body}>
         {isError && <div className={styles.empty}>Artifact not found.</div>}
-        {data && artifactId && <ArtifactFrame html={data} theme={theme} artifactId={artifactId} />}
+        {data && displayedArtifactId && (
+          <ArtifactFrame html={data} theme={theme} artifactId={displayedArtifactId} />
+        )}
       </div>
-      {artifact && (
+      {displayedArtifact && (
         <ShareArtifactDialog
           open={isShareOpen}
           onClose={() => setIsShareOpen(false)}
-          artifact={artifact}
+          artifact={displayedArtifact}
         />
       )}
     </div>
   );
 };
+
+/** Loads the artifact's session to derive its version list — its own component so the
+ *  session query only runs when there is an owned artifact to derive from. */
+function SessionVersionSwitcher({
+  artifact,
+  artifacts,
+  displayedArtifactId,
+  onSelect,
+}: {
+  artifact: Artifact;
+  artifacts: Artifact[];
+  displayedArtifactId: string | undefined;
+  onSelect: (artifactId: string) => void;
+}) {
+  const { data: detail } = useSessionDetail(artifact.sessionId);
+
+  const versions = useMemo<ArtifactVersion[]>(
+    () =>
+      deriveArtifactVersions(detail.messages).map((version) => ({
+        ...version,
+        generated: artifacts.find((a) => a.id === version.artifactId)?.generated,
+      })),
+    [detail.messages, artifacts],
+  );
+
+  if (versions.length === 0) {
+    return null;
+  }
+
+  const activeVersion =
+    versions.find((v) => v.artifactId === displayedArtifactId) ?? versions[versions.length - 1];
+
+  return <VersionSwitcher versions={versions} activeVersion={activeVersion} onSelect={onSelect} />;
+}
 
 export { ArtifactFullPageView };
 export default ArtifactFullPageView;

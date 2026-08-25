@@ -1,4 +1,4 @@
-import type { Artifact, ArtifactTheme, ArtifactVersion, DirectoryEntry } from '@/types/api/index';
+import type { Artifact, ArtifactTheme, DirectoryEntry } from '@/types/api/index';
 
 import { apiClient } from './apiClient';
 
@@ -10,16 +10,13 @@ export interface ArtifactShareResult {
 export const artifactApi = {
   listArtifacts: () => apiClient.get<Artifact[]>('/artifacts'),
 
-  /** The backend returns the artifact's HTML as text/html directly. theme and
-   *  versionId are 前端-only query extensions the mock reads; a real backend
-   *  ignores them (dark mode swaps in-frame via postMessage, ADR-0001). */
-  getContent: (artifactId: string, theme: ArtifactTheme, versionId?: string) =>
+  /** The backend returns the artifact's HTML as text/html directly. theme is a
+   *  前端-only query extension the mock reads; a real backend ignores it (dark
+   *  mode swaps in-frame via postMessage, ADR-0001). */
+  getContent: (artifactId: string, theme: ArtifactTheme) =>
     apiClient.get<string>(`/artifacts/${artifactId}`, {
-      params: { theme, versionId },
+      params: { theme },
     }),
-
-  listVersions: (artifactId: string) =>
-    apiClient.get<ArtifactVersion[]>(`/artifacts/${artifactId}/versions`),
 
   setPinned: (id: string, pinned: boolean) =>
     apiClient.patch<Artifact>(`/artifacts/${id}`, { pinned }),
@@ -31,10 +28,8 @@ export const artifactApi = {
       targetIds,
     }),
 
-  regenerate: (id: string) => apiClient.post<ArtifactVersion>(`/artifacts/${id}/regenerate`),
-
-  generateVersion: (id: string, versionId: string) =>
-    apiClient.post<ArtifactVersion>(`/artifacts/${id}/versions/${versionId}/generate`),
+  /** 前端-only（mock）：把這個 Artifact 標記為已生成。 */
+  generate: (id: string) => apiClient.post<Artifact>(`/artifacts/${id}/generate`),
 
   listDirectory: () => apiClient.get<DirectoryEntry[]>('/directory'),
 };

@@ -25,8 +25,9 @@
 ## 低 — Artifact 週邊
 
 5. **Artifact 中繼資料端點**:清單(gallery)、pin、分享(`/share` + directory)、
-   版本(`/versions`、`regenerate`、`generate`)。這些是本專案相對 cowork-master 的
-   領域價值,方向是後端補上而非前端砍掉(見 `docs/cowork-master-comparison.md` §5)。
+   已生成標記(`/generate`)。版本已改為與後端一致的訊息推導模型(無端點);其餘是
+   本專案相對 cowork-master 的領域價值,方向是後端補上而非前端砍掉
+   (見 `docs/cowork-master-comparison.md` §5)。
 6. **Artifact 內容的 theme 變體**:`GET /artifacts/{id}` 無 `theme` 參數,深色模式
    只能靠 iframe 內 postMessage(ADR-0001)換色,無法重抓深色版本。
 

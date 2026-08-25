@@ -88,6 +88,51 @@ describe('Streaming a run in the Studio', () => {
     expect(working).toBeInTheDocument();
   });
 
+  it('shows the question as a user bubble immediately, before the run finishes', async () => {
+    const user = userEvent.setup();
+    const stream = mockAgentStream();
+    renderStudioPage();
+
+    await selectASession(user);
+    await user.type(screen.getByRole('textbox', { name: 'Message' }), 'Check the Vt drift');
+    await user.click(screen.getByRole('button', { name: 'Send message' }));
+
+    // The stream is still open — nothing persisted, nothing refetched — yet the
+    // user's own words are already on screen.
+    expect(await screen.findByText('Check the Vt drift')).toBeInTheDocument();
+    expect(screen.getByRole('status', { name: 'eRD AI is working' })).toBeInTheDocument();
+
+    act(() => stream.close());
+  });
+
+  it('iterates on the artifact on display: the next send carries baseArtifactId', async () => {
+    const user = userEvent.setup();
+    const stream = mockAgentStream();
+    renderStudioPage();
+
+    await startAnalysis(user);
+    act(() =>
+      stream.push({
+        type: 'ARTIFACT',
+        artifactId: 'artifact-9',
+        title: 'SPC analysis — Vt (gate CD)',
+      }),
+    );
+    act(() => stream.close());
+    // The composer re-enables once the run (and its awaited refetch) is done.
+    await screen.findByRole('button', { name: 'Send message' });
+
+    // The panel now displays artifact-9; a follow-up question builds on it.
+    await user.type(screen.getByRole('textbox', { name: 'Message' }), 'Make the limits tighter');
+    await user.click(screen.getByRole('button', { name: 'Send message' }));
+
+    await waitFor(() => expect(stream.requests).toHaveLength(2));
+    expect(stream.requests[1]).toEqual({
+      question: 'Make the limits tighter',
+      baseArtifactId: 'artifact-9',
+    });
+  });
+
   it('swaps send for stop while a run is going, and keeps what was produced', async () => {
     const user = userEvent.setup();
     const stream = mockAgentStream();
@@ -402,6 +447,10 @@ describe('Streaming a run in the Studio', () => {
       }),
     );
 
+    // The backend closes the stream after a reask — the run pauses on the user.
+    act(() => stream.close());
+    await screen.findByRole('button', { name: 'Send message' });
+
     await user.click(await screen.findByRole('button', { name: 'A14' }));
     await user.click(screen.getByRole('button', { name: 'N5' }));
     await user.click(screen.getByRole('button', { name: 'Last 7 days' }));
@@ -564,6 +613,10 @@ describe('Streaming a run in the Studio', () => {
           },
         }),
       );
+
+      // The backend closes the stream after a reask — the run pauses on the user.
+      act(() => stream.close());
+      await screen.findByRole('button', { name: 'Send message' });
 
       const mineOnly = await screen.findByRole('button', { name: '只看我送測的 (王小明)' });
       await user.click(mineOnly);

@@ -3,7 +3,7 @@ import { http, HttpResponse } from 'msw';
 import { currentUser } from '@/config/currentUser';
 import { isLive } from '@/config/transport';
 import type { AgentEvent, QuestionForm, StepItem } from '@/types/api/agentEvent';
-import type { Artifact, ArtifactKind, ArtifactVersion } from '@/types/api/artifact';
+import type { Artifact, ArtifactKind } from '@/types/api/artifact';
 import type { Connector, ConnectorStatus } from '@/types/api/connector';
 import type { DcItem } from '@/types/api/dcItem';
 import type { Message } from '@/types/api/message';
@@ -11,7 +11,7 @@ import type { ScenarioKey } from '@/types/api/scenario';
 import type { Session } from '@/types/api/session';
 import type { UploadedFileInfo } from '@/types/api/upload';
 
-import { ARTIFACT_VERSION_CONTENT, buildArtifactFixture } from './artifactFixtures';
+import { buildArtifactFixture } from './artifactFixtures';
 import { DC_ITEM_FIXTURES, ROWS_PER_DC_ITEM } from './dcItemFixtures';
 import { DIRECTORY_FIXTURES } from './directoryFixtures';
 import { createPersistedResource } from './persistedResource';
@@ -63,20 +63,19 @@ const messages = createPersistedResource<StoredMessage>('erd-cowork:messages:v2'
 // resolving every Artifact to "not yours".
 const ALICE_USER_ID = 'u-002';
 
-interface StoredArtifact extends Omit<Artifact, 'mine' | 'generated'> {
+// `generated` is stored per artifact: every version IS its own artifact under the
+// derived-versions model, so the flag is naturally per-version. Key bumped to v3 so
+// browsers holding the version-store shape reseed.
+interface StoredArtifact extends Omit<Artifact, 'mine'> {
   ownerId: string;
 }
 
 function toArtifactDto(stored: StoredArtifact): Artifact {
   const { ownerId, ...rest } = stored;
-  return {
-    ...rest,
-    mine: ownerId === currentUser.id,
-    generated: artifactVersions.read().some((v) => v.artifactId === stored.id && v.generated),
-  };
+  return { ...rest, mine: ownerId === currentUser.id };
 }
 
-const artifacts = createPersistedResource<StoredArtifact>('erd-cowork:artifacts:v2', [
+const artifacts = createPersistedResource<StoredArtifact>('erd-cowork:artifacts:v3', [
   {
     id: 'artifact-1',
     sessionId: 'session-1',
@@ -87,6 +86,7 @@ const artifacts = createPersistedResource<StoredArtifact>('erd-cowork:artifacts:
     ownerId: currentUser.id,
     shared: false,
     createdAt: '2026-08-20T09:15:00.000Z',
+    generated: true,
   },
   {
     id: 'artifact-2',
@@ -98,6 +98,7 @@ const artifacts = createPersistedResource<StoredArtifact>('erd-cowork:artifacts:
     ownerId: currentUser.id,
     shared: false,
     createdAt: '2026-08-21T10:00:00.000Z',
+    generated: true,
   },
   {
     id: 'artifact-3',
@@ -110,49 +111,9 @@ const artifacts = createPersistedResource<StoredArtifact>('erd-cowork:artifacts:
     shared: false,
     sharedBy: 'Alice Wu',
     createdAt: '2026-08-19T08:30:00.000Z',
+    generated: true,
   },
 ]);
-
-// Storage key is versioned: browsers holding the older seeded shape (without
-// the per-version `generated` flag) reseed instead of resolving every version
-// to "not generated".
-const artifactVersions = createPersistedResource<ArtifactVersion>(
-  'erd-cowork:artifact-versions:v2',
-  [
-    {
-      id: 'artifact-1-v1',
-      artifactId: 'artifact-1',
-      n: 1,
-      label: 'SPC analysis — Vt (gate CD) (draft)',
-      createdAt: '2026-08-20T09:00:00.000Z',
-      generated: true,
-    },
-    {
-      id: 'artifact-1-v2',
-      artifactId: 'artifact-1',
-      n: 2,
-      label: 'SPC analysis — Vt (gate CD)',
-      createdAt: '2026-08-20T09:15:00.000Z',
-      generated: true,
-    },
-    {
-      id: 'artifact-2-v1',
-      artifactId: 'artifact-2',
-      n: 1,
-      label: 'Inline dashboard — W12',
-      createdAt: '2026-08-21T10:00:00.000Z',
-      generated: true,
-    },
-    {
-      id: 'artifact-3-v1',
-      artifactId: 'artifact-3',
-      n: 1,
-      label: 'Daily monitor (A14)',
-      createdAt: '2026-08-19T08:30:00.000Z',
-      generated: true,
-    },
-  ],
-);
 
 const connectors = createPersistedResource<Connector>('erd-cowork:connectors', [
   {
@@ -400,20 +361,10 @@ function streamRun(
     ownerId: currentUser.id,
     shared: false,
     createdAt: new Date().toISOString(),
+    // A run produces an ungenerated preview; the 生成 button commits it.
+    generated: false,
   };
   artifacts.write([...artifacts.read(), artifact]);
-
-  artifactVersions.write([
-    ...artifactVersions.read(),
-    {
-      id: crypto.randomUUID(),
-      artifactId: artifact.id,
-      n: 1,
-      label: artifactName,
-      createdAt: new Date().toISOString(),
-      generated: false,
-    },
-  ]);
 
   messages.write([
     ...messages.read(),
@@ -619,18 +570,22 @@ export const allHandlers = [
       return streamRun(sessionId, pending.scenarioKey, pending.artifactKind, extraSteps);
     }
 
-    // A fresh run: iterating on an artifact inherits its scenario and kind, and
-    // everything else is inferred from the question text — the mock's stand-in for
-    // the backend LLM reading the prompt.
+    // A fresh run: an explicit keyword in the question wins (a topic change), then an
+    // iterated artifact's own scenario (baseArtifactId), then the default — the
+    // mock's stand-in for the backend LLM reading the prompt.
     const baseArtifact = body.baseArtifactId
       ? artifacts.read().find((artifact) => artifact.id === body.baseArtifactId)
       : undefined;
-    const scenarioKey = baseArtifact?.scenario ?? matchScenario(question);
-    const artifactKind: ArtifactKind =
-      baseArtifact?.kind ?? (/slides|deck|簡報/i.test(question) ? 'slides' : 'dashboard');
+    const scenarioKey = matchScenario(question) ?? baseArtifact?.scenario ?? 'spc';
+    const artifactKind: ArtifactKind = /slides|deck|簡報/i.test(question)
+      ? 'slides'
+      : (baseArtifact?.kind ?? 'dashboard');
 
-    // A Scenario decides what it needs to ask before it can run (ADR-0006).
-    const form = openingQuestion(scenarioKey, connectors.read());
+    // A Scenario decides what it needs to ask before it can run (ADR-0006) — but an
+    // iteration whose scenario was inherited (a regenerate, a "make it tighter")
+    // already has its conditions from the base run, so it runs straight away.
+    const inherited = matchScenario(question) === null && baseArtifact !== undefined;
+    const form = inherited ? null : openingQuestion(scenarioKey, connectors.read());
     if (form) {
       pendingRuns.set(sessionId, { scenarioKey, artifactKind, form, stage: 'conditions' });
       return sseResponse([{ type: 'QUESTION', questions: flattenQuestionForm(form), form }]);
@@ -684,78 +639,42 @@ export const allHandlers = [
     }
     const searchParams = new URL(request.url).searchParams;
     const theme = searchParams.get('theme') === 'dark' ? 'dark' : 'light';
-    const versionId = searchParams.get('versionId');
-    const versions = artifactVersions.read().filter((v) => v.artifactId === artifact.id);
-    const version = versionId
-      ? versions.find((v) => v.id === versionId)
-      : versions[versions.length - 1];
-    const fixture =
-      (versionId ? ARTIFACT_VERSION_CONTENT[versionId] : undefined) ??
-      buildArtifactFixture(artifact.scenario, artifact.kind, version?.n);
-    // The backend serves text/html directly, not { html } JSON; theme and versionId
-    // are query extensions only the mock reads (a real backend ignores them).
+    // Each artifact IS a version (deriveArtifactVersions); number it the same way the
+    // client does — by its position among the session's artifact-bearing messages —
+    // so the rendered "· vN" matches the menu.
+    const artifactMessages = messages
+      .read()
+      .filter((m) => m.sessionId === artifact.sessionId && m.artifactId != null);
+    const messageIndex = artifactMessages.findIndex((m) => m.artifactId === artifact.id);
+    const versionN = messageIndex >= 0 ? messageIndex + 1 : 1;
+    const fixture = buildArtifactFixture(artifact.scenario, artifact.kind, versionN);
+    // The backend serves text/html directly, not { html } JSON; theme is a query
+    // extension only the mock reads (a real backend ignores it).
     return new HttpResponse(fixture[theme], { headers: { 'Content-Type': 'text/html' } });
   }),
 
-  // Rebuilding an artifact whose HTML threw. Every repair here succeeds and bumps a
-  // version — a real backend can also come back empty-handed, which the UI already
-  // handles; tests exercise that path by stubbing this endpoint.
+  // Rebuilding an artifact whose HTML threw. Every repair here succeeds — a real
+  // backend can also come back empty-handed, which the UI already handles; tests
+  // exercise that path by stubbing this endpoint.
   http.post('/api/artifacts/:id/repair', ({ params }) => {
     const artifact = artifacts.read().find((a) => a.id === params.id);
     if (!artifact) {
       return new HttpResponse(null, { status: 404 });
     }
-
-    const versions = artifactVersions.read();
-    const mine = versions.filter((v) => v.artifactId === artifact.id);
-    artifactVersions.write([
-      ...versions,
-      {
-        id: crypto.randomUUID(),
-        artifactId: artifact.id,
-        n: mine.length + 1,
-        label: artifact.name,
-        createdAt: new Date().toISOString(),
-        generated: false,
-      },
-    ]);
-
     return HttpResponse.json({ repaired: true });
   }),
 
-  http.get('/api/artifacts/:id/versions', ({ params }) => {
-    const versions = artifactVersions.read().filter((v) => v.artifactId === params.id);
-    return HttpResponse.json(versions);
-  }),
-
-  http.post('/api/artifacts/:id/regenerate', ({ params }) => {
-    const artifact = artifacts.read().find((a) => a.id === params.id);
-    if (!artifact) {
-      return new HttpResponse(null, { status: 404 });
-    }
-    const existingVersions = artifactVersions.read().filter((v) => v.artifactId === params.id);
-    const maxN = existingVersions.reduce((max, v) => Math.max(max, v.n), 0);
-    const version: ArtifactVersion = {
-      id: crypto.randomUUID(),
-      artifactId: artifact.id,
-      n: maxN + 1,
-      label: artifact.name,
-      createdAt: new Date().toISOString(),
-      generated: false,
-    };
-    artifactVersions.write([...artifactVersions.read(), version]);
-    return HttpResponse.json(version, { status: 201 });
-  }),
-
-  http.post('/api/artifacts/:id/versions/:versionId/generate', ({ params }) => {
-    const all = artifactVersions.read();
-    const existing = all.find((v) => v.artifactId === params.id && v.id === params.versionId);
+  // 前端-only：把這個 Artifact 標記為已生成（每個版本就是一個 Artifact，所以這
+  // 天生就是 per-version 狀態）。
+  http.post('/api/artifacts/:id/generate', ({ params }) => {
+    const all = artifacts.read();
+    const existing = all.find((a) => a.id === params.id);
     if (!existing) {
       return new HttpResponse(null, { status: 404 });
     }
-    const updated: ArtifactVersion = { ...existing, generated: true };
-    artifactVersions.write(all.map((v) => (v.id === updated.id ? updated : v)));
-    return HttpResponse.json(updated);
+    const updated: StoredArtifact = { ...existing, generated: true };
+    artifacts.write(all.map((a) => (a.id === params.id ? updated : a)));
+    return HttpResponse.json(toArtifactDto(updated));
   }),
 
   http.post('/api/artifacts/:id/share', async ({ params, request }) => {
