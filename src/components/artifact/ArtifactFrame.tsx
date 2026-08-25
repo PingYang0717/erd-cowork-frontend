@@ -1,17 +1,15 @@
-import { useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 
 import { type BrowserJsError, useRepairOfferStore } from '@/stores/useRepairOfferStore';
 import type { ArtifactTheme } from '@/types/api/index';
 
-export function ArtifactFrame({
-  html,
-  theme,
-  artifactId,
-}: {
+interface ArtifactFrameProps {
   html: string;
   theme: ArtifactTheme;
   artifactId: string;
-}) {
+}
+
+const ArtifactFrame: React.FC<ArtifactFrameProps> = ({ html, theme, artifactId }) => {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const report = useRepairOfferStore((store) => store.report);
 
@@ -49,4 +47,7 @@ export function ArtifactFrame({
       style={{ width: '100%', height: '100%', border: 'none' }}
     />
   );
-}
+};
+
+export { ArtifactFrame };
+export default ArtifactFrame;

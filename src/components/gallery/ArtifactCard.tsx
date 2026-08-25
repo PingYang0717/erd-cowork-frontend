@@ -10,7 +10,7 @@ import {
   UsergroupAddOutlined,
 } from '@ant-design/icons';
 import { Dropdown } from 'antd';
-import { useState } from 'react';
+import React, { useState } from 'react';
 
 import { ShareArtifactDialog } from '@/components/artifact/ShareArtifactDialog';
 import { useDeleteArtifact, useSetArtifactPinned } from '@/hooks/useArtifactMutations';
@@ -21,13 +21,12 @@ import { formatRelativeTime } from '@/utils/formatRelativeTime';
 
 import styles from './ArtifactCard.module.css';
 
-export function ArtifactCard({
-  artifact,
-  onOpen,
-}: {
+interface ArtifactCardProps {
   artifact: Artifact;
   onOpen: (artifact: Artifact) => void;
-}) {
+}
+
+const ArtifactCard: React.FC<ArtifactCardProps> = ({ artifact, onOpen }) => {
   const setArtifactPinned = useSetArtifactPinned();
   const deleteArtifact = useDeleteArtifact();
   const [isShareOpen, setIsShareOpen] = useState(false);
@@ -132,4 +131,7 @@ export function ArtifactCard({
       />
     </div>
   );
-}
+};
+
+export { ArtifactCard };
+export default ArtifactCard;

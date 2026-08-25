@@ -1,11 +1,17 @@
 import { CloseOutlined, FileExcelOutlined, FileTextOutlined } from '@ant-design/icons';
+import React from 'react';
 
 import type { Upload } from '@/types/api/index';
 import { formatBytes } from '@/utils/formatBytes';
 
 import styles from './AttachmentChip.module.css';
 
-export function AttachmentChip({ upload, onRemove }: { upload: Upload; onRemove?: () => void }) {
+interface AttachmentChipProps {
+  upload: Upload;
+  onRemove?: () => void;
+}
+
+const AttachmentChip: React.FC<AttachmentChipProps> = ({ upload, onRemove }) => {
   const isSpreadsheet = /\.(xlsx|xls)$/i.test(upload.fileName);
 
   return (
@@ -25,4 +31,7 @@ export function AttachmentChip({ upload, onRemove }: { upload: Upload; onRemove?
       )}
     </span>
   );
-}
+};
+
+export { AttachmentChip };
+export default AttachmentChip;

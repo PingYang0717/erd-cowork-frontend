@@ -12,7 +12,7 @@ import {
   PushpinOutlined,
 } from '@ant-design/icons';
 import { Button, Dropdown, Input } from 'antd';
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import { useSessionGroups } from '@/hooks/useSessionGroups';
@@ -189,13 +189,12 @@ export function SessionGroup({
   );
 }
 
-export function SessionList({
-  onCollapse,
-  artifactsCount,
-}: {
+interface SessionListProps {
   onCollapse?: () => void;
   artifactsCount?: number;
-}) {
+}
+
+const SessionList: React.FC<SessionListProps> = ({ onCollapse, artifactsCount }) => {
   const { pinned, recent, selectedSessionId, selectAndNavigate, createAndNavigate } =
     useSessionGroups();
   const navigate = useNavigate();
@@ -262,4 +261,7 @@ export function SessionList({
       </div>
     </div>
   );
-}
+};
+
+export { SessionList };
+export default SessionList;

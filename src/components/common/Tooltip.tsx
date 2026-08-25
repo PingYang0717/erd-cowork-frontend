@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { useEffect, useId, useRef, useState } from 'react';
+import React, { useEffect, useId, useRef, useState } from 'react';
 
 import styles from './Tooltip.module.css';
 
@@ -17,7 +17,7 @@ interface TooltipProps {
  * a 0.35s hover/focus delay. Wraps its trigger in an inline container that
  * owns the hover/focus tracking, so the trigger element needs no extra props.
  */
-export function Tooltip({ content, children, wrapperClassName }: TooltipProps) {
+const Tooltip: React.FC<TooltipProps> = ({ content, children, wrapperClassName }) => {
   const [open, setOpen] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const tipId = useId();
@@ -49,4 +49,7 @@ export function Tooltip({ content, children, wrapperClassName }: TooltipProps) {
       )}
     </span>
   );
-}
+};
+
+export { Tooltip };
+export default Tooltip;

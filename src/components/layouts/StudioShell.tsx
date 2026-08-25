@@ -1,3 +1,4 @@
+import React from 'react';
 import { Outlet } from 'react-router-dom';
 
 import DataBoundary from '@/components/common/DataBoundary';
@@ -26,7 +27,7 @@ function ExpandedSessionRail({ onCollapse }: { onCollapse: () => void }) {
   );
 }
 
-export function StudioShell() {
+const StudioShell: React.FC = () => {
   const sessionRailWidth = useStudioLayoutStore((s) => s.sessionRailWidth);
   const isSessionRailCollapsed = useStudioLayoutStore((s) => s.isSessionRailCollapsed);
   const setSessionRailWidth = useStudioLayoutStore((s) => s.setSessionRailWidth);
@@ -62,4 +63,7 @@ export function StudioShell() {
       </div>
     </div>
   );
-}
+};
+
+export { StudioShell };
+export default StudioShell;

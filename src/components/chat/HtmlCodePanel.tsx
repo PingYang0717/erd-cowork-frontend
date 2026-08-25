@@ -1,11 +1,15 @@
-import { useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 
 import { CollapsiblePanel } from './CollapsiblePanel';
 import styles from './HtmlCodePanel.module.css';
 
+interface HtmlCodePanelProps {
+  code: string;
+}
+
 /** The artifact's HTML as the agent writes it. Live-only, and it scrolls itself so the
  *  newest line stays in view while the run is still producing. */
-export function HtmlCodePanel({ code }: { code: string }) {
+const HtmlCodePanel: React.FC<HtmlCodePanelProps> = ({ code }) => {
   const codeRef = useRef<HTMLPreElement>(null);
 
   useEffect(() => {
@@ -22,4 +26,7 @@ export function HtmlCodePanel({ code }: { code: string }) {
       </pre>
     </CollapsiblePanel>
   );
-}
+};
+
+export { HtmlCodePanel };
+export default HtmlCodePanel;

@@ -1,9 +1,10 @@
 import { MoonOutlined, SunOutlined } from '@ant-design/icons';
 import { Button } from 'antd';
+import React from 'react';
 
 import { useThemeStore } from '@/stores/useThemeStore';
 
-export function ThemeToggle() {
+const ThemeToggle: React.FC = () => {
   const isDarkMode = useThemeStore((s) => s.isDarkMode);
   const toggleTheme = useThemeStore((s) => s.toggleTheme);
 
@@ -17,4 +18,7 @@ export function ThemeToggle() {
       icon={isDarkMode ? <SunOutlined /> : <MoonOutlined />}
     />
   );
-}
+};
+
+export { ThemeToggle };
+export default ThemeToggle;
