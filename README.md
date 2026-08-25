@@ -38,22 +38,27 @@ Commit 前 Husky + lint-staged 會自動跑 `oxlint --fix` → `eslint --fix` �
 
 ## 資料夾結構
 
+依「層」放，不依「功能」放。
+
 ```
 src/
-  app/          # 進入點、Router、Providers（含主題設定）
-  layouts/      # 版面
-  pages/        # 路由頁面（只組裝，不寫邏輯）
-  features/     # 依功能切，內含 api/ hooks/ store/ components/
-  components/   # 跨 feature 共用元件
-  hooks/        # 跨 feature 共用 hooks
-  stores/       # 跨 feature 共用 Zustand store
-  services/     # apiClient.ts（Axios instance）、currentUser.ts（mock 身分）
+  api/          # apiClient（Axios instance）、identity、各 endpoint module
+  components/   # 依 domain 切：artifact / chat / connectors / files /
+                #   gallery / session / common / layouts
+  config/       # 執行期設定（transport、currentUser）
+  constants/    # 共用常數（storage key）
+  hooks/        # 資料 hook 與跨元件 UI hook
+  stores/       # Zustand store
+  theme/        # design token
   types/api/    # 共用 DTO 型別
   utils/        # 純函式工具
+  app/          # 進入點、Router、Providers（含主題設定）
+  pages/        # 路由頁面（只組裝、只放 DataBoundary）
   mocks/        # MSW handlers 與 fixtures
 ```
 
-規則細節見 [`AGENTS.md`](./AGENTS.md)（動工前必讀的五條鐵律）與 [`architecture.md`](./architecture.md)（完整架構與設定）。
+規則細節見 [`AGENTS.md`](./AGENTS.md)（動工前必讀的五條鐵律與六條撰寫規則）與
+[`architecture.md`](./architecture.md)（完整架構與設定）。
 
 ---
 
@@ -82,7 +87,7 @@ src/
 
 設計稿 `eRDWorkspace20260819.html` 不是「參考」而是**必須符合**的基準（[ADR-0004](./docs/adr/0004-mockup-visual-fidelity-via-ant-design-icons.md)）：版面、間距、圖示（一律用 `@ant-design/icons`，不用文字或 emoji 頂替）都要對齊。
 
-色票唯一來源是 `src/features/theme/tokens.ts`，逐值抄自設計稿的 light / dark 兩組 CSS 變數，同時餵給 antd `ConfigProvider` 與 `--erd-color-*` 自訂屬性。改色前請先讀 `architecture.md` 第 8 節，其中兩個坑值得先知道：
+色票唯一來源是 `src/theme/tokens.ts`，逐值抄自設計稿的 light / dark 兩組 CSS 變數，同時餵給 antd `ConfigProvider` 與 `--erd-color-*` 自訂屬性。改色前請先讀 `architecture.md` 第 8 節，其中兩個坑值得先知道：
 
 - antd 的 **seed token 兩個主題都要餵亮色值**，否則 dark 會被二次變暗。
 - 變數必須宣告在 `:root`。對話框、下拉選單、收合後的 flyout 都是 portal 到 `document.body`，掛在 wrapper `<div>` 上它們讀不到。
