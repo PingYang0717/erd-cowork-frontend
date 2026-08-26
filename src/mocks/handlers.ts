@@ -409,8 +409,20 @@ const LIVE_BACKED = [
   'POST /api/sessions/:sessionId/files',
   'DELETE /api/sessions/:sessionId/files/:fileId',
   'GET /api/artifacts/:id',
+  'GET /api/artifacts/:id/raw',
   'POST /api/artifacts/:id/repair',
 ];
+
+/** Each artifact IS a version (deriveArtifactVersions); number it the way the client
+ *  does — by its position among the session's artifact-bearing messages — so the
+ *  rendered "· vN" matches the menu. */
+function artifactVersionNumber(artifact: { id: string; sessionId: string }): number {
+  const artifactMessages = messages
+    .read()
+    .filter((m) => m.sessionId === artifact.sessionId && m.artifactId != null);
+  const index = artifactMessages.findIndex((m) => m.artifactId === artifact.id);
+  return index >= 0 ? index + 1 : 1;
+}
 
 export const allHandlers = [
   http.get('/api/example-widgets', () => {
@@ -639,18 +651,29 @@ export const allHandlers = [
     }
     const searchParams = new URL(request.url).searchParams;
     const theme = searchParams.get('theme') === 'dark' ? 'dark' : 'light';
-    // Each artifact IS a version (deriveArtifactVersions); number it the same way the
-    // client does — by its position among the session's artifact-bearing messages —
-    // so the rendered "· vN" matches the menu.
-    const artifactMessages = messages
-      .read()
-      .filter((m) => m.sessionId === artifact.sessionId && m.artifactId != null);
-    const messageIndex = artifactMessages.findIndex((m) => m.artifactId === artifact.id);
-    const versionN = messageIndex >= 0 ? messageIndex + 1 : 1;
-    const fixture = buildArtifactFixture(artifact.scenario, artifact.kind, versionN);
+    const fixture = buildArtifactFixture(
+      artifact.scenario,
+      artifact.kind,
+      artifactVersionNumber(artifact),
+    );
     // The backend serves text/html directly, not { html } JSON; theme is a query
     // extension only the mock reads (a real backend ignores it).
     return new HttpResponse(fixture[theme], { headers: { 'Content-Type': 'text/html' } });
+  }),
+
+  // The artifact's source before assembly. The chat bubble lazy-fetches it when the
+  // reader expands "view HTML"; the light fixture stands in for the un-themed source.
+  http.get('/api/artifacts/:id/raw', ({ params }) => {
+    const artifact = artifacts.read().find((a) => a.id === params.id);
+    if (!artifact) {
+      return new HttpResponse(null, { status: 404 });
+    }
+    const fixture = buildArtifactFixture(
+      artifact.scenario,
+      artifact.kind,
+      artifactVersionNumber(artifact),
+    );
+    return new HttpResponse(fixture.light, { headers: { 'Content-Type': 'text/plain' } });
   }),
 
   // Rebuilding an artifact whose HTML threw. Every repair here succeeds — a real
