@@ -10,12 +10,22 @@ export interface ArtifactShareResult {
 export const artifactApi = {
   listArtifacts: () => apiClient.get<Artifact[]>('/artifacts'),
 
-  /** The backend returns the artifact's HTML as text/html directly. theme is a
-   *  前端-only query extension the mock reads; a real backend ignores it (dark
-   *  mode swaps in-frame via postMessage, ADR-0001). */
+  /** The backend returns the artifact's HTML as text/html directly. `responseType`
+   *  is explicit so a document that happens to parse as JSON still arrives as text.
+   *  theme is a 前端-only query extension the mock reads; a real backend ignores it
+   *  (dark mode swaps in-frame via postMessage, ADR-0001). */
   getContent: (artifactId: string, theme: ArtifactTheme) =>
     apiClient.get<string>(`/artifacts/${artifactId}`, {
       params: { theme },
+      responseType: 'text',
+    }),
+
+  /** The artifact's source before assembly (text/plain). Read by the chat bubble's
+   *  "view HTML" panel, and the text a later turn iterates from. */
+  getRawHtml: (artifactId: string, signal?: AbortSignal) =>
+    apiClient.get<string>(`/artifacts/${artifactId}/raw`, {
+      responseType: 'text',
+      signal,
     }),
 
   setPinned: (id: string, pinned: boolean) =>
