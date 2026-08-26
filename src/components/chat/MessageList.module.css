@@ -68,6 +68,35 @@
   line-height: normal;
 }
 
+/* Reset the button back to the chip it looks like, then give it the affordances a
+   button owes the user: a pointer, a hover, and a visible focus ring. */
+.artifactChipButton {
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 0.15s,
+    background 0.15s;
+}
+
+.artifactChipButton:hover {
+  border-color: var(--erd-color-primary-border, #91caff);
+  background: var(--erd-color-primary-bg, #e6f4ff);
+}
+
+.artifactChipButton:focus-visible {
+  outline: 2px solid var(--erd-color-primary, #1677ff);
+  outline-offset: 2px;
+}
+
+/* The one currently on the pane, so a thread with several Artifacts shows which of
+   them the right-hand side is answering for. */
+.artifactChipShown {
+  border-color: var(--erd-color-primary-border, #91caff);
+  background: var(--erd-color-primary-bg, #e6f4ff);
+}
+
 .artifactChipIcon {
   color: var(--erd-color-primary, #1677ff);
 }
