@@ -7,10 +7,9 @@ import {
   ThunderboltFilled,
   UpOutlined,
 } from '@ant-design/icons';
-import React, { useCallback, useState } from 'react';
+import React, { useState } from 'react';
 
 import { AttachmentChip } from '@/components/files/AttachmentChip';
-import { useActiveRunStore } from '@/stores/useActiveRunStore';
 import type { Message, QuestionForm, StepItem, StepStatus, TableResult } from '@/types/api/index';
 import { formatDuration } from '@/utils/formatDuration';
 
@@ -83,108 +82,53 @@ function StepRow({ step }: { step: StepItem }) {
 
 interface MessageBubbleProps {
   message: Message;
-  /** What the Artifact pane is showing, so this reply's chip can say whether it is the
-   *  one on the right or offer to put it there. */
-  displayedArtifactId: string | null;
-  onPickArtifact: (artifactId: string) => void;
 }
 
 // Memoised: a streaming run re-renders the whole list on every token, while a
 // settled message above it never changes.
-const MessageBubble = React.memo<MessageBubbleProps>(
-  ({ message, displayedArtifactId, onPickArtifact }) => {
-    if (message.sender === 'USER') {
-      const attachments = message.attachments ?? [];
-
-      return (
-        <div className={styles.userRow}>
-          <div className={styles.userBubble}>
-            {attachments.length > 0 && (
-              <ul className={styles.userAttachments} aria-label="Message attachments">
-                {attachments.map((upload) => (
-                  <li key={upload.id}>
-                    <AttachmentChip upload={upload} />
-                  </li>
-                ))}
-              </ul>
-            )}
-            <span className={styles.userText}>{message.text}</span>
-          </div>
-        </div>
-      );
-    }
-
-    const steps = parseSteps(message.stepsJson);
+const MessageBubble = React.memo<MessageBubbleProps>(({ message }) => {
+  if (message.sender === 'USER') {
+    const attachments = message.attachments ?? [];
 
     return (
-      <div className={styles.aiRow}>
-        <div className={styles.aiLabel}>
-          <ThunderboltFilled aria-hidden className={styles.aiLabelIcon} />
-          eRD AI
+      <div className={styles.userRow}>
+        <div className={styles.userBubble}>
+          {attachments.length > 0 && (
+            <ul className={styles.userAttachments} aria-label="Message attachments">
+              {attachments.map((upload) => (
+                <li key={upload.id}>
+                  <AttachmentChip upload={upload} />
+                </li>
+              ))}
+            </ul>
+          )}
+          <span className={styles.userText}>{message.text}</span>
         </div>
-        {steps.length > 0 && <StepsRecap steps={steps} />}
-        <ReplyText text={message.text} />
-        {message.artifactTitle && (
-          <ArtifactChip
-            title={message.artifactTitle}
-            artifactId={message.artifactId}
-            isShown={message.artifactId !== null && message.artifactId === displayedArtifactId}
-            onPick={onPickArtifact}
-          />
-        )}
-      </div>
-    );
-  },
-);
-MessageBubble.displayName = 'MessageBubble';
-
-interface ArtifactChipProps {
-  title: string;
-  /** Null on a reply that named an Artifact the backend gave no id for; the chip then
-   *  stays a label rather than pretending to be clickable. */
-  artifactId: string | null;
-  isShown: boolean;
-  onPick: (artifactId: string) => void;
-}
-
-/** The Artifact a reply produced. Clicking it puts that one on the pane — without this
- *  the pane could only be steered from its own version menu, so scrolling back to an
- *  earlier reply left its chip claiming "shown right →" about something that was not on
- *  the right at all. */
-const ArtifactChip: React.FC<ArtifactChipProps> = ({ title, artifactId, isShown, onPick }) => {
-  const handleClick = useCallback(() => {
-    if (artifactId !== null) {
-      onPick(artifactId);
-    }
-  }, [artifactId, onPick]);
-
-  if (artifactId === null) {
-    return (
-      <div className={styles.artifactChip}>
-        <AppstoreOutlined aria-hidden className={styles.artifactChipIcon} />
-        <span>{title}</span>
       </div>
     );
   }
 
+  const steps = parseSteps(message.stepsJson);
+
   return (
-    <button
-      type="button"
-      className={`${styles.artifactChip} ${styles.artifactChipButton} ${
-        isShown ? styles.artifactChipShown : ''
-      }`}
-      aria-label={
-        isShown ? `${title} — shown in the Artifact panel` : `Show ${title} in the Artifact panel`
-      }
-      aria-current={isShown ? 'true' : undefined}
-      onClick={handleClick}
-    >
-      <AppstoreOutlined aria-hidden className={styles.artifactChipIcon} />
-      <span>{title}</span>
-      <span className={styles.artifactChipHint}>{isShown ? 'shown right →' : 'show right →'}</span>
-    </button>
+    <div className={styles.aiRow}>
+      <div className={styles.aiLabel}>
+        <ThunderboltFilled aria-hidden className={styles.aiLabelIcon} />
+        eRD AI
+      </div>
+      {steps.length > 0 && <StepsRecap steps={steps} />}
+      <ReplyText text={message.text} />
+      {message.artifactTitle && (
+        <div className={styles.artifactChip}>
+          <AppstoreOutlined aria-hidden className={styles.artifactChipIcon} />
+          <span>{message.artifactTitle}</span>
+          <span className={styles.artifactChipHint}>shown right →</span>
+        </div>
+      )}
+    </div>
   );
-};
+});
+MessageBubble.displayName = 'MessageBubble';
 
 /** The wire carries steps as the backend's JSON string; a malformed one renders as no
  *  recap rather than a broken thread. Parsed per bubble render — MessageBubble is
@@ -309,22 +253,10 @@ const MessageList: React.FC<MessageListProps> = ({
   lastRunDurationMs,
   onAnswer,
 }) => {
-  // Published by the Artifact pane, so a chip's "shown right →" is decided by what is
-  // actually on the right rather than by a guess the two could disagree on.
-  const displayedArtifactId = useActiveRunStore((s) => s.displayedArtifactId);
-  // Zustand's setter identity is stable, so passing it down does not defeat
-  // MessageBubble's memoisation on every streamed token.
-  const pickArtifact = useActiveRunStore((s) => s.pickArtifact);
-
   return (
     <div>
       {messages.map((message) => (
-        <MessageBubble
-          key={message.id}
-          message={message}
-          displayedArtifactId={displayedArtifactId}
-          onPickArtifact={pickArtifact}
-        />
+        <MessageBubble key={message.id} message={message} />
       ))}
       {optimisticUserText !== null && (
         <div className={styles.userRow}>
