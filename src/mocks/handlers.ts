@@ -2,6 +2,7 @@ import { http, HttpResponse } from 'msw';
 
 import { currentUser } from '@/config/currentUser';
 import { isLive } from '@/config/transport';
+import { DRAFT_SESSION_TITLE } from '@/constants/messages';
 import type { AgentEvent, QuestionForm, StepItem } from '@/types/api/agentEvent';
 import type { Artifact, ArtifactKind } from '@/types/api/artifact';
 import type { Connector, ConnectorStatus } from '@/types/api/connector';
@@ -413,6 +414,27 @@ const LIVE_BACKED = [
   'POST /api/artifacts/:id/repair',
 ];
 
+/** Creates the session if this client has never sent to it before, and stamps its
+ *  last activity either way. Mirrors ChatSession implementing Persistable<String>:
+ *  the backend upserts on send rather than exposing a create endpoint. */
+export function upsertSession(sessionId: string): void {
+  const all = sessions.read();
+  const existing = all.find((session) => session.id === sessionId);
+  const now = new Date().toISOString();
+
+  if (existing) {
+    sessions.write(
+      all.map((session) => (session.id === sessionId ? { ...session, updatedAt: now } : session)),
+    );
+    return;
+  }
+
+  sessions.write([
+    ...all,
+    { id: sessionId, title: DRAFT_SESSION_TITLE, pinned: false, updatedAt: now },
+  ]);
+}
+
 /** Each artifact IS a version (deriveArtifactVersions); number it the way the client
  *  does — by its position among the session's artifact-bearing messages — so the
  *  rendered "· vN" matches the menu. */
@@ -437,7 +459,7 @@ export const allHandlers = [
     const body = (await request.json()) as Partial<Pick<Session, 'title'>>;
     const session: Session = {
       id: crypto.randomUUID(),
-      title: body.title?.trim() || 'New analysis',
+      title: body.title?.trim() || DRAFT_SESSION_TITLE,
       pinned: false,
       updatedAt: new Date().toISOString(),
     };
@@ -497,6 +519,10 @@ export const allHandlers = [
     if (incoming.length === 0) {
       return new HttpResponse(null, { status: 400 });
     }
+    // Uploading upserts the session too — the backend has two write endpoints and both
+    // create the session on first use (ADR-0008). Without this, attaching a file to a
+    // draft leaves the detail endpoint 404ing.
+    upsertSession(sessionId);
     const existingCount = sessionFiles.read().filter((f) => f.sessionId === sessionId).length;
     const created: StoredFile[] = incoming.map((file, index) => ({
       id: crypto.randomUUID(),
@@ -535,6 +561,11 @@ export const allHandlers = [
         { status: 400 },
       );
     }
+
+    // Sending is what creates a session: the id comes from the client and this is an
+    // upsert, not a lookup (ADR-0008 — the backend has no POST /sessions). A draft
+    // becomes real here and nowhere else.
+    upsertSession(sessionId);
 
     // Snapshot the session's files onto the user message (the 前端-only extension
     // behind the mockup's in-bubble chips), then consume them so the composer's

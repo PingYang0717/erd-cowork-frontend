@@ -20,6 +20,10 @@ _Avoid_: Chat view, Main view
 一段對話（Thread），底下包含多筆訊息與這段對話中產生的 Artifact 清單；使用者可命名、釘選（pin）。
 _Avoid_: Thread, Conversation, Chat
 
+**草稿 Session（Draft session）**:
+按下 New chat 後、第一則訊息送出前的 Session。它只存在於這個瀏覽器分頁裡——id 由前端產生，後端在第一則訊息抵達前不知道它存在。草稿可以被放棄（選走別的 Session、或重新整理）而不留下任何痕跡。
+_Avoid_: 未儲存的 Session, Pending session（草稿不是「等待儲存」，它是「還沒有理由存在」）
+
 **Scenario**:
 使用者請求對應到的一套預先定義分析劇本，目前有四種：SPC、Inline dashboard、Daily monitor、CP Test。一個 Scenario 決定三件事：**要向使用者反問哪些分析條件**、要跑哪一段分析流程、產出哪種 Artifact。
 _Avoid_: Workflow, Flow, Intent, Prompt preset（Scenario 不只是一段預寫好的提問——它是可被執行的劇本）

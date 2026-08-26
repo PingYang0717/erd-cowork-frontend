@@ -31,10 +31,14 @@ import styles from './SessionList.module.css';
 function SessionRow({
   session,
   isSelected,
+  isDraft,
   onSelect,
 }: {
   session: Session;
   isSelected: boolean;
+  /** A draft exists only in this client until its first message (ADR-0008). Rename,
+   *  pin and delete have nothing to act on, so the row offers none of them. */
+  isDraft: boolean;
   onSelect: (id: string) => void;
 }) {
   const setSessionPinned = useSetSessionPinned();
@@ -117,19 +121,21 @@ function SessionRow({
           {formatRelativeTime(session.updatedAt)}
         </span>
       </button>
-      <Dropdown
-        trigger={['click']}
-        overlayClassName="erd-menu"
-        menu={{ items: menuItems, onClick: ({ key }) => handleMenuClick(key) }}
-      >
-        <button
-          type="button"
-          className={styles.moreActionsButton}
-          aria-label={`More actions for ${session.title}`}
+      {!isDraft && (
+        <Dropdown
+          trigger={['click']}
+          overlayClassName="erd-menu"
+          menu={{ items: menuItems, onClick: ({ key }) => handleMenuClick(key) }}
         >
-          <MoreOutlined aria-hidden />
-        </button>
-      </Dropdown>
+          <button
+            type="button"
+            className={styles.moreActionsButton}
+            aria-label={`More actions for ${session.title}`}
+          >
+            <MoreOutlined aria-hidden />
+          </button>
+        </Dropdown>
+      )}
     </li>
   );
 }
@@ -138,12 +144,15 @@ export function SessionGroup({
   label,
   sessions,
   selectedSessionId,
+  draftSessionId,
   onSelect,
   emptyFallback,
 }: {
   label: string;
   sessions: Session[];
   selectedSessionId: string | null;
+  /** The open draft, if any — the one row without a more-actions menu. */
+  draftSessionId?: string | null;
   onSelect: (id: string) => void;
   /** When set, an empty group keeps its header and shows this line instead of vanishing. */
   emptyFallback?: string;
@@ -180,6 +189,7 @@ export function SessionGroup({
                 key={session.id}
                 session={session}
                 isSelected={session.id === selectedSessionId}
+                isDraft={session.id === draftSessionId}
                 onSelect={onSelect}
               />
             ))}
@@ -195,8 +205,14 @@ interface SessionListProps {
 }
 
 const SessionList: React.FC<SessionListProps> = ({ onCollapse, artifactsCount }) => {
-  const { pinned, recent, selectedSessionId, selectAndNavigate, createAndNavigate } =
-    useSessionGroups();
+  const {
+    pinned,
+    recent,
+    draftSessionId,
+    selectedSessionId,
+    selectAndNavigate,
+    createAndNavigate,
+  } = useSessionGroups();
   const navigate = useNavigate();
   const location = useLocation();
   const isCoaching = useGenerateCoachStore((s) => s.isActive);
@@ -255,6 +271,7 @@ const SessionList: React.FC<SessionListProps> = ({ onCollapse, artifactsCount })
           label="Recents"
           sessions={recent}
           selectedSessionId={selectedSessionId}
+          draftSessionId={draftSessionId}
           onSelect={selectAndNavigate}
           emptyFallback="No recent chats."
         />
