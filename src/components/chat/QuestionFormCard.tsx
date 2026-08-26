@@ -119,12 +119,20 @@ function DataTypeHint({ hint }: { hint: string }) {
 interface QuestionFormCardProps {
   form: QuestionForm;
   onSubmit: (answers: Answers) => void;
+  /** Read-only: the reask as it was asked, with nothing to submit. History reasks come
+   *  back this way — the answers were never persisted, so the card can only show what
+   *  was asked, not what was chosen. */
+  disabled?: boolean;
 }
 
 /** One reask from the agent: the fields it needs answered before it can carry on.
  *  Which fields appear is the Scenario's contract; what is in `options` is resolved
  *  when the run happens (ADR-0006). */
-const QuestionFormCard: React.FC<QuestionFormCardProps> = ({ form, onSubmit }) => {
+const QuestionFormCard: React.FC<QuestionFormCardProps> = ({
+  form,
+  onSubmit,
+  disabled = false,
+}) => {
   const [answers, setAnswers] = useState<Answers>({});
   const [searches, setSearches] = useState<Record<string, string>>({});
   // One debounce for the whole card: only one field is ever searchable at a time.
@@ -172,7 +180,7 @@ const QuestionFormCard: React.FC<QuestionFormCardProps> = ({ form, onSubmit }) =
     .every((field) => isAnswered(field, answers));
 
   return (
-    <div className={styles.card}>
+    <fieldset className={styles.card} disabled={disabled}>
       <p className={styles.title}>{form.title}</p>
       {form.intro && <p className={styles.intro}>{form.intro}</p>}
 
@@ -236,21 +244,25 @@ const QuestionFormCard: React.FC<QuestionFormCardProps> = ({ form, onSubmit }) =
         );
       })}
 
-      <div className={styles.footer}>
-        <button
-          type="button"
-          className={styles.submit}
-          disabled={!canSubmit}
-          onClick={() => onSubmit(answers)}
-        >
-          <SendOutlined aria-hidden />
-          {submitLabel}
-        </button>
-        <span className={styles.disabledHint}>
-          {canSubmit ? `已選 ${selectedCount} 項` : form.disabledHint}
-        </span>
-      </div>
-    </div>
+      {/* A read-only card has nothing to submit; the footer would only offer a dead
+          button next to a hint about a decision that is already made. */}
+      {!disabled && (
+        <div className={styles.footer}>
+          <button
+            type="button"
+            className={styles.submit}
+            disabled={!canSubmit}
+            onClick={() => onSubmit(answers)}
+          >
+            <SendOutlined aria-hidden />
+            {submitLabel}
+          </button>
+          <span className={styles.disabledHint}>
+            {canSubmit ? `已選 ${selectedCount} 項` : form.disabledHint}
+          </span>
+        </div>
+      )}
+    </fieldset>
   );
 };
 
