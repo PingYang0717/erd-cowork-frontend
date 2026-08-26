@@ -349,8 +349,8 @@ CSP 那條值得單獨說：兩邊都用 `sandbox="allow-scripts"` + `srcdoc`（
 流程兩邊相同（iframe 回報錯誤 → 卡片提議 → 使用者確認 → 呼叫 `/repair` → 重載）。差異：
 
 - 對方成功後跳 `message.success('已修復，儀表板已重新載入')`；本專案靠 iframe 重掛本身傳達。
-- 對方特別處理 `FILES_EXPIRED` 錯誤碼（檔案過期時直接關掉卡片並提示）；本專案一律歸到
-  `failed`。這是 7.4 那個保留期缺口的延伸。
+- `FILES_EXPIRED` 兩邊都特別處理：本專案多一個 `files-expired` 狀態，卡片改說「檔案已過期，
+  無法修復此儀表板」並收掉「再試一次」——重試跑的是同一份不存在的資料。
 
 ### 7.9 Session 管理
 
@@ -366,13 +366,18 @@ CSP 那條值得單獨說：兩邊都用 `sandbox="allow-scripts"` + `srcdoc`（
 刪除、複製連結）、Schedule 頁（**仍是 3 行 stub**）、三欄可拖曳寬度、深色模式。
 `cowork` 是單頁、無路由、無深色模式。
 
-### 7.11 建議處理順序
+### 7.11 處理結果（2026-08-27）
 
-1. 🔴 **IME 組字中按 Enter 會送出未完成的字**（7.3）——使用者是中文輸入的工程師，這是每天都會踩到的。成本：一個 ref + 兩個 handler。
-2. **檔案保留期與過期狀態沒有揭露**（7.4）——live 模式的實際故障，且連動 7.8 的 `FILES_EXPIRED`。
-3. **落地就要能打字**（7.1）——清單非空選第一筆、清單為空自動開草稿。成本極低，體感差很多。
-4. **Artifact iframe 補 CSP meta**（7.7）——安全性，成本是一個 util。
-5. **上傳進度**（7.4）與 **串流中禁用 Reload**（7.7）——兩個小缺口。
+1. ✅ **IME 組字中按 Enter 會送出未完成的字** — 已修（`ChatComposer`）。
+2. ✅ **檔案保留期與過期狀態沒有揭露** — 已補（`GET /config`、`useAppConfig`、過期 chip、
+   琥珀色警告條、擋住送出），連同 7.8 的 `FILES_EXPIRED`。
+3. ✅ **落地就要能打字** — 已補（選最近一筆 session，沒有就自動開草稿）。順帶把 thread header
+   提到 suspense 邊界之外，否則每次載入 session 時主題切換都會閃掉。
+4. ✅ **Artifact iframe 補 CSP meta** — 已補（`utils/artifactCsp.ts`）。
+5. ✅ **上傳進度**、**串流中禁用 Reload** — 都已補。上傳從 `fetch` 改成 XHR，因為 `fetch`
+   回報不了上傳進度。
 
-不建議做的，仍與第 5 節相同：Connector、Artifacts 總覽、分享、版本、深色模式、Schedule 都是
-本專案相對 `cowork` 的領域價值，方向是後端補上，不是前端砍掉。
+**仍未處理**：header 的 `AttachmentsPopover`（7.4，小）、Schedule 頁仍是 stub（7.10）。
+
+不建議做的，仍與第 5 節相同：Connector、Artifacts 總覽、分享、版本、深色模式都是本專案相對
+`cowork` 的領域價值，方向是後端補上，不是前端砍掉。

@@ -44,6 +44,15 @@ const RepairOfferCard: React.FC<RepairOfferCardProps> = ({ offer, onConfirm, onD
         </p>
       )}
 
+      {offer.status === 'files-expired' && (
+        <div className={styles.actions}>
+          <span className={styles.failed}>檔案已過期，無法修復此儀表板</span>
+          <button type="button" className={styles.dismiss} onClick={onDismiss}>
+            知道了
+          </button>
+        </div>
+      )}
+
       {offer.status === 'failed' && (
         <div className={styles.actions}>
           <span className={styles.failed}>修復未成功</span>

@@ -18,6 +18,7 @@ import { ConnectorsPanel } from '@/components/connectors/ConnectorsPanel';
 import { AttachmentChip } from '@/components/files/AttachmentChip';
 import { FileAttachmentModal } from '@/components/files/FileAttachmentModal';
 import { type SendInput } from '@/hooks/useAgentStream';
+import { useAppConfig } from '@/hooks/useAppConfig';
 import { useConnectors } from '@/hooks/useConnectors';
 import { useFileAttachments } from '@/hooks/useFileAttachments';
 import { useConnectorsPanelStore } from '@/stores/useConnectorsPanelStore';
@@ -88,10 +89,17 @@ const ChatComposer: React.FC<ChatComposerProps> = ({
     removeFile,
   } = useFileAttachments(sessionId);
   const { data: connectors } = useConnectors();
+  const { retentionDays } = useAppConfig();
   const connectorsOpen = useConnectorsPanelStore((store) => store.isOpen);
   const openConnectors = useConnectorsPanelStore((store) => store.open);
   const closeConnectors = useConnectorsPanelStore((store) => store.close);
   const connectedConnectorCount = selectConnected(connectors).length;
+
+  // Retention has already deleted these files server-side. Anything sent now runs
+  // against data that is not there, so the composer closes until they are cleared —
+  // the same call the backend makes when it answers FILES_EXPIRED.
+  const hasExpiredFiles = attachments.some((upload) => upload.expired);
+  const isBlocked = disabled || hasExpiredFiles;
 
   // Attachments do not travel with the message: they already live on the session
   // (uploaded on attach), and the mock snapshots them onto the sent message.
@@ -101,7 +109,7 @@ const ChatComposer: React.FC<ChatComposerProps> = ({
 
   function submitDraft() {
     const text = draft.trim();
-    if (!text || disabled) {
+    if (!text || isBlocked) {
       return;
     }
     send(text);
@@ -110,13 +118,19 @@ const ChatComposer: React.FC<ChatComposerProps> = ({
 
   return (
     <div>
+      {hasExpiredFiles && (
+        <p role="alert" className={styles.retentionNotice}>
+          部分檔案已超過 {retentionDays} 天未活動，內容已被系統清除。請移除下方標示「已過期」的
+          檔案並重新上傳，即可繼續對話。
+        </p>
+      )}
       <div className={styles.suggestRow}>
         {SUGGESTED_PROMPTS.map((prompt) => (
           <button
             key={prompt.label}
             type="button"
             className={styles.suggestChip}
-            disabled={disabled}
+            disabled={isBlocked}
             onClick={() => send(prompt.text)}
           >
             {prompt.icon}
@@ -182,7 +196,7 @@ const ChatComposer: React.FC<ChatComposerProps> = ({
             aria-label="Message"
             placeholder="Ask eRD AI, or attach .csv / .xlsx…"
             value={draft}
-            disabled={disabled}
+            disabled={isBlocked}
             autoSize={{ minRows: 1, maxRows: 5 }}
             onChange={(e) => setDraft(e.target.value)}
             onCompositionStart={() => {
@@ -217,7 +231,7 @@ const ChatComposer: React.FC<ChatComposerProps> = ({
             <button
               type="button"
               className={styles.sendButton}
-              disabled={disabled}
+              disabled={isBlocked}
               onClick={submitDraft}
               title="Send message"
               aria-label="Send message"

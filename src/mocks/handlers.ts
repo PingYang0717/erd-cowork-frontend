@@ -404,6 +404,7 @@ const dcItems = createPersistedResource<DcItem>('erd-cowork:dc-items', DC_ITEM_F
  *  (rename, pin, delete — features the backend does not have) stay mocked even in
  *  live mode (`docs/api/interface.md` → live 端點覆蓋範圍). */
 const LIVE_BACKED = [
+  'GET /api/config',
   'GET /api/sessions',
   'GET /api/sessions/:sessionId',
   'POST /api/sessions/:sessionId/messages',
@@ -447,6 +448,21 @@ function artifactVersionNumber(artifact: { id: string; sessionId: string }): num
 }
 
 export const allHandlers = [
+  // The limits the backend enforces, mirrored here so the UI reads one source in both
+  // transports. Values match cowork master's defaults.
+  http.get('/api/config', () =>
+    HttpResponse.json({
+      retentionDays: 30,
+      maxFiles: 5,
+      maxSessionBytes: 5 * 1024 * 1024 * 1024,
+      singleFileLimits: {
+        csv: 2 * 1024 * 1024 * 1024,
+        xlsx: 200 * 1024 * 1024,
+        xls: 200 * 1024 * 1024,
+      },
+    }),
+  ),
+
   http.get('/api/example-widgets', () => {
     return HttpResponse.json(exampleWidgets.read());
   }),

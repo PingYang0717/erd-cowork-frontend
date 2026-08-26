@@ -6,7 +6,9 @@ export interface BrowserJsError {
   col: number;
 }
 
-export type RepairStatus = 'pending' | 'repairing' | 'failed';
+/** `files-expired` is terminal in a way `failed` is not: the data the artifact was built
+ *  from has been deleted, so another attempt cannot succeed. */
+export type RepairStatus = 'pending' | 'repairing' | 'failed' | 'files-expired';
 
 export interface RepairOffer {
   artifactId: string;
