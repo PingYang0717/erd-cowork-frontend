@@ -140,17 +140,23 @@ QuestionOption { value: string; label: string; hint?: string; unit?: string; lo?
 切換是 build-time 的環境變數，不是 runtime 開關。live 模式可搭配的後端只實作了下表左半，
 其餘端點在 live 模式下**仍由 MSW 服務**。
 
-| 端點群                                                              | mock 模式 | live 模式 |
-| ------------------------------------------------------------------- | --------- | --------- |
-| `GET /sessions`、`GET /sessions/:id`、`POST /sessions/:id/messages` | MSW       | 真後端    |
-| `POST /sessions/:id/files`、`DELETE /sessions/:id/files/:fileId`    | MSW       | 真後端    |
-| `GET /artifacts/:id`（text/html）、`POST /artifacts/:id/repair`     | MSW       | 真後端    |
-| `POST/PATCH/DELETE /sessions`（建立／改名／釘選／刪除，前端-only）  | MSW       | **MSW**   |
-| `/artifacts` 清單、pin、share、generate                             | MSW       | **MSW**   |
-| `/connectors`、`/directory`、DC Item 清單、schedule                 | MSW       | **MSW**   |
+| 端點群                                                                                                  | mock 模式 | live 模式 |
+| ------------------------------------------------------------------------------------------------------- | --------- | --------- |
+| `GET /sessions`、`GET /sessions/:id`、`POST /sessions/:id/messages`                                     | MSW       | 真後端    |
+| `POST /sessions/:id/files`、`DELETE /sessions/:id/files/:fileId`                                        | MSW       | 真後端    |
+| `GET /artifacts/:id`（text/html）、`GET /artifacts/:id/raw`（text/plain）、`POST /artifacts/:id/repair` | MSW       | 真後端    |
+| `PATCH/DELETE /sessions/:id`（改名／釘選／刪除，前端-only）                                             | MSW       | **MSW**   |
+| `/artifacts` 清單、pin、share、generate                                                                 | MSW       | **MSW**   |
+| `/connectors`、`/directory`、DC Item 清單、schedule                                                     | MSW       | **MSW**   |
 
 過濾是 method-aware：`GET /sessions/:id` 放行給真後端的同時，同一路徑上前端-only 的
 `PATCH` / `DELETE` 仍由 MSW 服務。
+
+**沒有建立 session 的端點。** `POST /sessions` 只存在於 mock，而且 UI 不再呼叫它：session
+id 由前端產生，第一次送訊息或上傳檔案時由後端 upsert（[ADR-0008](../adr/0008-new-chat-is-a-client-side-draft.md)）。
+mock 的兩個寫入端點也照做，否則草稿 session 的 `GET /sessions/:id` 會 404。
+
+改名、釘選、刪除三者在 live 模式沒有後端，會 404；它們在[後端回饋清單](./backend-feedback.md)上。
 
 **線路型別即應用型別**（[ADR-0007](../adr/0007-verbatim-backend-wire-contract.md)）：
 `types/api/` 的形狀與後端 DTO 逐字一致（`sender: 'USER' | 'AI'`、`stepsJson` /

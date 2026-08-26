@@ -25,8 +25,14 @@ const CollapsedSessionRail: React.FC<CollapsedSessionRailProps> = ({ onExpand })
   const [flyoutPosition, setFlyoutPosition] = useState({ top: 0, left: 0 });
   const historyButtonRef = useRef<HTMLButtonElement>(null);
 
-  const { pinned, recent, selectedSessionId, selectAndNavigate, createAndNavigate } =
-    useSessionGroups();
+  const {
+    pinned,
+    recent,
+    draftSessionId,
+    selectedSessionId,
+    selectAndNavigate,
+    createAndNavigate,
+  } = useSessionGroups();
 
   function handleSelectSession(id: string) {
     selectAndNavigate(id);
@@ -131,6 +137,7 @@ const CollapsedSessionRail: React.FC<CollapsedSessionRailProps> = ({ onExpand })
                     label="Recents"
                     sessions={recent}
                     selectedSessionId={selectedSessionId}
+                    draftSessionId={draftSessionId}
                     onSelect={handleSelectSession}
                   />
                 </div>

@@ -289,18 +289,19 @@ describe('Session rail', () => {
     expect(within(recents).getByText('No recent chats.')).toBeInTheDocument();
   });
 
-  it('keeps a created, renamed, and pinned session in the right section after a simulated reload', async () => {
+  // Starts from a session the backend already knows about, not from "New chat": a
+  // draft has nothing to rename or pin until its first message persists it (ADR-0008).
+  it('keeps a renamed and pinned session in the right section after a simulated reload', async () => {
     const user = userEvent.setup();
     renderStudioPage();
 
     await screen.findByRole('region', { name: 'Pinned sessions' });
-    await user.click(await screen.findByRole('button', { name: 'New chat' }));
-    const created = await screen.findByRole('button', { name: 'New analysis' });
-    expect(created).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: 'More actions for New analysis' }));
+    await user.click(
+      await screen.findByRole('button', { name: 'More actions for Defect pareto — W12' }),
+    );
     await user.click(screen.getByRole('menuitem', { name: 'Rename' }));
-    const input = screen.getByRole('textbox', { name: 'Rename New analysis' });
+    const input = screen.getByRole('textbox', { name: 'Rename Defect pareto — W12' });
     await user.clear(input);
     await user.type(input, 'CP Test triage{Enter}');
     await screen.findByRole('button', { name: 'CP Test triage' });

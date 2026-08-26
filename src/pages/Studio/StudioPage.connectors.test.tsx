@@ -33,9 +33,11 @@ async function openConnectorsPanel(user: ReturnType<typeof userEvent.setup>) {
   await user.click(screen.getByRole('menuitem', { name: 'Connectors' }));
 }
 
+// A session the backend already knows about, not a draft: connector state is what
+// these cases are about, and a draft would not survive the simulated reload below
+// (ADR-0008).
 async function selectASessionAndOpenConnectors(user: ReturnType<typeof userEvent.setup>) {
-  await user.click(await screen.findByRole('button', { name: 'New chat' }));
-  await screen.findByRole('button', { name: 'New analysis' });
+  await user.click(await screen.findByRole('button', { name: 'Defect pareto — W12' }));
   // The composer subtree suspends on its queries; wait for it before sync getBy*.
   await screen.findByRole('textbox', { name: 'Message' });
   await openConnectorsPanel(user);
