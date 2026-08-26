@@ -12,7 +12,7 @@ import {
 } from '@ant-design/icons';
 import { Dropdown, Input } from 'antd';
 import type { ReactNode } from 'react';
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 
 import { ConnectorsPanel } from '@/components/connectors/ConnectorsPanel';
 import { AttachmentChip } from '@/components/files/AttachmentChip';
@@ -74,6 +74,11 @@ const ChatComposer: React.FC<ChatComposerProps> = ({
 }) => {
   const [draft, setDraft] = useState('');
   const [fileModalOpen, setFileModalOpen] = useState(false);
+  // An input method (注音, 拼音, かな) is mid-word for most of the time a Chinese or
+  // Japanese user spends typing, and its Enter means "take this candidate", not "send".
+  // A ref rather than state: nothing renders differently, and a re-render between
+  // compositionend and keydown would be a race.
+  const isComposingRef = useRef(false);
 
   const {
     attachments,
@@ -179,7 +184,18 @@ const ChatComposer: React.FC<ChatComposerProps> = ({
             disabled={disabled}
             autoSize={{ minRows: 1, maxRows: 5 }}
             onChange={(e) => setDraft(e.target.value)}
+            onCompositionStart={() => {
+              isComposingRef.current = true;
+            }}
+            onCompositionEnd={() => {
+              isComposingRef.current = false;
+            }}
             onKeyDown={(e) => {
+              // `isComposing` is the standard signal but is not set by every browser or
+              // IME; the composition events are the fallback that always fires.
+              if (isComposingRef.current || e.nativeEvent.isComposing) {
+                return;
+              }
               if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
                 submitDraft();

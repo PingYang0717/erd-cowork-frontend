@@ -1,4 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
+import { useCallback, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { DRAFT_SESSION_TITLE } from '@/constants/messages';
@@ -21,7 +22,9 @@ function emptySessionDetail(id: string, createdAt: string): SessionDetail {
 
 export function useSessionGroups() {
   const { data } = useSessions();
-  const sessions = data ?? [];
+  // Stable identity: the landing effect below depends on this list, and `data ?? []`
+  // would hand it a new array on every render.
+  const sessions = useMemo(() => data ?? [], [data]);
 
   const selectedSessionId = useSessionSelectionStore((s) => s.selectedSessionId);
   const draftStartedAt = useSessionSelectionStore((s) => s.draftStartedAt);
@@ -55,6 +58,32 @@ export function useSessionGroups() {
     ...(draftSession ? [draftSession] : []),
   ]);
 
+  /** Seeds a draft and selects it, without moving the user anywhere. */
+  const openDraft = useCallback(() => {
+    const draftSessionId = crypto.randomUUID();
+    const startedAt = new Date().toISOString();
+    queryClient.setQueryData(
+      sessionDetailQueryKey(draftSessionId),
+      emptySessionDetail(draftSessionId, startedAt),
+    );
+    startDraft(draftSessionId, startedAt);
+  }, [queryClient, startDraft]);
+
+  // Landing: with nothing selected the Studio is an empty shell with a composer the user
+  // cannot reach, and the click that fixes it carries no decision. Open the most recent
+  // conversation, or a draft when there is none. Runs once — it sets the selection.
+  useEffect(() => {
+    if (selectedSessionId !== null) {
+      return;
+    }
+    const mostRecent = sortByRecency(sessions)[0];
+    if (mostRecent) {
+      selectSession(mostRecent.id);
+      return;
+    }
+    openDraft();
+  }, [selectedSessionId, sessions, selectSession, openDraft]);
+
   // Selecting (or creating) a session should always bring the Studio thread
   // into view — matching the mockup's cwSelectSession, which resets cwView
   // to "studio" (line 11050). Without this, selecting a session while on
@@ -75,13 +104,7 @@ export function useSessionGroups() {
       navigate('/cowork');
       return;
     }
-    const draftSessionId = crypto.randomUUID();
-    const startedAt = new Date().toISOString();
-    queryClient.setQueryData(
-      sessionDetailQueryKey(draftSessionId),
-      emptySessionDetail(draftSessionId, startedAt),
-    );
-    startDraft(draftSessionId, startedAt);
+    openDraft();
     navigate('/cowork');
   }
 

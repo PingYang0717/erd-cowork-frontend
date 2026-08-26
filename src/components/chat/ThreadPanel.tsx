@@ -2,6 +2,7 @@ import { DatabaseOutlined, ThunderboltFilled } from '@ant-design/icons';
 import type { ReactNode } from 'react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
+import DataBoundary from '@/components/common/DataBoundary';
 import { ThemeToggle } from '@/components/common/ThemeToggle';
 import { type SendInput, useAgentStream } from '@/hooks/useAgentStream';
 import { useArtifactRepair } from '@/hooks/useArtifactRepair';
@@ -49,27 +50,33 @@ function EmptyState({ heading, subtitle }: { heading: string; subtitle: ReactNod
   );
 }
 
+/** The thread pane. The header is deliberately outside the boundary below: it carries
+ *  the theme toggle and the data-source chip, which have nothing to do with which
+ *  conversation is open, and a header that blinks away every time a session loads is a
+ *  worse answer than one that stays put. */
 const ThreadPanel: React.FC = () => {
   const selectedSessionId = useSessionSelectionStore((s) => s.selectedSessionId);
 
-  if (!selectedSessionId) {
-    return (
-      <div className={styles.panel}>
-        <ThreadHeader />
+  return (
+    <div className={styles.panel}>
+      <ThreadHeader />
+      {selectedSessionId ? (
+        // Keyed on the session: every piece of state below belongs to one conversation —
+        // the open stream, the optimistic bubble, each recap's expanded flag. Remounting
+        // is one line where clearing them individually is five, and the five drift.
+        <DataBoundary label="Thread">
+          <ThreadView key={selectedSessionId} sessionId={selectedSessionId} />
+        </DataBoundary>
+      ) : (
         <div className={styles.body}>
           <EmptyState
             heading="Select or start a session"
             subtitle="Start or select a session from the left to begin an analysis."
           />
         </div>
-      </div>
-    );
-  }
-
-  // Keyed on the session: every piece of state below belongs to one conversation —
-  // the open stream, the optimistic bubble, each recap's expanded flag. Remounting is
-  // one line where clearing them individually is five, and the five drift.
-  return <ThreadView key={selectedSessionId} sessionId={selectedSessionId} />;
+      )}
+    </div>
+  );
 };
 
 function ThreadView({ sessionId }: { sessionId: string }) {
@@ -180,8 +187,7 @@ function ThreadView({ sessionId }: { sessionId: string }) {
   const hasContent = messages.length > 0 || live !== null || optimisticUserText !== null;
 
   return (
-    <div className={styles.panel}>
-      <ThreadHeader />
+    <>
       {hasContent ? (
         <MessageList
           messages={messages}
@@ -218,7 +224,7 @@ function ThreadView({ sessionId }: { sessionId: string }) {
           onStop={stop}
         />
       </div>
-    </div>
+    </>
   );
 }
 

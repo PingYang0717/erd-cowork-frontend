@@ -44,6 +44,22 @@ describe('New chat opens a client-side draft', () => {
     useSessionSelectionStore.setState(useSessionSelectionStore.getInitialState());
   });
 
+  it('lands with the most recent session open, ready to type', async () => {
+    renderStudioPage();
+
+    // No click needed: the composer is there because a session already is.
+    expect(await screen.findByRole('textbox', { name: 'Message' })).toBeInTheDocument();
+    expect(document.querySelectorAll('[aria-current="true"]')).toHaveLength(1);
+  });
+
+  it('opens a draft by itself when there is no session to land on', async () => {
+    server.use(http.get('/api/sessions', () => HttpResponse.json([])));
+    renderStudioPage();
+
+    expect(await screen.findByRole('textbox', { name: 'Message' })).toBeInTheDocument();
+    expect(await recentGroup().findByText('New analysis')).toBeInTheDocument();
+  });
+
   it('never asks the backend to create a session', async () => {
     let createCalls = 0;
     server.use(
