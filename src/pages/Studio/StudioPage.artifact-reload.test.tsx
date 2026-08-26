@@ -9,6 +9,7 @@ import { useActiveRunStore } from '@/stores/useActiveRunStore';
 import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
 import { useStudioLayoutStore } from '@/stores/useStudioLayoutStore';
 import { useThemeStore } from '@/stores/useThemeStore';
+import { mockAgentStream } from '@/test/agentStream';
 import { answerAnalysisConditions } from '@/test/studioRun';
 
 import { StudioPage } from './StudioPage';
@@ -26,6 +27,19 @@ function renderStudioPage() {
       </MemoryRouter>
     </QueryClientProvider>,
   );
+}
+
+/** Starts a run over a driven stream and waits for it to put an artifact on screen,
+ *  leaving the stream open so the panel is observable mid-run. */
+async function runSpcScenarioWithMockStream(
+  user: ReturnType<typeof userEvent.setup>,
+  stream: ReturnType<typeof mockAgentStream>,
+) {
+  await user.click(await screen.findByRole('button', { name: 'New chat' }));
+  await screen.findByRole('textbox', { name: 'Message' });
+  await user.click(screen.getByRole('button', { name: 'SPC analysis' }));
+  act(() => stream.push({ type: 'ARTIFACT', artifactId: 'artifact-1', title: 'SPC analysis' }));
+  await screen.findByTitle('Artifact preview');
 }
 
 async function runSpcScenario(user: ReturnType<typeof userEvent.setup>) {
@@ -59,6 +73,20 @@ describe('Artifact Reload', () => {
     await waitFor(() => {
       expect(screen.getByTitle('Artifact preview')).not.toBe(before);
     });
+  });
+
+  it('refuses to reload while the agent is still writing the next version', async () => {
+    const user = userEvent.setup();
+    const stream = mockAgentStream();
+    renderStudioPage();
+    await runSpcScenarioWithMockStream(user, stream);
+
+    expect(screen.getByRole('button', { name: 'Reload artifact' })).toBeDisabled();
+
+    act(() => stream.close());
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Reload artifact' })).toBeEnabled(),
+    );
   });
 
   it('keeps the same document when only the theme changes', async () => {

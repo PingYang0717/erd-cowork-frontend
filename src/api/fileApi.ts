@@ -39,22 +39,50 @@ async function buildMultipartBody(
 }
 
 export const fileApi = {
-  /** 走 raw fetch 而非 axios：自組 multipart，所以 MUST 自行帶 auth header——axios
-   *  interceptor 不會經過這裡。 */
-  uploadFiles: async (sessionId: string, files: File[]): Promise<UploadedFileInfo[]> => {
-    const { body, contentType } = await buildMultipartBody(files);
-    const response = await fetch(`${API_BASE}/sessions/${sessionId}/files`, {
-      method: 'POST',
-      headers: { 'Content-Type': contentType, ...getAuthHeaders() },
-      // The freshly-built Uint8Array owns its exact-size buffer; TS's DOM lib just
-      // does not accept Uint8Array as BodyInit.
-      body: body.buffer as ArrayBuffer,
-    });
-    if (!response.ok) {
-      throw new Error(`Failed to upload files: ${response.status}`);
-    }
-    return (await response.json()) as UploadedFileInfo[];
-  },
+  /** 走 XHR 而非 fetch 或 axios：自組 multipart（所以 MUST 自行帶 auth header——axios
+   *  interceptor 不會經過這裡），而 `fetch` 無法回報上傳進度。一份 CSV 在這裡動輒 GB
+   *  等級，沒有進度就是一片凍住的畫面。 */
+  uploadFiles: (
+    sessionId: string,
+    files: File[],
+    onProgress?: (percent: number) => void,
+  ): Promise<UploadedFileInfo[]> =>
+    buildMultipartBody(files).then(
+      ({ body, contentType }) =>
+        new Promise<UploadedFileInfo[]>((resolve, reject) => {
+          const request = new XMLHttpRequest();
+          request.open('POST', `${API_BASE}/sessions/${sessionId}/files`);
+          request.setRequestHeader('Content-Type', contentType);
+          for (const [header, value] of Object.entries(getAuthHeaders())) {
+            request.setRequestHeader(header, value);
+          }
+
+          request.upload.onprogress = (event) => {
+            // `lengthComputable` is false for a body of unknown size; there is nothing
+            // honest to report then, so report nothing.
+            if (onProgress && event.lengthComputable && event.total > 0) {
+              onProgress(Math.round((event.loaded / event.total) * 100));
+            }
+          };
+
+          request.onload = () => {
+            if (request.status < 200 || request.status >= 300) {
+              reject(new Error(`Failed to upload files: ${request.status}`));
+              return;
+            }
+            // The bytes are on the wire by the time the response lands; some browsers
+            // stop short of a final progress event, so close it out here.
+            onProgress?.(100);
+            resolve(JSON.parse(request.responseText) as UploadedFileInfo[]);
+          };
+          request.onerror = () => reject(new Error('Failed to upload files'));
+          request.onabort = () => reject(new Error('Upload aborted'));
+
+          // The freshly-built Uint8Array owns its exact-size buffer; TS's DOM lib just
+          // does not accept Uint8Array as a body.
+          request.send(body.buffer as ArrayBuffer);
+        }),
+    ),
 
   deleteFile: (sessionId: string, fileId: string) =>
     apiClient.delete<void>(`/sessions/${sessionId}/files/${fileId}`),

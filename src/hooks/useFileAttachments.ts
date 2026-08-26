@@ -18,6 +18,9 @@ export {
  *  and extension limits are validated client-side before anything is uploaded. */
 export function useFileAttachments(sessionId: string) {
   const [error, setError] = useState('');
+  /** How far the upload in flight has got, or null when nothing is uploading. A CSV
+   *  here runs to gigabytes — without this the modal is frozen for minutes. */
+  const [uploadPercent, setUploadPercent] = useState<number | null>(null);
   const queryClient = useQueryClient();
   const { data: detail } = useSessionDetail(sessionId);
   const attachments = detail.files;
@@ -26,9 +29,18 @@ export function useFileAttachments(sessionId: string) {
     const plan = planFileAdditions(attachments, files);
     setError(plan.error);
 
-    if (plan.accepted.length > 0) {
-      await fileApi.uploadFiles(sessionId, plan.accepted);
+    if (plan.accepted.length === 0) {
+      return;
+    }
+
+    setUploadPercent(0);
+    try {
+      await fileApi.uploadFiles(sessionId, plan.accepted, setUploadPercent);
       await queryClient.invalidateQueries({ queryKey: sessionDetailQueryKey(sessionId) });
+    } catch {
+      setError('上傳失敗，請再試一次。');
+    } finally {
+      setUploadPercent(null);
     }
   }
 
@@ -38,5 +50,5 @@ export function useFileAttachments(sessionId: string) {
     await queryClient.invalidateQueries({ queryKey: sessionDetailQueryKey(sessionId) });
   }
 
-  return { attachments, error, addFiles, removeFile };
+  return { attachments, error, uploadPercent, addFiles, removeFile };
 }

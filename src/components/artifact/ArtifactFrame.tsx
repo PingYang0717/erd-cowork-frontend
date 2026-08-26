@@ -1,7 +1,8 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 
 import { type BrowserJsError, useRepairOfferStore } from '@/stores/useRepairOfferStore';
 import type { ArtifactTheme } from '@/types/api/index';
+import { injectCspMeta } from '@/utils/artifactCsp';
 
 interface ArtifactFrameProps {
   html: string;
@@ -16,6 +17,10 @@ interface ArtifactFrameProps {
 const ArtifactFrame: React.FC<ArtifactFrameProps> = ({ html, theme, artifactId }) => {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const report = useRepairOfferStore((store) => store.report);
+
+  // The sandbox keeps the artifact out of this app; the policy keeps it off the network.
+  // Injected here rather than served with the document — a srcdoc never sees a header.
+  const securedHtml = useMemo(() => injectCspMeta(html, window.location.origin), [html]);
 
   // The artifact reports its own runtime errors (the collector injected into its head).
   // Only messages from THIS iframe count — any page can postMessage at us.
@@ -47,7 +52,7 @@ const ArtifactFrame: React.FC<ArtifactFrameProps> = ({ html, theme, artifactId }
       ref={iframeRef}
       title="Artifact preview"
       sandbox="allow-scripts"
-      srcDoc={html}
+      srcDoc={securedHtml}
       style={{ width: '100%', height: '100%', border: 'none' }}
     />
   );

@@ -83,6 +83,7 @@ const ChatComposer: React.FC<ChatComposerProps> = ({
   const {
     attachments,
     error: attachmentError,
+    uploadPercent,
     addFiles,
     removeFile,
   } = useFileAttachments(sessionId);
@@ -231,6 +232,7 @@ const ChatComposer: React.FC<ChatComposerProps> = ({
         onClose={() => setFileModalOpen(false)}
         attachments={attachments}
         error={attachmentError}
+        uploadPercent={uploadPercent}
         onAddFiles={(files) => void addFiles(files)}
         onRemoveFile={(fileId) => void removeFile(fileId)}
       />
