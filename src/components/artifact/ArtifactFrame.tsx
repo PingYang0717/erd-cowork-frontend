@@ -9,6 +9,10 @@ interface ArtifactFrameProps {
   artifactId: string;
 }
 
+/** Keying the iframe on the artifact and the reload nonce is what makes a Reload a
+ *  Reload: React drops the element and mounts a new one, so the document restarts from
+ *  scratch. A theme change deliberately does NOT touch this key — the srcDoc swaps
+ *  under the same document (ADR-0001). */
 const ArtifactFrame: React.FC<ArtifactFrameProps> = ({ html, theme, artifactId }) => {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const report = useRepairOfferStore((store) => store.report);
