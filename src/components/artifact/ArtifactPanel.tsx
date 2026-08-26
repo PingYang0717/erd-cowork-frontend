@@ -130,6 +130,7 @@ function ArtifactPanelContent({
   const [isShareOpen, setIsShareOpen] = useState(false);
   const reloadNonce = useActiveRunStore((s) => s.artifactReloadNonce);
   const bumpArtifactReload = useActiveRunStore((s) => s.bumpArtifactReload);
+  const isRunStreaming = useActiveRunStore((s) => s.isRunStreaming);
   const { data } = useArtifactContent(artifactId, theme, reloadNonce);
   const { data: artifacts } = useArtifacts();
   const artifact = artifacts?.find((a) => a.id === artifactId);
@@ -200,6 +201,9 @@ function ArtifactPanelContent({
             type="button"
             className={styles.iconButton}
             aria-label="Reload artifact"
+            // Mid-run the version on screen is still being written; remounting now would
+            // present a half-finished document as the result.
+            disabled={isRunStreaming}
             onClick={bumpArtifactReload}
           >
             <ReloadOutlined aria-hidden />

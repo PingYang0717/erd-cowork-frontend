@@ -5,7 +5,7 @@
   FileExcelOutlined,
   FileTextOutlined,
 } from '@ant-design/icons';
-import { Button, Modal } from 'antd';
+import { Button, Modal, Progress } from 'antd';
 import React, { useRef } from 'react';
 
 import { ACCEPT_ATTRIBUTE, MAX_ATTACHMENT_COUNT } from '@/hooks/useFileAttachments';
@@ -56,6 +56,8 @@ interface FileAttachmentModalProps {
   onClose: () => void;
   attachments: UploadedFileInfo[];
   error: string;
+  /** Progress of the upload in flight, or null when nothing is uploading. */
+  uploadPercent: number | null;
   onAddFiles: (files: FileList) => void;
   onRemoveFile: (fileId: string) => void;
 }
@@ -65,6 +67,7 @@ const FileAttachmentModal: React.FC<FileAttachmentModalProps> = ({
   onClose,
   attachments,
   error,
+  uploadPercent,
   onAddFiles,
   onRemoveFile,
 }) => {
@@ -115,6 +118,16 @@ const FileAttachmentModal: React.FC<FileAttachmentModalProps> = ({
           最多 {MAX_ATTACHMENT_COUNT} 個檔案 · 總計上限 5 GB
         </div>
       </div>
+
+      {uploadPercent !== null && (
+        <Progress
+          percent={uploadPercent}
+          aria-label="Uploading"
+          size="small"
+          status="active"
+          className={styles.uploadProgress}
+        />
+      )}
 
       {error && (
         <div className={styles.error} role="alert">

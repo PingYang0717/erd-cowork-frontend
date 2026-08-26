@@ -19,6 +19,11 @@ interface ActiveRunState {
   /** Artifact produced by the run in progress; null when no run has produced one. */
   streamedArtifact: StreamedArtifact | null;
   setStreamedArtifact: (artifact: StreamedArtifact | null) => void;
+  /** Whether a run is open right now. The Artifact pane needs it to refuse a Reload
+   *  mid-run: the version on screen is still being written, and remounting the frame
+   *  would show a half-finished document as if it were the result. */
+  isRunStreaming: boolean;
+  setRunStreaming: (isStreaming: boolean) => void;
   /** Artifact the Artifact pane is currently showing; the thread sends it as
    *  baseArtifactId so the backend iterates on what the user is looking at. */
   displayedArtifactId: string | null;
@@ -34,6 +39,8 @@ interface ActiveRunState {
 export const useActiveRunStore = create<ActiveRunState>((set) => ({
   streamedArtifact: null,
   setStreamedArtifact: (streamedArtifact) => set({ streamedArtifact }),
+  isRunStreaming: false,
+  setRunStreaming: (isRunStreaming) => set({ isRunStreaming }),
   displayedArtifactId: null,
   setDisplayedArtifactId: (displayedArtifactId) => set({ displayedArtifactId }),
   artifactReloadNonce: 0,

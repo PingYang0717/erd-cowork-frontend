@@ -1,5 +1,11 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, within } from '@testing-library/react';
+import {
+  fireEvent,
+  render,
+  screen,
+  waitForElementToBeRemoved,
+  within,
+} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it } from 'vitest';
@@ -55,6 +61,24 @@ describe('File attachments', () => {
   beforeEach(() => {
     useStudioLayoutStore.setState(useStudioLayoutStore.getInitialState());
     useSessionSelectionStore.setState(useSessionSelectionStore.getInitialState());
+  });
+
+  // A CSV here runs to gigabytes; without this the modal is a frozen screen for minutes.
+  it('shows upload progress while the bytes are going out, and clears it when they land', async () => {
+    const user = userEvent.setup();
+    renderStudioPage();
+    await selectASessionAndOpenFileModal(user);
+
+    // Fired rather than awaited: the point is what the screen shows *during* the
+    // upload, and userEvent's upload does not return until the request settles.
+    fireEvent.change(screen.getByLabelText('Choose files'), {
+      target: { files: [fileOfSize('big.csv', 4096)] },
+    });
+
+    expect(screen.getByRole('progressbar', { name: 'Uploading' })).toBeInTheDocument();
+
+    await waitForElementToBeRemoved(() => screen.queryByRole('progressbar', { name: 'Uploading' }));
+    expect(within(composerAttachments()).getByText(/big\.csv/)).toBeInTheDocument();
   });
 
   it('attaches a file via click-to-browse and shows it as a chip in the composer', async () => {

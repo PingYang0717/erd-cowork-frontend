@@ -84,6 +84,7 @@ function ThreadView({ sessionId }: { sessionId: string }) {
   const messages = detail.messages;
   const { state, send, stop } = useAgentStream(sessionId);
   const setStreamedArtifact = useActiveRunStore((s) => s.setStreamedArtifact);
+  const setRunStreaming = useActiveRunStore((s) => s.setRunStreaming);
   const displayedArtifactId = useActiveRunStore((s) => s.displayedArtifactId);
   // The user's words go on screen the moment they send; cleared once the refetched
   // history carries them (streaming flips false after the hook's await-then-DONE).
@@ -103,6 +104,14 @@ function ThreadView({ sessionId }: { sessionId: string }) {
   // An offer belongs to one artifact in one session. Moving away from that session
   // leaves it pointing at something the user is no longer looking at.
   useEffect(() => clearRepair, [sessionId, clearRepair]);
+
+  // The Artifact pane refuses a Reload while a run is open; like the artifact itself
+  // this is state another tree needs, so it goes through the store.
+  const isRunStreaming = state.isStreaming;
+  useEffect(() => {
+    setRunStreaming(isRunStreaming);
+    return () => setRunStreaming(false);
+  }, [isRunStreaming, setRunStreaming]);
 
   // Publishing to the Artifact pane is syncing with something outside this tree, and it
   // has to happen the moment the ARTIFACT event lands rather than when the run ends.
