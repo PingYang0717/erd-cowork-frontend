@@ -14,11 +14,17 @@ interface AttachmentChipProps {
 const AttachmentChip: React.FC<AttachmentChipProps> = ({ upload, onRemove }) => {
   const isSpreadsheet = /\.(xlsx|xls)$/i.test(upload.name);
 
+  // The backend deletes the contents once retention lapses but keeps the row, so the
+  // chip has to say the file is gone rather than look like it is still usable.
   return (
-    <span className={styles.chip}>
+    <span className={upload.expired ? styles.expiredChip : styles.chip}>
       {isSpreadsheet ? <FileExcelOutlined aria-hidden /> : <FileTextOutlined aria-hidden />}
       <span className={styles.name}>{upload.name}</span>
-      <span className={styles.size}>{formatBytes(upload.sizeBytes)}</span>
+      {upload.expired ? (
+        <span className={styles.expiredBadge}>已過期</span>
+      ) : (
+        <span className={styles.size}>{formatBytes(upload.sizeBytes)}</span>
+      )}
       {onRemove && (
         <button
           type="button"

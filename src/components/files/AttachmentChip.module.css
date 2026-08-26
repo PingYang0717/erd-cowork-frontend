@@ -39,3 +39,26 @@
 .remove:hover {
   background: var(--erd-color-fill-tertiary, #f5f5f5);
 }
+
+/* An expired file is a row without contents: it keeps its shape so the user can find
+   and remove it, but drops the primary tint that says "ready to use". */
+.expiredChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 5px 4px 9px;
+  border-radius: 8px;
+  background: var(--erd-color-fill-tertiary, rgba(0, 0, 0, 0.04));
+  border: 1px solid var(--erd-color-border, #d9d9d9);
+  color: var(--erd-color-text-tertiary, #8c8c8c);
+  font-size: 12px;
+}
+
+.expiredBadge {
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: var(--erd-color-fill-tertiary, rgba(0, 0, 0, 0.04));
+  color: var(--erd-color-text-secondary, rgba(0, 0, 0, 0.65));
+  font-size: 10.5px;
+  line-height: 1.5;
+}
