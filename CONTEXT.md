@@ -48,6 +48,14 @@ _Avoid_: Reasoning, Chain of thought
 Artifact 的 HTML 在 iframe 中執行時拋出 JS 錯誤後，由系統偵測、向使用者提議、經使用者確認才交由 Agent 重新產生一版可執行 HTML 的流程。
 _Avoid_: Fix, Retry, Regenerate（Regenerate 是使用者主動要新版本，Repair 是錯誤驅動）
 
+**重新生成（Regenerate）**:
+使用者主動要求 Agent 再產一版 Artifact。它送出一則訊息、跑一整輪分析，結果是**一個新版本**。
+_Avoid_: Reload, Refresh（那兩個不產生新版本）
+
+**重新整理（Reload）**:
+把 iframe 裡的 Artifact 文件丟掉、以**同一份 HTML** 重新掛載一次。不呼叫 Agent、不產生新版本，用途是讓一個自己卡住的 Artifact 從頭再跑一次它的 script。修復成功後也會觸發一次。
+_Avoid_: Regenerate, Repair（三者互斥：Reload 不重產、Regenerate 是使用者要新版本、Repair 是錯誤驅動的重產）
+
 **Artifact**:
 一次 Scenario 執行後產生的分析成果，形式是一段完整的 HTML（dashboard 或 slides），在 Studio 右側以 sandboxed iframe 呈現；可被命名、釘選、分享、切版本。
 _Avoid_: Dashboard, Report, Output（這些是 Artifact 的呈現型態，不是這個概念本身）

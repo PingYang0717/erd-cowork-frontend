@@ -2,6 +2,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useCallback } from 'react';
 
 import { apiClient } from '@/api/apiClient';
+import { useActiveRunStore } from '@/stores/useActiveRunStore';
 import { type BrowserJsError, useRepairOfferStore } from '@/stores/useRepairOfferStore';
 
 /** Asks the agent to rebuild an artifact that threw, then reloads it.
@@ -11,6 +12,7 @@ export function useArtifactRepair() {
   const queryClient = useQueryClient();
   const setStatus = useRepairOfferStore((store) => store.setStatus);
   const clear = useRepairOfferStore((store) => store.clear);
+  const bumpArtifactReload = useActiveRunStore((store) => store.bumpArtifactReload);
 
   return useCallback(
     async (artifactId: string, errors: BrowserJsError[]) => {
@@ -29,10 +31,13 @@ export function useArtifactRepair() {
 
         clear();
         await queryClient.invalidateQueries({ queryKey: ['artifacts', artifactId] });
+        // Refetching is not enough: the wedged document is still mounted, holding
+        // whatever state made it throw. A Reload replaces it.
+        bumpArtifactReload();
       } catch {
         setStatus('failed');
       }
     },
-    [queryClient, setStatus, clear],
+    [queryClient, setStatus, clear, bumpArtifactReload],
   );
 }
