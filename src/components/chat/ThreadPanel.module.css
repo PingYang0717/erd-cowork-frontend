@@ -48,10 +48,14 @@
   white-space: nowrap;
 }
 
+/* Holds the empty state only: once there is a conversation, MessageList is the box
+   that scrolls, because it is the box that grows. */
 .body {
   flex: 1 1 auto;
   min-height: 0;
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
   padding: 6px 20px 16px;
 }
 

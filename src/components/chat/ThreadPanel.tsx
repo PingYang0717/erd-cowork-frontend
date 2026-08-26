@@ -13,7 +13,7 @@ import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
 import { composeAnswerText } from '@/utils/composeAnswerText';
 
 import { ChatComposer } from './ChatComposer';
-import { MessageList } from './MessageList';
+import { type LiveRun, MessageList } from './MessageList';
 import type { Answers } from './QuestionFormCard';
 import { RepairOfferCard } from './RepairOfferCard';
 import styles from './ThreadPanel.module.css';
@@ -66,7 +66,10 @@ const ThreadPanel: React.FC = () => {
     );
   }
 
-  return <ThreadView sessionId={selectedSessionId} />;
+  // Keyed on the session: every piece of state below belongs to one conversation —
+  // the open stream, the optimistic bubble, each recap's expanded flag. Remounting is
+  // one line where clearing them individually is five, and the five drift.
+  return <ThreadView key={selectedSessionId} sessionId={selectedSessionId} />;
 };
 
 function ThreadView({ sessionId }: { sessionId: string }) {
@@ -93,7 +96,6 @@ function ThreadView({ sessionId }: { sessionId: string }) {
   // An offer belongs to one artifact in one session. Moving away from that session
   // leaves it pointing at something the user is no longer looking at.
   useEffect(() => clearRepair, [sessionId, clearRepair]);
-  const bodyRef = useRef<HTMLDivElement>(null);
 
   // Publishing to the Artifact pane is syncing with something outside this tree, and it
   // has to happen the moment the ARTIFACT event lands rather than when the run ends.
@@ -104,19 +106,6 @@ function ThreadView({ sessionId }: { sessionId: string }) {
     // longer on screen.
     return () => setStreamedArtifact(null);
   }, [streamedArtifact, setStreamedArtifact]);
-
-  // The mockup scrolls the thread to the bottom shortly after a new message
-  // renders (40ms, letting layout settle), so long conversations never leave
-  // the latest reply out of view.
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      const body = bodyRef.current;
-      if (body) {
-        body.scrollTop = body.scrollHeight;
-      }
-    }, 40);
-    return () => clearTimeout(timer);
-  }, [messages.length, state.steps.length, state.liveText]);
 
   // Handed to ChatComposer; a fresh identity every render would defeat its memoisation.
   // Refetching after the run lives inside useAgentStream (awaited before DONE); the
@@ -159,19 +148,26 @@ function ThreadView({ sessionId }: { sessionId: string }) {
     return () => unregisterPromptSender(sender);
   }, [handleSend, registerPromptSender, unregisterPromptSender]);
 
+  // A run that ended cleanly hands over to the refetched history — the bubble it left
+  // behind and the one history renders are now the same component, so the swap is
+  // invisible. A run that stopped, failed or is waiting on a reask has something the
+  // history does not carry, so it stays.
   const runEndedVisibly = state.stopped || state.error !== null || state.question !== null;
-  const live =
+  const live: LiveRun | null =
     state.isStreaming || runEndedVisibly
       ? {
           isStreaming: state.isStreaming,
           steps: state.steps,
           liveText: state.liveText,
           stopped: state.stopped,
+          networkError: state.networkError,
           thinking: state.thinking,
           question: state.question,
           codeText: state.codeText,
           tables: state.tables,
           error: state.error,
+          artifact: state.artifact,
+          startedAt: state.startedAt,
         }
       : null;
 
@@ -186,29 +182,33 @@ function ThreadView({ sessionId }: { sessionId: string }) {
   return (
     <div className={styles.panel}>
       <ThreadHeader />
-      <div ref={bodyRef} role="log" aria-label="Messages" className={styles.body}>
-        {hasContent ? (
-          <MessageList
-            messages={messages}
-            live={live}
-            optimisticUserText={optimisticUserText}
-            lastRunDurationMs={state.durationMs}
-            onAnswer={handleAnswer}
-          />
-        ) : (
+      {hasContent ? (
+        <MessageList
+          messages={messages}
+          live={live}
+          optimisticUserText={optimisticUserText}
+          lastRunDurationMs={state.durationMs}
+          onAnswer={handleAnswer}
+          // The offer is about the artifact this conversation just produced, so it
+          // belongs at the tail of the thread and scrolls with it.
+          bottomSlot={
+            repairOffer ? (
+              <RepairOfferCard
+                offer={repairOffer}
+                onConfirm={() => repair(repairOffer.artifactId, repairOffer.errors)}
+                onDismiss={dismissRepair}
+              />
+            ) : null
+          }
+        />
+      ) : (
+        <div className={styles.body}>
           <EmptyState
             heading="Start an analysis"
             subtitle={'Try "Daily monitor (A14)" below, or ask for an SPC analysis on Vt.'}
           />
-        )}
-        {repairOffer && (
-          <RepairOfferCard
-            offer={repairOffer}
-            onConfirm={() => repair(repairOffer.artifactId, repairOffer.errors)}
-            onDismiss={dismissRepair}
-          />
-        )}
-      </div>
+        </div>
+      )}
       <div className={styles.composer}>
         <ChatComposer
           sessionId={sessionId}

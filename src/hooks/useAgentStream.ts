@@ -31,10 +31,13 @@ export interface AgentStreamState {
   tables: TableResult[];
   /** Wall-clock milliseconds the finished run took; null while idle or streaming. */
   durationMs: number | null;
+  /** Epoch ms the current run started; null while idle. Drives the bubble's live timer,
+   *  which has to tick from the start rather than only report at the end. */
+  startedAt: number | null;
 }
 
 type Action =
-  | { type: 'START' }
+  | { type: 'START'; startedAt: number }
   | { type: 'RESET' }
   | { type: 'EVENT'; event: AgentEvent }
   | { type: 'STOPPED' }
@@ -61,6 +64,7 @@ const initialState: AgentStreamState = {
   codeText: '',
   tables: [],
   durationMs: null,
+  startedAt: null,
 };
 
 /** A step is identified by its `stepKey`: a later event for the same key is a status
@@ -78,7 +82,7 @@ function upsertStep(steps: StepItem[], incoming: StepItem): StepItem[] {
 function reducer(state: AgentStreamState, action: Action): AgentStreamState {
   switch (action.type) {
     case 'START':
-      return { ...initialState, isStreaming: true };
+      return { ...initialState, isStreaming: true, startedAt: action.startedAt };
 
     case 'RESET':
       return initialState;
@@ -206,8 +210,8 @@ export function useAgentStream(sessionId: string): {
 
   const send = useCallback(
     async (input: SendInput): Promise<void> => {
-      dispatch({ type: 'START' });
       const startedAt = Date.now();
+      dispatch({ type: 'START', startedAt });
 
       const controller = new AbortController();
       controllerRef.current = controller;

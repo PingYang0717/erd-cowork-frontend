@@ -153,13 +153,17 @@ describe('Scenario matching', () => {
     renderStudioPage();
     await selectASession(user);
 
+    // The thread only exists once it has something in it: an empty session shows the
+    // empty state instead, and there is nothing to scroll.
+    await runScenario(user, 'SPC analysis');
     const log = screen.getByRole('log', { name: 'Messages' });
     Object.defineProperty(log, 'scrollHeight', { value: 640, configurable: true });
-    expect(log.scrollTop).toBe(0);
+    log.scrollTop = 0;
 
-    await runScenario(user, 'SPC analysis');
+    // The user's own words land in the thread the moment they send, which is exactly
+    // the moment the thread has to follow them down.
+    await user.type(screen.getByRole('textbox', { name: 'Message' }), 'And the Cpk?{Enter}');
 
-    // The mockup's 40ms post-render scroll delay.
     await waitFor(() => expect(log.scrollTop).toBe(640));
   });
 

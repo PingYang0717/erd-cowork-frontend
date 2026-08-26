@@ -1,24 +1,12 @@
-import {
-  AppstoreOutlined,
-  CheckCircleFilled,
-  CloseCircleFilled,
-  DownOutlined,
-  LoadingOutlined,
-  ThunderboltFilled,
-  UpOutlined,
-} from '@ant-design/icons';
-import React, { useState } from 'react';
+import type { ReactNode } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 
-import { AttachmentChip } from '@/components/files/AttachmentChip';
-import type { Message, QuestionForm, StepItem, StepStatus, TableResult } from '@/types/api/index';
-import { formatDuration } from '@/utils/formatDuration';
+import type { Message, QuestionForm, StepItem, TableResult } from '@/types/api/index';
+import { liftQuestions } from '@/utils/liftQuestions';
 
-import { HtmlCodePanel } from './HtmlCodePanel';
+import { MessageBubble } from './MessageBubble';
 import styles from './MessageList.module.css';
-import { type Answers, QuestionFormCard } from './QuestionFormCard';
-import { ReplyText } from './ReplyText';
-import { ResultTable } from './ResultTable';
-import { ThinkingPanel } from './ThinkingPanel';
+import type { Answers } from './QuestionFormCard';
 
 /** What the current run has produced so far. Null once nothing is streaming. */
 export interface LiveRun {
@@ -29,6 +17,8 @@ export interface LiveRun {
   liveText: string;
   /** The user ended this run early. What it produced stays, but it is no longer working. */
   stopped: boolean;
+  /** The connection died rather than closing; distinct from a user stop. */
+  networkError: boolean;
   /** Reasoning streamed so far. Live-only. */
   thinking: string;
   /** The reask the run is waiting on, if any. */
@@ -39,100 +29,14 @@ export interface LiveRun {
   tables: TableResult[];
   /** Set when the run ended badly; shown as an alert under whatever it produced. */
   error: { code: string; message: string } | null;
+  /** The artifact this run produced, before the refetched history carries it. */
+  artifact: { artifactId: string; title: string } | null;
+  /** Epoch ms the run started, which drives the ticking timer. */
+  startedAt: number | null;
 }
-
-// Steps used to be revealed by a client-side timer, so a step could only ever be
-// pending, running or done. The backend now reports the status itself, which means a
-// step can also fail — hence the fourth state (ADR-0005).
-const STEP_STATUS_LABEL: Record<StepStatus, string> = {
-  PENDING: 'Pending',
-  RUNNING: 'Running',
-  SUCCESS: 'Done',
-  ERROR: 'Failed',
-};
-
-function StepStatusIcon({ status }: { status: StepStatus }) {
-  const label = STEP_STATUS_LABEL[status];
-
-  if (status === 'SUCCESS') {
-    return <CheckCircleFilled aria-label={label} className={styles.stepIconSuccess} />;
-  }
-  if (status === 'RUNNING') {
-    return <LoadingOutlined aria-label={label} spin className={styles.stepIconRunning} />;
-  }
-  if (status === 'ERROR') {
-    return <CloseCircleFilled aria-label={label} className={styles.stepIconError} />;
-  }
-  return <span aria-label={label} role="img" className={styles.stepIconPending} />;
-}
-
-function StepRow({ step }: { step: StepItem }) {
-  return (
-    <div className={styles.workingStep}>
-      <StepStatusIcon status={step.status} />
-      <span className={styles.stepText}>
-        <span className={styles.stepTitle}>{step.title}</span>
-        {step.description !== null && (
-          <span className={styles.stepDescription}>{step.description}</span>
-        )}
-      </span>
-    </div>
-  );
-}
-
-interface MessageBubbleProps {
-  message: Message;
-}
-
-// Memoised: a streaming run re-renders the whole list on every token, while a
-// settled message above it never changes.
-const MessageBubble = React.memo<MessageBubbleProps>(({ message }) => {
-  if (message.sender === 'USER') {
-    const attachments = message.attachments ?? [];
-
-    return (
-      <div className={styles.userRow}>
-        <div className={styles.userBubble}>
-          {attachments.length > 0 && (
-            <ul className={styles.userAttachments} aria-label="Message attachments">
-              {attachments.map((upload) => (
-                <li key={upload.id}>
-                  <AttachmentChip upload={upload} />
-                </li>
-              ))}
-            </ul>
-          )}
-          <span className={styles.userText}>{message.text}</span>
-        </div>
-      </div>
-    );
-  }
-
-  const steps = parseSteps(message.stepsJson);
-
-  return (
-    <div className={styles.aiRow}>
-      <div className={styles.aiLabel}>
-        <ThunderboltFilled aria-hidden className={styles.aiLabelIcon} />
-        eRD AI
-      </div>
-      {steps.length > 0 && <StepsRecap steps={steps} />}
-      <ReplyText text={message.text} />
-      {message.artifactTitle && (
-        <div className={styles.artifactChip}>
-          <AppstoreOutlined aria-hidden className={styles.artifactChipIcon} />
-          <span>{message.artifactTitle}</span>
-          <span className={styles.artifactChipHint}>shown right →</span>
-        </div>
-      )}
-    </div>
-  );
-});
-MessageBubble.displayName = 'MessageBubble';
 
 /** The wire carries steps as the backend's JSON string; a malformed one renders as no
- *  recap rather than a broken thread. Parsed per bubble render — MessageBubble is
- *  memoised, so a settled message parses once. */
+ *  recap rather than a broken thread. */
 function parseSteps(stepsJson: string | null): StepItem[] {
   if (!stepsJson) {
     return [];
@@ -145,93 +49,21 @@ function parseSteps(stepsJson: string | null): StepItem[] {
   }
 }
 
-// After a run completes, its steps stay behind as the mockup's collapsed
-// "Worked through N steps" card, expandable to each step's title and
-// description.
-function StepsRecap({ steps }: { steps: StepItem[] }) {
-  const [isExpanded, setIsExpanded] = useState(false);
-  // The mockup leads the row with the run's outcome. A recap is only ever
-  // rendered for a finished run, so the only question left is whether any step
-  // failed.
-  const hasFailure = steps.some((step) => step.status === 'ERROR');
-
-  return (
-    <div className={styles.stepsRecap}>
-      <button
-        type="button"
-        className={styles.stepsRecapToggle}
-        aria-expanded={isExpanded}
-        onClick={() => setIsExpanded((v) => !v)}
-      >
-        {/* Decorative, like every other icon on this surface: the toggle's
-            accessible name has to stay exactly its label, and each step's own
-            status is announced by `StepStatusIcon` once expanded. */}
-        {hasFailure ? (
-          <CloseCircleFilled
-            aria-hidden
-            className={`${styles.stepsRecapStatus} ${styles.stepIconError}`}
-          />
-        ) : (
-          <CheckCircleFilled
-            aria-hidden
-            className={`${styles.stepsRecapStatus} ${styles.stepIconSuccess}`}
-          />
-        )}
-        Worked through {steps.length} steps
-        {isExpanded ? (
-          <UpOutlined aria-hidden className={styles.stepsRecapChevron} />
-        ) : (
-          <DownOutlined aria-hidden className={styles.stepsRecapChevron} />
-        )}
-      </button>
-      {isExpanded && (
-        <div className={styles.stepsRecapList}>
-          {steps.map((step) => (
-            <StepRow key={step.stepKey} step={step} />
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function liveRunLabel(live: LiveRun): string {
-  if (live.isStreaming) {
-    return 'eRD AI is working…';
+/** The reask a past turn asked, lifted into the same form the live one renders. Answers
+ *  were never persisted, so it comes back read-only. */
+function parseQuestion(questionsJson: string | null): QuestionForm | null {
+  if (!questionsJson) {
+    return null;
   }
-  return live.stopped ? 'eRD AI · stopped' : 'eRD AI';
-}
-
-function LiveRunView({ live, onAnswer }: { live: LiveRun; onAnswer: (answers: Answers) => void }) {
-  const steps = live.steps.map((step) => <StepRow key={step.stepKey} step={step} />);
-
-  return (
-    <div className={styles.aiRow}>
-      <div className={styles.aiLabel}>
-        <ThunderboltFilled aria-hidden className={styles.aiLabelIcon} />
-        {liveRunLabel(live)}
-      </div>
-      {live.isStreaming ? (
-        <div role="status" aria-label="eRD AI is working" className={styles.workingSteps}>
-          {steps}
-        </div>
-      ) : (
-        <div className={styles.workingSteps}>{steps}</div>
-      )}
-      {live.thinking && <ThinkingPanel thinking={live.thinking} />}
-      {live.codeText && <HtmlCodePanel code={live.codeText} />}
-      {live.tables.map((table) => (
-        <ResultTable key={table.tableId} table={table} />
-      ))}
-      {live.liveText && <ReplyText text={live.liveText} />}
-      {live.question && <QuestionFormCard form={live.question} onSubmit={onAnswer} />}
-      {live.error && (
-        <p role="alert" className={styles.runError}>
-          {live.error.message}
-        </p>
-      )}
-    </div>
-  );
+  try {
+    const parsed = JSON.parse(questionsJson) as unknown;
+    if (!Array.isArray(parsed) || parsed.length === 0) {
+      return null;
+    }
+    return liftQuestions(parsed);
+  } catch {
+    return null;
+  }
 }
 
 interface MessageListProps {
@@ -240,35 +72,96 @@ interface MessageListProps {
   /** The question just sent, shown as a user bubble before the refetched history
    *  carries it — a run takes seconds and the user's own words must not vanish. */
   optimisticUserText: string | null;
-  /** Elapsed time of the run that just finished; a footer under the thread rather than
-   *  part of any message, since it is not persisted with the conversation. */
+  /** Elapsed time of the run that just finished. Belongs to the turn that produced it,
+   *  so it rides the tail AI bubble rather than the bottom of the thread. */
   lastRunDurationMs: number | null;
   onAnswer: (answers: Answers) => void;
+  /** Rendered inside the scroll container, after the thread — anything that belongs to
+   *  the tail of the conversation rather than above it. */
+  bottomSlot?: ReactNode;
 }
 
+/** The thread, and the element that scrolls it. It owns the scroll because it owns what
+ *  is appended: the log boundary a screen reader announces and the box that follows the
+ *  newest turn have to be the same element. */
 const MessageList: React.FC<MessageListProps> = ({
   messages,
   live,
   optimisticUserText,
   lastRunDurationMs,
   onAnswer,
+  bottomSlot,
 }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (container) {
+      container.scrollTop = container.scrollHeight;
+    }
+  }, [messages, live, optimisticUserText, bottomSlot]);
+
+  // Parsed per settled message and memoised together: a streaming run re-renders this
+  // list on every token, and re-parsing the whole history each time is O(history × tokens).
+  const parsedHistory = useMemo(
+    () =>
+      messages.map((message) => ({
+        steps: message.sender === 'AI' ? parseSteps(message.stepsJson) : [],
+        question: message.sender === 'AI' ? parseQuestion(message.questionsJson) : null,
+      })),
+    [messages],
+  );
+
+  const lastIndex = messages.length - 1;
+
   return (
-    <div>
-      {messages.map((message) => (
-        <MessageBubble key={message.id} message={message} />
+    <div ref={containerRef} role="log" aria-label="Messages" className={styles.thread}>
+      {messages.map((message, index) => (
+        <MessageBubble
+          key={message.id}
+          sender={message.sender}
+          text={message.text}
+          attachments={message.attachments}
+          steps={parsedHistory[index].steps}
+          artifact={
+            message.artifactId
+              ? { artifactId: message.artifactId, title: message.artifactTitle ?? message.text }
+              : null
+          }
+          question={parsedHistory[index].question}
+          questionDisabled
+          // The turn that just finished is the tail of the history once the live bubble
+          // has handed over; nothing older has a duration to show.
+          durationMs={
+            live === null && index === lastIndex && message.sender === 'AI'
+              ? lastRunDurationMs
+              : null
+          }
+        />
       ))}
-      {optimisticUserText !== null && (
-        <div className={styles.userRow}>
-          <div className={styles.userBubble}>
-            <span className={styles.userText}>{optimisticUserText}</span>
-          </div>
-        </div>
+      {optimisticUserText !== null && <MessageBubble sender="USER" text={optimisticUserText} />}
+      {live && (
+        <MessageBubble
+          sender="AI"
+          text={live.liveText}
+          steps={live.steps}
+          artifact={live.artifact}
+          streaming={live.isStreaming}
+          stopped={live.stopped}
+          networkError={live.networkError}
+          thinking={live.thinking || null}
+          // A reask appears the moment it is asked: the run is blocked on the answer,
+          // so waiting for the stream to close would just be dead time on screen.
+          question={live.question}
+          onAnswer={onAnswer}
+          codeText={live.codeText || null}
+          tables={live.tables}
+          error={live.error}
+          durationMs={live.isStreaming ? null : lastRunDurationMs}
+          timerStartedAt={live.isStreaming ? live.startedAt : null}
+        />
       )}
-      {live && <LiveRunView live={live} onAnswer={onAnswer} />}
-      {lastRunDurationMs !== null && (
-        <p className={styles.runDuration}>Took {formatDuration(lastRunDurationMs)}</p>
-      )}
+      {bottomSlot}
     </div>
   );
 };

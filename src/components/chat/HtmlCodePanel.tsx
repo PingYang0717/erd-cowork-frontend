@@ -1,29 +1,85 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+
+import { artifactApi } from '@/api/artifactApi';
 
 import { CollapsiblePanel } from './CollapsiblePanel';
 import styles from './HtmlCodePanel.module.css';
 
 interface HtmlCodePanelProps {
-  code: string;
+  /** The artifact's HTML as the agent writes it. Wins over `artifactId` when present:
+   *  the live text IS the source, and it is more current than anything fetchable. */
+  code?: string;
+  /** Fetches the artifact's source on first expand — the read-back path for a turn
+   *  whose CODE events are long gone. */
+  artifactId?: string;
+  /** Keeps the newest line in view while the run is still producing. */
+  autoScroll?: boolean;
 }
 
-/** The artifact's HTML as the agent writes it. Live-only, and it scrolls itself so the
- *  newest line stays in view while the run is still producing. */
-const HtmlCodePanel: React.FC<HtmlCodePanelProps> = ({ code }) => {
+/** What the fetch came back with, for one artifact. Absent means "not answered yet",
+ *  which is the only thing loading has ever meant — so loading is derived, not stored. */
+interface FetchOutcome {
+  artifactId: string;
+  result: { status: 'ok'; code: string } | { status: 'error' };
+}
+
+/** The artifact's HTML, collapsed by default. Live during a run, fetched on demand
+ *  afterwards — the reader does not care which, so both wear the same panel. */
+const HtmlCodePanel: React.FC<HtmlCodePanelProps> = ({ code, artifactId, autoScroll = false }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [outcome, setOutcome] = useState<FetchOutcome | null>(null);
   const codeRef = useRef<HTMLPreElement>(null);
+
+  const hasLiveCode = code !== undefined && code !== '';
+  // Both being undefined is not a match: a panel with no artifact has nothing fetched.
+  const resolved =
+    outcome !== null && artifactId !== undefined && outcome.artifactId === artifactId
+      ? outcome.result
+      : null;
+
+  // Lazy: nothing is fetched until the reader asks to see it, and the answer is kept per
+  // artifact so re-expanding does not re-fetch while switching versions does.
+  useEffect(() => {
+    if (!isExpanded || hasLiveCode || artifactId === undefined || resolved !== null) {
+      return undefined;
+    }
+    const controller = new AbortController();
+    artifactApi
+      .getRawHtml(artifactId, controller.signal)
+      .then((html) => setOutcome({ artifactId, result: { status: 'ok', code: html } }))
+      .catch((error: unknown) => {
+        // The abort is ours (collapse, unmount, version switch) — not a failure to report.
+        if (error instanceof Error && error.name === 'CanceledError') {
+          return;
+        }
+        setOutcome({ artifactId, result: { status: 'error' } });
+      });
+    return () => controller.abort();
+  }, [isExpanded, hasLiveCode, artifactId, resolved]);
 
   useEffect(() => {
     const element = codeRef.current;
-    if (element) {
+    if (autoScroll && element) {
       element.scrollTop = element.scrollHeight;
     }
-  }, [code]);
+  }, [code, autoScroll, isExpanded]);
+
+  const shownCode = hasLiveCode ? code : resolved?.status === 'ok' ? resolved.code : null;
+  const isLoading = !hasLiveCode && artifactId !== undefined && resolved === null;
 
   return (
-    <CollapsiblePanel label="HTML">
-      <pre ref={codeRef} className={styles.code}>
-        {code}
-      </pre>
+    <CollapsiblePanel
+      label="HTML"
+      isExpanded={isExpanded}
+      onToggle={() => setIsExpanded((expanded) => !expanded)}
+    >
+      {isLoading && <p className={styles.note}>Loading…</p>}
+      {resolved?.status === 'error' && <p className={styles.note}>No source available.</p>}
+      {shownCode !== null && (
+        <pre ref={codeRef} className={styles.code}>
+          {shownCode}
+        </pre>
+      )}
     </CollapsiblePanel>
   );
 };

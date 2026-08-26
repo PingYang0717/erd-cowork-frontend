@@ -1,8 +1,8 @@
+/* Inside a message bubble the outline is the bubble's; depth comes from a fill one
+   step deeper than it. */
 .panel {
-  margin-top: 8px;
-  border: 1px solid var(--erd-color-border-secondary, #f0f0f0);
   border-radius: 9px;
-  background: var(--erd-color-fill-quaternary, #fafafa);
+  background: var(--erd-color-fill-quaternary, rgba(0, 0, 0, 0.02));
 }
 
 .toggle {

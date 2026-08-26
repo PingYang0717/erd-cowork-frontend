@@ -79,8 +79,8 @@ describe('New chat opens a client-side draft', () => {
     await openStudio();
     await userEvent.click(screen.getByRole('button', { name: 'New chat' }));
 
-    const thread = within(await screen.findByRole('log', { name: 'Messages' }));
-    expect(thread.queryByText(/eRD AI/)).not.toBeInTheDocument();
+    expect(await screen.findByText('Start an analysis')).toBeInTheDocument();
+    expect(screen.queryByRole('log', { name: 'Messages' })).not.toBeInTheDocument();
   });
 
   it('offers no rename, pin or delete on a draft — there is nothing to act on yet', async () => {

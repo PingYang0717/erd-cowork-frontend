@@ -1,6 +1,6 @@
 # 與 `cowork-master` 的功能比對與設計缺口
 
-比對日期：2026-08-25。對象是 `/Users/py/Downloads/cowork-master`（Spring Boot + MongoDB
+比對日期：2026-08-25，**第 6 節更新於 2026-08-27**。對象是 `/Users/py/Downloads/cowork-master`（Spring Boot + MongoDB
 
 - FastAPI deepagent，前端 React 18 + antd 6）與本專案（React 19 + Vite，MSW mock backend）。
 
@@ -228,13 +228,32 @@ request interceptor 是空的。
 | 13  | **Header／空狀態**        | 標題 + 副標「Import data, prompt eRD AI…」+ AttachmentsPopover；空狀態一行純文字                                                                   | 標題 + 資料來源 chip + ThemeToggle；空狀態 icon 磚 + 標題 + 副標（對齊 mockup）                                                              |
 | 14  | **斷線文案**              | `連線中斷，請重新送出一次`                                                                                                                         | `Connection lost — send it again.`（刻意英文，見第 4 節的文案討論）                                                                          |
 
-### 建議
+### 處理結果（2026-08-27）
 
-- **#2 樂觀 user bubble ——建議補**。一輪分析要跑好幾秒，這段期間使用者看不到自己剛送出的
-  內容，是這次比對裡體感最差的一項。
-- **#10 沒有 invalidate `sessions` ——建議補**。跑完之後左欄 session 的最後活動時間與排序
-  不會更新，成本只是多一個 query key。
-- **#9** 只有在後端真的非同步落庫時才會咬到，等 live 模式接起來再看。
-- **#4** 目前不是 bug（`START` 會清乾淨），但 stopped／error 的殘留區塊會跨越使用者的其他
-  操作，值得順手補一個 `reset()`。
-- 其餘各項多半是本專案刻意的設計（#1、#6、#7、#8、#11、#12、#13），維持現狀。
+**已對齊**：
+
+- **#2 樂觀 user bubble** — 已補（`optimisticUserText`）。
+- **#3 尾巴重複抑制** — 交棒問題已由 MessageBubble 合流解決：跑完的那輪與歷史那輪走同一條
+  render 路徑，長相一致，所以交棒看不出來，不需要對 history 動刀。
+- **#4 `reset()`** — 改以 `<ThreadView key={sessionId}>` 解決。整棵重掛一次清掉 stream
+  state、樂觀泡泡、recap 展開狀態與捲動位置；逐項清會漂移。
+- **#5 耗時位置** — 已搬進該輪的 AI 泡泡，並補上串流中的即時計時。
+- **#9 中止後補追** — 已補（`AbortError` 後兩段 800ms 延遲 invalidate）。
+- **#10 invalidate 範圍／時機** — 已補（`['sessions', id]` 與 `['sessions']` 一起，且
+  在 `DONE` 之前 await）。
+- **#11 自動捲動** — 捲動搬進 `MessageList` 自己的容器，deps 補齊（先前少了樂觀泡泡與
+  repair 卡，兩者出現時不會捲）。
+
+**維持現狀**（本專案刻意的設計）：#1 quick chips 直送、#6 schema-driven `QuestionForm`、
+#7 artifact 發布走 zustand、#8 訊息層級附件、#12 手刻 StepRow、#13 header／空狀態、
+#14 英文文案。
+
+### 這一輪新發現的落差
+
+| #   | 項目                                    | 狀況                                                                                                                                                                                               |
+| --- | --------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 15  | **`[[table:id]]` 標記未處理**           | 🔴 後端在回覆文字裡夾 `[[table:...]]` 指定表格位置，本專案沒有解析，live 模式會把標記原樣印給使用者。**已補**（`utils/tableMarkers.ts`，行內渲染；沒有標記指定位置的表格接在文字後面而不是消失）。 |
+| 16  | **後端持久化的系統紀錄訊息**            | 「回應已中斷…」「已修復儀表板執行錯誤…」會被當成一般 AI 回覆走 markdown 排版。**已補**（`constants/messages.ts` + 泡泡的小灰字分支；比對字串維持中文一字不差）。                                   |
+| 17  | **`useArtifactContent` 註解與行為不符** | docstring 宣稱換 theme 時保留舊文件，實際上換 query key 就會清空 `data`，畫面會閃。**已補**（`placeholderData: keepPreviousData`）。                                                               |
+| 18  | **`ThreadView` 沒有 `key={sessionId}`** | `ArtifactPanel` 有、thread 沒有，stream state 會跨 session 存活。**已補**。                                                                                                                        |
+| 19  | **歷史的「查看 HTML」不存在**           | cowork 的泡泡會 lazy-fetch `/artifacts/{id}/raw`，本專案沒有這條端點也沒有這個分支。**已補**。                                                                                                     |
