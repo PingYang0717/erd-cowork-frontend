@@ -89,11 +89,11 @@ describe('MessageBubble', () => {
 
   it('distinguishes a user-initiated stop from a dropped connection', () => {
     const { rerender } = render(<MessageBubble sender="AI" text="Partial" stopped />);
-    expect(screen.getByText('Stopped')).toBeInTheDocument();
+    expect(screen.getByText('⏹ 已停止生成')).toBeInTheDocument();
 
     rerender(<MessageBubble sender="AI" text="Partial" networkError />);
-    expect(screen.queryByText('Stopped')).not.toBeInTheDocument();
-    expect(screen.getByText('Connection lost — send it again.')).toBeInTheDocument();
+    expect(screen.queryByText('⏹ 已停止生成')).not.toBeInTheDocument();
+    expect(screen.getByText('⚠ 連線中斷，請重新送出一次')).toBeInTheDocument();
   });
 
   it('renders the backend’s own record messages as hints, not as agent prose', () => {

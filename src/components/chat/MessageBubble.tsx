@@ -321,12 +321,12 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
         )}
         {!streaming && durationMs != null && <Elapsed ms={durationMs} />}
 
-        {stopped && <p className={styles.stateNote}>Stopped</p>}
+        {stopped && <p className={styles.stateNote}>⏹ 已停止生成</p>}
         {/* Still an alert: the run ended in a way the user has to act on, and the
             dedicated wording is what distinguishes it from a backend refusal. */}
         {networkError && (
           <p role="alert" className={styles.networkNote}>
-            Connection lost — send it again.
+            ⚠ 連線中斷，請重新送出一次
           </p>
         )}
         {error && !networkError && (
@@ -341,9 +341,11 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
 
 function agentLabel(streaming: boolean, stopped: boolean): string {
   if (streaming) {
-    return 'eRD AI is working…';
+    return 'eRD AI 處理中…';
   }
-  return stopped ? 'eRD AI · stopped' : 'eRD AI';
+  // A stop is reported inside the bubble (⏹ 已停止生成, cowork's wording); repeating
+  // it in the label would say it twice.
+  return stopped ? 'eRD AI · 已停止' : 'eRD AI';
 }
 
 /** The open turn's timer. The clock is read in the interval rather than during render —
