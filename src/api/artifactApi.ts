@@ -3,8 +3,8 @@ import type { Artifact, DirectoryEntry } from '@/types/api/index';
 import { apiClient } from './apiClient';
 
 /** Stub for the one read the backend has not built yet (ADR-0009): the directory the
- *  share dialog searches. Sharing is disabled, so nothing reaches it — but the dialog
- *  still renders behind that disabled entry point. */
+ *  share dialog searches. Sharing itself is live (10e61cc); recipients are picked from
+ *  this fixed list until the real directory endpoint lands. */
 const DEPARTMENT_CODES = [
   'A10INTD1-1',
   'A10INTD1-2',
@@ -88,9 +88,8 @@ export const artifactApi = {
   unpublish: (id: string) =>
     apiClient.delete<Artifact>(`/artifacts/${id}/publish`).then((res) => res.data),
 
-  // Delete and share have no backend endpoint yet, and no caller: the controls that
-  // would reach them are disabled (ADR-0009). They stay as the executable shape of
-  // the contract in docs/api/interface.md.
+  // Live since 10e61cc: the Gallery card's delete and the share dialog both reach the
+  // backend for real (ADR-0009 status note).
   deleteArtifact: (id: string) => apiClient.delete<void>(`/artifacts/${id}`).then(() => undefined),
 
   share: (id: string, targetIds: string[]) =>
@@ -100,7 +99,7 @@ export const artifactApi = {
       })
       .then((res) => res.data),
 
-  /** Stubbed: no backend directory endpoint (ADR-0009). Read by the share dialog,
-   *  which is itself unreachable while sharing is disabled. */
+  /** Stubbed: no backend directory endpoint (ADR-0009). The share dialog searches this
+   *  fixed list until the real directory lands. */
   listDirectory: () => Promise.resolve(STUB_DIRECTORY),
 };

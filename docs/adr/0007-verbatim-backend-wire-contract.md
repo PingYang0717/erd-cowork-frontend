@@ -9,6 +9,11 @@ Accepted。取代 `api/liveAdapter.ts` 的轉換層路線;修訂 [ADR-0006](0006
 決策 4「傳輸為 hybrid」已被 [ADR-0009](0009-no-mock-backend-at-runtime.md) 取代:runtime
 不再有 mock 後端,未實作的端點改為 api 模組回 stub 或在 UI 停用。verbatim 契約本身不變。
 
+> **狀態註記(2026-08-28)**:後果第一條提到的 `VITE_AGENT_TRANSPORT` 與
+> `VITE_API_BASE_URL` 皆已不存在——前者隨 ADR-0009 移除,後者隨
+> [ADR-0011](0011-cowork-file-parity-for-api-seams.md) 移除(base 寫死 `/api`)。
+> 「接真後端」如今不需要任何設定,唯一模式即真後端。
+
 ## 背景
 
 後端(cowork master,Spring Boot + MongoDB)已實作完成,契約已鎖定:
