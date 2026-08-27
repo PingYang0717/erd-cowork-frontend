@@ -45,16 +45,16 @@ export function useSessionGroups() {
       ? {
           id: selectedSessionId,
           title: DRAFT_SESSION_TITLE,
-          pinned: false,
+          pinnedAt: null,
           updatedAt: draftStartedAt,
         }
       : null;
 
-  const pinned = sortByRecency(sessions.filter((session) => session.pinned));
+  const pinned = sortByRecency(sessions.filter((session) => session.pinnedAt !== null));
   // No special case for the draft's position: its updatedAt is the moment it was
   // opened, so recency ordering already puts it first.
   const recent = sortByRecency([
-    ...sessions.filter((session) => !session.pinned),
+    ...sessions.filter((session) => session.pinnedAt === null),
     ...(draftSession ? [draftSession] : []),
   ]);
 

@@ -15,8 +15,9 @@ export const sessionApi = {
   renameSession: (id: string, title: string) =>
     apiClient.patch<Session>(`/sessions/${id}`, { title }),
 
-  setSessionPinned: (id: string, pinned: boolean) =>
-    apiClient.patch<Session>(`/sessions/${id}`, { pinned }),
+  /** `pinnedAt` 是釘選當下的時間戳；傳 null 表示取消釘選。 */
+  setSessionPinned: (id: string, pinnedAt: string | null) =>
+    apiClient.patch<Session>(`/sessions/${id}`, { pinnedAt }),
 
   deleteSession: (id: string) => apiClient.delete<void>(`/sessions/${id}`),
 };

@@ -28,16 +28,16 @@ it implements them.
 
 ## Session
 
-| Method | Path            | Request                                       | Response        |
-| ------ | --------------- | --------------------------------------------- | --------------- |
-| GET    | `/sessions`     | —                                             | `Session[]`     |
-| GET    | `/sessions/:id` | —                                             | `SessionDetail` |
-| POST   | `/sessions`     | `{}` (title defaults to `"New analysis"`)     | `Session` (201) |
-| PATCH  | `/sessions/:id` | `Partial<Pick<Session, 'title' \| 'pinned'>>` | `Session`       |
-| DELETE | `/sessions/:id` | —                                             | 204 No Content  |
+| Method | Path            | Request                                         | Response        |
+| ------ | --------------- | ----------------------------------------------- | --------------- |
+| GET    | `/sessions`     | —                                               | `Session[]`     |
+| GET    | `/sessions/:id` | —                                               | `SessionDetail` |
+| POST   | `/sessions`     | `{}` (title defaults to `"New analysis"`)       | `Session` (201) |
+| PATCH  | `/sessions/:id` | `Partial<Pick<Session, 'title' \| 'pinnedAt'>>` | `Session`       |
+| DELETE | `/sessions/:id` | —                                               | 204 No Content  |
 
 `GET /sessions/:id` 回 `SessionDetail`：session 的 messages 與 files 內嵌其中——後端
-**沒有**獨立的 messages 端點。`POST` / `PATCH` / `DELETE` 與 `Session.pinned` 是前端-only
+**沒有**獨立的 messages 端點。`POST` / `PATCH` / `DELETE` 與 `Session.pinnedAt` 是前端-only
 （後端的 session 由 client 指定 id、第一次送訊息時 upsert，也沒有改名／釘選／刪除），
 live 模式下仍由 MSW 服務，見「傳輸模式」。
 
@@ -161,7 +161,7 @@ mock 的兩個寫入端點也照做，否則草稿 session 的 `GET /sessions/:i
 **線路型別即應用型別**（[ADR-0007](../adr/0007-verbatim-backend-wire-contract.md)）：
 `types/api/` 的形狀與後端 DTO 逐字一致（`sender: 'USER' | 'AI'`、`stepsJson` /
 `questionsJson` JSON 字串、`artifactTitle`……），UI 在使用點解析，沒有轉換層。
-前端-only 的欄位（`Session.pinned`、`Message.scenario` / `attachments`、QUESTION 的
+前端-only 的欄位（`Session.pinnedAt`、`Message.scenario` / `attachments`、QUESTION 的
 `form`）在型別上明確標註，真後端不回它們時 UI 各自降級。
 
 ### QUESTION 事件與反問表單的降級

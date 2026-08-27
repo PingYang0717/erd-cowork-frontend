@@ -46,14 +46,15 @@ function SessionRow({
   const deleteSession = useDeleteSession();
   const [isRenaming, setIsRenaming] = useState(false);
   const [renameDraft, setRenameDraft] = useState(session.title);
+  const isPinned = session.pinnedAt !== null;
 
   // Dividers between every item, per the mockup's session menu. The Pin icon
   // deliberately keeps its filled-when-pinned variant (spec exception).
   const menuItems = [
     {
       key: 'pin',
-      label: session.pinned ? 'Unpin' : 'Pin',
-      icon: session.pinned ? <PushpinFilled aria-hidden /> : <PushpinOutlined aria-hidden />,
+      label: isPinned ? 'Unpin' : 'Pin',
+      icon: isPinned ? <PushpinFilled aria-hidden /> : <PushpinOutlined aria-hidden />,
     },
     { type: 'divider' as const },
     { key: 'rename', label: 'Rename', icon: <EditOutlined aria-hidden /> },
@@ -63,7 +64,7 @@ function SessionRow({
 
   function handleMenuClick(key: string) {
     dispatchMenuAction(key, {
-      pin: () => setSessionPinned.mutate({ id: session.id, pinned: !session.pinned }),
+      pin: () => setSessionPinned.mutate({ id: session.id, pinned: !isPinned }),
       rename: () => {
         setRenameDraft(session.title);
         setIsRenaming(true);
@@ -114,7 +115,7 @@ function SessionRow({
         onClick={() => onSelect(session.id)}
       >
         <span className={styles.sessionRowTitle}>
-          {session.pinned && <PushpinOutlined aria-hidden className={styles.pinIndicator} />}
+          {isPinned && <PushpinOutlined aria-hidden className={styles.pinIndicator} />}
           {session.title}
         </span>
         <span className={styles.sessionRowTimestamp} aria-hidden="true">
