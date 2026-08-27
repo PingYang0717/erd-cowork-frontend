@@ -50,17 +50,18 @@ Lint 是 **oxlint + ESLint 並存**(`npm run lint` 依序跑兩個),格式走 Pr
 
 ```
 src/
-  api/          # apiClient(Axios instance)+ 各 endpoint module + identity
+  api/          # apiClient(Axios instance + 匿名身分與 auth header provider)+ 各 endpoint module
+  bootstrap/    # internal 環境啟動接縫(import.meta.glob 偵測 internal.impl.ts,ADR-0011)
   components/   # 依 domain 切:artifact / chat / connectors / files /
                 #   gallery / session / common / layouts
-  config/       # 執行期設定(transport、currentUser)
+  config/       # 執行期設定(currentUser)
   constants/    # 共用常數(storage key 等)
   hooks/        # 資料 hook 與跨元件的 UI hook
   stores/       # Zustand store
   theme/        # design token
   types/        # 共用型別
   utils/        # 純函式工具
-  app/          # 進入點、Router、Providers
+  app/          # Router、Providers(進入點是 src/main.tsx,mount 前先跑 bootstrap)
   pages/        # 路由頁面(只組裝、只放邊界)
   mocks/ test/  # MSW 與測試工具（test-only，app 不跑 MSW）
 ```
@@ -111,5 +112,9 @@ Husky + lint-staged 會自動跑 `oxlint --fix` → `eslint --fix` → `prettier
 
 ### 測試
 
-- 預設不平行(`fileParallelism: false`)。每個窗格都會先 suspend,24 個檔案同時跑會餓死
+- 預設不平行(`fileParallelism: false`)。每個窗格都會先 suspend,幾十個檔案同時跑會餓死
   那些等待,讓單獨跑會過的測試在整批跑時失敗
+- 測試身分與 FormData 有兩個 setup 前提:`test/seedTestIdentity.ts` 在 mocks 模組載入前
+  固定匿名 id(`getUserId` 無快取,fixtures 在模組載入時捕捉 ownerId);
+  `test/formDataWire.ts` 把 FormData 序列化成瀏覽器等價 multipart(jsdom File 過 MSW
+  會降級成匿名 blob)。動 setup.ts 的 import 順序前先讀這兩檔的註解
