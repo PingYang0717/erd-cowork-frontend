@@ -5,6 +5,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { StudioShell } from '@/components/layouts/StudioShell';
+import { BACKEND_UNSUPPORTED } from '@/constants/messages';
 import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
 import { useStudioLayoutStore } from '@/stores/useStudioLayoutStore';
 import { useThemeStore } from '@/stores/useThemeStore';
@@ -26,78 +27,67 @@ function renderStudioPage() {
   );
 }
 
-describe('Per-version Artifact generation', () => {
+describe('Per-version Artifact publishing', () => {
   beforeEach(() => {
     useStudioLayoutStore.setState(useStudioLayoutStore.getInitialState());
     useSessionSelectionStore.setState(useSessionSelectionStore.getInitialState());
     useThemeStore.setState(useThemeStore.getInitialState());
   });
 
-  it('offers 生成 Artifact for a fresh (regenerated) version, and generating flips it to the 已生成 chip', async () => {
+  // 發布 = 開放給別人使用。The button the mockup labels 生成 Artifact is what does it,
+  // and `publishedAt` is what it sets — not to be confused with 重新生成, which asks the
+  // Agent for a whole new version.
+  it('offers 發布 Artifact for a fresh (regenerated) version, and publishing flips it to 已發布', async () => {
     const user = userEvent.setup();
     renderStudioPage();
 
-    // The seeded session's latest version is already generated.
+    // The seeded session's latest version is already published.
     await user.click(await screen.findByRole('button', { name: 'SPC — Vt (gate CD)' }));
-    expect(await screen.findByText('已生成')).toBeInTheDocument();
+    expect(await screen.findByText('已發布')).toBeInTheDocument();
 
-    // Regenerating produces a new, not-yet-generated version.
+    // Regenerating produces a new, not-yet-published version.
     await user.click(await screen.findByRole('button', { name: 'Regenerate artifact' }));
 
-    const generateButton = await screen.findByRole('button', { name: '生成 Artifact' });
-    expect(screen.queryByText('已生成')).not.toBeInTheDocument();
+    const publishButton = await screen.findByRole('button', { name: '發布 Artifact' });
+    expect(screen.queryByText('已發布')).not.toBeInTheDocument();
 
-    await user.click(generateButton);
+    await user.click(publishButton);
 
-    expect(await screen.findByText('已生成')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: '生成 Artifact' })).not.toBeInTheDocument();
+    expect(await screen.findByText('已發布')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '發布 Artifact' })).not.toBeInTheDocument();
   });
 
-  it('gates the Share button on the current version being generated', async () => {
+  it('disables Share on a published version too — the endpoint is what is missing, not the publish', async () => {
     const user = userEvent.setup();
     renderStudioPage();
 
     await user.click(await screen.findByRole('button', { name: 'SPC — Vt (gate CD)' }));
-    await screen.findByText('已生成');
-
-    // Generated version: share is enabled.
-    expect(screen.getByRole('button', { name: 'Share artifact' })).toBeEnabled();
-
-    // A fresh ungenerated version disables share with an explanatory tooltip.
-    await user.click(await screen.findByRole('button', { name: 'Regenerate artifact' }));
-    await screen.findByRole('button', { name: '生成 Artifact' });
+    await screen.findByText('已發布');
 
     const share = screen.getByRole('button', { name: 'Share artifact' });
     expect(share).toBeDisabled();
-
     await user.hover(share);
-    expect(await screen.findByRole('tooltip')).toHaveTextContent('請先生成 Artifact');
-    await user.unhover(share);
-
-    // Generating unlocks it again.
-    await user.click(screen.getByRole('button', { name: '生成 Artifact' }));
-    await screen.findByText('已生成');
-    expect(screen.getByRole('button', { name: 'Share artifact' })).toBeEnabled();
+    expect(await screen.findByRole('tooltip')).toHaveTextContent(BACKEND_UNSUPPORTED);
   });
 
-  it('keeps each version’s generated state independent when switching versions', async () => {
+  it('keeps each version’s published state independent when switching versions', async () => {
     const user = userEvent.setup();
     renderStudioPage();
 
     await user.click(await screen.findByRole('button', { name: 'SPC — Vt (gate CD)' }));
-    await screen.findByText('已生成');
+    await screen.findByText('已發布');
 
     await user.click(await screen.findByRole('button', { name: 'Regenerate artifact' }));
-    await screen.findByRole('button', { name: '生成 Artifact' });
+    await screen.findByRole('button', { name: '發布 Artifact' });
 
-    // Switch back to the seeded, already-generated v1: the chip returns.
+    // Switch back to the seeded, already-published v1: the chip returns.
     await user.click(await screen.findByRole('button', { name: '切換版本' }));
     await user.click(await screen.findByRole('menuitem', { name: /v1/ }));
-    expect(await screen.findByText('已生成')).toBeInTheDocument();
+    expect(await screen.findByText('已發布')).toBeInTheDocument();
 
-    // And v2 is still ungenerated when switching to it again.
+    // And v2 is still unpublished when switching to it again.
     await user.click(await screen.findByRole('button', { name: '切換版本' }));
     await user.click(await screen.findByRole('menuitem', { name: /v2/ }));
-    expect(await screen.findByRole('button', { name: '生成 Artifact' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: '發布 Artifact' })).toBeInTheDocument();
   });
 });

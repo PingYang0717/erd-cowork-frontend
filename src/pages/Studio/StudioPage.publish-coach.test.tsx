@@ -35,23 +35,23 @@ function artifactsNav() {
   return screen.findByRole('button', { name: /^Artifacts/ });
 }
 
-describe('Generation feedback: badge count, coach highlight, toast', () => {
+describe('Publish feedback: badge count, coach highlight, toast', () => {
   beforeEach(() => {
     useStudioLayoutStore.setState(useStudioLayoutStore.getInitialState());
     useSessionSelectionStore.setState(useSessionSelectionStore.getInitialState());
     useThemeStore.setState(useThemeStore.getInitialState());
   });
 
-  it('counts only generated Artifacts in the rail badge, increments on generate, coaches the nav entry, and offers a toast', async () => {
+  it('counts only published Artifacts in the rail badge, increments on publish, coaches the nav entry, and offers a toast', async () => {
     const user = userEvent.setup();
     renderStudioPage();
 
-    // All three seeded Artifacts are generated.
+    // All three seeded Artifacts are published.
     // The rail suspends until the Artifacts list arrives, so wait for it first.
     expect(await within(await artifactsNav()).findByText('3')).toBeInTheDocument();
 
-    // A regenerated (ungenerated) version does not change the count, but the
-    // artifact needs generating: use a brand-new artifact via the composer.
+    // A regenerated (unpublished) version does not change the count, but the
+    // artifact needs publishing: use a brand-new artifact via the composer.
     await user.click(await screen.findByRole('button', { name: 'New chat' }));
     await screen.findByRole('button', { name: 'New analysis' });
     // The composer subtree suspends on its queries; wait for it before sync getBy*.
@@ -59,22 +59,22 @@ describe('Generation feedback: badge count, coach highlight, toast', () => {
     await user.click(screen.getByRole('button', { name: 'SPC analysis' }));
     await answerAnalysisConditions(user);
 
-    // The new artifact arrives ungenerated once the steps animation finishes.
-    const generateButton = await screen.findByRole(
+    // The new artifact arrives unpublished once the steps animation finishes.
+    const publishButton = await screen.findByRole(
       'button',
-      { name: '生成 Artifact' },
+      { name: '發布 Artifact' },
       { timeout: 5000 },
     );
     expect(within(await artifactsNav()).getByText('3')).toBeInTheDocument();
     expect(await artifactsNav()).not.toHaveAttribute('data-coach');
 
-    await user.click(generateButton);
+    await user.click(publishButton);
 
     // Badge +1, coach highlight on, toast with both actions.
     expect(await within(await artifactsNav()).findByText('4')).toBeInTheDocument();
     expect(await artifactsNav()).toHaveAttribute('data-coach', 'true');
 
-    const toast = await screen.findByRole('status', { name: 'Artifact 已生成' });
+    const toast = await screen.findByRole('status', { name: 'Artifact 已發布' });
     expect(within(toast).getByRole('button', { name: '前往 Artifacts' })).toBeInTheDocument();
     expect(within(toast).getByRole('button', { name: '知道了' })).toBeInTheDocument();
   });
@@ -90,18 +90,18 @@ describe('Generation feedback: badge count, coach highlight, toast', () => {
     await user.click(screen.getByRole('button', { name: 'SPC analysis' }));
     await answerAnalysisConditions(user);
     await user.click(
-      await screen.findByRole('button', { name: '生成 Artifact' }, { timeout: 5000 }),
+      await screen.findByRole('button', { name: '發布 Artifact' }, { timeout: 5000 }),
     );
 
-    const toast = await screen.findByRole('status', { name: 'Artifact 已生成' });
+    const toast = await screen.findByRole('status', { name: 'Artifact 已發布' });
     await user.click(within(toast).getByRole('button', { name: '知道了' }));
-    expect(screen.queryByRole('status', { name: 'Artifact 已生成' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('status', { name: 'Artifact 已發布' })).not.toBeInTheDocument();
     expect(await artifactsNav()).not.toHaveAttribute('data-coach');
 
-    // Generate another version to bring the toast back, then navigate.
+    // Publish another version to bring the toast back, then navigate.
     await user.click(await screen.findByRole('button', { name: 'Regenerate artifact' }));
-    await user.click(await screen.findByRole('button', { name: '生成 Artifact' }));
-    const toast2 = await screen.findByRole('status', { name: 'Artifact 已生成' });
+    await user.click(await screen.findByRole('button', { name: '發布 Artifact' }));
+    const toast2 = await screen.findByRole('status', { name: 'Artifact 已發布' });
     await user.click(within(toast2).getByRole('button', { name: '前往 Artifacts' }));
 
     expect(await screen.findByRole('heading', { name: 'Artifacts' })).toBeInTheDocument();

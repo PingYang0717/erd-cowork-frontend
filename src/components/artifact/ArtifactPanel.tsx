@@ -10,14 +10,15 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { Tooltip } from '@/components/common/Tooltip';
+import { BACKEND_UNSUPPORTED } from '@/constants/messages';
 import { useArtifactContent } from '@/hooks/useArtifactContent';
-import { useGenerateArtifact } from '@/hooks/useArtifactMutations';
+import { usePublishArtifact } from '@/hooks/useArtifactMutations';
 import { useArtifacts } from '@/hooks/useArtifacts';
 import { useArtifactTheme } from '@/hooks/useArtifactTheme';
 import { useSessionDetail } from '@/hooks/useSessionDetail';
 import { useActiveRunStore } from '@/stores/useActiveRunStore';
-import { useGenerateCoachStore } from '@/stores/useGenerateCoachStore';
 import { usePendingPromptStore } from '@/stores/usePendingPromptStore';
+import { usePublishCoachStore } from '@/stores/usePublishCoachStore';
 import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
 import type { ArtifactVersion } from '@/types/api/index';
 import { deriveArtifactVersions } from '@/utils/deriveArtifactVersions';
@@ -134,17 +135,17 @@ function ArtifactPanelContent({
   const { data } = useArtifactContent(artifactId, theme, reloadNonce);
   const { data: artifacts } = useArtifacts();
   const artifact = artifacts?.find((a) => a.id === artifactId);
-  const generateArtifact = useGenerateArtifact();
+  const publishArtifact = usePublishArtifact();
   const sendPrompt = usePendingPromptStore((s) => s.sendPrompt);
-  const startCoach = useGenerateCoachStore((s) => s.start);
+  const startCoach = usePublishCoachStore((s) => s.start);
 
-  // Enrich the derived versions with each artifact's generated state for the menu's
+  // Enrich the derived versions with each artifact's published state for the menu's
   // green check; the artifacts list is the mock's 前端-only source for it.
   const enrichedVersions = useMemo<ArtifactVersion[]>(
     () =>
       versions.map((version) => ({
         ...version,
-        generated: artifacts?.find((a) => a.id === version.artifactId)?.generated,
+        publishedAt: artifacts?.find((a) => a.id === version.artifactId)?.publishedAt,
       })),
     [versions, artifacts],
   );
@@ -153,7 +154,9 @@ function ArtifactPanelContent({
     return <EmptyPanel />;
   }
 
-  const isGenerated = artifact?.generated === true;
+  // 發布 = 把這個 Artifact 開放給別人使用。The mockup's button says 生成 Artifact;
+  // what it does is publish, and `publishedAt` is where that lives now.
+  const isPublished = artifact?.publishedAt != null;
 
   return (
     <div className={styles.panel}>
@@ -161,36 +164,38 @@ function ArtifactPanelContent({
         {enrichedVersions.length > 0 && (
           <VersionSwitcher
             versions={enrichedVersions}
-            activeVersion={{ ...activeVersion, generated: isGenerated }}
+            activeVersion={{ ...activeVersion, publishedAt: artifact?.publishedAt ?? null }}
             onSelect={onSelectVersion}
           />
         )}
-        {isGenerated ? (
-          <Tooltip content="此版本已生成 Artifact，可用右側分享">
-            <span className={styles.generatedBadge}>
+        {isPublished ? (
+          // Unpublishing lives on the Artifact management page, not here — this chip
+          // states the fact rather than offering to undo it.
+          <Tooltip content="此版本已發布，其他人可以使用">
+            <span className={styles.publishedBadge}>
               <CheckOutlined aria-hidden />
-              已生成
+              已發布
             </span>
           </Tooltip>
         ) : (
           <button
             type="button"
             className={styles.generateButton}
-            disabled={generateArtifact.isPending}
-            onClick={() => generateArtifact.mutate(artifactId, { onSuccess: startCoach })}
+            disabled={publishArtifact.isPending}
+            onClick={() => publishArtifact.mutate(artifactId, { onSuccess: startCoach })}
           >
-            生成 Artifact
+            發布 Artifact
           </button>
         )}
-        <Tooltip
-          content={isGenerated ? '分享' : '請先生成 Artifact'}
-          wrapperClassName={styles.shareButtonSlot}
-        >
+        {/* Share is disabled at its entry point, so the dialog never opens onto a
+            recipient search that could not submit anything — no backend share
+            endpoint yet (ADR-0009). */}
+        <Tooltip content={BACKEND_UNSUPPORTED} wrapperClassName={styles.shareButtonSlot}>
           <button
             type="button"
             className={styles.shareButton}
             aria-label="Share artifact"
-            disabled={!isGenerated}
+            disabled
             onClick={() => setIsShareOpen(true)}
           >
             <ShareAltOutlined aria-hidden />
@@ -251,29 +256,29 @@ function ArtifactPanelContent({
           artifact={artifact}
         />
       )}
-      <GeneratedToast />
+      <PublishedToast />
     </div>
   );
 }
 
-// The mockup's post-generate toast: confirms where the Artifact landed and
+// The mockup's post-publish toast: confirms where the Artifact landed and
 // offers a jump to the gallery. The rail's coach highlight shares its state
 // and both clear together on dismiss.
-function GeneratedToast() {
+function PublishedToast() {
   const navigate = useNavigate();
-  const isActive = useGenerateCoachStore((s) => s.isActive);
-  const dismiss = useGenerateCoachStore((s) => s.dismiss);
+  const isActive = usePublishCoachStore((s) => s.isActive);
+  const dismiss = usePublishCoachStore((s) => s.dismiss);
 
   if (!isActive) {
     return null;
   }
 
   return (
-    <div role="status" aria-label="Artifact 已生成" className={styles.generatedToast}>
-      <span className={styles.generatedToastText}>已生成 — 已加入左側 Artifacts 清單。</span>
+    <div role="status" aria-label="Artifact 已發布" className={styles.publishedToast}>
+      <span className={styles.publishedToastText}>已發布 — 已加入左側 Artifacts 清單。</span>
       <button
         type="button"
-        className={styles.generatedToastPrimary}
+        className={styles.publishedToastPrimary}
         onClick={() => {
           dismiss();
           navigate('/cowork/artifacts');
@@ -281,7 +286,7 @@ function GeneratedToast() {
       >
         前往 Artifacts
       </button>
-      <button type="button" className={styles.generatedToastDismiss} onClick={dismiss}>
+      <button type="button" className={styles.publishedToastDismiss} onClick={dismiss}>
         知道了
       </button>
     </div>

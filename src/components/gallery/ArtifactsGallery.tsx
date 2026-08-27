@@ -49,11 +49,14 @@ function dedupeById(artifacts: Artifact[]) {
 function filterArtifacts(artifacts: Artifact[], category: FilterCategory) {
   switch (category) {
     case 'yours':
-      return artifacts.filter((artifact) => artifact.mine);
+      return artifacts.filter((artifact) => artifact.isOwn);
+    // Shared *to me* is the complement of ownership. `isShared` is the other
+    // direction — whether this Artifact has been shared out — and reading it here
+    // would list your own shared Artifacts as if someone had sent them to you.
     case 'shared':
-      return dedupeById(artifacts.filter((artifact) => !!artifact.sharedBy));
+      return dedupeById(artifacts.filter((artifact) => !artifact.isOwn));
     case 'pinned':
-      return artifacts.filter((artifact) => artifact.pinned);
+      return artifacts.filter((artifact) => artifact.pinnedAt !== null);
     default:
       return artifacts;
   }
@@ -62,11 +65,13 @@ function filterArtifacts(artifacts: Artifact[], category: FilterCategory) {
 function sortArtifacts(artifacts: Artifact[], sort: SortKey) {
   const sorted = [...artifacts];
   if (sort === 'name') {
-    sorted.sort((a, b) => a.name.localeCompare(b.name));
+    sorted.sort((a, b) => a.title.localeCompare(b.title));
   } else if (sort === 'recent') {
     sorted.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   } else {
-    sorted.sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0));
+    // Pinned first, most recently pinned leading — `pinnedAt` carries the moment, so
+    // the group has a real order rather than whatever the list arrived in.
+    sorted.sort((a, b) => (b.pinnedAt ?? '').localeCompare(a.pinnedAt ?? ''));
   }
   return sorted;
 }
@@ -83,9 +88,9 @@ const ArtifactsGallery: React.FC = () => {
   // elsewhere in the tree otherwise.
   const counts = useMemo(
     () => ({
-      yours: artifacts.filter((artifact) => artifact.mine).length,
-      shared: dedupeById(artifacts.filter((artifact) => !!artifact.sharedBy)).length,
-      pinned: artifacts.filter((artifact) => artifact.pinned).length,
+      yours: artifacts.filter((artifact) => artifact.isOwn).length,
+      shared: dedupeById(artifacts.filter((artifact) => !artifact.isOwn)).length,
+      pinned: artifacts.filter((artifact) => artifact.pinnedAt !== null).length,
     }),
     [artifacts],
   );
@@ -115,7 +120,7 @@ const ArtifactsGallery: React.FC = () => {
         <div>
           <h1 className={styles.title}>Artifacts</h1>
           <p className={styles.subtitle}>
-            Every dashboard and deck eRD Cowork has generated — click to open it.
+            Every Artifact eRD Cowork has produced — click to open it.
           </p>
         </div>
         <Dropdown

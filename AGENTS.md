@@ -62,7 +62,7 @@ src/
   utils/        # 純函式工具
   app/          # 進入點、Router、Providers
   pages/        # 路由頁面(只組裝、只放邊界)
-  mocks/ test/  # MSW 與測試工具
+  mocks/ test/  # MSW 與測試工具（test-only，app 不跑 MSW）
 ```
 
 ---

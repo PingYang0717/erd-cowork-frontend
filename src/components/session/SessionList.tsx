@@ -15,13 +15,14 @@ import { Button, Dropdown, Input } from 'antd';
 import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
+import { UnsupportedLabel } from '@/components/common/UnsupportedLabel';
 import { useSessionGroups } from '@/hooks/useSessionGroups';
 import {
   useDeleteSession,
   useRenameSession,
   useSetSessionPinned,
 } from '@/hooks/useSessionMutations';
-import { useGenerateCoachStore } from '@/stores/useGenerateCoachStore';
+import { usePublishCoachStore } from '@/stores/usePublishCoachStore';
 import type { Session } from '@/types/api/session';
 import { dispatchMenuAction } from '@/utils/dispatchMenuAction';
 import { formatRelativeTime } from '@/utils/formatRelativeTime';
@@ -50,16 +51,33 @@ function SessionRow({
 
   // Dividers between every item, per the mockup's session menu. The Pin icon
   // deliberately keeps its filled-when-pinned variant (spec exception).
+  //
+  // All three are disabled: the backend has no rename, pin or delete for a session
+  // (ADR-0009). They stay in the menu — and keep their handlers below — so that what
+  // the product offers is still visible, and so the day the endpoints land the only
+  // change is dropping `disabled`.
   const menuItems = [
     {
       key: 'pin',
-      label: isPinned ? 'Unpin' : 'Pin',
+      label: <UnsupportedLabel label={isPinned ? 'Unpin' : 'Pin'} />,
       icon: isPinned ? <PushpinFilled aria-hidden /> : <PushpinOutlined aria-hidden />,
+      disabled: true,
     },
     { type: 'divider' as const },
-    { key: 'rename', label: 'Rename', icon: <EditOutlined aria-hidden /> },
+    {
+      key: 'rename',
+      label: <UnsupportedLabel label="Rename" />,
+      icon: <EditOutlined aria-hidden />,
+      disabled: true,
+    },
     { type: 'divider' as const },
-    { key: 'delete', label: 'Delete', danger: true, icon: <DeleteOutlined aria-hidden /> },
+    {
+      key: 'delete',
+      label: <UnsupportedLabel label="Delete" />,
+      danger: true,
+      icon: <DeleteOutlined aria-hidden />,
+      disabled: true,
+    },
   ];
 
   function handleMenuClick(key: string) {
@@ -216,7 +234,7 @@ const SessionList: React.FC<SessionListProps> = ({ onCollapse, artifactsCount })
   } = useSessionGroups();
   const navigate = useNavigate();
   const location = useLocation();
-  const isCoaching = useGenerateCoachStore((s) => s.isActive);
+  const isCoaching = usePublishCoachStore((s) => s.isActive);
 
   return (
     <div className={styles.sessionList}>

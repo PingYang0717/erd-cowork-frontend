@@ -1,5 +1,9 @@
 # 以 SSE 串流取代一次回覆的批次契約
 
+> **狀態註記(2026-08-27)**:本文最後一段「live 模式不覆蓋整個 app / 切換是 build-time
+> 環境變數」已被 [ADR-0009](0009-no-mock-backend-at-runtime.md) 取代——runtime 不再有
+> mock 後端,也沒有模式開關。SSE 的決策本身不變。
+
 原本的對話流程是：`POST /sessions/:sessionId/messages` 一次回傳 `{ userMessage, aiMessage }`，`aiMessage.steps` 已經全部算好，前端用一支 500ms 的計時器把步驟逐一揭露，跑完把整則訊息塞進快取。這是為了在沒有後端的情況下先把畫面做出來的權宜設計。
 
 我們改成 Server-Sent Events：同一個端點改回 `text/event-stream`，逐筆推送 Agent event（STEP / TOKEN / ANSWER / ARTIFACT / THINKING / QUESTION / CODE / TABLE / ERROR），由 `useAgentStream` 的 reducer 累積成畫面狀態。

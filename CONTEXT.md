@@ -50,15 +50,22 @@ _Avoid_: Fix, Retry, Regenerate（Regenerate 是使用者主動要新版本，Re
 
 **重新生成（Regenerate）**:
 使用者主動要求 Agent 再產一版 Artifact。它送出一則訊息、跑一整輪分析，結果是**一個新版本**。
-_Avoid_: Reload, Refresh（那兩個不產生新版本）
+_Avoid_: Reload, Refresh（那兩個不產生新版本）、發布（發布不產生任何東西，只是把既有的一版交出去）
 
 **重新整理（Reload）**:
 把 iframe 裡的 Artifact 文件丟掉、以**同一份 HTML** 重新掛載一次。不呼叫 Agent、不產生新版本，用途是讓一個自己卡住的 Artifact 從頭再跑一次它的 script。修復成功後也會觸發一次。
 _Avoid_: Regenerate, Repair（三者互斥：Reload 不重產、Regenerate 是使用者要新版本、Repair 是錯誤驅動的重產）
 
 **Artifact**:
-一次 Scenario 執行後產生的分析成果，形式是一段完整的 HTML（dashboard 或 slides），在 Studio 右側以 sandboxed iframe 呈現；可被命名、釘選、分享、切版本。
+一次 Scenario 執行後產生的分析成果，形式是一段完整的 HTML（dashboard 或 slides），在 Studio 右側以 sandboxed iframe 呈現；可被命名、釘選、發布、分享、切版本。
 _Avoid_: Dashboard, Report, Output（這些是 Artifact 的呈現型態，不是這個概念本身）
+
+**發布（Publish）**:
+把一個 Artifact 開放給自己以外的人使用。Scenario 跑完產出的是**只有自己看得到的**成果，發布是那道把它交出去的動作；未發布的 Artifact 不能分享。
+_Avoid_: 生成、Generate（畫面上的按鈕曾叫「生成 Artifact」，但它不產生任何東西——Artifact 在按下去之前就已經存在了。「生成」與「重新生成」只差兩個字卻是完全不同的動作，這是要避開的正是那個混淆）
+
+**個人副本（Personal copy）**:
+把別人分享給你的 Artifact 複製一份成為自己的。副本有自己的擁有者，因此**不能再往下分享**——分享只有原擁有者做得到。
 
 **Artifact version**:
 同一個 Artifact 的歷史產出版本，可在版本切換選單中選擇檢視。
