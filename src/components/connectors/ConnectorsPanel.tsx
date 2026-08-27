@@ -22,6 +22,7 @@ import { Button, Input, Modal } from 'antd';
 import type { ReactNode } from 'react';
 import React, { useState } from 'react';
 
+import { BACKEND_UNSUPPORTED } from '@/constants/messages';
 import { useAddConnector, useSetConnectorStatus } from '@/hooks/useConnectorMutations';
 import { useConnectors } from '@/hooks/useConnectors';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
@@ -86,20 +87,6 @@ function toggleIcon(status: ConnectorStatus, isPending: boolean) {
   }
 }
 
-function toggleTitle(status: ConnectorStatus, isPending: boolean) {
-  if (isPending) return 'Connecting…';
-  switch (status) {
-    case 'connected':
-      return 'Connected — click to disconnect';
-    case 'no_access':
-      return 'No access — request permission';
-    case 'expired':
-      return 'Reconnect';
-    default:
-      return 'Connect';
-  }
-}
-
 const EMPTY_CONNECTORS: Connector[] = [];
 
 interface ConnectorsPanelProps {
@@ -116,6 +103,9 @@ const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ open, onClose }) => {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('All');
   const [addValue, setAddValue] = useState('');
 
+  // Every write here (connect, disconnect, add) is disabled: the backend has no
+  // connector endpoints yet (ADR-0009), so the panel is a read-only view of state
+  // that arrives stubbed. Handlers stay wired for the day those endpoints land.
   const connectedConnectors = selectConnected(connectors);
   const connectedCount = connectedConnectors.length;
 
@@ -187,6 +177,8 @@ const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ open, onClose }) => {
             <button
               type="button"
               className={styles.clearAll}
+              disabled
+              title={BACKEND_UNSUPPORTED}
               onClick={() => connectedConnectors.forEach((c) => toggle(c))}
             >
               Clear all
@@ -204,7 +196,8 @@ const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ open, onClose }) => {
                 <button
                   type="button"
                   className={styles.selectedChipRemove}
-                  title="Disconnect"
+                  disabled
+                  title={BACKEND_UNSUPPORTED}
                   aria-label={`Remove ${connector.name} from selected sources`}
                   onClick={() => toggle(connector)}
                 >
@@ -267,7 +260,6 @@ const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ open, onClose }) => {
             const isPending = setStatus.isPending && setStatus.variables?.id === connector.id;
             const meta = statusMeta(connector.status, isPending);
             const isConnected = connector.status === 'connected';
-            const isDisabled = connector.status === 'no_access' || isPending;
             return (
               <li key={connector.id} className={styles.row} data-connected={isConnected}>
                 <span className={styles.icon} data-connected={isConnected} aria-hidden="true">
@@ -294,8 +286,8 @@ const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ open, onClose }) => {
                   data-state={isPending ? 'connecting' : connector.status}
                   shape="circle"
                   size="small"
-                  disabled={isDisabled}
-                  title={toggleTitle(connector.status, isPending)}
+                  disabled
+                  title={BACKEND_UNSUPPORTED}
                   aria-label={
                     isConnected ? `Disconnect ${connector.name}` : `Connect ${connector.name}`
                   }
@@ -318,7 +310,12 @@ const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ open, onClose }) => {
           onChange={(e) => setAddValue(e.target.value)}
           onPressEnter={submitAddConnector}
         />
-        <Button icon={<PlusOutlined aria-hidden />} onClick={submitAddConnector}>
+        <Button
+          icon={<PlusOutlined aria-hidden />}
+          disabled
+          title={BACKEND_UNSUPPORTED}
+          onClick={submitAddConnector}
+        >
           Add
         </Button>
       </div>

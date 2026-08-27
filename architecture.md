@@ -55,7 +55,7 @@ src/
   utils/        純函式
   app/          進入點、Router、Providers
   pages/        路由頁面——只組裝、只放 DataBoundary
-  mocks/ test/  MSW handler 與測試工具
+  mocks/ test/  MSW handler 與測試工具（test-only，app 不跑 MSW）
 ```
 
 一個新功能會同時落在好幾個目錄:endpoint 進 `api/`、資料 hook 進 `hooks/`、UI 進

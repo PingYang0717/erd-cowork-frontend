@@ -1,20 +1,19 @@
 import { http, HttpResponse } from 'msw';
 
 import { currentUser } from '@/config/currentUser';
-import { isLive } from '@/config/transport';
 import { DRAFT_SESSION_TITLE } from '@/constants/messages';
 import type { AgentEvent, QuestionForm, StepItem } from '@/types/api/agentEvent';
-import type { Artifact, ArtifactKind } from '@/types/api/artifact';
-import type { Connector, ConnectorStatus } from '@/types/api/connector';
+import type { Artifact } from '@/types/api/artifact';
+import type { Connector } from '@/types/api/connector';
 import type { DcItem } from '@/types/api/dcItem';
 import type { Message } from '@/types/api/message';
 import type { ScenarioKey } from '@/types/api/scenario';
 import type { Session } from '@/types/api/session';
 import type { UploadedFileInfo } from '@/types/api/upload';
 
+import type { ArtifactKind } from './artifactFixtures';
 import { buildArtifactFixture } from './artifactFixtures';
 import { DC_ITEM_FIXTURES, ROWS_PER_DC_ITEM } from './dcItemFixtures';
-import { DIRECTORY_FIXTURES } from './directoryFixtures';
 import { createPersistedResource } from './persistedResource';
 import { dcItemQuestion, flattenQuestionForm, openingQuestion } from './questionFixtures';
 import { matchScenario, SCENARIO_FIXTURES, SLIDES_STEP } from './scenarioFixtures';
@@ -57,64 +56,90 @@ const messages = createPersistedResource<StoredMessage>('erd-cowork:messages:v2'
   },
 ]);
 
-// Who owns an Artifact is the backend's business: it is stored as ownerId and
-// reaches the client only as Artifact.mine, resolved against the mock identity
-// in services/currentUser.ts. The storage key is suffixed so a browser holding
-// the older seeded shape (which carried mine directly) reseeds instead of
-// resolving every Artifact to "not yours".
+// The mock's own artifact record. It is not a slice of the wire `Artifact`: the
+// contract dropped `kind` (returning later as `type`) and never had `scenario`, but
+// the mock needs both to decide which fixture HTML to build — while `isOwn`,
+// `ownerDisplay`, `sessionTitle` and the permission flags are things a backend
+// derives per request rather than stores. `toArtifactDto` does that deriving.
+// Key bumped to v5 for the reshaped record.
 const ALICE_USER_ID = 'u-002';
+const OWNER_DISPLAY_NAMES: Record<string, string> = { [ALICE_USER_ID]: 'Alice Wu' };
 
-// `generated` is stored per artifact: every version IS its own artifact under the
-// derived-versions model, so the flag is naturally per-version. Key bumped to v3 so
-// browsers holding the version-store shape reseed.
-interface StoredArtifact extends Omit<Artifact, 'mine'> {
+interface StoredArtifact {
+  id: string;
+  sessionId: string;
+  title: string;
+  kind: ArtifactKind;
+  scenario: ScenarioKey;
   ownerId: string;
+  createdAt: string;
+  pinnedAt: string | null;
+  publishedAt: string | null;
+  /** Shared out by its owner. Whether it was shared *to* you is `!isOwn`. */
+  isShared: boolean;
 }
 
-function toArtifactDto(stored: StoredArtifact): Artifact {
-  const { ownerId, ...rest } = stored;
-  return { ...rest, mine: ownerId === currentUser.id };
-}
-
-const artifacts = createPersistedResource<StoredArtifact>('erd-cowork:artifacts:v3', [
+const artifacts = createPersistedResource<StoredArtifact>('erd-cowork:artifacts:v5', [
   {
     id: 'artifact-1',
     sessionId: 'session-1',
-    name: 'SPC analysis — Vt (gate CD)',
+    title: 'SPC analysis — Vt (gate CD)',
     kind: 'dashboard',
     scenario: 'spc',
-    pinned: false,
     ownerId: currentUser.id,
-    shared: false,
     createdAt: '2026-08-20T09:15:00.000Z',
-    generated: true,
+    pinnedAt: null,
+    publishedAt: '2026-08-20T09:20:00.000Z',
+    isShared: false,
   },
   {
     id: 'artifact-2',
     sessionId: 'session-1',
-    name: 'Inline dashboard — W12',
+    title: 'Inline dashboard — W12',
     kind: 'dashboard',
     scenario: 'inline',
-    pinned: true,
     ownerId: currentUser.id,
-    shared: false,
     createdAt: '2026-08-21T10:00:00.000Z',
-    generated: true,
+    pinnedAt: '2026-08-21T10:05:00.000Z',
+    publishedAt: '2026-08-21T10:02:00.000Z',
+    isShared: false,
   },
   {
     id: 'artifact-3',
     sessionId: 'session-2',
-    name: 'Daily monitor (A14)',
+    title: 'Daily monitor (A14)',
     kind: 'slides',
     scenario: 'daily',
-    pinned: false,
     ownerId: ALICE_USER_ID,
-    shared: false,
-    sharedBy: 'Alice Wu',
     createdAt: '2026-08-19T08:30:00.000Z',
-    generated: true,
+    pinnedAt: null,
+    publishedAt: '2026-08-19T08:35:00.000Z',
+    isShared: true,
   },
 ]);
+
+function toArtifactDto(stored: StoredArtifact): Artifact {
+  const isOwn = stored.ownerId === currentUser.id;
+  return {
+    id: stored.id,
+    title: stored.title,
+    sessionId: stored.sessionId,
+    sessionTitle: sessions.read().find((session) => session.id === stored.sessionId)?.title ?? '',
+    pinnedAt: stored.pinnedAt,
+    publishedAt: stored.publishedAt,
+    createdAt: stored.createdAt,
+    owner: stored.ownerId,
+    ownerDisplay: isOwn
+      ? currentUser.name
+      : (OWNER_DISPLAY_NAMES[stored.ownerId] ?? stored.ownerId),
+    canPin: true,
+    // Personal copies are not modelled, so "owner and non-copy" is just "owner".
+    canShare: isOwn,
+    isOwn,
+    isShared: stored.isShared,
+    hasPersonalCopy: false,
+  };
+}
 
 const connectors = createPersistedResource<Connector>('erd-cowork:connectors', [
   {
@@ -356,15 +381,15 @@ function streamRun(
   const artifact: StoredArtifact = {
     id: crypto.randomUUID(),
     sessionId,
-    name: artifactName,
+    title: artifactName,
     kind: artifactKind,
     scenario: scenarioKey,
-    pinned: false,
     ownerId: currentUser.id,
-    shared: false,
     createdAt: new Date().toISOString(),
-    // A run produces an ungenerated preview; the 生成 button commits it.
-    generated: false,
+    pinnedAt: null,
+    // A run produces something only its author can see; publishing opens it to others.
+    publishedAt: null,
+    isShared: false,
   };
   artifacts.write([...artifacts.read(), artifact]);
 
@@ -400,22 +425,6 @@ function streamRun(
 
 const dcItems = createPersistedResource<DcItem>('erd-cowork:dc-items', DC_ITEM_FIXTURES);
 
-/** What the live backend serves, as "METHOD path" pairs. Filtering is method-aware:
- *  GET /sessions/{id} is live-backed while PATCH and DELETE on the same session path
- *  (rename, pin, delete — features the backend does not have) stay mocked even in
- *  live mode (`docs/api/interface.md` → live 端點覆蓋範圍). */
-const LIVE_BACKED = [
-  'GET /api/config',
-  'GET /api/sessions',
-  'GET /api/sessions/:sessionId',
-  'POST /api/sessions/:sessionId/messages',
-  'POST /api/sessions/:sessionId/files',
-  'DELETE /api/sessions/:sessionId/files/:fileId',
-  'GET /api/artifacts/:id',
-  'GET /api/artifacts/:id/raw',
-  'POST /api/artifacts/:id/repair',
-];
-
 /** Creates the session if this client has never sent to it before, and stamps its
  *  last activity either way. Mirrors ChatSession implementing Persistable<String>:
  *  the backend upserts on send rather than exposing a create endpoint. */
@@ -435,6 +444,20 @@ export function upsertSession(sessionId: string): void {
     ...all,
     { id: sessionId, title: DRAFT_SESSION_TITLE, pinnedAt: null, updatedAt: now },
   ]);
+}
+
+function setPublished(id: string | readonly string[] | undefined, published: boolean) {
+  const all = artifacts.read();
+  const existing = all.find((artifact) => artifact.id === id);
+  if (!existing) {
+    return new HttpResponse(null, { status: 404 });
+  }
+  const updated: StoredArtifact = {
+    ...existing,
+    publishedAt: published ? new Date().toISOString() : null,
+  };
+  artifacts.write(all.map((artifact) => (artifact.id === id ? updated : artifact)));
+  return HttpResponse.json(toArtifactDto(updated));
 }
 
 /** Each artifact IS a version (deriveArtifactVersions); number it the way the client
@@ -470,40 +493,6 @@ export const allHandlers = [
 
   http.get('/api/sessions', () => {
     return HttpResponse.json(sessions.read());
-  }),
-
-  http.post('/api/sessions', async ({ request }) => {
-    const body = (await request.json()) as Partial<Pick<Session, 'title'>>;
-    const session: Session = {
-      id: crypto.randomUUID(),
-      title: body.title?.trim() || DRAFT_SESSION_TITLE,
-      pinnedAt: null,
-      updatedAt: new Date().toISOString(),
-    };
-    sessions.write([...sessions.read(), session]);
-    return HttpResponse.json(session, { status: 201 });
-  }),
-
-  http.patch('/api/sessions/:id', async ({ params, request }) => {
-    const body = (await request.json()) as Partial<Pick<Session, 'title' | 'pinnedAt'>>;
-    const all = sessions.read();
-    const existing = all.find((session) => session.id === params.id);
-    if (!existing) {
-      return new HttpResponse(null, { status: 404 });
-    }
-    const updated: Session = {
-      ...existing,
-      ...body,
-      updatedAt: new Date().toISOString(),
-    };
-    sessions.write(all.map((session) => (session.id === params.id ? updated : session)));
-    return HttpResponse.json(updated);
-  }),
-
-  http.delete('/api/sessions/:id', ({ params }) => {
-    const all = sessions.read();
-    sessions.write(all.filter((session) => session.id !== params.id));
-    return new HttpResponse(null, { status: 204 });
   }),
 
   // The backend has no standalone messages endpoint: a session's messages and
@@ -654,43 +643,30 @@ export const allHandlers = [
     return streamRun(sessionId, scenarioKey, artifactKind);
   }),
 
-  http.get('/api/dc-items', () => HttpResponse.json(dcItems.read())),
-
-  http.post('/api/dc-items', async ({ request }) => {
-    const { name } = (await request.json()) as { name: string };
-    const id = name.trim().toLowerCase().replace(/\s+/g, '-');
-    const existing = dcItems.read().find((item) => item.id === id);
-    if (existing) {
-      return HttpResponse.json(existing, { status: 200 });
-    }
-
-    // A custom item has no spec limits of its own — it is charted without them.
-    const created: DcItem = { id, name: name.trim(), unit: '', lo: 0, hi: 0, custom: true };
-    dcItems.write([...dcItems.read(), created]);
-    return HttpResponse.json(created, { status: 201 });
-  }),
-
   http.get('/api/artifacts', () => {
     return HttpResponse.json(artifacts.read().map(toArtifactDto));
   }),
 
-  http.patch('/api/artifacts/:id', async ({ params, request }) => {
-    const body = (await request.json()) as Partial<Pick<Artifact, 'pinned'>>;
+  /** Toggle: which way it goes is the backend's call, so the request carries no
+   *  direction and the client cannot act on a stale reading of its own. */
+  http.post('/api/artifacts/:id/pin', ({ params }) => {
     const all = artifacts.read();
-    const existing = all.find((a) => a.id === params.id);
+    const existing = all.find((artifact) => artifact.id === params.id);
     if (!existing) {
       return new HttpResponse(null, { status: 404 });
     }
-    const updated: StoredArtifact = { ...existing, ...body };
-    artifacts.write(all.map((a) => (a.id === params.id ? updated : a)));
+    const updated: StoredArtifact = {
+      ...existing,
+      pinnedAt: existing.pinnedAt === null ? new Date().toISOString() : null,
+    };
+    artifacts.write(all.map((artifact) => (artifact.id === params.id ? updated : artifact)));
     return HttpResponse.json(toArtifactDto(updated));
   }),
 
-  http.delete('/api/artifacts/:id', ({ params }) => {
-    const all = artifacts.read();
-    artifacts.write(all.filter((a) => a.id !== params.id));
-    return new HttpResponse(null, { status: 204 });
-  }),
+  /** 發布 / 取消發布 — split by method, and the timestamp is the server's to write. */
+  http.post('/api/artifacts/:id/publish', ({ params }) => setPublished(params.id, true)),
+
+  http.delete('/api/artifacts/:id/publish', ({ params }) => setPublished(params.id, false)),
 
   http.get('/api/artifacts/:id', ({ params, request }) => {
     const artifact = artifacts.read().find((a) => a.id === params.id);
@@ -734,98 +710,8 @@ export const allHandlers = [
     }
     return HttpResponse.json({ repaired: true });
   }),
-
-  // 前端-only：把這個 Artifact 標記為已生成（每個版本就是一個 Artifact，所以這
-  // 天生就是 per-version 狀態）。
-  http.post('/api/artifacts/:id/generate', ({ params }) => {
-    const all = artifacts.read();
-    const existing = all.find((a) => a.id === params.id);
-    if (!existing) {
-      return new HttpResponse(null, { status: 404 });
-    }
-    const updated: StoredArtifact = { ...existing, generated: true };
-    artifacts.write(all.map((a) => (a.id === params.id ? updated : a)));
-    return HttpResponse.json(toArtifactDto(updated));
-  }),
-
-  http.post('/api/artifacts/:id/share', async ({ params, request }) => {
-    const all = artifacts.read();
-    const existing = all.find((a) => a.id === params.id);
-    if (!existing) {
-      return new HttpResponse(null, { status: 404 });
-    }
-    const body = (await request.json()) as { targetIds: string[] };
-    if (!body.targetIds?.length) {
-      return new HttpResponse(null, { status: 400 });
-    }
-    const updated: StoredArtifact = { ...existing, shared: true };
-    artifacts.write(all.map((a) => (a.id === params.id ? updated : a)));
-
-    const url = `${new URL(request.url).origin}/cowork/artifact/${params.id}`;
-    return HttpResponse.json({ url, artifact: toArtifactDto(updated) });
-  }),
-
-  http.get('/api/directory', () => {
-    return HttpResponse.json(DIRECTORY_FIXTURES);
-  }),
-
-  http.get('/api/connectors', () => {
-    return HttpResponse.json(connectors.read());
-  }),
-
-  http.patch('/api/connectors/:id', async ({ params, request }) => {
-    const body = (await request.json()) as { status: ConnectorStatus };
-    const all = connectors.read();
-    const existing = all.find((c) => c.id === params.id);
-    if (!existing) {
-      return new HttpResponse(null, { status: 404 });
-    }
-    const updated: Connector = { ...existing, status: body.status };
-    connectors.write(all.map((c) => (c.id === params.id ? updated : c)));
-    return HttpResponse.json(updated);
-  }),
-
-  http.post('/api/connectors', async ({ request }) => {
-    const body = (await request.json()) as { name: string };
-    const name = body.name?.trim();
-    if (!name) {
-      return new HttpResponse(null, { status: 400 });
-    }
-    const id =
-      'c_' +
-      name
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '_')
-        .replace(/^_|_$/g, '');
-    const all = connectors.read();
-    const existing = all.find((c) => c.id === id);
-    if (existing) {
-      return HttpResponse.json(existing);
-    }
-    const created: Connector = {
-      id,
-      name,
-      description: 'Custom RD data source',
-      category: 'Custom',
-      status: 'connected',
-      custom: true,
-    };
-    connectors.write([...all, created]);
-    return HttpResponse.json(created, { status: 201 });
-  }),
 ];
 
-/** What MSW should intercept for the given transport. Exported as a function so the
- *  transport test can check both modes without rebuilding the module. */
-export function handlersForTransport(mode: 'mock' | 'live') {
-  if (mode === 'mock') {
-    return allHandlers;
-  }
-  return allHandlers.filter(
-    (handler) =>
-      !LIVE_BACKED.includes(`${String(handler.info.method)} ${String(handler.info.path)}`),
-  );
-}
-
-/** What MSW should intercept for the configured transport. */
-export const handlers = handlersForTransport(isLive ? 'live' : 'mock');
+/** Every handler, registered for tests. The app itself no longer runs MSW — see
+ *  ADR-0009; endpoints the backend has not built are stubbed in `src/api/`. */
+export const handlers = allHandlers;

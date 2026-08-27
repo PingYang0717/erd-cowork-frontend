@@ -12,6 +12,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 
 import { ThemeToggle } from '@/components/common/ThemeToggle';
 import { Tooltip } from '@/components/common/Tooltip';
+import { BACKEND_UNSUPPORTED } from '@/constants/messages';
 import { useArtifactContent } from '@/hooks/useArtifactContent';
 import { artifactQueryKey, useArtifacts } from '@/hooks/useArtifacts';
 import { useArtifactTheme } from '@/hooks/useArtifactTheme';
@@ -74,10 +75,10 @@ const ArtifactFullPageView: React.FC<ArtifactFullPageViewProps> = ({ artifactId 
         )}
 
         <div className={styles.headerCenter}>
-          {routeArtifact?.sharedBy ? (
+          {routeArtifact && !routeArtifact.isOwn ? (
             <div className={styles.sharedToMeHeader} aria-label="Shared to me">
               <UsergroupAddOutlined aria-hidden className={styles.sharedToMeIcon} />
-              <span className={styles.sharedToMeName}>{routeArtifact.sharedBy}</span>
+              <span className={styles.sharedToMeName}>{routeArtifact.ownerDisplay}</span>
               <span className={styles.sharedToMeBadge}>Shared to me</span>
             </div>
           ) : (
@@ -92,12 +93,13 @@ const ArtifactFullPageView: React.FC<ArtifactFullPageViewProps> = ({ artifactId 
           )}
         </div>
 
-        <Tooltip content={displayedArtifact?.generated ? '分享' : '請先生成 Artifact'}>
+        {/* Disabled at the entry point — no backend share endpoint yet (ADR-0009). */}
+        <Tooltip content={BACKEND_UNSUPPORTED}>
           <button
             type="button"
             className={styles.shareButton}
             aria-label="Share artifact"
-            disabled={!displayedArtifact?.generated}
+            disabled
             onClick={() => setIsShareOpen(true)}
           >
             <ShareAltOutlined aria-hidden />
@@ -171,7 +173,7 @@ function SessionVersionSwitcher({
     () =>
       deriveArtifactVersions(detail.messages).map((version) => ({
         ...version,
-        generated: artifacts.find((a) => a.id === version.artifactId)?.generated,
+        publishedAt: artifacts.find((a) => a.id === version.artifactId)?.publishedAt,
       })),
     [detail.messages, artifacts],
   );

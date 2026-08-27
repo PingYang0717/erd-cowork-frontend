@@ -9,7 +9,7 @@ export type {
   StepStatus,
   TableResult,
 } from './agentEvent';
-export type { Artifact, ArtifactKind, ArtifactTheme, ArtifactVersion } from './artifact';
+export type { Artifact, ArtifactTheme, ArtifactVersion } from './artifact';
 export type { Connector, ConnectorStatus } from './connector';
 export type { DcItem } from './dcItem';
 export type { DirectoryEntry, DirectoryEntryKind } from './directory';

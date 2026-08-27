@@ -130,11 +130,16 @@
   padding: 1px 6px;
 }
 
-.pinButton {
+/* The tooltip wrapper is `position: relative`, so it — not the button inside it —
+   has to be the thing pinned to the card's corner. */
+.pinButtonSlot {
   position: absolute;
   top: 8px;
   left: 8px;
   z-index: 5;
+}
+
+.pinButton {
   width: 22px;
   height: 22px;
   display: flex;
@@ -151,6 +156,11 @@
 
 .pinButton[aria-pressed='true'] {
   color: var(--erd-color-primary, #1677ff);
+}
+
+.pinButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
 }
 
 .moreActionsButton {

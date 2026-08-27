@@ -3,13 +3,34 @@ import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { BACKEND_UNSUPPORTED } from '@/constants/messages';
 import { server } from '@/mocks/server';
 import { ArtifactPage } from '@/pages/Artifact/ArtifactPage';
 import type { Artifact } from '@/types/api/index';
 
 import { ArtifactsGalleryPage } from './ArtifactsGalleryPage';
+
+/** One Artifact in the fixed contract's shape, for the tests that need to state their
+ *  own data rather than take the seeded three. */
+function artifactDto(over: Partial<Artifact> & Pick<Artifact, 'id' | 'title'>): Artifact {
+  return {
+    sessionId: 'session-1',
+    sessionTitle: 'SPC — Vt (gate CD)',
+    pinnedAt: null,
+    publishedAt: '2026-08-20T09:20:00.000Z',
+    createdAt: '2026-08-20T09:15:00.000Z',
+    owner: 'u-001',
+    ownerDisplay: 'Alex Chen',
+    canPin: true,
+    canShare: true,
+    isOwn: true,
+    isShared: false,
+    hasPersonalCopy: false,
+    ...over,
+  };
+}
 
 function renderGalleryPage() {
   const queryClient = new QueryClient();
@@ -23,6 +44,10 @@ function renderGalleryPage() {
 }
 
 describe('Artifacts gallery', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it('lists every seeded Artifact under "All", with per-filter counts', async () => {
     renderGalleryPage();
 
@@ -99,27 +124,36 @@ describe('Artifacts gallery', () => {
     renderGalleryPage();
     await screen.findByRole('button', { name: 'SPC analysis — Vt (gate CD)' });
 
-    const pinButton = screen.getByRole('button', {
-      name: 'Pin SPC analysis — Vt (gate CD)',
-    });
-    await user.click(pinButton);
+    // No direction is sent: the pin endpoint is a toggle the backend resolves.
+    await user.click(screen.getByRole('button', { name: 'Pin SPC analysis — Vt (gate CD)' }));
 
     expect(
       await screen.findByRole('button', { name: 'Unpin SPC analysis — Vt (gate CD)' }),
     ).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /^Pinned/ })).toHaveTextContent('2');
 
-    // Reload: fresh QueryClient + fresh render, so the only way pinned state
-    // survives is if the mock backend (localStorage-backed) actually persisted it.
+    // Reload: fresh QueryClient + fresh render, so the only way pinned state survives
+    // is if the backend actually persisted it.
     renderGalleryPage();
     const pinnedFilters = await screen.findAllByRole('button', { name: /^Pinned/ });
-    const reloadedPinnedFilter = pinnedFilters[pinnedFilters.length - 1];
-    expect(reloadedPinnedFilter).toHaveTextContent('2');
+    expect(pinnedFilters[pinnedFilters.length - 1]).toHaveTextContent('2');
+    expect(
+      screen.getAllByRole('button', { name: 'Unpin SPC analysis — Vt (gate CD)' }).length,
+    ).toBeGreaterThan(0);
+  });
 
-    const reloadedGalleries = screen.getAllByRole('button', {
-      name: 'Unpin SPC analysis — Vt (gate CD)',
-    });
-    expect(reloadedGalleries.length).toBeGreaterThan(0);
+  it('disables the pin button when the user may not pin this Artifact', async () => {
+    server.use(
+      http.get('/api/artifacts', () =>
+        HttpResponse.json([
+          artifactDto({ id: 'artifact-1', title: 'SPC analysis — Vt (gate CD)', canPin: false }),
+        ]),
+      ),
+    );
+    renderGalleryPage();
+    await screen.findByRole('button', { name: 'SPC analysis — Vt (gate CD)' });
+
+    expect(screen.getByRole('button', { name: 'Pin SPC analysis — Vt (gate CD)' })).toBeDisabled();
   });
 
   it("shows Pin, Copy Link, Share, and Delete in an owned card's more-actions menu", async () => {
@@ -130,10 +164,19 @@ describe('Artifacts gallery', () => {
     await user.click(
       screen.getByRole('button', { name: 'More actions for SPC analysis — Vt (gate CD)' }),
     );
-    expect(screen.getByRole('menuitem', { name: 'Pin' })).toBeInTheDocument();
-    expect(screen.getByRole('menuitem', { name: 'Copy link' })).toBeInTheDocument();
-    expect(screen.getByRole('menuitem', { name: 'Share' })).toBeInTheDocument();
-    expect(screen.getByRole('menuitem', { name: 'Delete' })).toBeInTheDocument();
+    // Pin has an endpoint and this user may use it; Copy link never needed one.
+    for (const label of ['Pin', 'Copy link']) {
+      expect(screen.getByRole('menuitem', { name: label })).not.toHaveAttribute(
+        'aria-disabled',
+        'true',
+      );
+    }
+    // Share and Delete are still waiting on the backend.
+    for (const label of ['Share', 'Delete']) {
+      const item = screen.getByRole('menuitem', { name: new RegExp(`^${label}`) });
+      expect(item).toHaveAttribute('aria-disabled', 'true');
+      expect(within(item).getByText(BACKEND_UNSUPPORTED)).toBeInTheDocument();
+    }
   });
 
   it('hides Share in the more-actions menu of a "Shared to me" card', async () => {
@@ -142,30 +185,8 @@ describe('Artifacts gallery', () => {
     await screen.findByRole('button', { name: 'Daily monitor (A14)' });
 
     await user.click(screen.getByRole('button', { name: 'More actions for Daily monitor (A14)' }));
-    expect(screen.getByRole('menuitem', { name: 'Pin' })).toBeInTheDocument();
-    expect(screen.queryByRole('menuitem', { name: 'Share' })).not.toBeInTheDocument();
-  });
-
-  it('deletes an Artifact from its card menu, and the deletion persists across a simulated reload', async () => {
-    const user = userEvent.setup();
-    renderGalleryPage();
-    await screen.findByRole('button', { name: 'SPC analysis — Vt (gate CD)' });
-
-    await user.click(
-      screen.getByRole('button', { name: 'More actions for SPC analysis — Vt (gate CD)' }),
-    );
-    await user.click(screen.getByRole('menuitem', { name: 'Delete' }));
-
-    expect(
-      screen.queryByRole('button', { name: 'SPC analysis — Vt (gate CD)' }),
-    ).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /^All/ })).toHaveTextContent('2');
-
-    renderGalleryPage();
-    await screen.findByRole('button', { name: 'Inline dashboard — W12' });
-    expect(screen.queryAllByRole('button', { name: 'SPC analysis — Vt (gate CD)' })).toHaveLength(
-      0,
-    );
+    expect(screen.getByRole('menuitem', { name: /^Pin/ })).toBeInTheDocument();
+    expect(screen.queryByRole('menuitem', { name: /^Share/ })).not.toBeInTheDocument();
   });
 
   it("copies an Artifact's link to the clipboard from its card menu", async () => {
@@ -183,20 +204,7 @@ describe('Artifacts gallery', () => {
     expect(writeText).toHaveBeenCalledWith(expect.stringContaining('/cowork/artifact/artifact-1'));
   });
 
-  it('opens the share dialog for an Artifact from its card menu', async () => {
-    const user = userEvent.setup();
-    renderGalleryPage();
-    await screen.findByRole('button', { name: 'SPC analysis — Vt (gate CD)' });
-
-    await user.click(
-      screen.getByRole('button', { name: 'More actions for SPC analysis — Vt (gate CD)' }),
-    );
-    await user.click(screen.getByRole('menuitem', { name: 'Share' }));
-
-    expect(await screen.findByRole('dialog', { name: '分享 Artifact' })).toBeInTheDocument();
-  });
-
-  it('distinguishes kinds by thumbnail, names the producing session, and badges sharing states', async () => {
+  it('names the producing session and badges sharing states', async () => {
     renderGalleryPage();
 
     const spcOpen = await screen.findByRole('button', { name: 'SPC analysis — Vt (gate CD)' });
@@ -205,17 +213,12 @@ describe('Artifacts gallery', () => {
       .getByRole('button', { name: 'Daily monitor (A14)' })
       .closest('[role="listitem"]') as HTMLElement;
 
-    // Thumbnails carry the kind so dashboard and slides cards can be told apart.
-    expect(within(spcCard).getByTestId('artifact-thumbnail')).toHaveAttribute(
-      'data-kind',
-      'dashboard',
-    );
-    expect(within(dailyCard).getByTestId('artifact-thumbnail')).toHaveAttribute(
-      'data-kind',
-      'slides',
-    );
+    // Every card gets the same thumbnail: the contract has no kind until the backend
+    // adds `type` (types/api/artifact.ts).
+    expect(within(spcCard).getByTestId('artifact-thumbnail')).not.toHaveAttribute('data-kind');
 
-    // Each card names the session that produced it (session list loads async).
+    // Each card names the session that produced it — carried on the Artifact itself
+    // now (`sessionTitle`), not looked up from the session list.
     expect(await within(spcCard).findByText('SPC — Vt (gate CD)')).toBeInTheDocument();
     expect(await within(dailyCard).findByText('Defect pareto — W12')).toBeInTheDocument();
 
@@ -224,53 +227,45 @@ describe('Artifacts gallery', () => {
     expect(within(spcCard).queryByText('Shared to me')).not.toBeInTheDocument();
   });
 
-  it('shows the primary "Shared" badge in the meta row once an Artifact has been shared', async () => {
-    const user = userEvent.setup();
-    renderGalleryPage();
-    await screen.findByRole('button', { name: 'SPC analysis — Vt (gate CD)' });
-
-    const spcCard = screen
-      .getByRole('button', { name: 'SPC analysis — Vt (gate CD)' })
-      .closest('[role="listitem"]') as HTMLElement;
-    expect(within(spcCard).queryByText('Shared')).not.toBeInTheDocument();
-
-    await user.click(
-      screen.getByRole('button', { name: 'More actions for SPC analysis — Vt (gate CD)' }),
+  // Sharing is still disabled (ADR-0009), so the badge is asserted from the data that
+  // arrives once something has been shared, rather than by sharing it here.
+  it('shows the primary "Shared" badge in the meta row for an Artifact already shared', async () => {
+    server.use(
+      http.get('/api/artifacts', () =>
+        HttpResponse.json([
+          artifactDto({ id: 'artifact-1', title: 'SPC analysis — Vt (gate CD)', isShared: true }),
+        ]),
+      ),
     );
-    await user.click(screen.getByRole('menuitem', { name: 'Share' }));
+    renderGalleryPage();
 
-    const dialog = await screen.findByRole('dialog', { name: '分享 Artifact' });
-    const picker = within(dialog).getByRole('combobox');
-    await user.type(picker, '鄭凱宇');
-    await user.click(await screen.findByRole('option', { name: /CHXXGHYC/ }));
-    await user.click(within(dialog).getByRole('button', { name: '分享' }));
-    await user.click(within(dialog).getByRole('button', { name: '完成' }));
-
-    expect(await within(spcCard).findByText('Shared')).toBeInTheDocument();
+    const spcCard = (
+      await screen.findByRole('button', { name: 'SPC analysis — Vt (gate CD)' })
+    ).closest('[role="listitem"]') as HTMLElement;
+    expect(within(spcCard).getByText('Shared')).toBeInTheDocument();
   });
 
   it('de-duplicates "Shared to me" by artifact id without collapsing distinct same-name artifacts', async () => {
-    const shared = (over: Partial<Artifact> & Pick<Artifact, 'id' | 'name'>): Artifact => ({
-      sessionId: 'session-2',
-      kind: 'dashboard',
-      scenario: 'daily',
-      pinned: false,
-      mine: false,
-      shared: false,
-      sharedBy: 'Alice Wu',
-      generated: true,
-      createdAt: '2026-08-19T08:30:00.000Z',
-      ...over,
-    });
+    const shared = (over: Partial<Artifact> & Pick<Artifact, 'id' | 'title'>) =>
+      // Someone else's Artifact: not own, and not shareable onward.
+      artifactDto({
+        sessionId: 'session-2',
+        sessionTitle: 'Defect pareto — W12',
+        ownerDisplay: 'Alice Wu',
+        isOwn: false,
+        canShare: false,
+        isShared: true,
+        ...over,
+      });
     server.use(
       http.get('/api/artifacts', () =>
         HttpResponse.json([
           // The same artifact shared to the user twice: one row survives.
-          shared({ id: 'artifact-9', name: 'Daily monitor (A14)' }),
-          shared({ id: 'artifact-9', name: 'Daily monitor (A14)' }),
+          shared({ id: 'artifact-9', title: 'Daily monitor (A14)' }),
+          shared({ id: 'artifact-9', title: 'Daily monitor (A14)' }),
           // Two different artifacts that happen to share a name: both stay.
-          shared({ id: 'artifact-10', name: 'Q3 report', sharedBy: 'Bob Lin' }),
-          shared({ id: 'artifact-11', name: 'Q3 report', sharedBy: 'Carol Kao' }),
+          shared({ id: 'artifact-10', title: 'Q3 report', ownerDisplay: 'Bob Lin' }),
+          shared({ id: 'artifact-11', title: 'Q3 report', ownerDisplay: 'Carol Kao' }),
         ]),
       ),
     );

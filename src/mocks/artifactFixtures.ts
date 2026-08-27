@@ -1,4 +1,9 @@
-import type { ArtifactKind, ArtifactTheme, ScenarioKey } from '@/types/api/index';
+import type { ArtifactTheme, ScenarioKey } from '@/types/api/index';
+
+/** Which document the mock builds. It left the wire contract when `kind` did — the
+ *  backend will reintroduce it as `type` — but the fixtures still need to know whether
+ *  they are assembling a dashboard or a deck. */
+export type ArtifactKind = 'dashboard' | 'slides';
 
 // The same surfaces the app itself uses (theme/tokens.ts, copied
 // from the mockup): the Artifact renders inside an iframe and so cannot read

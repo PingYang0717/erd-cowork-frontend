@@ -1,36 +1,30 @@
 # 接上真實後端:設定與驗收指南
 
-更新日期:2026-08-26。本文取代先前的「串接真實後端的注意事項」——那份文件記錄的
+更新日期:2026-08-27。本文取代先前的「串接真實後端的注意事項」——那份文件記錄的
 契約落差(body 形狀、Message 形狀、上傳模型、Artifact HTML、liveAdapter 死碼)已在
 [ADR-0007](../adr/0007-verbatim-backend-wire-contract.md) 的 verbatim 對齊中全部解決,
 線路型別即應用型別,**接真後端不需要改任何程式碼**。仍需後端配合的項目集中在
 [backend-feedback.md](./backend-feedback.md)。
 
-## 1. 切換開關(唯一必要的改動)
+## 1. 沒有開關了
 
-在 `.env`(或 `.env.local`)設定:
+前端只有一種模式:打真後端([ADR-0009](../adr/0009-no-mock-backend-at-runtime.md))。
+`VITE_AGENT_TRANSPORT`、`src/config/transport.ts` 與 `LIVE_BACKED` 清單都已移除,MSW 只在
+測試裡跑。`.env` 只剩一項:
 
 ```
-VITE_AGENT_TRANSPORT=live
 VITE_API_BASE_URL=/api
 ```
 
-機制(都已存在,不用動):
+後端還沒建好的端點,前端已各自表態,不需要任何設定:
 
-- `src/config/transport.ts` 讀取 flag(build-time,不是 runtime 開關——runtime 切換
-  會把 MSW 打進 production bundle,見 ADR-0005)。
-- `src/main.tsx`:live 模式下 MSW 仍啟動,但 `onUnhandledRequest: 'bypass'`。
-- `src/mocks/handlers.ts` 的 `LIVE_BACKED` 清單(**method-aware**)決定哪些請求穿透:
+| 類別           | 端點                                                                                                                                                         | 前端行為                          |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------- |
+| **stub**(讀取) | `GET /artifacts`、`GET /connectors`、`GET /directory`                                                                                                        | `src/api/` 回固定資料,不發請求    |
+| **停用**(寫入) | `PATCH`/`DELETE /sessions/{id}`、`PATCH`/`DELETE /artifacts/{id}`、`POST /artifacts/{id}/share`、`POST /artifacts/{id}/generate`、`PATCH`/`POST /connectors` | UI 上 disabled,標「後端尚未支援」 |
 
-| 穿透到真後端                                                    | 仍由 MSW 服務                                      |
-| --------------------------------------------------------------- | -------------------------------------------------- |
-| `GET /sessions`、`GET /sessions/{id}`(含 messages/files)        | `POST/PATCH/DELETE /sessions`(建立/改名/釘選/刪除) |
-| `POST /sessions/{id}/messages`(SSE)                             | `/artifacts` 清單、pin、share、generate            |
-| `POST /sessions/{id}/files`、`DELETE .../files/{fileId}`        | `/connectors`、`/dc-items`、`/directory`、schedule |
-| `GET /artifacts/{id}`(text/html)、`POST /artifacts/{id}/repair` |                                                    |
-
-同一路徑不同 method 各走各的:`GET /sessions/:id` 給後端、`PATCH /sessions/:id`
-(改名/釘選,後端沒有)留在 MSW。
+後端補上其中一條時:把對應的 stub 換回 `apiClient` 呼叫,或把 UI 上的 `disabled` 拿掉
+(api 函式都還在,`src/api/` 裡標註著)。同時復活 ADR-0009 附的那份測試清單。
 
 ## 2. 網路層:讓 `/api` 到得了後端
 
@@ -70,13 +64,13 @@ live bubble 永遠看不到逐步進度。Vite 的 http-proxy 預設不 buffer;�
 7. **Artifact**:右欄 iframe 渲染後端回的 text/html;repair 流程(錯誤收集 → offer 卡
    → `POST .../repair`)。
 
-## 4. live 模式的已知降級(不是 bug,是記錄過的取捨)
+## 4. 已知降級(不是 bug,是記錄過的取捨)
 
 - **反問表單降級成 chips**:真後端只送扁平 `Question[]`;六種欄位/`visibleWhen` 的
   富表單是 mock-only extension,`utils/liftQuestions.ts` 單向抬升。完整表單需後端改送
   `QuestionForm`(feedback #1)。
-- **New chat 的短暫不一致**:mock 的 `POST /sessions` 建的 session 不在後端,第一次
-  送訊息時後端以同 id upsert 才會進清單(feedback #3)。
+- **New chat 的短暫不一致**:草稿 session 只存在於這個分頁,第一次送訊息時後端以同 id
+  upsert 才會進清單(ADR-0008;feedback #3)。
 - **bubble 附件 chips 消失**:真後端的歷史訊息不帶 `attachments` extension
   (feedback #4)。
 - **深色 Artifact**:真後端無 `theme` 參數,只靠 iframe 內 postMessage 換色

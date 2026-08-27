@@ -2,7 +2,6 @@ import {
   CopyOutlined,
   DashboardOutlined,
   DeleteOutlined,
-  FilePptOutlined,
   MoreOutlined,
   PushpinFilled,
   PushpinOutlined,
@@ -13,8 +12,8 @@ import { Dropdown } from 'antd';
 import React, { useState } from 'react';
 
 import { ShareArtifactDialog } from '@/components/artifact/ShareArtifactDialog';
-import { useDeleteArtifact, useSetArtifactPinned } from '@/hooks/useArtifactMutations';
-import { useSessions } from '@/hooks/useSessions';
+import { UnsupportedLabel } from '@/components/common/UnsupportedLabel';
+import { useDeleteArtifact, useToggleArtifactPin } from '@/hooks/useArtifactMutations';
 import type { Artifact } from '@/types/api/index';
 import { dispatchMenuAction } from '@/utils/dispatchMenuAction';
 import { formatRelativeTime } from '@/utils/formatRelativeTime';
@@ -27,34 +26,46 @@ interface ArtifactCardProps {
 }
 
 const ArtifactCard: React.FC<ArtifactCardProps> = ({ artifact, onOpen }) => {
-  const setArtifactPinned = useSetArtifactPinned();
+  const toggleArtifactPin = useToggleArtifactPin();
   const deleteArtifact = useDeleteArtifact();
   const [isShareOpen, setIsShareOpen] = useState(false);
-  const { data: sessions } = useSessions();
-  const sessionTitle = sessions?.find((s) => s.id === artifact.sessionId)?.title;
+  const isPinned = artifact.pinnedAt !== null;
+  // Shared *to me*: someone else owns it. `isShared` is the opposite direction —
+  // whether this Artifact has been shared out, which the meta row badges below.
+  const isSharedToMe = !artifact.isOwn;
 
+  // Pin is live — the backend has the endpoint, and `canPin` says whether this user
+  // may use it. Share and Delete have no endpoint yet (ADR-0009); Copy link never
+  // needed one, it reads the current URL.
   const menuItems = [
     {
       key: 'pin',
-      label: artifact.pinned ? 'Unpin' : 'Pin',
-      icon: artifact.pinned ? <PushpinFilled aria-hidden /> : <PushpinOutlined aria-hidden />,
+      label: isPinned ? 'Unpin' : 'Pin',
+      icon: isPinned ? <PushpinFilled aria-hidden /> : <PushpinOutlined aria-hidden />,
+      disabled: !artifact.canPin,
     },
     { key: 'copyLink', label: 'Copy link', icon: <CopyOutlined aria-hidden /> },
-    artifact.sharedBy
-      ? null
-      : { key: 'share', label: 'Share', icon: <ShareAltOutlined aria-hidden /> },
+    artifact.canShare
+      ? {
+          key: 'share',
+          label: <UnsupportedLabel label="Share" />,
+          icon: <ShareAltOutlined aria-hidden />,
+          disabled: true,
+        }
+      : null,
     { type: 'divider' as const },
     {
       key: 'delete',
-      label: 'Delete',
+      label: <UnsupportedLabel label="Delete" />,
       danger: true,
       icon: <DeleteOutlined aria-hidden />,
+      disabled: true,
     },
   ].filter((item): item is NonNullable<typeof item> => item !== null);
 
   function handleMenuClick(key: string) {
     dispatchMenuAction(key, {
-      pin: () => setArtifactPinned.mutate({ id: artifact.id, pinned: !artifact.pinned }),
+      pin: () => toggleArtifactPin.mutate(artifact.id),
       copyLink: () =>
         navigator.clipboard.writeText(`${window.location.origin}/cowork/artifact/${artifact.id}`),
       share: () => setIsShareOpen(true),
@@ -65,51 +76,44 @@ const ArtifactCard: React.FC<ArtifactCardProps> = ({ artifact, onOpen }) => {
   return (
     <div className={styles.card} role="listitem">
       <button type="button" className={styles.open} onClick={() => onOpen(artifact)}>
-        <span
-          className={styles.thumbnail}
-          aria-hidden="true"
-          data-testid="artifact-thumbnail"
-          data-kind={artifact.kind}
-        >
-          {artifact.kind === 'slides' ? (
-            <FilePptOutlined className={styles.thumbnailIcon} />
-          ) : (
-            <DashboardOutlined className={styles.thumbnailIcon} />
-          )}
-          {artifact.sharedBy && <span className={styles.sharedToMeOverlay}>Shared to me</span>}
+        {/* One thumbnail for every Artifact: the contract dropped `kind`, and it
+            returns as `type` once the backend adds it (types/api/artifact.ts). */}
+        <span className={styles.thumbnail} aria-hidden="true" data-testid="artifact-thumbnail">
+          <DashboardOutlined className={styles.thumbnailIcon} />
+          {isSharedToMe && <span className={styles.sharedToMeOverlay}>Shared to me</span>}
         </span>
         <span className={styles.body}>
           <span className={styles.titleRow}>
-            <span className={styles.name}>{artifact.name}</span>
-            <span className={styles.kindTag} aria-hidden="true">
-              {artifact.kind === 'slides' ? 'Deck' : 'Dash'}
-            </span>
+            <span className={styles.name}>{artifact.title}</span>
           </span>
-          {sessionTitle && (
+          {artifact.sessionTitle && (
             <span className={styles.sessionRow} aria-hidden="true">
-              {sessionTitle}
+              {artifact.sessionTitle}
             </span>
           )}
           <span className={styles.metaRow} aria-hidden="true">
             <span className={styles.time}>{formatRelativeTime(artifact.createdAt)}</span>
-            {artifact.shared && <span className={styles.sharedBadge}>Shared</span>}
-            {artifact.sharedBy && (
+            {artifact.isShared && <span className={styles.sharedBadge}>Shared</span>}
+            {isSharedToMe && (
               <span className={styles.sharedByBadge}>
-                <UsergroupAddOutlined /> {artifact.sharedBy}
+                <UsergroupAddOutlined /> {artifact.ownerDisplay}
               </span>
             )}
           </span>
         </span>
       </button>
-      <button
-        type="button"
-        className={styles.pinButton}
-        aria-label={artifact.pinned ? `Unpin ${artifact.name}` : `Pin ${artifact.name}`}
-        aria-pressed={artifact.pinned}
-        onClick={() => setArtifactPinned.mutate({ id: artifact.id, pinned: !artifact.pinned })}
-      >
-        {artifact.pinned ? <PushpinFilled aria-hidden /> : <PushpinOutlined aria-hidden />}
-      </button>
+      <span className={styles.pinButtonSlot}>
+        <button
+          type="button"
+          className={styles.pinButton}
+          aria-label={isPinned ? `Unpin ${artifact.title}` : `Pin ${artifact.title}`}
+          aria-pressed={isPinned}
+          disabled={!artifact.canPin}
+          onClick={() => toggleArtifactPin.mutate(artifact.id)}
+        >
+          {isPinned ? <PushpinFilled aria-hidden /> : <PushpinOutlined aria-hidden />}
+        </button>
+      </span>
       <Dropdown
         trigger={['click']}
         overlayClassName="erd-menu"
@@ -118,7 +122,7 @@ const ArtifactCard: React.FC<ArtifactCardProps> = ({ artifact, onOpen }) => {
         <button
           type="button"
           className={styles.moreActionsButton}
-          aria-label={`More actions for ${artifact.name}`}
+          aria-label={`More actions for ${artifact.title}`}
           onClick={(e) => e.stopPropagation()}
         >
           <MoreOutlined aria-hidden />

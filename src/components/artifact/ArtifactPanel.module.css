@@ -58,7 +58,7 @@
   border-bottom: 1px solid var(--erd-color-border-secondary, #f0f0f0);
 }
 
-.generatedBadge {
+.publishedBadge {
   flex: none;
   display: inline-flex;
   align-items: center;
@@ -141,7 +141,7 @@
   min-height: 0;
 }
 
-.generatedToast {
+.publishedToast {
   position: fixed;
   left: 50%;
   bottom: 24px;
@@ -159,11 +159,11 @@
   color: var(--erd-color-text, rgba(0, 0, 0, 0.88));
 }
 
-.generatedToastText {
+.publishedToastText {
   white-space: nowrap;
 }
 
-.generatedToastPrimary {
+.publishedToastPrimary {
   flex: none;
   border: none;
   border-radius: 7px;
@@ -175,7 +175,7 @@
   color: #fff;
 }
 
-.generatedToastDismiss {
+.publishedToastDismiss {
   flex: none;
   border: 1px solid var(--erd-color-border, #d9d9d9);
   border-radius: 7px;

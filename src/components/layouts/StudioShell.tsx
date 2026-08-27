@@ -22,7 +22,7 @@ function ExpandedSessionRail({ onCollapse }: { onCollapse: () => void }) {
   return (
     <SessionList
       onCollapse={onCollapse}
-      artifactsCount={artifacts.filter((artifact) => artifact.generated).length}
+      artifactsCount={artifacts.filter((artifact) => artifact.publishedAt !== null).length}
     />
   );
 }
