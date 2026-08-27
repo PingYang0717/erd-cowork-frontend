@@ -144,7 +144,6 @@ const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ open, onClose }) => {
       onCancel={onClose}
       title="Connectors"
       width={720}
-      destroyOnHidden
       styles={{
         body: {
           display: 'flex',

@@ -50,6 +50,9 @@ export function AppProviders({ children }: { children: ReactNode }) {
           algorithm: isDarkMode ? theme.darkAlgorithm : theme.defaultAlgorithm,
           token: {
             fontFamily: FONT_FAMILY,
+            // antd's 0.3s default makes every dialog read as lag rather than motion;
+            // modal/mask enter-leave animate on this token.
+            motionDurationSlow: '0.15s',
             // The mockup's body text runs 12-13.5px throughout; antd's
             // default (14) reads noticeably larger/heavier across every
             // control that doesn't have its own font-size override.

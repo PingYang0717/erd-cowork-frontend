@@ -94,6 +94,11 @@ const MessageList: React.FC<MessageListProps> = ({
   bottomSlot,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
+  // Where the reader last was: following the newest turn only holds while they are at
+  // the bottom. Scrolling up is how they read an earlier reply (or click its chip), and
+  // yanking them back down on every re-render made that impossible. A ref, not state —
+  // scroll position must never cause a render.
+  const isNearBottomRef = useRef(true);
   // Published by the Artifact pane, so a chip's "shown right →" is decided by what is
   // actually on the right rather than by a guess the two could disagree on.
   const displayedArtifactId = useActiveRunStore((s) => s.displayedArtifactId);
@@ -101,12 +106,30 @@ const MessageList: React.FC<MessageListProps> = ({
   // MessageBubble's memoisation on every streamed token.
   const pickArtifact = useActiveRunStore((s) => s.pickArtifact);
 
-  useEffect(() => {
+  const handleScroll = () => {
     const container = containerRef.current;
     if (container) {
+      isNearBottomRef.current =
+        container.scrollHeight - container.scrollTop - container.clientHeight < 80;
+    }
+  };
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (container && isNearBottomRef.current) {
       container.scrollTop = container.scrollHeight;
     }
   }, [messages, live, optimisticUserText, bottomSlot]);
+
+  // The reader's own send is the exception: they just spoke, so the reply belongs on
+  // screen no matter how far up they had scrolled.
+  useEffect(() => {
+    const container = containerRef.current;
+    if (optimisticUserText !== null && container) {
+      container.scrollTop = container.scrollHeight;
+      isNearBottomRef.current = true;
+    }
+  }, [optimisticUserText]);
 
   // Parsed per settled message and memoised together: a streaming run re-renders this
   // list on every token, and re-parsing the whole history each time is O(history × tokens).
@@ -122,7 +145,13 @@ const MessageList: React.FC<MessageListProps> = ({
   const lastIndex = messages.length - 1;
 
   return (
-    <div ref={containerRef} role="log" aria-label="Messages" className={styles.thread}>
+    <div
+      ref={containerRef}
+      role="log"
+      aria-label="Messages"
+      className={styles.thread}
+      onScroll={handleScroll}
+    >
       {messages.map((message, index) => (
         <MessageBubble
           key={message.id}
