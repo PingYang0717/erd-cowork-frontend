@@ -1,12 +1,11 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { http, HttpResponse } from 'msw';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { artifactApi } from '@/api/artifactApi';
 import { BACKEND_UNSUPPORTED } from '@/constants/messages';
-import { server } from '@/mocks/server';
 import { ArtifactPage } from '@/pages/Artifact/ArtifactPage';
 import type { Artifact } from '@/types/api/index';
 
@@ -24,6 +23,10 @@ function renderGalleryPage() {
 }
 
 describe('Artifacts gallery', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it('lists every seeded Artifact under "All", with per-filter counts', async () => {
     renderGalleryPage();
 
@@ -181,24 +184,22 @@ describe('Artifacts gallery', () => {
   // Sharing is disabled (ADR-0009), so the badge is asserted from the data that would
   // arrive once something has been shared, rather than by sharing it here.
   it('shows the primary "Shared" badge in the meta row for an Artifact already shared', async () => {
-    server.use(
-      http.get('/api/artifacts', () =>
-        HttpResponse.json([
-          {
-            id: 'artifact-1',
-            sessionId: 'session-1',
-            name: 'SPC analysis — Vt (gate CD)',
-            kind: 'dashboard',
-            scenario: 'spc',
-            pinned: false,
-            mine: true,
-            shared: true,
-            generated: true,
-            createdAt: '2026-08-20T09:15:00.000Z',
-          },
-        ]),
-      ),
-    );
+    // The listing is stubbed in the api module now (ADR-0009), so the seam a test
+    // substitutes data at is that function — not an HTTP handler.
+    vi.spyOn(artifactApi, 'listArtifacts').mockResolvedValue([
+      {
+        id: 'artifact-1',
+        sessionId: 'session-1',
+        name: 'SPC analysis — Vt (gate CD)',
+        kind: 'dashboard',
+        scenario: 'spc',
+        pinned: false,
+        mine: true,
+        shared: true,
+        generated: true,
+        createdAt: '2026-08-20T09:15:00.000Z',
+      },
+    ]);
     renderGalleryPage();
 
     const spcCard = (
@@ -220,18 +221,14 @@ describe('Artifacts gallery', () => {
       createdAt: '2026-08-19T08:30:00.000Z',
       ...over,
     });
-    server.use(
-      http.get('/api/artifacts', () =>
-        HttpResponse.json([
-          // The same artifact shared to the user twice: one row survives.
-          shared({ id: 'artifact-9', name: 'Daily monitor (A14)' }),
-          shared({ id: 'artifact-9', name: 'Daily monitor (A14)' }),
-          // Two different artifacts that happen to share a name: both stay.
-          shared({ id: 'artifact-10', name: 'Q3 report', sharedBy: 'Bob Lin' }),
-          shared({ id: 'artifact-11', name: 'Q3 report', sharedBy: 'Carol Kao' }),
-        ]),
-      ),
-    );
+    vi.spyOn(artifactApi, 'listArtifacts').mockResolvedValue([
+      // The same artifact shared to the user twice: one row survives.
+      shared({ id: 'artifact-9', name: 'Daily monitor (A14)' }),
+      shared({ id: 'artifact-9', name: 'Daily monitor (A14)' }),
+      // Two different artifacts that happen to share a name: both stay.
+      shared({ id: 'artifact-10', name: 'Q3 report', sharedBy: 'Bob Lin' }),
+      shared({ id: 'artifact-11', name: 'Q3 report', sharedBy: 'Carol Kao' }),
+    ]);
 
     const user = userEvent.setup();
     renderGalleryPage();
