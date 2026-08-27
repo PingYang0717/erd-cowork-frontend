@@ -37,6 +37,17 @@ export interface ThemeTokens {
   borderSecondary: string;
   fillTertiary: string;
   fillQuaternary: string;
+  /** The chat surfaces, aligned to cowork's Tailwind gray ladder (ADR-0010): the AI
+   *  bubble, the code/pre fill one step deeper, the table stripe/header tint, and the
+   *  hairline border tables and chips draw on a white card. cowork has no dark theme,
+   *  so the dark values are ours, chosen to sit on the same rungs of the existing
+   *  dark ladder (container #1f1f22 → bubble ≈ elevated → code one step lighter). */
+  chatBubbleBg: string;
+  chatCodeBg: string;
+  chatStripeBg: string;
+  chatBorder: string;
+  /** cowork mockup's scrollbar thumb (14% black); dark value is ours. */
+  scrollbarThumb: string;
   shadowSm: string;
   shadowMd: string;
   shadowLg: string;
@@ -69,6 +80,11 @@ export const THEME_TOKENS: Record<'light' | 'dark', ThemeTokens> = {
     borderSecondary: '#f0f0f0',
     fillTertiary: 'rgba(0, 0, 0, 0.04)',
     fillQuaternary: 'rgba(0, 0, 0, 0.02)',
+    chatBubbleBg: '#f3f4f6',
+    chatCodeBg: '#e5e7eb',
+    chatStripeBg: '#f9fafb',
+    chatBorder: '#e5e7eb',
+    scrollbarThumb: 'rgba(0, 0, 0, 0.14)',
     shadowSm: '0 1px 2px rgba(0, 0, 0, 0.04), 0 1px 6px -1px rgba(0, 0, 0, 0.03)',
     shadowMd: '0 6px 16px rgba(0, 0, 0, 0.08)',
     // The mockup never declares --shadow-lg; its dialogs and flyouts use this
@@ -101,6 +117,11 @@ export const THEME_TOKENS: Record<'light' | 'dark', ThemeTokens> = {
     borderSecondary: '#303030',
     fillTertiary: 'rgba(255, 255, 255, 0.06)',
     fillQuaternary: 'rgba(255, 255, 255, 0.03)',
+    chatBubbleBg: '#262629',
+    chatCodeBg: '#303034',
+    chatStripeBg: 'rgba(255, 255, 255, 0.04)',
+    chatBorder: '#303030',
+    scrollbarThumb: 'rgba(255, 255, 255, 0.2)',
     shadowSm: '0 1px 2px rgba(0, 0, 0, 0.3)',
     shadowMd: '0 6px 16px rgba(0, 0, 0, 0.45)',
     shadowLg: '0 12px 40px rgba(0, 0, 0, 0.28)',
@@ -136,6 +157,13 @@ export function themeCssVars(tokens: ThemeTokens): Record<string, string> {
     '--erd-color-border-secondary': tokens.borderSecondary,
     '--erd-color-fill-tertiary': tokens.fillTertiary,
     '--erd-color-fill-quaternary': tokens.fillQuaternary,
+    // Not mockup names: the chat-* group and the scrollbar thumb come from the
+    // cowork alignment (ADR-0010).
+    '--erd-color-chat-bubble-bg': tokens.chatBubbleBg,
+    '--erd-color-chat-code-bg': tokens.chatCodeBg,
+    '--erd-color-chat-stripe-bg': tokens.chatStripeBg,
+    '--erd-color-chat-border': tokens.chatBorder,
+    '--erd-scrollbar-thumb': tokens.scrollbarThumb,
     '--shadow-sm': tokens.shadowSm,
     '--shadow-md': tokens.shadowMd,
     '--shadow-lg': tokens.shadowLg,
