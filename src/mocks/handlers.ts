@@ -738,6 +738,20 @@ export const allHandlers = [
   // Rebuilding an artifact whose HTML threw. Every repair here succeeds — a real
   // backend can also come back empty-handed, which the UI already handles; tests
   // exercise that path by stubbing this endpoint.
+  http.delete('/api/artifacts/:id', ({ params }) => {
+    artifacts.write(artifacts.read().filter((stored) => stored.id !== params.id));
+    return new HttpResponse(null, { status: 200 });
+  }),
+
+  // Share has no backend this round: the mock answers the agreed error shape so the
+  // UI exercises the same path the real backend produces.
+  http.post('/api/artifacts/:id/share', () =>
+    HttpResponse.json(
+      { code: 'NOT_IMPLEMENTED', message: '分享功能後端尚未就緒' },
+      { status: 501 },
+    ),
+  ),
+
   http.post('/api/artifacts/:id/repair', ({ params }) => {
     const artifact = artifacts.read().find((a) => a.id === params.id);
     if (!artifact) {

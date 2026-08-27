@@ -1,11 +1,10 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { BACKEND_UNSUPPORTED } from '@/constants/messages';
 import { server } from '@/mocks/server';
 import { ArtifactPage } from '@/pages/Artifact/ArtifactPage';
 import type { Artifact } from '@/types/api/index';
@@ -164,19 +163,31 @@ describe('Artifacts gallery', () => {
     await user.click(
       screen.getByRole('button', { name: 'More actions for SPC analysis — Vt (gate CD)' }),
     );
-    // Pin has an endpoint and this user may use it; Copy link never needed one.
-    for (const label of ['Pin', 'Copy link']) {
+    // Nothing is disabled up front: every action goes to the backend, and an endpoint
+    // that has not landed answers with an error instead.
+    for (const label of ['Pin', 'Copy link', 'Share', 'Delete']) {
       expect(screen.getByRole('menuitem', { name: label })).not.toHaveAttribute(
         'aria-disabled',
         'true',
       );
     }
-    // Share and Delete are still waiting on the backend.
-    for (const label of ['Share', 'Delete']) {
-      const item = screen.getByRole('menuitem', { name: new RegExp(`^${label}`) });
-      expect(item).toHaveAttribute('aria-disabled', 'true');
-      expect(within(item).getByText(BACKEND_UNSUPPORTED)).toBeInTheDocument();
-    }
+  });
+
+  it('deletes a card through the menu, and the card is gone', async () => {
+    const user = userEvent.setup();
+    renderGalleryPage();
+    await screen.findByRole('button', { name: 'SPC analysis — Vt (gate CD)' });
+
+    await user.click(
+      screen.getByRole('button', { name: 'More actions for SPC analysis — Vt (gate CD)' }),
+    );
+    await user.click(screen.getByRole('menuitem', { name: 'Delete' }));
+
+    await waitFor(() =>
+      expect(
+        screen.queryByRole('button', { name: 'SPC analysis — Vt (gate CD)' }),
+      ).not.toBeInTheDocument(),
+    );
   });
 
   it('hides Share in the more-actions menu of a "Shared to me" card', async () => {

@@ -10,7 +10,6 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { Tooltip } from '@/components/common/Tooltip';
-import { BACKEND_UNSUPPORTED } from '@/constants/messages';
 import { useArtifactContent } from '@/hooks/useArtifactContent';
 import { usePublishArtifact } from '@/hooks/useArtifactMutations';
 import { useArtifacts } from '@/hooks/useArtifacts';
@@ -189,15 +188,11 @@ function ArtifactPanelContent({
             發布 Artifact
           </button>
         )}
-        {/* Share is disabled at its entry point, so the dialog never opens onto a
-            recipient search that could not submit anything — no backend share
-            endpoint yet (ADR-0009). */}
-        <Tooltip content={BACKEND_UNSUPPORTED} wrapperClassName={styles.shareButtonSlot}>
+        <Tooltip content="分享" wrapperClassName={styles.shareButtonSlot}>
           <button
             type="button"
             className={styles.shareButton}
             aria-label="Share artifact"
-            disabled
             onClick={() => setIsShareOpen(true)}
           >
             <ShareAltOutlined aria-hidden />
