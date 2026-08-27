@@ -130,6 +130,9 @@ function SessionRow({
         type="button"
         className={styles.sessionRow}
         aria-current={isSelected ? 'true' : undefined}
+        // The elided name has to be readable somewhere: the rail caps at 460px, so a
+        // long name may never fit. Hovering shows it whole, at any width.
+        title={session.title}
         onClick={() => onSelect(session.id)}
       >
         <span className={styles.sessionRowTitle}>
