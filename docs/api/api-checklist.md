@@ -54,17 +54,17 @@ client abort，前端會在 abort 後兩段 800ms invalidate 追後端非同步�
 
 ## 5. Artifact
 
-| #   | Method + Path                    | 前端送出                                                                 | 前端期望回應                                                 | 狀態                                  | 後端實際 input/output（請補） |
-| --- | -------------------------------- | ------------------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------- | ----------------------------- |
-| 10  | `GET /artifacts`                 | —                                                                        | `Artifact[]`（Gallery 清單）                                 | ✅ 已接                               |                               |
-| 11  | `GET /artifacts/{id}`            | （選）`?theme=light\|dark`（真後端可忽略）、`?r={nonce}`（cache-buster） | `text/html`（組裝後的完整文件）                              | ✅ 已接                               |                               |
-| 12  | `GET /artifacts/{id}/raw`        | —                                                                        | `text/plain`（組裝前原始碼；「查看 HTML」與迭代回餵用）      | ✅ 已接                               |                               |
-| 13  | `POST /artifacts/{id}/repair`    | `{ errors: BrowserJsError[] }`                                           | `{ repaired: boolean }`；檔案過期時錯誤 code `FILES_EXPIRED` | ✅ 已接                               |                               |
-| 14  | `POST /artifacts/{id}/pin`       | —（無 body，方向由後端判定）                                             | `Artifact`                                                   | ✅ 已接                               |                               |
-| 15  | `POST /artifacts/{id}/publish`   | —                                                                        | `Artifact`（`publishedAt` 由後端蓋章）                       | ✅ 已接                               |                               |
-| 16  | `DELETE /artifacts/{id}/publish` | —                                                                        | `Artifact`                                                   | 📝 合約已定，UI 尚無入口（unpublish） |                               |
-| 17  | `DELETE /artifacts/{id}`         | —                                                                        | 204                                                          | 🚫 UI 停用中（Delete）                |                               |
-| 18  | `POST /artifacts/{id}/share`     | `{ targetIds: string[] }`                                                | `{ url: string, artifact: Artifact }`                        | 🚫 UI 停用中（Share）                 |                               |
+| #   | Method + Path                    | 前端送出                                                  | 前端期望回應                                                 | 狀態                                  | 後端實際 input/output（請補） |
+| --- | -------------------------------- | --------------------------------------------------------- | ------------------------------------------------------------ | ------------------------------------- | ----------------------------- |
+| 10  | `GET /artifacts`                 | —                                                         | `Artifact[]`（Gallery 清單）                                 | ✅ 已接                               |                               |
+| 11  | `GET /artifacts/{id}`            | （選）`?r={nonce}`（Reload cache-buster，nonce > 0 才送） | `text/html`（組裝後的完整文件）                              | ✅ 已接                               |                               |
+| 12  | `GET /artifacts/{id}/raw`        | —                                                         | `text/plain`（組裝前原始碼；「查看 HTML」與迭代回餵用）      | ✅ 已接                               |                               |
+| 13  | `POST /artifacts/{id}/repair`    | `{ errors: BrowserJsError[] }`                            | `{ repaired: boolean }`；檔案過期時錯誤 code `FILES_EXPIRED` | ✅ 已接                               |                               |
+| 14  | `POST /artifacts/{id}/pin`       | —（無 body，方向由後端判定）                              | `Artifact`                                                   | ✅ 已接                               |                               |
+| 15  | `POST /artifacts/{id}/publish`   | —                                                         | `Artifact`（`publishedAt` 由後端蓋章）                       | ✅ 已接                               |                               |
+| 16  | `DELETE /artifacts/{id}/publish` | —                                                         | `Artifact`                                                   | 📝 合約已定，UI 尚無入口（unpublish） |                               |
+| 17  | `DELETE /artifacts/{id}`         | —                                                         | 204                                                          | 🚫 UI 停用中（Delete）                |                               |
+| 18  | `POST /artifacts/{id}/share`     | `{ targetIds: string[] }`                                 | `{ url: string, artifact: Artifact }`                        | 🚫 UI 停用中（Share）                 |                               |
 
 ## 6. Directory（分享收件者）
 

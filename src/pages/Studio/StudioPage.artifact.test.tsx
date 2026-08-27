@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it } from 'vitest';
@@ -7,7 +7,6 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { StudioShell } from '@/components/layouts/StudioShell';
 import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
 import { useStudioLayoutStore } from '@/stores/useStudioLayoutStore';
-import { useThemeStore } from '@/stores/useThemeStore';
 import { answerAnalysisConditions } from '@/test/studioRun';
 
 import { StudioPage } from './StudioPage';
@@ -45,7 +44,6 @@ describe('Artifact panel', () => {
   beforeEach(() => {
     useStudioLayoutStore.setState(useStudioLayoutStore.getInitialState());
     useSessionSelectionStore.setState(useSessionSelectionStore.getInitialState());
-    useThemeStore.setState(useThemeStore.getInitialState());
   });
 
   it('renders the produced Artifact HTML in a sandboxed iframe once a scenario completes', async () => {
@@ -56,7 +54,6 @@ describe('Artifact panel', () => {
     const iframe = (await screen.findByTitle('Artifact preview')) as HTMLIFrameElement;
     expect(iframe.getAttribute('sandbox')).toBe('allow-scripts');
     expect(iframe.getAttribute('srcdoc')).toContain('SPC analysis — Vt (gate CD)');
-    expect(iframe.getAttribute('srcdoc')).toContain('data-artifact-theme="light"');
   });
 
   // The sandbox stops the artifact reaching into this app; the policy stops it reaching
@@ -72,22 +69,5 @@ describe('Artifact panel', () => {
     expect(srcdoc).toContain("default-src 'none'");
     expect(srcdoc).toContain("connect-src 'none'");
     expect(srcdoc.indexOf('Content-Security-Policy')).toBeLessThan(srcdoc.indexOf('<title>'));
-  });
-
-  it('re-renders the iframe with the dark variant when the app theme is toggled', async () => {
-    const user = userEvent.setup();
-    renderStudioPage();
-    await selectASessionAndRunSpcScenario(user);
-
-    await screen.findByTitle('Artifact preview');
-
-    act(() => {
-      useThemeStore.getState().toggleTheme();
-    });
-
-    await waitFor(() => {
-      const iframe = screen.getByTitle('Artifact preview') as HTMLIFrameElement;
-      expect(iframe.getAttribute('srcdoc')).toContain('data-artifact-theme="dark"');
-    });
   });
 });

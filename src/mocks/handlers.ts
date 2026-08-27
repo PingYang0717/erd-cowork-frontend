@@ -703,25 +703,23 @@ export const allHandlers = [
 
   http.delete('/api/artifacts/:id/publish', ({ params }) => setPublished(params.id, false)),
 
-  http.get('/api/artifacts/:id', ({ params, request }) => {
+  http.get('/api/artifacts/:id', ({ params }) => {
     const artifact = artifacts.read().find((a) => a.id === params.id);
     if (!artifact) {
       return new HttpResponse(null, { status: 404 });
     }
-    const searchParams = new URL(request.url).searchParams;
-    const theme = searchParams.get('theme') === 'dark' ? 'dark' : 'light';
     const fixture = buildArtifactFixture(
       artifact.scenario,
       artifact.kind,
       artifactVersionNumber(artifact),
     );
-    // The backend serves text/html directly, not { html } JSON; theme is a query
-    // extension only the mock reads (a real backend ignores it).
-    return new HttpResponse(fixture[theme], { headers: { 'Content-Type': 'text/html' } });
+    // The backend serves text/html directly, not { html } JSON. The `r` cache-buster
+    // (reload nonce) needs no reading — the same document simply goes out again.
+    return new HttpResponse(fixture, { headers: { 'Content-Type': 'text/html' } });
   }),
 
   // The artifact's source before assembly. The chat bubble lazy-fetches it when the
-  // reader expands "view HTML"; the light fixture stands in for the un-themed source.
+  // reader expands "view HTML"; the rendered fixture stands in for the source.
   http.get('/api/artifacts/:id/raw', ({ params }) => {
     const artifact = artifacts.read().find((a) => a.id === params.id);
     if (!artifact) {
@@ -732,7 +730,7 @@ export const allHandlers = [
       artifact.kind,
       artifactVersionNumber(artifact),
     );
-    return new HttpResponse(fixture.light, { headers: { 'Content-Type': 'text/plain' } });
+    return new HttpResponse(fixture, { headers: { 'Content-Type': 'text/plain' } });
   }),
 
   // Rebuilding an artifact whose HTML threw. Every repair here succeeds — a real

@@ -73,8 +73,9 @@ live bubble 永遠看不到逐步進度。Vite 的 http-proxy 預設不 buffer;�
   upsert 才會進清單(ADR-0008;feedback #3)。
 - **bubble 附件 chips 消失**:真後端的歷史訊息不帶 `attachments` extension
   (feedback #4)。
-- **深色 Artifact**:真後端無 `theme` 參數,只靠 iframe 內 postMessage 換色
-  (ADR-0001;feedback #6)。
+- **深色 Artifact**:已決議不做(2026-08-28)。`?theme=` query 與 iframe 內
+  postMessage 換色通道皆已移除;Artifact HTML 只有單一配色(ADR-0001 狀態註記;
+  feedback #6 已結案)。
 - **`GET /api/config` 尚未接**:`retentionDays` 沒被讀取,expired 檔案警示未實作。
 
 ## 5. 驗收後的下一步

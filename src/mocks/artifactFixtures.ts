@@ -1,34 +1,21 @@
-import type { ArtifactTheme, ScenarioKey } from '@/types/api/index';
+import type { ScenarioKey } from '@/types/api/index';
 
 /** Which document the mock builds. It left the wire contract when `kind` did — the
  *  backend will reintroduce it as `type` — but the fixtures still need to know whether
  *  they are assembling a dashboard or a deck. */
 export type ArtifactKind = 'dashboard' | 'slides';
 
-// The same surfaces the app itself uses (theme/tokens.ts, copied
-// from the mockup): the Artifact renders inside an iframe and so cannot read
-// the app's custom properties, but it has to look like it belongs to the page
-// it sits in — in both themes.
-const THEME_PALETTE: Record<
-  ArtifactTheme,
-  { bg: string; fg: string; fgMuted: string; accent: string; cardBg: string; cardBorder: string }
-> = {
-  light: {
-    bg: '#f5f6f8',
-    fg: 'rgba(0, 0, 0, 0.88)',
-    fgMuted: 'rgba(0, 0, 0, 0.45)',
-    accent: '#1677ff',
-    cardBg: '#ffffff',
-    cardBorder: '#f0f0f0',
-  },
-  dark: {
-    bg: '#17181c',
-    fg: 'rgba(255, 255, 255, 0.88)',
-    fgMuted: 'rgba(255, 255, 255, 0.45)',
-    accent: '#1668dc',
-    cardBg: '#1f1f22',
-    cardBorder: '#303030',
-  },
+// The same surfaces the app itself uses (theme/tokens.ts, copied from the mockup):
+// the Artifact renders inside an iframe and so cannot read the app's custom
+// properties, but it has to look like it belongs to the page it sits in. Artifact
+// HTML has no theme variants (ADR-0001 status note) — one light palette only.
+const PALETTE = {
+  bg: '#f5f6f8',
+  fg: 'rgba(0, 0, 0, 0.88)',
+  fgMuted: 'rgba(0, 0, 0, 0.45)',
+  accent: '#1677ff',
+  cardBg: '#ffffff',
+  cardBorder: '#f0f0f0',
 };
 
 interface StatTile {
@@ -60,13 +47,12 @@ window.addEventListener('unhandledrejection',function(e){
 push('Unhandled rejection: '+(e.reason&&e.reason.message?e.reason.message:String(e.reason)),0,0);});
 })();</script>`;
 
-// Both artifact kinds ship the same document shell: a theme-colored body plus the
-// postMessage listener ADR-0001 relies on for live theme switching.
-function renderDocument(title: string, theme: ArtifactTheme, css: string, body: string) {
-  const { bg, fg } = THEME_PALETTE[theme];
+// Both artifact kinds ship the same document shell.
+function renderDocument(title: string, css: string, body: string) {
+  const { bg, fg } = PALETTE;
 
   return `<!doctype html>
-<html data-artifact-theme="${theme}">
+<html>
 <head>
 <meta charset="utf-8" />
 <title>${title}</title>
@@ -79,19 +65,12 @@ ${css}
 </head>
 <body>
 ${body}
-<script>
-  window.addEventListener('message', (event) => {
-    if (event.data && event.data.type === 'theme') {
-      document.documentElement.dataset.artifactTheme = event.data.theme;
-    }
-  });
-</script>
 </body>
 </html>`;
 }
 
-function renderDashboardHtml(content: ArtifactContent, theme: ArtifactTheme) {
-  const { fg, fgMuted, accent, cardBg, cardBorder } = THEME_PALETTE[theme];
+function renderDashboardHtml(content: ArtifactContent) {
+  const { fg, fgMuted, accent, cardBg, cardBorder } = PALETTE;
   const tagsHtml = content.tags.map((tag) => `<span class="tag">${tag}</span>`).join('');
   const statsHtml = content.stats
     .map(
@@ -120,13 +99,13 @@ function renderDashboardHtml(content: ArtifactContent, theme: ArtifactTheme) {
 <div class="tags">${tagsHtml}</div>
 <div class="stats">${statsHtml}</div>`;
 
-  return renderDocument(content.title, theme, css, body);
+  return renderDocument(content.title, css, body);
 }
 
 // The slides kind renders the same analysis as a stacked deck (title slide,
 // findings slide, key-figures slide) instead of one dashboard surface.
-function renderSlidesHtml(content: ArtifactContent, theme: ArtifactTheme) {
-  const { fg, fgMuted, accent, cardBg, cardBorder } = THEME_PALETTE[theme];
+function renderSlidesHtml(content: ArtifactContent) {
+  const { fg, fgMuted, accent, cardBg, cardBorder } = PALETTE;
   const tagsHtml = content.tags.map((tag) => `<span class="tag">${tag}</span>`).join('');
   const figuresHtml = content.stats
     .map(
@@ -173,20 +152,12 @@ function renderSlidesHtml(content: ArtifactContent, theme: ArtifactTheme) {
   </section>
 </div>`;
 
-  return renderDocument(content.title, theme, css, body);
+  return renderDocument(content.title, css, body);
 }
 
-interface ArtifactFixture {
-  light: string;
-  dark: string;
-}
-
-function buildFixture(content: ArtifactContent, kind: ArtifactKind = 'dashboard'): ArtifactFixture {
+function buildFixture(content: ArtifactContent, kind: ArtifactKind = 'dashboard'): string {
   const render = kind === 'slides' ? renderSlidesHtml : renderDashboardHtml;
-  return {
-    light: render(content, 'light'),
-    dark: render(content, 'dark'),
-  };
+  return render(content);
 }
 
 const SCENARIO_CONTENT: Record<ScenarioKey, ArtifactContent> = {
@@ -245,7 +216,7 @@ export function buildArtifactFixture(
   scenario: ScenarioKey,
   kind: ArtifactKind,
   versionN?: number,
-): ArtifactFixture {
+): string {
   const content = SCENARIO_CONTENT[scenario];
   const versioned =
     versionN == null ? content : { ...content, subtitle: `${content.subtitle} · v${versionN}` };
