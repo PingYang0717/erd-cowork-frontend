@@ -2,15 +2,13 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 
-import { artifactApi } from '@/api/artifactApi';
 import { StudioShell } from '@/components/layouts/StudioShell';
 import { BACKEND_UNSUPPORTED } from '@/constants/messages';
 import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
 import { useStudioLayoutStore } from '@/stores/useStudioLayoutStore';
 import { useThemeStore } from '@/stores/useThemeStore';
-import type { Artifact } from '@/types/api/index';
 
 import { StudioPage } from './StudioPage';
 
@@ -30,10 +28,6 @@ function renderStudioPage() {
 }
 
 describe('Per-version Artifact publishing', () => {
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
-
   beforeEach(() => {
     useStudioLayoutStore.setState(useStudioLayoutStore.getInitialState());
     useSessionSelectionStore.setState(useSessionSelectionStore.getInitialState());
@@ -43,8 +37,7 @@ describe('Per-version Artifact publishing', () => {
   // 發布 = 開放給別人使用。The button the mockup labels 生成 Artifact is what does it,
   // and `publishedAt` is what it sets — not to be confused with 重新生成, which asks the
   // Agent for a whole new version.
-  it('offers 發布 Artifact for a fresh (regenerated) version, and publishes through the backend', async () => {
-    const publish = vi.spyOn(artifactApi, 'publish').mockResolvedValue({} as Artifact);
+  it('offers 發布 Artifact for a fresh (regenerated) version, and publishing flips it to 已發布', async () => {
     const user = userEvent.setup();
     renderStudioPage();
 
@@ -56,14 +49,12 @@ describe('Per-version Artifact publishing', () => {
     await user.click(await screen.findByRole('button', { name: 'Regenerate artifact' }));
 
     const publishButton = await screen.findByRole('button', { name: '發布 Artifact' });
-    expect(publishButton).toBeEnabled();
     expect(screen.queryByText('已發布')).not.toBeInTheDocument();
 
-    // The chip does not flip here: the Artifacts listing this panel reads its
-    // published state from is still stubbed (ADR-0009). What the click must do is
-    // reach the endpoint.
     await user.click(publishButton);
-    expect(publish).toHaveBeenCalled();
+
+    expect(await screen.findByText('已發布')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '發布 Artifact' })).not.toBeInTheDocument();
   });
 
   it('disables Share on a published version too — the endpoint is what is missing, not the publish', async () => {

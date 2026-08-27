@@ -17,8 +17,8 @@ import { useArtifacts } from '@/hooks/useArtifacts';
 import { useArtifactTheme } from '@/hooks/useArtifactTheme';
 import { useSessionDetail } from '@/hooks/useSessionDetail';
 import { useActiveRunStore } from '@/stores/useActiveRunStore';
-import { useGenerateCoachStore } from '@/stores/useGenerateCoachStore';
 import { usePendingPromptStore } from '@/stores/usePendingPromptStore';
+import { usePublishCoachStore } from '@/stores/usePublishCoachStore';
 import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
 import type { ArtifactVersion } from '@/types/api/index';
 import { deriveArtifactVersions } from '@/utils/deriveArtifactVersions';
@@ -137,7 +137,7 @@ function ArtifactPanelContent({
   const artifact = artifacts?.find((a) => a.id === artifactId);
   const publishArtifact = usePublishArtifact();
   const sendPrompt = usePendingPromptStore((s) => s.sendPrompt);
-  const startCoach = useGenerateCoachStore((s) => s.start);
+  const startCoach = usePublishCoachStore((s) => s.start);
 
   // Enrich the derived versions with each artifact's published state for the menu's
   // green check; the artifacts list is the mock's 前端-only source for it.
@@ -172,7 +172,7 @@ function ArtifactPanelContent({
           // Unpublishing lives on the Artifact management page, not here — this chip
           // states the fact rather than offering to undo it.
           <Tooltip content="此版本已發布，其他人可以使用">
-            <span className={styles.generatedBadge}>
+            <span className={styles.publishedBadge}>
               <CheckOutlined aria-hidden />
               已發布
             </span>
@@ -266,19 +266,19 @@ function ArtifactPanelContent({
 // and both clear together on dismiss.
 function PublishedToast() {
   const navigate = useNavigate();
-  const isActive = useGenerateCoachStore((s) => s.isActive);
-  const dismiss = useGenerateCoachStore((s) => s.dismiss);
+  const isActive = usePublishCoachStore((s) => s.isActive);
+  const dismiss = usePublishCoachStore((s) => s.dismiss);
 
   if (!isActive) {
     return null;
   }
 
   return (
-    <div role="status" aria-label="Artifact 已發布" className={styles.generatedToast}>
-      <span className={styles.generatedToastText}>已發布 — 已加入左側 Artifacts 清單。</span>
+    <div role="status" aria-label="Artifact 已發布" className={styles.publishedToast}>
+      <span className={styles.publishedToastText}>已發布 — 已加入左側 Artifacts 清單。</span>
       <button
         type="button"
-        className={styles.generatedToastPrimary}
+        className={styles.publishedToastPrimary}
         onClick={() => {
           dismiss();
           navigate('/cowork/artifacts');
@@ -286,7 +286,7 @@ function PublishedToast() {
       >
         前往 Artifacts
       </button>
-      <button type="button" className={styles.generatedToastDismiss} onClick={dismiss}>
+      <button type="button" className={styles.publishedToastDismiss} onClick={dismiss}>
         知道了
       </button>
     </div>

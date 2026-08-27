@@ -3,6 +3,7 @@ import { http, HttpResponse } from 'msw';
 import { currentUser } from '@/config/currentUser';
 import { DRAFT_SESSION_TITLE } from '@/constants/messages';
 import type { AgentEvent, QuestionForm, StepItem } from '@/types/api/agentEvent';
+import type { Artifact } from '@/types/api/artifact';
 import type { Connector } from '@/types/api/connector';
 import type { DcItem } from '@/types/api/dcItem';
 import type { Message } from '@/types/api/message';
@@ -55,12 +56,14 @@ const messages = createPersistedResource<StoredMessage>('erd-cowork:messages:v2'
   },
 ]);
 
-// The mock's own artifact record, no longer a slice of the wire `Artifact`: the
-// contract dropped `kind` (coming back as `type`) and never had `scenario`, but the
-// mock needs both to decide which fixture HTML to build. Only three handlers read this
-// store — the Artifact's HTML, its raw source, and repair — so it holds what those need
-// and nothing else. Key bumped to v4 for the reshaped record.
+// The mock's own artifact record. It is not a slice of the wire `Artifact`: the
+// contract dropped `kind` (returning later as `type`) and never had `scenario`, but
+// the mock needs both to decide which fixture HTML to build — while `isOwn`,
+// `ownerDisplay`, `sessionTitle` and the permission flags are things a backend
+// derives per request rather than stores. `toArtifactDto` does that deriving.
+// Key bumped to v5 for the reshaped record.
 const ALICE_USER_ID = 'u-002';
+const OWNER_DISPLAY_NAMES: Record<string, string> = { [ALICE_USER_ID]: 'Alice Wu' };
 
 interface StoredArtifact {
   id: string;
@@ -70,10 +73,13 @@ interface StoredArtifact {
   scenario: ScenarioKey;
   ownerId: string;
   createdAt: string;
+  pinnedAt: string | null;
   publishedAt: string | null;
+  /** Shared out by its owner. Whether it was shared *to* you is `!isOwn`. */
+  isShared: boolean;
 }
 
-const artifacts = createPersistedResource<StoredArtifact>('erd-cowork:artifacts:v4', [
+const artifacts = createPersistedResource<StoredArtifact>('erd-cowork:artifacts:v5', [
   {
     id: 'artifact-1',
     sessionId: 'session-1',
@@ -82,7 +88,9 @@ const artifacts = createPersistedResource<StoredArtifact>('erd-cowork:artifacts:
     scenario: 'spc',
     ownerId: currentUser.id,
     createdAt: '2026-08-20T09:15:00.000Z',
+    pinnedAt: null,
     publishedAt: '2026-08-20T09:20:00.000Z',
+    isShared: false,
   },
   {
     id: 'artifact-2',
@@ -92,7 +100,9 @@ const artifacts = createPersistedResource<StoredArtifact>('erd-cowork:artifacts:
     scenario: 'inline',
     ownerId: currentUser.id,
     createdAt: '2026-08-21T10:00:00.000Z',
+    pinnedAt: '2026-08-21T10:05:00.000Z',
     publishedAt: '2026-08-21T10:02:00.000Z',
+    isShared: false,
   },
   {
     id: 'artifact-3',
@@ -102,9 +112,34 @@ const artifacts = createPersistedResource<StoredArtifact>('erd-cowork:artifacts:
     scenario: 'daily',
     ownerId: ALICE_USER_ID,
     createdAt: '2026-08-19T08:30:00.000Z',
+    pinnedAt: null,
     publishedAt: '2026-08-19T08:35:00.000Z',
+    isShared: true,
   },
 ]);
+
+function toArtifactDto(stored: StoredArtifact): Artifact {
+  const isOwn = stored.ownerId === currentUser.id;
+  return {
+    id: stored.id,
+    title: stored.title,
+    sessionId: stored.sessionId,
+    sessionTitle: sessions.read().find((session) => session.id === stored.sessionId)?.title ?? '',
+    pinnedAt: stored.pinnedAt,
+    publishedAt: stored.publishedAt,
+    createdAt: stored.createdAt,
+    owner: stored.ownerId,
+    ownerDisplay: isOwn
+      ? currentUser.name
+      : (OWNER_DISPLAY_NAMES[stored.ownerId] ?? stored.ownerId),
+    canPin: true,
+    // Personal copies are not modelled, so "owner and non-copy" is just "owner".
+    canShare: isOwn,
+    isOwn,
+    isShared: stored.isShared,
+    hasPersonalCopy: false,
+  };
+}
 
 const connectors = createPersistedResource<Connector>('erd-cowork:connectors', [
   {
@@ -351,8 +386,10 @@ function streamRun(
     scenario: scenarioKey,
     ownerId: currentUser.id,
     createdAt: new Date().toISOString(),
-    // A run produces an unpublished preview; publishing is what opens it to others.
+    pinnedAt: null,
+    // A run produces something only its author can see; publishing opens it to others.
     publishedAt: null,
+    isShared: false,
   };
   artifacts.write([...artifacts.read(), artifact]);
 
@@ -407,6 +444,20 @@ export function upsertSession(sessionId: string): void {
     ...all,
     { id: sessionId, title: DRAFT_SESSION_TITLE, pinnedAt: null, updatedAt: now },
   ]);
+}
+
+function setPublished(id: string | readonly string[] | undefined, published: boolean) {
+  const all = artifacts.read();
+  const existing = all.find((artifact) => artifact.id === id);
+  if (!existing) {
+    return new HttpResponse(null, { status: 404 });
+  }
+  const updated: StoredArtifact = {
+    ...existing,
+    publishedAt: published ? new Date().toISOString() : null,
+  };
+  artifacts.write(all.map((artifact) => (artifact.id === id ? updated : artifact)));
+  return HttpResponse.json(toArtifactDto(updated));
 }
 
 /** Each artifact IS a version (deriveArtifactVersions); number it the way the client
@@ -591,6 +642,31 @@ export const allHandlers = [
 
     return streamRun(sessionId, scenarioKey, artifactKind);
   }),
+
+  http.get('/api/artifacts', () => {
+    return HttpResponse.json(artifacts.read().map(toArtifactDto));
+  }),
+
+  /** Toggle: which way it goes is the backend's call, so the request carries no
+   *  direction and the client cannot act on a stale reading of its own. */
+  http.post('/api/artifacts/:id/pin', ({ params }) => {
+    const all = artifacts.read();
+    const existing = all.find((artifact) => artifact.id === params.id);
+    if (!existing) {
+      return new HttpResponse(null, { status: 404 });
+    }
+    const updated: StoredArtifact = {
+      ...existing,
+      pinnedAt: existing.pinnedAt === null ? new Date().toISOString() : null,
+    };
+    artifacts.write(all.map((artifact) => (artifact.id === params.id ? updated : artifact)));
+    return HttpResponse.json(toArtifactDto(updated));
+  }),
+
+  /** 發布 / 取消發布 — split by method, and the timestamp is the server's to write. */
+  http.post('/api/artifacts/:id/publish', ({ params }) => setPublished(params.id, true)),
+
+  http.delete('/api/artifacts/:id/publish', ({ params }) => setPublished(params.id, false)),
 
   http.get('/api/artifacts/:id', ({ params, request }) => {
     const artifact = artifacts.read().find((a) => a.id === params.id);

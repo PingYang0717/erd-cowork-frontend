@@ -79,8 +79,10 @@ src/
 
 app 打真實後端，沒有 runtime mock（[ADR-0009](./docs/adr/0009-no-mock-backend-at-runtime.md)）。後端還沒建好的端點分成兩類處理：
 
-- **讀取**（Artifacts 清單、Connectors、Directory）在 `src/api/` 直接回一份固定 stub，就寫在它假裝的那個函式旁邊。
-- **寫入**（Session 釘選／改名／刪除、Artifact 生成／分享／釘選／刪除、Connector 連線與新增）在 UI 上 disabled，標示「後端尚未支援」。api 函式保留但沒有呼叫端，是後端補上那天的接點。
+- **讀取**（Connectors、Directory）在 `src/api/` 直接回一份固定 stub，就寫在它假裝的那個函式旁邊。
+- **寫入**（Session 釘選／改名／刪除、Artifact 分享／刪除、Connector 連線與新增）在 UI 上 disabled，標示「後端尚未支援」。api 函式保留但沒有呼叫端，是後端補上那天的接點。
+
+Artifact 的清單、釘選與發布已接真後端。
 
 `src/mocks/handlers.ts` 只在**測試**裡跑（`src/test/setup.ts` 起 node server），服務的正是後端真的有的那九條，加上 SSE 劇本。集合資料透過 `createPersistedResource` 存在 `localStorage`，讓測試能驗跨重整的行為。
 

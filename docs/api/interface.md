@@ -151,12 +151,8 @@ app 執行時不再有 mock 後端（[ADR-0009](../adr/0009-no-mock-backend-at-r
 
 | 類別             | 端點                                                                                                             | 前端行為                            |
 | ---------------- | ---------------------------------------------------------------------------------------------------------------- | ----------------------------------- |
-| **stub**（讀取） | `GET /artifacts`、`GET /connectors`、`GET /directory`                                                            | `src/api/` 直接回固定資料，不發請求 |
+| **stub**（讀取） | `GET /connectors`、`GET /directory`                                                                              | `src/api/` 直接回固定資料，不發請求 |
 | **停用**（寫入） | `PATCH`/`DELETE /sessions/:id`、`DELETE /artifacts/:id`、`POST /artifacts/:id/share`、`PATCH`/`POST /connectors` | UI 上 disabled，標「後端尚未支援」  |
-
-Artifact 的釘選與發布已有端點（`POST /artifacts/:id/pin`、`POST`/`DELETE
-/artifacts/:id/publish`），UI 已啟用；但 `GET /artifacts` 仍是 stub，所以**這兩個動作的
-結果在畫面上看不出來**，要等清單接上真後端。
 
 MSW 只在**測試**裡跑，服務的是上表以外、後端真的有的那幾條，加上 SSE 劇本。
 
@@ -184,7 +180,7 @@ QUESTION 的線路承載是後端的扁平 `Question[]`（純字串選項、`mul
 
 | Method | Path                     | Request                                                       | Response                              | 後端狀態 |
 | ------ | ------------------------ | ------------------------------------------------------------- | ------------------------------------- | -------- |
-| GET    | `/artifacts`             | —                                                             | `Artifact[]`                          | stub     |
+| GET    | `/artifacts`             | —                                                             | `Artifact[]`                          | 已實作   |
 | GET    | `/artifacts/:id`         | `?theme=light\|dark`（前端-only query extension，真後端忽略） | `text/html`（HTML 字串）              | 已實作   |
 | GET    | `/artifacts/:id/raw`     | —                                                             | `text/plain`                          | 已實作   |
 | POST   | `/artifacts/:id/repair`  | —                                                             | `Artifact`                            | 已實作   |
@@ -250,8 +246,6 @@ already-mounted iframe on every theme change, so an artifact's own script can re
 instantly without waiting on a refetch.
 
 `POST /artifacts/:id/pin` toggles the pin from the Gallery card, enabled per `canPin`.
-**注意目前的落差**：清單 `GET /artifacts` 還是 stub，所以釘選成功後畫面不會有變化——要等
-清單接上真後端,釘選的結果才看得見。
 
 `DELETE /artifacts/:id` removes the Artifact permanently (Gallery card's
 more-actions menu); the mock backend does not cascade-delete its versions or
