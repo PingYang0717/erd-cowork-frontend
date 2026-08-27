@@ -103,12 +103,14 @@ client abort，前端會在 abort 後兩段 800ms invalidate 追後端非同步�
 
 ## 前端待辦（依上面定案）
 
-- [ ] `sessionApi`：pin 改 `POST /sessions/{id}/pin`；解除 session Rename/Pin/Delete 的
-      `disabled`（含 UnsupportedLabel 移除）
-- [ ] 解除 artifact Delete 的 `disabled`
+- [x] `sessionApi`：pin 改 `POST /sessions/{id}/pin`；session Rename/Pin/Delete 全面解禁
+      （UnsupportedLabel 已整個移除；後端錯誤以 toast 呈現）
+- [x] artifact Delete/Share 解禁（Share 未就緒時由後端錯誤告知）
+- [x] Regenerate 按鈕移除（後端無此概念；迭代走對話 `baseArtifactId`）
+- [x] Connector 選取改 localStorage 偏好（`erd-cowork:connector-prefs`）
+- [x] MSW 測試 handler 跟上新形狀（session PATCH/pin/DELETE、artifact DELETE、share 501）
 - [ ] `Artifact` 型別補 `type` 欄位；Gallery 縮圖與 Dash/Deck 標籤接回
 - [ ] internal 身分 provider 的安裝開關（不送 `X-User-Id`）
-- [ ] MSW 測試 handler 跟上新形狀（session pin POST、artifact `type`、delete 200）
 
 ### 狀態圖例
 
