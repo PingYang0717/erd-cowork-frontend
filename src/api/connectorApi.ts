@@ -1,10 +1,9 @@
+import { CONNECTOR_PREFS_STORAGE_KEY } from '@/constants/storage';
 import type { Connector, ConnectorStatus } from '@/types/api/index';
 
-import { apiClient } from './apiClient';
-
-/** Stub for a read the backend has not built yet (ADR-0009). The ten fixtures the mock
- *  backend used to serve, verbatim — all four statuses have to be present for the
- *  panel's per-state styling and status filter to mean anything. */
+/** The catalogue of known sources (the ten fixtures the mock backend used to serve,
+ *  verbatim — all four statuses present so the per-state styling and the status
+ *  filter mean something). The user's own choices overlay this, from localStorage. */
 const STUB_CONNECTORS: Connector[] = [
   {
     id: 'inline',
@@ -78,14 +77,72 @@ const STUB_CONNECTORS: Connector[] = [
   },
 ];
 
+/** The user's overlay on the catalogue: status choices per source, plus custom
+ *  sources. localStorage, not backend state — there are no connector endpoints this
+ *  round, and a preference should survive a reload. */
+interface ConnectorPrefs {
+  statusById: Record<string, ConnectorStatus>;
+  custom: Connector[];
+}
+
+function readPrefs(): ConnectorPrefs {
+  try {
+    const raw = localStorage.getItem(CONNECTOR_PREFS_STORAGE_KEY);
+    if (raw !== null) {
+      const parsed = JSON.parse(raw) as Partial<ConnectorPrefs>;
+      return { statusById: parsed.statusById ?? {}, custom: parsed.custom ?? [] };
+    }
+  } catch {
+    // A corrupt entry reads as "no preferences" and gets overwritten on the next write.
+  }
+  return { statusById: {}, custom: [] };
+}
+
+function writePrefs(prefs: ConnectorPrefs): void {
+  localStorage.setItem(CONNECTOR_PREFS_STORAGE_KEY, JSON.stringify(prefs));
+}
+
 export const connectorApi = {
-  /** Stubbed: no backend connector endpoints (ADR-0009). */
-  listConnectors: () => Promise.resolve(STUB_CONNECTORS),
+  /** The catalogue with the user's choices applied. Async only to keep the query
+   *  seam — nothing here leaves the browser. */
+  listConnectors: (): Promise<Connector[]> => {
+    const prefs = readPrefs();
+    const catalogue = STUB_CONNECTORS.map((connector) =>
+      prefs.statusById[connector.id] !== undefined
+        ? { ...connector, status: prefs.statusById[connector.id] }
+        : connector,
+    );
+    return Promise.resolve([...catalogue, ...prefs.custom]);
+  },
 
-  // No caller: connecting, disconnecting and adding are all disabled in the panel.
-  // Kept as the shape the backend will implement.
-  setStatus: (id: string, status: ConnectorStatus) =>
-    apiClient.patch<Connector>(`/connectors/${id}`, { status }),
+  setStatus: (id: string, status: ConnectorStatus): Promise<void> => {
+    const prefs = readPrefs();
+    writePrefs({
+      statusById: { ...prefs.statusById, [id]: status },
+      custom: prefs.custom.map((connector) =>
+        connector.id === id ? { ...connector, status } : connector,
+      ),
+    });
+    return Promise.resolve();
+  },
 
-  addConnector: (name: string) => apiClient.post<Connector>('/connectors', { name }),
+  /** A custom source starts connected — adding one IS choosing it. */
+  addConnector: (name: string): Promise<void> => {
+    const prefs = readPrefs();
+    writePrefs({
+      ...prefs,
+      custom: [
+        ...prefs.custom,
+        {
+          id: `custom-${crypto.randomUUID()}`,
+          name,
+          description: 'Custom data source',
+          category: 'Custom',
+          status: 'connected',
+          custom: true,
+        },
+      ],
+    });
+    return Promise.resolve();
+  },
 };

@@ -5,7 +5,6 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { StudioShell } from '@/components/layouts/StudioShell';
-import { BACKEND_UNSUPPORTED } from '@/constants/messages';
 import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
 import { useStudioLayoutStore } from '@/stores/useStudioLayoutStore';
 
@@ -93,22 +92,16 @@ describe('Connectors panel', () => {
     expect(screen.getByText('No access')).toBeInTheDocument();
   });
 
-  // Connecting and disconnecting were driven from here and asserted across a simulated
-  // reload. The backend has no connector endpoints (ADR-0009), so the panel is a
-  // read-only view of the data it is given, and every toggle says so.
-  it('disables connecting and disconnecting, saying why', async () => {
+  // Choices are the user's preference, kept in localStorage (see
+  // ConnectorsPanel.test.tsx for the persistence itself); only no_access stays off.
+  it('lets the user connect and disconnect; only no_access stays off', async () => {
     const user = userEvent.setup();
     renderStudioPage();
     await selectASessionAndOpenConnectors(user);
 
-    const connect = await screen.findByRole('button', { name: 'Connect Lot Info' });
-    expect(connect).toBeDisabled();
-    expect(connect).toHaveAttribute('title', BACKEND_UNSUPPORTED);
-
-    const disconnect = screen.getByRole('button', { name: 'Disconnect Inline' });
-    expect(disconnect).toBeDisabled();
-    expect(disconnect).toHaveAttribute('title', BACKEND_UNSUPPORTED);
-
-    expect(screen.getByRole('button', { name: /^Add$/ })).toBeDisabled();
+    expect(await screen.findByRole('button', { name: 'Connect Lot Info' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Disconnect Inline' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: /^Add$/ })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Connect Offline Tool Log' })).toBeDisabled();
   });
 });

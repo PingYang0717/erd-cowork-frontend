@@ -19,8 +19,3 @@ export const REPAIR_RECORD_PREFIXES: readonly string[] = [
   '已修復儀表板執行錯誤',
   '儀表板執行錯誤自動修復未成功',
 ] as const;
-
-/** Why a control is disabled: the backend has not built the endpoint behind it yet.
- *  Shown on every action stubbed out by ADR-0009, so the copy stays in one place and
- *  the tests can assert against it rather than a literal. */
-export const BACKEND_UNSUPPORTED = '後端尚未支援' as const;
