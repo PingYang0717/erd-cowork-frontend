@@ -1,44 +1,109 @@
-import React from 'react';
+import type { TableColumnsType } from 'antd';
+import { Table } from 'antd';
+import React, { useMemo } from 'react';
 
-import type { TableResult } from '@/types/api/index';
+import type { TableCellValue, TableResult } from '@/types/api/index';
 
 import styles from './ResultTable.module.css';
+
+/** Number of rows above which antd's pagination kicks in (cowork upstream). */
+const PAGINATION_THRESHOLD = 20;
+const PAGE_SIZE = 20;
+
+type ResultTableRecord = Record<string, TableCellValue> & { key: string };
+
+/** Trims float noise via significant digits (toPrecision(12)), not a fixed decimal
+ *  position — a fixed position would corrupt large-magnitude values. Re-expands JS's
+ *  exponent fallback. (Ported verbatim from cowork upstream, ADR-0010.) */
+function expandExponentialNotation(exponentialText: string): string {
+  const exponentMatch = /^(-?)(\d+)(?:\.(\d+))?e([+-]\d+)$/i.exec(exponentialText);
+  if (!exponentMatch) return exponentialText;
+  const [, sign, integerDigits, fractionDigits = '', exponentText] = exponentMatch;
+  const digits = integerDigits + fractionDigits;
+  const decimalPointPosition = integerDigits.length + Number.parseInt(exponentText, 10);
+  if (decimalPointPosition <= 0) {
+    return `${sign}0.${'0'.repeat(-decimalPointPosition)}${digits}`;
+  }
+  if (decimalPointPosition >= digits.length) {
+    return `${sign}${digits}${'0'.repeat(decimalPointPosition - digits.length)}`;
+  }
+  return `${sign}${digits.slice(0, decimalPointPosition)}.${digits.slice(decimalPointPosition)}`;
+}
+
+function formatCellValue(value: TableCellValue): string {
+  // A null cell is "no value", which reads as blank — not as "null".
+  if (value === null) return '';
+  if (typeof value === 'boolean') return value ? 'true' : 'false';
+  if (typeof value === 'number') {
+    if (!Number.isFinite(value) || Number.isInteger(value)) return String(value);
+    // toPrecision(12) then re-parsing as a Number drops trailing zeros exactly like the
+    // backend's shorten-then-rstrip("0") does, without a regex.
+    const shortened = Number(value.toPrecision(12)).toString();
+    return shortened.includes('e') ? expandExponentialNotation(shortened) : shortened;
+  }
+  return String(value);
+}
 
 interface ResultTableProps {
   table: TableResult;
 }
 
 /** One query result the run produced on its way to the artifact. Live-only: the data is
- *  large and goes stale, so it is never persisted with the conversation (ADR-0005). */
+ *  large and goes stale, so it is never persisted with the conversation (ADR-0005).
+ *  Rendering is cowork upstream's: an intent caption over an antd Table that paginates
+ *  past 20 rows and scrolls sideways instead of widening the thread (ADR-0010). */
 const ResultTable: React.FC<ResultTableProps> = ({ table }) => {
+  // Defensive: the wire contract guarantees both fields, but a contract violation
+  // (e.g. Jackson nulling a missing field upstream) must not crash the live bubble.
+  const columns = table.columns ?? [];
+  const rows = table.rows ?? [];
+
+  const tableColumns: TableColumnsType<ResultTableRecord> = useMemo(
+    () =>
+      columns.map((columnName, columnIndex) => ({
+        title: columnName,
+        dataIndex: `col_${columnIndex}`,
+        key: `col_${columnIndex}`,
+        render: (value: TableCellValue) => formatCellValue(value),
+      })),
+    [columns],
+  );
+
+  const dataSource: ResultTableRecord[] = useMemo(
+    () =>
+      rows.map((row, rowIndex) => {
+        const record: ResultTableRecord = { key: `row-${rowIndex}` };
+        row.forEach((cellValue, columnIndex) => {
+          record[`col_${columnIndex}`] = cellValue;
+        });
+        return record;
+      }),
+    [rows],
+  );
+
   return (
     <div className={styles.wrapper}>
-      <table className={styles.table} aria-label={table.intent}>
-        <caption className={styles.caption}>{table.intent}</caption>
-        <thead>
-          <tr>
-            {table.columns.map((column) => (
-              <th key={column} scope="col">
-                {column}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {table.rows.map((row, rowIndex) => (
-            <tr key={rowIndex}>
-              {row.map((cell, cellIndex) => (
-                // A null cell is "no value", which reads as blank — not as "null".
-                <td key={cellIndex}>{cell === null ? '' : String(cell)}</td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      {table.truncated && <p className={styles.truncated}>已截斷,僅顯示部分結果</p>}
+      <div className={styles.caption}>{table.intent}</div>
+      <Table<ResultTableRecord>
+        columns={tableColumns}
+        dataSource={dataSource}
+        size="small"
+        pagination={rows.length > PAGINATION_THRESHOLD ? { pageSize: PAGE_SIZE } : false}
+        scroll={{ x: 'max-content' }}
+        components={{
+          // antd offers no aria-label prop; the intent must still be the table's
+          // accessible name, as it was when this was a hand-rolled <table>.
+          table: (tableProps: React.HTMLAttributes<HTMLTableElement>) => (
+            <table {...tableProps} aria-label={table.intent} />
+          ),
+        }}
+      />
+      {table.truncated && <p className={styles.truncated}>(前 200 列)</p>}
     </div>
   );
 };
 
-export { ResultTable };
-export default ResultTable;
+const MemoisedResultTable = React.memo(ResultTable);
+
+export { MemoisedResultTable as ResultTable };
+export default MemoisedResultTable;

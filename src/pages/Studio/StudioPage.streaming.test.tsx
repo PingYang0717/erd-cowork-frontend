@@ -219,7 +219,7 @@ describe('Streaming a run in the Studio', () => {
     expect(within(table).getByRole('cell', { name: '0.361' })).toBeInTheDocument();
     // A null cell renders empty rather than as the word "null".
     expect(within(table).queryByRole('cell', { name: 'null' })).not.toBeInTheDocument();
-    expect(screen.getByText('已截斷,僅顯示部分結果')).toBeInTheDocument();
+    expect(screen.getByText('(前 200 列)')).toBeInTheDocument();
   });
 
   // Runs against the scripted mock backend rather than a hand-driven stream: this is a

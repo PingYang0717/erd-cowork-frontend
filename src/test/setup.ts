@@ -15,6 +15,20 @@ class ResizeObserverStub {
 }
 global.ResizeObserver = ResizeObserverStub;
 
+// jsdom doesn't implement matchMedia; antd's Table registers a responsive
+// observer through it (grid useBreakpoint).
+window.matchMedia ??= (query: string): MediaQueryList =>
+  ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: () => {},
+    removeListener: () => {},
+    addEventListener: () => {},
+    removeEventListener: () => {},
+    dispatchEvent: () => false,
+  }) as MediaQueryList;
+
 // Every pane now suspends before it renders (useSuspenseQuery), so a findBy* waits on
 // one more async hop than it used to. The 1s default is enough on an idle machine and
 // not enough under a parallel run — which is a scheduling artefact, not a real failure.
