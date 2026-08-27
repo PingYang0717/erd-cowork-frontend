@@ -3,7 +3,6 @@ import { http, HttpResponse } from 'msw';
 import { currentUser } from '@/config/currentUser';
 import { DRAFT_SESSION_TITLE } from '@/constants/messages';
 import type { AgentEvent, QuestionForm, StepItem } from '@/types/api/agentEvent';
-import type { Artifact, ArtifactKind } from '@/types/api/artifact';
 import type { Connector } from '@/types/api/connector';
 import type { DcItem } from '@/types/api/dcItem';
 import type { Message } from '@/types/api/message';
@@ -11,6 +10,7 @@ import type { ScenarioKey } from '@/types/api/scenario';
 import type { Session } from '@/types/api/session';
 import type { UploadedFileInfo } from '@/types/api/upload';
 
+import type { ArtifactKind } from './artifactFixtures';
 import { buildArtifactFixture } from './artifactFixtures';
 import { DC_ITEM_FIXTURES, ROWS_PER_DC_ITEM } from './dcItemFixtures';
 import { createPersistedResource } from './persistedResource';
@@ -55,57 +55,54 @@ const messages = createPersistedResource<StoredMessage>('erd-cowork:messages:v2'
   },
 ]);
 
-// Who owns an Artifact is the backend's business: it is stored as ownerId and
-// reaches the client only as Artifact.mine, resolved against the mock identity
-// in services/currentUser.ts. The storage key is suffixed so a browser holding
-// the older seeded shape (which carried mine directly) reseeds instead of
-// resolving every Artifact to "not yours".
+// The mock's own artifact record, no longer a slice of the wire `Artifact`: the
+// contract dropped `kind` (coming back as `type`) and never had `scenario`, but the
+// mock needs both to decide which fixture HTML to build. Only three handlers read this
+// store — the Artifact's HTML, its raw source, and repair — so it holds what those need
+// and nothing else. Key bumped to v4 for the reshaped record.
 const ALICE_USER_ID = 'u-002';
 
-// `generated` is stored per artifact: every version IS its own artifact under the
-// derived-versions model, so the flag is naturally per-version. Key bumped to v3 so
-// browsers holding the version-store shape reseed.
-interface StoredArtifact extends Omit<Artifact, 'mine'> {
+interface StoredArtifact {
+  id: string;
+  sessionId: string;
+  title: string;
+  kind: ArtifactKind;
+  scenario: ScenarioKey;
   ownerId: string;
+  createdAt: string;
+  publishedAt: string | null;
 }
 
-const artifacts = createPersistedResource<StoredArtifact>('erd-cowork:artifacts:v3', [
+const artifacts = createPersistedResource<StoredArtifact>('erd-cowork:artifacts:v4', [
   {
     id: 'artifact-1',
     sessionId: 'session-1',
-    name: 'SPC analysis — Vt (gate CD)',
+    title: 'SPC analysis — Vt (gate CD)',
     kind: 'dashboard',
     scenario: 'spc',
-    pinned: false,
     ownerId: currentUser.id,
-    shared: false,
     createdAt: '2026-08-20T09:15:00.000Z',
-    generated: true,
+    publishedAt: '2026-08-20T09:20:00.000Z',
   },
   {
     id: 'artifact-2',
     sessionId: 'session-1',
-    name: 'Inline dashboard — W12',
+    title: 'Inline dashboard — W12',
     kind: 'dashboard',
     scenario: 'inline',
-    pinned: true,
     ownerId: currentUser.id,
-    shared: false,
     createdAt: '2026-08-21T10:00:00.000Z',
-    generated: true,
+    publishedAt: '2026-08-21T10:02:00.000Z',
   },
   {
     id: 'artifact-3',
     sessionId: 'session-2',
-    name: 'Daily monitor (A14)',
+    title: 'Daily monitor (A14)',
     kind: 'slides',
     scenario: 'daily',
-    pinned: false,
     ownerId: ALICE_USER_ID,
-    shared: false,
-    sharedBy: 'Alice Wu',
     createdAt: '2026-08-19T08:30:00.000Z',
-    generated: true,
+    publishedAt: '2026-08-19T08:35:00.000Z',
   },
 ]);
 
@@ -349,15 +346,13 @@ function streamRun(
   const artifact: StoredArtifact = {
     id: crypto.randomUUID(),
     sessionId,
-    name: artifactName,
+    title: artifactName,
     kind: artifactKind,
     scenario: scenarioKey,
-    pinned: false,
     ownerId: currentUser.id,
-    shared: false,
     createdAt: new Date().toISOString(),
-    // A run produces an ungenerated preview; the 生成 button commits it.
-    generated: false,
+    // A run produces an unpublished preview; publishing is what opens it to others.
+    publishedAt: null,
   };
   artifacts.write([...artifacts.read(), artifact]);
 

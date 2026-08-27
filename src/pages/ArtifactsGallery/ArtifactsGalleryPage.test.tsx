@@ -98,9 +98,40 @@ describe('Artifacts gallery', () => {
     expect(namesByRecency[2]).toContain('Daily monitor');
   });
 
-  // Pinning used to be clicked here and asserted across a simulated reload. There is no
-  // backend endpoint behind it (ADR-0009), so the button states what it cannot do.
-  it('disables the card pin button, saying why', async () => {
+  // Pinning has a backend endpoint again. What the card cannot yet show is the
+  // *result*: the listing it renders from is still stubbed (ADR-0009), so a pin
+  // changes nothing on screen until GET /artifacts is real. What is testable — and
+  // what breaks first if the wiring is wrong — is that the click reaches the endpoint.
+  it('pins from the card, toggling through the backend rather than asserting a direction', async () => {
+    const togglePin = vi.spyOn(artifactApi, 'togglePin').mockResolvedValue({} as Artifact);
+    const user = userEvent.setup();
+    renderGalleryPage();
+    await screen.findByRole('button', { name: 'SPC analysis — Vt (gate CD)' });
+
+    await user.click(screen.getByRole('button', { name: 'Pin SPC analysis — Vt (gate CD)' }));
+
+    expect(togglePin).toHaveBeenCalledWith('artifact-1');
+  });
+
+  it('disables the pin button when the user may not pin this Artifact', async () => {
+    vi.spyOn(artifactApi, 'listArtifacts').mockResolvedValue([
+      {
+        id: 'artifact-1',
+        title: 'SPC analysis — Vt (gate CD)',
+        sessionId: 'session-1',
+        sessionTitle: 'SPC — Vt (gate CD)',
+        pinnedAt: null,
+        publishedAt: '2026-08-20T09:20:00.000Z',
+        createdAt: '2026-08-20T09:15:00.000Z',
+        owner: 'u-001',
+        ownerDisplay: 'Alex Chen',
+        canPin: false,
+        canShare: true,
+        isOwn: true,
+        isShared: false,
+        hasPersonalCopy: false,
+      },
+    ]);
     renderGalleryPage();
     await screen.findByRole('button', { name: 'SPC analysis — Vt (gate CD)' });
 
@@ -115,13 +146,15 @@ describe('Artifacts gallery', () => {
     await user.click(
       screen.getByRole('button', { name: 'More actions for SPC analysis — Vt (gate CD)' }),
     );
-    // Copy link is the only one with nothing behind it to wait for: it reads the
-    // current URL. The other three are disabled until the backend has the endpoints.
-    expect(screen.getByRole('menuitem', { name: 'Copy link' })).not.toHaveAttribute(
-      'aria-disabled',
-      'true',
-    );
-    for (const label of ['Pin', 'Share', 'Delete']) {
+    // Pin has an endpoint and this user may use it; Copy link never needed one.
+    for (const label of ['Pin', 'Copy link']) {
+      expect(screen.getByRole('menuitem', { name: label })).not.toHaveAttribute(
+        'aria-disabled',
+        'true',
+      );
+    }
+    // Share and Delete are still waiting on the backend.
+    for (const label of ['Share', 'Delete']) {
       const item = screen.getByRole('menuitem', { name: new RegExp(`^${label}`) });
       expect(item).toHaveAttribute('aria-disabled', 'true');
       expect(within(item).getByText(BACKEND_UNSUPPORTED)).toBeInTheDocument();
@@ -153,7 +186,7 @@ describe('Artifacts gallery', () => {
     expect(writeText).toHaveBeenCalledWith(expect.stringContaining('/cowork/artifact/artifact-1'));
   });
 
-  it('distinguishes kinds by thumbnail, names the producing session, and badges sharing states', async () => {
+  it('names the producing session and badges sharing states', async () => {
     renderGalleryPage();
 
     const spcOpen = await screen.findByRole('button', { name: 'SPC analysis — Vt (gate CD)' });
@@ -162,17 +195,12 @@ describe('Artifacts gallery', () => {
       .getByRole('button', { name: 'Daily monitor (A14)' })
       .closest('[role="listitem"]') as HTMLElement;
 
-    // Thumbnails carry the kind so dashboard and slides cards can be told apart.
-    expect(within(spcCard).getByTestId('artifact-thumbnail')).toHaveAttribute(
-      'data-kind',
-      'dashboard',
-    );
-    expect(within(dailyCard).getByTestId('artifact-thumbnail')).toHaveAttribute(
-      'data-kind',
-      'slides',
-    );
+    // Every card gets the same thumbnail: the contract has no kind until the backend
+    // adds `type` (types/api/artifact.ts).
+    expect(within(spcCard).getByTestId('artifact-thumbnail')).not.toHaveAttribute('data-kind');
 
-    // Each card names the session that produced it (session list loads async).
+    // Each card names the session that produced it — carried on the Artifact itself
+    // now (`sessionTitle`), not looked up from the session list.
     expect(await within(spcCard).findByText('SPC — Vt (gate CD)')).toBeInTheDocument();
     expect(await within(dailyCard).findByText('Defect pareto — W12')).toBeInTheDocument();
 
@@ -189,15 +217,19 @@ describe('Artifacts gallery', () => {
     vi.spyOn(artifactApi, 'listArtifacts').mockResolvedValue([
       {
         id: 'artifact-1',
+        title: 'SPC analysis — Vt (gate CD)',
         sessionId: 'session-1',
-        name: 'SPC analysis — Vt (gate CD)',
-        kind: 'dashboard',
-        scenario: 'spc',
-        pinned: false,
-        mine: true,
-        shared: true,
-        generated: true,
+        sessionTitle: 'SPC — Vt (gate CD)',
+        pinnedAt: null,
+        publishedAt: '2026-08-20T09:20:00.000Z',
         createdAt: '2026-08-20T09:15:00.000Z',
+        owner: 'u-001',
+        ownerDisplay: 'Alex Chen',
+        canPin: true,
+        canShare: true,
+        isOwn: true,
+        isShared: true,
+        hasPersonalCopy: false,
       },
     ]);
     renderGalleryPage();
@@ -209,25 +241,29 @@ describe('Artifacts gallery', () => {
   });
 
   it('de-duplicates "Shared to me" by artifact id without collapsing distinct same-name artifacts', async () => {
-    const shared = (over: Partial<Artifact> & Pick<Artifact, 'id' | 'name'>): Artifact => ({
+    const shared = (over: Partial<Artifact> & Pick<Artifact, 'id' | 'title'>): Artifact => ({
       sessionId: 'session-2',
-      kind: 'dashboard',
-      scenario: 'daily',
-      pinned: false,
-      mine: false,
-      shared: false,
-      sharedBy: 'Alice Wu',
-      generated: true,
+      sessionTitle: 'Defect pareto — W12',
+      pinnedAt: null,
+      publishedAt: '2026-08-19T08:35:00.000Z',
       createdAt: '2026-08-19T08:30:00.000Z',
+      owner: 'u-002',
+      ownerDisplay: 'Alice Wu',
+      canPin: true,
+      // Someone else's Artifact: it cannot be shared onward.
+      canShare: false,
+      isOwn: false,
+      isShared: true,
+      hasPersonalCopy: false,
       ...over,
     });
     vi.spyOn(artifactApi, 'listArtifacts').mockResolvedValue([
       // The same artifact shared to the user twice: one row survives.
-      shared({ id: 'artifact-9', name: 'Daily monitor (A14)' }),
-      shared({ id: 'artifact-9', name: 'Daily monitor (A14)' }),
+      shared({ id: 'artifact-9', title: 'Daily monitor (A14)' }),
+      shared({ id: 'artifact-9', title: 'Daily monitor (A14)' }),
       // Two different artifacts that happen to share a name: both stay.
-      shared({ id: 'artifact-10', name: 'Q3 report', sharedBy: 'Bob Lin' }),
-      shared({ id: 'artifact-11', name: 'Q3 report', sharedBy: 'Carol Kao' }),
+      shared({ id: 'artifact-10', title: 'Q3 report', ownerDisplay: 'Bob Lin' }),
+      shared({ id: 'artifact-11', title: 'Q3 report', ownerDisplay: 'Carol Kao' }),
     ]);
 
     const user = userEvent.setup();

@@ -1,10 +1,4 @@
-import {
-  AppstoreOutlined,
-  CheckOutlined,
-  CopyOutlined,
-  FundOutlined,
-  LinkOutlined,
-} from '@ant-design/icons';
+import { CheckOutlined, CopyOutlined, FundOutlined, LinkOutlined } from '@ant-design/icons';
 import { Button, Input, Modal, Select } from 'antd';
 import React, { useState } from 'react';
 
@@ -60,21 +54,21 @@ const ShareArtifactDialog: React.FC<ShareArtifactDialogProps> = ({ open, onClose
       footer={null}
       destroyOnHidden
     >
-      <p className={styles.subtitle}>Artifact 已生成,可分享給團隊檢視。</p>
+      <p className={styles.subtitle}>Artifact 已發布,可分享給團隊檢視。</p>
       <div className={styles.infoCard} aria-label="Artifact 資訊">
         <span className={styles.infoCardIcon} aria-hidden>
-          {artifact.kind === 'dashboard' ? <FundOutlined /> : <AppstoreOutlined />}
+          <FundOutlined />
         </span>
         <span className={styles.infoCardText}>
-          <span className={styles.infoCardName}>{artifact.name}</span>
-          <span className={styles.infoCardKind}>
-            {artifact.kind === 'dashboard' ? 'Dashboard' : 'Slides'} · eRD Cowork
-          </span>
+          <span className={styles.infoCardName}>{artifact.title}</span>
+          {/* The Artifact's kind returns as `type` once the backend adds it; until
+              then there is nothing true to put in front of the product name. */}
+          <span className={styles.infoCardKind}>eRD Cowork</span>
         </span>
-        {artifact.generated && (
+        {artifact.publishedAt !== null && (
           <span className={styles.infoCardGeneratedChip}>
             <CheckOutlined aria-hidden />
-            已生成
+            已發布
           </span>
         )}
       </div>

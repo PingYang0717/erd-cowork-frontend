@@ -9,43 +9,54 @@ import { apiClient } from './apiClient';
 const STUB_ARTIFACTS: Artifact[] = [
   {
     id: 'artifact-1',
+    title: 'SPC analysis — Vt (gate CD)',
     sessionId: 'session-1',
-    name: 'SPC analysis — Vt (gate CD)',
-    kind: 'dashboard',
-    scenario: 'spc',
-    pinned: false,
-    mine: true,
-    shared: false,
+    sessionTitle: 'SPC — Vt (gate CD)',
+    pinnedAt: null,
+    publishedAt: '2026-08-20T09:20:00.000Z',
     createdAt: '2026-08-20T09:15:00.000Z',
-    generated: true,
+    owner: 'u-001',
+    ownerDisplay: 'Alex Chen',
+    canPin: true,
+    canShare: true,
+    isOwn: true,
+    isShared: false,
+    hasPersonalCopy: false,
   },
   {
     id: 'artifact-2',
+    title: 'Inline dashboard — W12',
     sessionId: 'session-1',
-    name: 'Inline dashboard — W12',
-    kind: 'dashboard',
-    scenario: 'inline',
-    pinned: true,
-    mine: true,
-    shared: false,
+    sessionTitle: 'SPC — Vt (gate CD)',
+    pinnedAt: '2026-08-21T10:05:00.000Z',
+    publishedAt: '2026-08-21T10:02:00.000Z',
     createdAt: '2026-08-21T10:00:00.000Z',
-    generated: true,
+    owner: 'u-001',
+    ownerDisplay: 'Alex Chen',
+    canPin: true,
+    canShare: true,
+    isOwn: true,
+    isShared: false,
+    hasPersonalCopy: false,
   },
   {
     id: 'artifact-3',
+    title: 'Daily monitor (A14)',
     sessionId: 'session-2',
-    name: 'Daily monitor (A14)',
-    kind: 'slides',
-    scenario: 'daily',
-    pinned: false,
-    mine: false,
-    shared: false,
-    sharedBy: 'Alice Wu',
+    sessionTitle: 'Defect pareto — W12',
+    pinnedAt: null,
+    publishedAt: '2026-08-19T08:35:00.000Z',
     createdAt: '2026-08-19T08:30:00.000Z',
-    generated: true,
+    owner: 'u-002',
+    ownerDisplay: 'Alice Wu',
+    canPin: true,
+    // Not the owner: a shared Artifact cannot be shared onward.
+    canShare: false,
+    isOwn: false,
+    isShared: true,
+    hasPersonalCopy: false,
   },
 ];
-
 const DEPARTMENT_CODES = [
   'A10INTD1-1',
   'A10INTD1-2',
@@ -109,22 +120,29 @@ export const artifactApi = {
       signal,
     }),
 
-  // Everything from here to `listDirectory` has no backend endpoint yet, and no caller:
-  // the controls that would reach them are disabled (ADR-0009). They stay as the
-  // executable shape of the contract in docs/api/interface.md — the day an endpoint
-  // lands, the UI drops one `disabled` and these are already right.
-  setPinned: (id: string, pinned: boolean) =>
-    apiClient.patch<Artifact>(`/artifacts/${id}`, { pinned }),
+  /** Toggles the pin. One endpoint, no body: which way it goes is the backend's call,
+   *  not something the client asserts from state it may have read a while ago. */
+  togglePin: (id: string) => apiClient.post<Artifact>(`/artifacts/${id}/pin`),
 
+  /** Publishing is what makes an Artifact available to other people. The two
+   *  directions are split by method rather than a body flag, and the backend stamps
+   *  `publishedAt` itself — the client never sends a time it believes it is. */
+  publish: (id: string) => apiClient.post<Artifact>(`/artifacts/${id}/publish`),
+
+  /** No UI reaches this yet: unpublishing belongs on the Artifact management page,
+   *  which does not exist. The function is here so that page starts from the contract
+   *  rather than rediscovering it. */
+  unpublish: (id: string) => apiClient.delete<Artifact>(`/artifacts/${id}/publish`),
+
+  // Delete and share have no backend endpoint yet, and no caller: the controls that
+  // would reach them are disabled (ADR-0009). They stay as the executable shape of
+  // the contract in docs/api/interface.md.
   deleteArtifact: (id: string) => apiClient.delete<void>(`/artifacts/${id}`),
 
   share: (id: string, targetIds: string[]) =>
     apiClient.post<ArtifactShareResult>(`/artifacts/${id}/share`, {
       targetIds,
     }),
-
-  /** 前端-only（mock）：把這個 Artifact 標記為已生成。 */
-  generate: (id: string) => apiClient.post<Artifact>(`/artifacts/${id}/generate`),
 
   /** Stubbed: no backend directory endpoint (ADR-0009). Read by the share dialog,
    *  which is itself unreachable while sharing is disabled. */

@@ -39,13 +39,13 @@ describe('Artifact panel toolbar', () => {
   // Two tests used to open the share dialog from here and drive a share through it.
   // Sharing has no backend endpoint (ADR-0009): the button is disabled at its entry
   // point so the dialog never opens onto a form that could not submit.
-  it('shows a "已生成" badge for a rendered Artifact, and disables the Share button', async () => {
+  it('shows a "已發布" badge for a rendered Artifact, and disables the Share button', async () => {
     const user = userEvent.setup();
     renderStudioPage();
 
     await user.click(await screen.findByRole('button', { name: 'SPC — Vt (gate CD)' }));
 
-    expect(await screen.findByText('已生成')).toBeInTheDocument();
+    expect(await screen.findByText('已發布')).toBeInTheDocument();
     expect(await screen.findByRole('button', { name: 'Share artifact' })).toBeDisabled();
     expect(screen.queryByRole('dialog', { name: '分享 Artifact' })).not.toBeInTheDocument();
   });
@@ -97,7 +97,7 @@ describe('Artifact panel toolbar', () => {
 
     // Regenerate streams a new run whose artifact becomes v2 and takes over.
     await user.click(await screen.findByRole('button', { name: 'Regenerate artifact' }));
-    await screen.findByRole('button', { name: '生成 Artifact' });
+    await screen.findByRole('button', { name: '發布 Artifact' });
 
     await user.click(await screen.findByRole('button', { name: '切換版本' }));
     await expect.poll(() => screen.getAllByRole('menuitem')).toHaveLength(2);
