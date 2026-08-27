@@ -1,6 +1,7 @@
 # `chore/remove-mock-layer` — 拔掉 runtime mock,把 code 準備好接真後端
 
-分支基準:`master@26c36ae`　·　狀態:**計畫,尚未動工**
+分支基準:`master@26c36ae`　·　狀態:**已完成**,6 顆 commit
+測試 228 → 218(42 檔),`tsc -b`、`npm run lint` 乾淨。
 
 後端正在開發中。這一輪不等它,先把前端調整成「畫面上看到的就是後端真的有的」——
 runtime 不再有任何假裝成後端的東西,後端還沒做的功能在 UI 上明確停用。
@@ -90,19 +91,25 @@ connectors 三條、`/directory`、`/dc-items` 兩條(前端從來沒打過,只�
 
 ## 執行順序
 
-| #   | Commit          | 內容                                                                                                  |
-| --- | --------------- | ----------------------------------------------------------------------------------------------------- |
-| 1   | `chore(config)` | 刪 `transport.ts`、`isLive`、`main.tsx` 的 `enableMocking()`、`mocks/browser.ts`、`.env` 的 flag 註解 |
-| 2   | `feat(api)`     | 讀取類三條改回 stub,fixtures 搬到 api 模組旁                                                          |
-| 3   | `feat(ui)`      | 停用清單上的入口全部 disabled + tooltip                                                               |
-| 4   | `feat(error)`   | `ErrorBoundary` 網路錯誤訊息 + 重試                                                                   |
-| 5   | `test`          | 13 個 `it` 改寫成驗 disabled                                                                          |
-| 6   | `chore(mocks)`  | 刪掉 15 條死 handler                                                                                  |
-| 7   | `docs`          | ADR-0009、`interface.md` 狀態欄、README/architecture/AGENTS、`backend-integration.md`                 |
+| #   | Commit                      | 內容                                                                                                            |
+| --- | --------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| 1   | [`eb61c32`] `chore(config)` | 刪 `transport.ts`、`isLive`、`main.tsx` 的 `enableMocking()`、`mocks/browser.ts`、`LIVE_BACKED`、`.env` 的 flag |
+| 2   | [`38b75fc`] `feat(ui)`      | 停用清單上的入口全部 disabled + 說明,並改寫受影響的測試                                                         |
+| 3   | [`6e10cd5`] `feat(api)`     | 讀取類三條改回 stub                                                                                             |
+| 4   | [`b6a3bfe`] `feat(error)`   | `describeLoadError` + ErrorBoundary 認得「連不上後端」                                                          |
+| 5   | [`8ef9380`] `chore(mocks)`  | 刪掉 14 條死 handler(831 → 648 行)                                                                              |
+| 6   | `docs`                      | ADR-0009、`interface.md` 後端狀態欄、README/architecture/AGENTS、`backend-integration.md`                       |
 
-每一顆都要 `tsc -b` + `npm test` + `npm run lint` 乾淨才進下一顆。
+**與計畫的兩處出入**,都是為了讓每顆 commit 保持綠燈:
 
----
+1. **停用 UI 與測試改寫合併成一顆**(原計畫 3 與 5)。分開會有一顆 commit 是紅的:控制項
+   一旦 disabled,那些點擊它的測試當場就失敗。
+2. **停用 UI 排在 stub 之前**(原計畫 2 與 3 對調)。反過來的話,mutation 會寫進 MSW 而
+   refetch 讀到固定 stub,Gallery 的 pin/delete/share 測試會在切 stub 那一顆就變紅。
+
+**受影響的測試比估計多**:估 13 個,實際 24 個。多出來的是 `generate-coach`(整套引導由
+生成觸發)、`ArtifactPage` 工具列、以及 Gallery 幾個斷言選單項目名稱的測試——停用說明寫進
+了 label,可及名稱因此改變。
 
 ## 後端 ready 時要復活的測試
 

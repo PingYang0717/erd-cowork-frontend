@@ -6,6 +6,9 @@
 
 Accepted。取代 `api/liveAdapter.ts` 的轉換層路線;修訂 [ADR-0006](0006-scenario-drives-clarification.md) 中「答案以結構化形式回傳」的線路部分(表單本身與 Scenario 驅動反問的決策不變)。
 
+決策 4「傳輸為 hybrid」已被 [ADR-0009](0009-no-mock-backend-at-runtime.md) 取代:runtime
+不再有 mock 後端,未實作的端點改為 api 模組回 stub 或在 UI 停用。verbatim 契約本身不變。
+
 ## 背景
 
 後端(cowork master,Spring Boot + MongoDB)已實作完成,契約已鎖定:
