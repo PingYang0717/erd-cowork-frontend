@@ -146,7 +146,7 @@ function SessionRow({
       {!isDraft && (
         <Dropdown
           trigger={['click']}
-          overlayClassName="erd-menu"
+          classNames={{ root: 'erd-menu' }}
           menu={{ items: menuItems, onClick: ({ key }) => handleMenuClick(key) }}
         >
           <button
