@@ -10,11 +10,8 @@
 
 前端只有一種模式:打真後端([ADR-0009](../adr/0009-no-mock-backend-at-runtime.md))。
 `VITE_AGENT_TRANSPORT`、`src/config/transport.ts` 與 `LIVE_BACKED` 清單都已移除,MSW 只在
-測試裡跑。`.env` 只剩一項:
-
-```
-VITE_API_BASE_URL=/api
-```
+測試裡跑。`VITE_API_BASE_URL` 也已移除(2026-08-28,cowork 對齊):API base 寫死
+`/api`,不吃任何環境變數。
 
 後端還沒建好的端點,前端已各自表態,不需要任何設定:
 
@@ -28,8 +25,8 @@ VITE_API_BASE_URL=/api
 
 ## 2. 網路層:讓 `/api` 到得了後端
 
-`VITE_API_BASE_URL` 維持相對路徑 `/api`,dev 模式在 `vite.config.ts` 加 proxy
-(假設後端在 8080):
+API base 寫死相對路徑 `/api`,dev/preview 模式由 `vite.config.ts` 的 proxy 轉發
+(後端在 8080):
 
 ```ts
 server: {

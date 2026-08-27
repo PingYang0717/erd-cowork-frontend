@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL ?? '';
+const API_BASE = '/api';
 
 /** The backend serves an artifact's content as text/html directly — not JSON-wrapped. */
 describe('GET /api/artifacts/:id (content)', () => {

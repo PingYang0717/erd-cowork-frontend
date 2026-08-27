@@ -7,7 +7,7 @@
 
 ## 共通約定
 
-- Base path：一律相對路徑 `/api`（`VITE_API_BASE_URL` 可覆蓋）
+- Base path：一律相對路徑 `/api`（寫死於 `api/apiClient.ts`，無環境變數）
 - 身分：**每個請求**帶 `X-User-Id` header（`api/identity.ts`；axios interceptor 與
   raw fetch/XHR 共用同一個 helper）
 - 錯誤格式：`{ code: string, message: string }`（`@RestControllerAdvice` 統一）

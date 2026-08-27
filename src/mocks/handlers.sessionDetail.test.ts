@@ -4,7 +4,7 @@ import type { SessionDetail, StepItem } from '@/types/api/index';
 
 import { SCENARIO_FIXTURES } from './scenarioFixtures';
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL ?? '';
+const API_BASE = '/api';
 
 /** The backend nests a session's messages and files inside GET /sessions/{id} —
  *  there is no standalone messages endpoint — and persists messages in its own
