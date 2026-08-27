@@ -1,4 +1,4 @@
-import type { Artifact, ArtifactTheme, DirectoryEntry } from '@/types/api/index';
+import type { Artifact, DirectoryEntry } from '@/types/api/index';
 
 import { apiClient } from './apiClient';
 
@@ -51,11 +51,11 @@ export const artifactApi = {
 
   /** The backend returns the artifact's HTML as text/html directly. `responseType`
    *  is explicit so a document that happens to parse as JSON still arrives as text.
-   *  theme is a 前端-only query extension the mock reads; a real backend ignores it
-   *  (dark mode swaps in-frame via postMessage, ADR-0001). */
-  getContent: (artifactId: string, theme: ArtifactTheme) =>
-    apiClient.get<string>(`/artifacts/${artifactId}`, {
-      params: { theme },
+   *  `r` is a cache-buster carrying the reload nonce, sent only after an actual
+   *  reload (nonce > 0) so the initial load stays cache-friendly. */
+  getContent: (artifactId: string, reloadNonce: number) =>
+    apiClient.get<string>(`/artifacts/${encodeURIComponent(artifactId)}`, {
+      params: reloadNonce > 0 ? { r: reloadNonce } : undefined,
       responseType: 'text',
     }),
 

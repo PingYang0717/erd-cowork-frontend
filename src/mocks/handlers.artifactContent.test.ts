@@ -2,11 +2,10 @@ import { describe, expect, it } from 'vitest';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? '';
 
-/** The backend serves an artifact's content as text/html directly — not JSON-wrapped.
- *  theme / versionId stay as query extensions only the mock reads. */
+/** The backend serves an artifact's content as text/html directly — not JSON-wrapped. */
 describe('GET /api/artifacts/:id (content)', () => {
   it('serves the artifact content as text/html', async () => {
-    const response = await fetch(`${API_BASE}/artifacts/artifact-1?theme=light`);
+    const response = await fetch(`${API_BASE}/artifacts/artifact-1`);
 
     expect(response.status).toBe(200);
     expect(response.headers.get('content-type')).toContain('text/html');

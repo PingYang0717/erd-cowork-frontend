@@ -28,8 +28,9 @@
    已生成標記(`/generate`)。版本已改為與後端一致的訊息推導模型(無端點);其餘是
    本專案相對 cowork-master 的領域價值,方向是後端補上而非前端砍掉
    (見 `docs/cowork-master-comparison.md` §5)。
-6. **Artifact 內容的 theme 變體**:`GET /artifacts/{id}` 無 `theme` 參數,深色模式
-   只能靠 iframe 內 postMessage(ADR-0001)換色,無法重抓深色版本。
+6. **Artifact 內容的 theme 變體**:已結案(2026-08-28)——決議 Artifact HTML 不做
+   theme 變體,前端已移除 `?theme=` query 與 postMessage 換色通道,後端無需動作
+   (ADR-0001 狀態註記)。
 
 ## 已對齊、無需後端動作(記錄用)
 

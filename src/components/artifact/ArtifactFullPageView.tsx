@@ -14,7 +14,6 @@ import { ThemeToggle } from '@/components/common/ThemeToggle';
 import { Tooltip } from '@/components/common/Tooltip';
 import { useArtifactContent } from '@/hooks/useArtifactContent';
 import { artifactQueryKey, useArtifacts } from '@/hooks/useArtifacts';
-import { useArtifactTheme } from '@/hooks/useArtifactTheme';
 import { useSessionDetail } from '@/hooks/useSessionDetail';
 import type { Artifact, ArtifactVersion } from '@/types/api/index';
 import { deriveArtifactVersions } from '@/utils/deriveArtifactVersions';
@@ -39,7 +38,6 @@ const ArtifactFullPageView: React.FC<ArtifactFullPageViewProps> = ({ artifactId 
   const navigate = useNavigate();
   const location = useLocation();
   const queryClient = useQueryClient();
-  const theme = useArtifactTheme();
 
   const [selectedArtifactId, setSelectedArtifactId] = useState<string | null>(null);
   const [isShareOpen, setIsShareOpen] = useState(false);
@@ -50,7 +48,7 @@ const ArtifactFullPageView: React.FC<ArtifactFullPageViewProps> = ({ artifactId 
   // the switcher can jump between sibling artifacts (each version IS an artifact).
   const displayedArtifactId = selectedArtifactId ?? artifactId;
   const displayedArtifact = artifacts?.find((a) => a.id === displayedArtifactId);
-  const { data, isError } = useArtifactContent(displayedArtifactId, theme);
+  const { data, isError } = useArtifactContent(displayedArtifactId);
 
   const origin = (location.state as FullPageLocationState | null)?.from;
 
@@ -137,7 +135,7 @@ const ArtifactFullPageView: React.FC<ArtifactFullPageViewProps> = ({ artifactId 
       <div className={styles.body}>
         {isError && <div className={styles.empty}>Artifact not found.</div>}
         {data && displayedArtifactId && (
-          <ArtifactFrame html={data} theme={theme} artifactId={displayedArtifactId} />
+          <ArtifactFrame html={data} artifactId={displayedArtifactId} />
         )}
       </div>
       {displayedArtifact && (

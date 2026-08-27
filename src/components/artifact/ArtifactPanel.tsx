@@ -12,7 +12,6 @@ import { Tooltip } from '@/components/common/Tooltip';
 import { useArtifactContent } from '@/hooks/useArtifactContent';
 import { usePublishArtifact } from '@/hooks/useArtifactMutations';
 import { useArtifacts } from '@/hooks/useArtifacts';
-import { useArtifactTheme } from '@/hooks/useArtifactTheme';
 import { useSessionDetail } from '@/hooks/useSessionDetail';
 import { useActiveRunStore } from '@/stores/useActiveRunStore';
 import { usePublishCoachStore } from '@/stores/usePublishCoachStore';
@@ -125,13 +124,11 @@ function ArtifactPanelContent({
   activeVersion: ArtifactVersion;
   onSelectVersion: (artifactId: string) => void;
 }) {
-  const theme = useArtifactTheme();
-
   const [isShareOpen, setIsShareOpen] = useState(false);
   const reloadNonce = useActiveRunStore((s) => s.artifactReloadNonce);
   const bumpArtifactReload = useActiveRunStore((s) => s.bumpArtifactReload);
   const isRunStreaming = useActiveRunStore((s) => s.isRunStreaming);
-  const { data } = useArtifactContent(artifactId, theme, reloadNonce);
+  const { data } = useArtifactContent(artifactId, reloadNonce);
   const { data: artifacts } = useArtifacts();
   const artifact = artifacts?.find((a) => a.id === artifactId);
   const publishArtifact = usePublishArtifact();
@@ -222,12 +219,7 @@ function ArtifactPanelContent({
         </Tooltip>
       </div>
       <div className={styles.frameWrapper}>
-        <ArtifactFrame
-          key={`${artifactId}-${reloadNonce}`}
-          html={data}
-          theme={theme}
-          artifactId={artifactId}
-        />
+        <ArtifactFrame key={`${artifactId}-${reloadNonce}`} html={data} artifactId={artifactId} />
       </div>
       {artifact && (
         <ShareArtifactDialog

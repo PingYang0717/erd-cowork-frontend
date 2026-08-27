@@ -1,5 +1,3 @@
-export type ArtifactTheme = 'light' | 'dark';
-
 /** Backend contract, 定版 2026-08-27.
  *
  *  What is deliberately absent: the Artifact's own kind (dashboard / slides). It is
