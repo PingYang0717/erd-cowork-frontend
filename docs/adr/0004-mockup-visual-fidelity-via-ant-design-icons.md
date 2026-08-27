@@ -1,3 +1,6 @@
+> **狀態註記(2026-08-27)**:適用範圍被 [ADR-0010](0010-chat-panel-presentation-follows-cowork.md)
+> 收窄——chat panel(對話串區域)的呈現語彙改以 cowork 上游為準,其餘畫面本文不變。
+
 # 視覺、排版、圖示嚴格對齊 `eRDWorkspace20260819.html`，圖示改用 `@ant-design/icons`
 
 先前的定案（`spec.md`「Further Notes」）只把原始設計稿 `eRDWorkspace20260819.html` 與 `project.png` 定位為「視覺與互動行為的主要參考來源」。實際開發到 ticket 08 時發現這個定位太鬆：Session rail 收合後應該是設計稿裡那種完整的 icon-only rail（展開鈕、New chat、Schedule、Artifacts 等圖示 tile），但因為沒有明確要求「必須」對齊，做出來的只是一顆顯示純文字字元 `»` 的陽春按鈕，跟其他幾個地方（theme toggle 用 emoji 🌙/☀️、more-actions 用文字 `⋯`）一樣，用文字/emoji 頂替了設計稿裡實際存在的圖示。

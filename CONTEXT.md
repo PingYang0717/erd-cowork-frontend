@@ -74,6 +74,10 @@ _Avoid_: 生成、Generate（畫面上的按鈕曾叫「生成 Artifact」，但
 一個資料來源的連線狀態（已連線／可連線／已過期／無權限），例如 Inline、WAT、CP、Lot Info、Lot Abnormal、Process、Defect、TEM、Recipe、Offline Tool Log。連線狀態是帳號層級的事實，跨 Session 共用。Scenario 執行時會參照已連線的 Connector 取得資料，**也決定分析條件表單上 Data type 有哪些可選**。
 _Avoid_: Data source, Integration
 
+**保留期（Retention）**:
+上傳檔案與 workspace 依 Session 最後活動時間保留的期限（後端 `GET /config` 的 `retentionDays`）。逾期後後端清除檔案**內容**但保留那筆紀錄，這種檔案在畫面上標示「已過期」——它擋住送出，也讓修復（Repair）不可行，因為要重跑的資料已經不存在（FILES_EXPIRED）。
+_Avoid_: TTL, 過期刪除（紀錄沒有被刪，被清掉的只有內容——「還看得到名字但用不了」正是這個概念的核心）
+
 **DC Item**:
 SPC 分析中可選擇的管制項目（量測參數），例如 Idsat、Vt (gate CD)、Contact Rs，各自有上下限（`lo`/`hi`）。當一次 SPC 執行涉及的 DC Item 過多時，Agent 會以 DC item 卡反問使用者先看哪幾項。
 _Avoid_: Parameter, Metric

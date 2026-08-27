@@ -1,3 +1,8 @@
+> **狀態註記(2026-08-27)**:sandbox 之上後來加了第二層——`utils/artifactCsp.ts` 在
+> srcdoc 呈現前注入 `<meta http-equiv="Content-Security-Policy">`(`default-src 'none';
+connect-src 'none'`,host 來源用父頁 origin 明寫)。sandbox 擋同源存取,CSP 擋
+> Artifact HTML 對外發網路請求;兩層互補,本文的 iframe 決策不變。
+
 # Artifact 內容以 sandboxed iframe 渲染
 
 Artifact（Scenario 執行後的分析成果）以完整 HTML 字串的形式由 API 回傳，而非結構化圖表資料。我們選擇用 `<iframe sandbox srcDoc={html}>` 掛載這段 HTML，而不是用 React 元件重繪圖表、也不是用 `dangerouslySetInnerHTML` 直接注入主 DOM。原因是生成的 HTML 內可能自帶 `<script>`（例如載入 ECharts 畫圖），iframe 是唯一能讓這些 script 正常執行、同時完全隔離主 app 樣式與 JS 執行環境（避免 XSS 外洩與 CSS 互相污染）的方式。

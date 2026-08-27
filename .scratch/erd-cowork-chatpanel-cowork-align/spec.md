@@ -1,6 +1,6 @@
 # Chat panel 對齊 cowork 上游
 
-Status: ready-for-agent
+Status: resolved
 
 比對基準：`https://github.com/Michelle12369/cowork.git` HEAD `5ca03f2`（frontend/）。
 定案過程見 grilling session 2026-08-27；權威邊界由 ADR-0010 記錄。
