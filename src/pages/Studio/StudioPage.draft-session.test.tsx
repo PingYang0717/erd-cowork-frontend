@@ -49,7 +49,12 @@ describe('New chat opens a client-side draft', () => {
 
     // No click needed: the composer is there because a session already is.
     expect(await screen.findByRole('textbox', { name: 'Message' })).toBeInTheDocument();
-    expect(document.querySelectorAll('[aria-current="true"]')).toHaveLength(1);
+    // Scoped to the rail's session groups (Pinned + Recents): the thread's Artifact
+    // chip legitimately carries its own aria-current for "the version on the pane".
+    const selectedRows = screen
+      .getAllByRole('region', { name: /sessions$/ })
+      .flatMap((group) => [...group.querySelectorAll('[aria-current="true"]')]);
+    expect(selectedRows).toHaveLength(1);
   });
 
   it('opens a draft by itself when there is no session to land on', async () => {

@@ -134,7 +134,10 @@ function SessionRow({
       >
         <span className={styles.sessionRowTitle}>
           {isPinned && <PushpinOutlined aria-hidden className={styles.pinIndicator} />}
-          {session.title}
+          {/* Its own box, because text-overflow elides text boxes, not flex rows: the
+              name shrinks to "…" when the rail is narrow and comes back whole when
+              there is room. */}
+          <span className={styles.sessionRowTitleText}>{session.title}</span>
         </span>
         <span className={styles.sessionRowTimestamp} aria-hidden="true">
           {formatRelativeTime(session.updatedAt)}
