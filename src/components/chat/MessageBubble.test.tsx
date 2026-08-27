@@ -117,7 +117,8 @@ describe('MessageBubble', () => {
     );
 
     expect(screen.getByText('SPC dashboard')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'HTML' })).toBeInTheDocument();
+    // cowork's read-back label; the "</>" glyph prefix is decorative (ADR-0010).
+    expect(screen.getByRole('button', { name: '查看 HTML' })).toBeInTheDocument();
   });
 
   it('shows the live HTML instead of the fetchable one while the agent is still writing it', () => {
