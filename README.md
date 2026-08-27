@@ -2,13 +2,13 @@
 
 半導體廠務 R&D 平台（eRD Workspace）內的 AI 對話式分析工具。工程師以自然語言提出分析請求，系統回覆一段可視化的分析成果（**Artifact**），呈現在 Studio 右側的 sandboxed iframe 中。
 
-目前是**純前端 + mock 後端**的實作：所有 API 由 MSW 攔截，資料存在 `localStorage`，沒有真實後端與登入流程。名詞定義見 [`CONTEXT.md`](./CONTEXT.md)。
+前端打的是**真實後端**。後端尚未實作的端點在 `src/api/` 直接回 stub，而它們背後的操作（釘選、改名、刪除、生成、分享、Connector 連線）在 UI 上明確停用，不假裝有作用——見 [ADR-0009](./docs/adr/0009-no-mock-backend-at-runtime.md)。MSW 只服務測試。名詞定義見 [`CONTEXT.md`](./CONTEXT.md)。
 
 ---
 
 ## 技術棧
 
-React 19 + Vite + TypeScript（先不開 strict）+ Ant Design + React Router + Zustand + TanStack Query + Axios，MSW 做 mock 後端，Vitest + Testing Library 做測試。
+React 19 + Vite + TypeScript（先不開 strict）+ Ant Design + React Router + Zustand + TanStack Query + Axios，Vitest + Testing Library 做測試，MSW 在測試裡當後端。
 
 React Compiler 已開啟（`@vitejs/plugin-react` 的 `compiler: true`，需 `oxc-transform-react`），因此不手動包 `useMemo` / `useCallback`。
 
@@ -54,7 +54,7 @@ src/
   utils/        # 純函式工具
   app/          # 進入點、Router、Providers（含主題設定）
   pages/        # 路由頁面（只組裝、只放 DataBoundary）
-  mocks/        # MSW handlers 與 fixtures
+  mocks/        # MSW handlers 與 fixtures（test-only）
 ```
 
 規則細節見 [`AGENTS.md`](./AGENTS.md)（動工前必讀的五條鐵律與六條撰寫規則）與
@@ -75,11 +75,16 @@ src/
 
 ---
 
-## Mock 後端
+## 後端與 stub
 
-`src/mocks/handlers.ts` 以 MSW 攔截所有 `/api/*` 請求，dev 模式走 browser worker、測試走 node server，共用同一份 handlers。集合資料透過 `createPersistedResource` 存在 `localStorage`，重新整理不會遺失。
+app 打真實後端，沒有 runtime mock（[ADR-0009](./docs/adr/0009-no-mock-backend-at-runtime.md)）。後端還沒建好的端點分成兩類處理：
 
-**API 契約的唯一來源是 [`docs/api/interface.md`](./docs/api/interface.md)** —— 換成真實後端時照著實作，前端呼叫端不需要改。Artifact 的擁有者只存在 mock 端（`ownerId`），對外只以 `Artifact.mine` 呈現，依 `config/currentUser.ts` 的 mock 身分解析。
+- **讀取**（Artifacts 清單、Connectors、Directory）在 `src/api/` 直接回一份固定 stub，就寫在它假裝的那個函式旁邊。
+- **寫入**（Session 釘選／改名／刪除、Artifact 生成／分享／釘選／刪除、Connector 連線與新增）在 UI 上 disabled，標示「後端尚未支援」。api 函式保留但沒有呼叫端，是後端補上那天的接點。
+
+`src/mocks/handlers.ts` 只在**測試**裡跑（`src/test/setup.ts` 起 node server），服務的正是後端真的有的那九條，加上 SSE 劇本。集合資料透過 `createPersistedResource` 存在 `localStorage`，讓測試能驗跨重整的行為。
+
+**API 契約的唯一來源是 [`docs/api/interface.md`](./docs/api/interface.md)**，每條端點都標了後端狀態。Artifact 的擁有者只存在後端（`ownerId`），對外只以 `Artifact.mine` 呈現。
 
 ---
 
@@ -119,10 +124,7 @@ src/
 - **未啟用 React Compiler** — 技術棧對齊 `cowork-master` 後降到 React 18.3.1，而 compiler 以 19 為目標，在 18 上需要額外的 `react-compiler-runtime` polyfill。memoization 現在要自己顧。
 - **`@ant-design/x` 已安裝但尚無使用處** — 隨技術棧對齊加入；`cowork-master` 用它做 `StepChain`，本專案有自己的步驟卡，尚未決定採用點。
 
-## 執行模式
-
-前端有兩條傳輸軌道，由 build-time 的環境變數決定（不是 runtime 開關——runtime 開關會
-逼 MSW 進 production bundle，見 [ADR-0005](docs/adr/0005-sse-streaming-replaces-batch-reply.md)）。
+## 執行
 
 先建立 `.env`（`.gitignore` 排除，可從 `.env.example` 複製）：
 
@@ -130,23 +132,15 @@ src/
 VITE_API_BASE_URL=/api
 ```
 
-**mock 模式（預設）** — 整個 app 由 MSW 服務，單機即可跑完所有流程，包含串流、反問、
-中止、斷線與 Artifact 修復：
-
 ```
 npm run dev
 ```
 
-**live 模式** — 對話、Session、Artifact HTML 與上傳打真實後端，其餘端點仍由 MSW 服務
-（Artifacts 總覽清單、分享、Directory、Schedule、Connectors、DC item、Artifact 版本，
-真實後端都沒有實作）：
+`/api` 保持相對路徑，在 `vite.config.ts` 加 proxy 指到後端；直連絕對 URL 需要後端開 CORS
+並允許 `X-User-Id`，見 [`docs/api/backend-integration.md`](docs/api/backend-integration.md)。
 
-```
-VITE_AGENT_TRANSPORT=live npm run dev
-```
-
-覆蓋範圍與後端 DTO 的轉換見 [`docs/api/interface.md`](docs/api/interface.md) 的
-「傳輸模式與 live 端點覆蓋範圍」。
+**後端沒起來時**，session 清單會失敗，`useSuspenseQuery` 把錯誤丟給 ErrorBoundary，畫面
+顯示「無法連線到後端服務」與重試鈕。這是設計上的行為：沒有 stub 會頂上去假裝成功。
 
 ## 已知環境需求
 

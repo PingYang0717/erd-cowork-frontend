@@ -15,12 +15,12 @@
 ## 中 — Session 管理
 
 3. **Session CRUD**:建立(`POST /sessions`)、改名、釘選、刪除。目前這四個功能
-   live 模式下只存在於 MSW,對真後端無效;`Session.pinnedAt`(釘選時間戳,未釘選為 `null`)是前端-only 欄位。
+   目前在 UI 上停用(ADR-0009);`Session.pinnedAt`(釘選時間戳,未釘選為 `null`)是前端-only 欄位。
 
 ## 中 — 檔案與訊息
 
 4. **訊息層級的附件記錄**:`Message.attachments`(送出當下 session 檔案的快照)是
-   前端-only extension,真後端的歷史訊息不帶檔案資訊,bubble chips 在 live 模式消失。
+   前端-only extension,真後端的歷史訊息不帶檔案資訊,bubble chips 因此不會出現在歷史訊息上。
 
 ## 低 — Artifact 週邊
 

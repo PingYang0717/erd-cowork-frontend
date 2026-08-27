@@ -1,12 +1,19 @@
 # eRD Cowork API Interface
 
-This is the single source of truth for the mock backend's API contract. Every
-endpoint the frontend calls through `api/apiClient.ts` is mocked by MSW
-(`src/mocks/handlers.ts`) against the shape documented here. The corresponding
-TypeScript DTOs live in `src/types/api/`.
+This is the single source of truth for the backend's API contract. The
+corresponding TypeScript DTOs live in `src/types/api/`.
 
-When a real backend replaces MSW, it should implement each endpoint below to
-match; the frontend's calling code should not need to change.
+每張表都有 **後端狀態** 欄,三種值:
+
+| 狀態       | 意思                      | 前端怎麼處理                                               |
+| ---------- | ------------------------- | ---------------------------------------------------------- |
+| **已實作** | 後端真的有這條            | 正常呼叫                                                   |
+| **stub**   | 後端還沒有,但畫面需要資料 | `src/api/` 直接回固定假資料                                |
+| **停用**   | 後端還沒有,是一個寫入操作 | UI 上 disabled,標「後端尚未支援」;api 函式保留但沒有呼叫端 |
+
+後兩者的理由與取捨見 [ADR-0009](../adr/0009-no-mock-backend-at-runtime.md)。**照著實作
+一條標為 stub 或停用的端點之前先確認需求**——它們是前端先行定義的形狀,不是後端已承諾的
+契約。
 
 Each feature ticket appends its own endpoints to the relevant section below as
 it implements them.
@@ -28,18 +35,20 @@ it implements them.
 
 ## Session
 
-| Method | Path            | Request                                         | Response        |
-| ------ | --------------- | ----------------------------------------------- | --------------- |
-| GET    | `/sessions`     | —                                               | `Session[]`     |
-| GET    | `/sessions/:id` | —                                               | `SessionDetail` |
-| POST   | `/sessions`     | `{}` (title defaults to `"New analysis"`)       | `Session` (201) |
-| PATCH  | `/sessions/:id` | `Partial<Pick<Session, 'title' \| 'pinnedAt'>>` | `Session`       |
-| DELETE | `/sessions/:id` | —                                               | 204 No Content  |
+| Method | Path            | Request                                         | Response        | 後端狀態 |
+| ------ | --------------- | ----------------------------------------------- | --------------- | -------- |
+| GET    | `/sessions`     | —                                               | `Session[]`     | 已實作   |
+| GET    | `/sessions/:id` | —                                               | `SessionDetail` | 已實作   |
+| POST   | `/sessions`     | `{}` (title defaults to `"New analysis"`)       | `Session` (201) | 不會實作 |
+| PATCH  | `/sessions/:id` | `Partial<Pick<Session, 'title' \| 'pinnedAt'>>` | `Session`       | 停用     |
+| DELETE | `/sessions/:id` | —                                               | 204 No Content  | 停用     |
 
 `GET /sessions/:id` 回 `SessionDetail`：session 的 messages 與 files 內嵌其中——後端
-**沒有**獨立的 messages 端點。`POST` / `PATCH` / `DELETE` 與 `Session.pinnedAt` 是前端-only
-（後端的 session 由 client 指定 id、第一次送訊息時 upsert，也沒有改名／釘選／刪除），
-live 模式下仍由 MSW 服務，見「傳輸模式」。
+**沒有**獨立的 messages 端點。
+
+`POST /sessions` 標為「不會實作」：session 由 client 指定 id、第一次送訊息時 upsert
+（[ADR-0008](../adr/0008-new-chat-is-a-client-side-draft.md)），沒有建立端點這件事是決策
+不是缺口。改名／釘選／刪除與 `Session.pinnedAt` 則是前端先定義的形狀，UI 上停用中。
 
 ## Message / Chat
 
@@ -73,7 +82,7 @@ scenario 與 kind，而非重新從文字推斷。
 
 `Content-Type: text/event-stream`，每個事件是一個 `data: {json}` 行後接一個空行；`:` 開頭的
 行是心跳，解析時忽略；無法解析的區塊靜默丟棄。事件名稱維持 SCREAMING_CASE，與
-`cowork-master` 的線路契約逐字一致，live 模式因此不需要轉換層。
+`cowork-master` 的線路契約逐字一致，因此不需要轉換層。
 
 | `type`     | 欄位                                                | 說明                                 | 進入對話歷史      |
 | ---------- | --------------------------------------------------- | ------------------------------------ | ----------------- |
@@ -135,34 +144,27 @@ QuestionOption { value: string; label: string; hint?: string; unit?: string; lo?
 **一次執行可以反問多次。** SPC 開場問一次分析條件，執行途中發現 DC Item 過多時再問一次。
 執行結束後「補齊全部 N 項」的提議不是反問，不走 QUESTION。
 
-### 傳輸模式與 live 端點覆蓋範圍
+### 目前以 stub 供應或停用的端點
 
-切換是 build-time 的環境變數，不是 runtime 開關。live 模式可搭配的後端只實作了下表左半，
-其餘端點在 live 模式下**仍由 MSW 服務**。
+app 執行時不再有 mock 後端（[ADR-0009](../adr/0009-no-mock-backend-at-runtime.md)）。後端
+還沒建好的端點分兩類：
 
-| 端點群                                                                                                  | mock 模式 | live 模式 |
-| ------------------------------------------------------------------------------------------------------- | --------- | --------- |
-| `GET /sessions`、`GET /sessions/:id`、`POST /sessions/:id/messages`                                     | MSW       | 真後端    |
-| `POST /sessions/:id/files`、`DELETE /sessions/:id/files/:fileId`                                        | MSW       | 真後端    |
-| `GET /artifacts/:id`（text/html）、`GET /artifacts/:id/raw`（text/plain）、`POST /artifacts/:id/repair` | MSW       | 真後端    |
-| `PATCH/DELETE /sessions/:id`（改名／釘選／刪除，前端-only）                                             | MSW       | **MSW**   |
-| `/artifacts` 清單、pin、share、generate                                                                 | MSW       | **MSW**   |
-| `/connectors`、`/directory`、DC Item 清單、schedule                                                     | MSW       | **MSW**   |
+| 類別             | 端點                                                                                                                                                     | 前端行為                            |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------- |
+| **stub**（讀取） | `GET /artifacts`、`GET /connectors`、`GET /directory`                                                                                                    | `src/api/` 直接回固定資料，不發請求 |
+| **停用**（寫入） | `PATCH`/`DELETE /sessions/:id`、`PATCH`/`DELETE /artifacts/:id`、`POST /artifacts/:id/share`、`POST /artifacts/:id/generate`、`PATCH`/`POST /connectors` | UI 上 disabled，標「後端尚未支援」  |
 
-過濾是 method-aware：`GET /sessions/:id` 放行給真後端的同時，同一路徑上前端-only 的
-`PATCH` / `DELETE` 仍由 MSW 服務。
+MSW 只在**測試**裡跑，服務的正是上表以外、後端真的有的那九條，加上 SSE 劇本。
 
-**沒有建立 session 的端點。** `POST /sessions` 只存在於 mock，而且 UI 不再呼叫它：session
-id 由前端產生，第一次送訊息或上傳檔案時由後端 upsert（[ADR-0008](../adr/0008-new-chat-is-a-client-side-draft.md)）。
-mock 的兩個寫入端點也照做，否則草稿 session 的 `GET /sessions/:id` 會 404。
-
-改名、釘選、刪除三者在 live 模式沒有後端，會 404；它們在[後端回饋清單](./backend-feedback.md)上。
+**沒有建立 session 的端點。** session id 由前端產生，第一次送訊息或上傳檔案時由後端
+upsert（[ADR-0008](../adr/0008-new-chat-is-a-client-side-draft.md)）。
 
 **線路型別即應用型別**（[ADR-0007](../adr/0007-verbatim-backend-wire-contract.md)）：
 `types/api/` 的形狀與後端 DTO 逐字一致（`sender: 'USER' | 'AI'`、`stepsJson` /
 `questionsJson` JSON 字串、`artifactTitle`……），UI 在使用點解析，沒有轉換層。
 前端-only 的欄位（`Session.pinnedAt`、`Message.scenario` / `attachments`、QUESTION 的
-`form`）在型別上明確標註，真後端不回它們時 UI 各自降級。
+`form`、`Artifact.generated` / `pinned` / `shared`）在型別上明確標註。真後端不回它們時 UI
+各自降級；依賴它們的操作目前一律停用（ADR-0009）。
 
 ### QUESTION 事件與反問表單的降級
 
@@ -171,20 +173,22 @@ QUESTION 的線路承載是後端的扁平 `Question[]`（純字串選項、`mul
 `visibleWhen`、DC item 規格上下限）維持運作；真後端只送扁平清單時，
 `utils/liftQuestions.ts` 把它抬升成一排 chip 的表單——**單向且失真**。
 
-**要在 live 模式驅動完整的分析條件表單，後端必須改送 `QuestionForm` 本身**；連同結構化
+**要驅動完整的分析條件表單，後端必須改送 `QuestionForm` 本身**；連同結構化
 答案 `{ answers, inReplyTo }`，這兩項都在[後端回饋清單](./backend-feedback.md)。
 
 ## Artifact
 
-| Method | Path                      | Request                                                       | Response                              |
-| ------ | ------------------------- | ------------------------------------------------------------- | ------------------------------------- |
-| GET    | `/artifacts`              | —                                                             | `Artifact[]`                          |
-| GET    | `/artifacts/:id`          | `?theme=light\|dark`（前端-only query extension，真後端忽略） | `text/html`（HTML 字串）              |
-| PATCH  | `/artifacts/:id`          | `Partial<Pick<Artifact, 'pinned'>>`                           | `Artifact`                            |
-| DELETE | `/artifacts/:id`          | —                                                             | 204 No Content                        |
-| POST   | `/artifacts/:id/share`    | `{ targetIds: string[] }`                                     | `{ url: string; artifact: Artifact }` |
-| POST   | `/artifacts/:id/generate` | —                                                             | `Artifact`（前端-only）               |
-| GET    | `/directory`              | —                                                             | `DirectoryEntry[]`                    |
+| Method | Path                      | Request                                                       | Response                              | 後端狀態 |
+| ------ | ------------------------- | ------------------------------------------------------------- | ------------------------------------- | -------- |
+| GET    | `/artifacts`              | —                                                             | `Artifact[]`                          | stub     |
+| GET    | `/artifacts/:id`          | `?theme=light\|dark`（前端-only query extension，真後端忽略） | `text/html`（HTML 字串）              | 已實作   |
+| GET    | `/artifacts/:id/raw`      | —                                                             | `text/plain`                          | 已實作   |
+| POST   | `/artifacts/:id/repair`   | —                                                             | `Artifact`                            | 已實作   |
+| PATCH  | `/artifacts/:id`          | `Partial<Pick<Artifact, 'pinned'>>`                           | `Artifact`                            | 停用     |
+| DELETE | `/artifacts/:id`          | —                                                             | 204 No Content                        | 停用     |
+| POST   | `/artifacts/:id/share`    | `{ targetIds: string[] }`                                     | `{ url: string; artifact: Artifact }` | 停用     |
+| POST   | `/artifacts/:id/generate` | —                                                             | `Artifact`（前端-only）               | 停用     |
+| GET    | `/directory`              | —                                                             | `DirectoryEntry[]`                    | stub     |
 
 `/artifacts` lists every Artifact (own, pinned, and shared-to-me), backing the
 Artifacts Gallery's filters (All / Yours / Shared to me / Pinned) and sort
@@ -213,8 +217,8 @@ The Studio panel additionally `postMessage`s `{ type: 'theme', theme }` into the
 already-mounted iframe on every theme change, so an artifact's own script can react
 instantly without waiting on a refetch.
 
-`PATCH /artifacts/:id` toggles the Artifact's pinned state from the Gallery card;
-the pinned flag is persisted (localStorage-backed mock) and survives reload.
+`PATCH /artifacts/:id` toggles the Artifact's pinned state from the Gallery card. 停用中
+（ADR-0009）：卡片上的釘選鈕與選單項目 disabled，`Artifact.pinned` 目前只從 stub 資料讀。
 
 `DELETE /artifacts/:id` removes the Artifact permanently (Gallery card's
 more-actions menu); the mock backend does not cascade-delete its versions or
@@ -237,18 +241,16 @@ departments/sections, `"<NT account> · <中文名>"` for people).
 
 ## Connector
 
-| Method | Path              | Request                       | Response          |
-| ------ | ----------------- | ----------------------------- | ----------------- |
-| GET    | `/connectors`     | —                             | `Connector[]`     |
-| PATCH  | `/connectors/:id` | `{ status: ConnectorStatus }` | `Connector`       |
-| POST   | `/connectors`     | `{ name: string }`            | `Connector` (201) |
+| Method | Path              | Request                       | Response          | 後端狀態 |
+| ------ | ----------------- | ----------------------------- | ----------------- | -------- |
+| GET    | `/connectors`     | —                             | `Connector[]`     | stub     |
+| PATCH  | `/connectors/:id` | `{ status: ConnectorStatus }` | `Connector`       | 停用     |
+| POST   | `/connectors`     | `{ name: string }`            | `Connector` (201) | 停用     |
 
 `Connector.status` is one of `connected` / `available` / `expired` / `no_access`.
 `PATCH /connectors/:id` connects or disconnects a data source from the Studio
-composer's Connectors panel; the new status is persisted (localStorage-backed
-mock) and survives reload. `no_access` connectors cannot be toggled (the panel
-disables their connect control) — the mock backend does not enforce this
-server-side, since only the panel exposes the toggle.
+composer's Connectors panel. 停用中（ADR-0009）：面板是唯讀的狀態呈現，每個 toggle 都
+disabled 並標「後端尚未支援」。
 
 `POST /connectors` backs the panel's "Add a custom data source" input. The id is
 slugified from the name (`c_<slug>`); posting a name that slugifies to an existing id
@@ -269,10 +271,10 @@ are `custom: true`, category `Custom`, and start `connected`.
 
 ## Session files（上傳）
 
-| Method | Path                                 | Request              | Response                   |
-| ------ | ------------------------------------ | -------------------- | -------------------------- |
-| POST   | `/sessions/:sessionId/files`         | multipart（`files`） | `UploadedFileInfo[]` (201) |
-| DELETE | `/sessions/:sessionId/files/:fileId` | —                    | 204 No Content             |
+| Method | Path                                 | Request              | Response                   | 後端狀態 |
+| ------ | ------------------------------------ | -------------------- | -------------------------- | -------- |
+| POST   | `/sessions/:sessionId/files`         | multipart（`files`） | `UploadedFileInfo[]` (201) | 已實作   |
+| DELETE | `/sessions/:sessionId/files/:fileId` | —                    | 204 No Content             | 已實作   |
 
 檔案掛在 session 上（後端契約），清單內嵌於 `SessionDetail.files`。Composer 的
 attach-files 流程先過 client-side 驗證（副檔名白名單、最多 5 檔、總計 5 GB，
