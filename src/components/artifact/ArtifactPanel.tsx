@@ -4,6 +4,7 @@ import {
   ExportOutlined,
   ReloadOutlined,
   ShareAltOutlined,
+  SyncOutlined,
 } from '@ant-design/icons';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -127,7 +128,10 @@ function ArtifactPanelContent({
   const theme = useArtifactTheme();
 
   const [isShareOpen, setIsShareOpen] = useState(false);
-  const { data } = useArtifactContent(artifactId, theme);
+  const reloadNonce = useActiveRunStore((s) => s.artifactReloadNonce);
+  const bumpArtifactReload = useActiveRunStore((s) => s.bumpArtifactReload);
+  const isRunStreaming = useActiveRunStore((s) => s.isRunStreaming);
+  const { data } = useArtifactContent(artifactId, theme, reloadNonce);
   const { data: artifacts } = useArtifacts();
   const artifact = artifacts?.find((a) => a.id === artifactId);
   const generateArtifact = useGenerateArtifact();
@@ -192,6 +196,19 @@ function ArtifactPanelContent({
             <ShareAltOutlined aria-hidden />
           </button>
         </Tooltip>
+        <Tooltip content="重新整理">
+          <button
+            type="button"
+            className={styles.iconButton}
+            aria-label="Reload artifact"
+            // Mid-run the version on screen is still being written; remounting now would
+            // present a half-finished document as the result.
+            disabled={isRunStreaming}
+            onClick={bumpArtifactReload}
+          >
+            <ReloadOutlined aria-hidden />
+          </button>
+        </Tooltip>
         <Tooltip content="重新生成">
           <button
             type="button"
@@ -203,7 +220,7 @@ function ArtifactPanelContent({
               sendPrompt?.({ question: 'Regenerate the dashboard.', baseArtifactId: artifactId })
             }
           >
-            <ReloadOutlined aria-hidden />
+            <SyncOutlined aria-hidden />
           </button>
         </Tooltip>
         <Tooltip content="在新分頁開啟預覽">
@@ -220,7 +237,12 @@ function ArtifactPanelContent({
         </Tooltip>
       </div>
       <div className={styles.frameWrapper}>
-        <ArtifactFrame html={data} theme={theme} artifactId={artifactId} />
+        <ArtifactFrame
+          key={`${artifactId}-${reloadNonce}`}
+          html={data}
+          theme={theme}
+          artifactId={artifactId}
+        />
       </div>
       {artifact && (
         <ShareArtifactDialog

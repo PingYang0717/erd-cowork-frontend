@@ -2,6 +2,7 @@ import { http, HttpResponse } from 'msw';
 
 import { currentUser } from '@/config/currentUser';
 import { isLive } from '@/config/transport';
+import { DRAFT_SESSION_TITLE } from '@/constants/messages';
 import type { AgentEvent, QuestionForm, StepItem } from '@/types/api/agentEvent';
 import type { Artifact, ArtifactKind } from '@/types/api/artifact';
 import type { Connector, ConnectorStatus } from '@/types/api/connector';
@@ -236,17 +237,18 @@ async function parseMultipartFiles(
   return files;
 }
 
-const sessions = createPersistedResource<Session>('erd-cowork:sessions', [
+// :v2 — sessions persisted before this carry the old boolean `pinned` field.
+const sessions = createPersistedResource<Session>('erd-cowork:sessions:v2', [
   {
     id: 'session-1',
     title: 'SPC — Vt (gate CD)',
-    pinned: true,
+    pinnedAt: '2026-08-20T09:05:00.000Z',
     updatedAt: '2026-08-20T09:00:00.000Z',
   },
   {
     id: 'session-2',
     title: 'Defect pareto — W12',
-    pinned: false,
+    pinnedAt: null,
     updatedAt: '2026-08-19T09:00:00.000Z',
   },
 ]);
@@ -403,16 +405,65 @@ const dcItems = createPersistedResource<DcItem>('erd-cowork:dc-items', DC_ITEM_F
  *  (rename, pin, delete — features the backend does not have) stay mocked even in
  *  live mode (`docs/api/interface.md` → live 端點覆蓋範圍). */
 const LIVE_BACKED = [
+  'GET /api/config',
   'GET /api/sessions',
   'GET /api/sessions/:sessionId',
   'POST /api/sessions/:sessionId/messages',
   'POST /api/sessions/:sessionId/files',
   'DELETE /api/sessions/:sessionId/files/:fileId',
   'GET /api/artifacts/:id',
+  'GET /api/artifacts/:id/raw',
   'POST /api/artifacts/:id/repair',
 ];
 
+/** Creates the session if this client has never sent to it before, and stamps its
+ *  last activity either way. Mirrors ChatSession implementing Persistable<String>:
+ *  the backend upserts on send rather than exposing a create endpoint. */
+export function upsertSession(sessionId: string): void {
+  const all = sessions.read();
+  const existing = all.find((session) => session.id === sessionId);
+  const now = new Date().toISOString();
+
+  if (existing) {
+    sessions.write(
+      all.map((session) => (session.id === sessionId ? { ...session, updatedAt: now } : session)),
+    );
+    return;
+  }
+
+  sessions.write([
+    ...all,
+    { id: sessionId, title: DRAFT_SESSION_TITLE, pinnedAt: null, updatedAt: now },
+  ]);
+}
+
+/** Each artifact IS a version (deriveArtifactVersions); number it the way the client
+ *  does — by its position among the session's artifact-bearing messages — so the
+ *  rendered "· vN" matches the menu. */
+function artifactVersionNumber(artifact: { id: string; sessionId: string }): number {
+  const artifactMessages = messages
+    .read()
+    .filter((m) => m.sessionId === artifact.sessionId && m.artifactId != null);
+  const index = artifactMessages.findIndex((m) => m.artifactId === artifact.id);
+  return index >= 0 ? index + 1 : 1;
+}
+
 export const allHandlers = [
+  // The limits the backend enforces, mirrored here so the UI reads one source in both
+  // transports. Values match cowork master's defaults.
+  http.get('/api/config', () =>
+    HttpResponse.json({
+      retentionDays: 30,
+      maxFiles: 5,
+      maxSessionBytes: 5 * 1024 * 1024 * 1024,
+      singleFileLimits: {
+        csv: 2 * 1024 * 1024 * 1024,
+        xlsx: 200 * 1024 * 1024,
+        xls: 200 * 1024 * 1024,
+      },
+    }),
+  ),
+
   http.get('/api/example-widgets', () => {
     return HttpResponse.json(exampleWidgets.read());
   }),
@@ -425,8 +476,8 @@ export const allHandlers = [
     const body = (await request.json()) as Partial<Pick<Session, 'title'>>;
     const session: Session = {
       id: crypto.randomUUID(),
-      title: body.title?.trim() || 'New analysis',
-      pinned: false,
+      title: body.title?.trim() || DRAFT_SESSION_TITLE,
+      pinnedAt: null,
       updatedAt: new Date().toISOString(),
     };
     sessions.write([...sessions.read(), session]);
@@ -434,7 +485,7 @@ export const allHandlers = [
   }),
 
   http.patch('/api/sessions/:id', async ({ params, request }) => {
-    const body = (await request.json()) as Partial<Pick<Session, 'title' | 'pinned'>>;
+    const body = (await request.json()) as Partial<Pick<Session, 'title' | 'pinnedAt'>>;
     const all = sessions.read();
     const existing = all.find((session) => session.id === params.id);
     if (!existing) {
@@ -485,6 +536,10 @@ export const allHandlers = [
     if (incoming.length === 0) {
       return new HttpResponse(null, { status: 400 });
     }
+    // Uploading upserts the session too — the backend has two write endpoints and both
+    // create the session on first use (ADR-0008). Without this, attaching a file to a
+    // draft leaves the detail endpoint 404ing.
+    upsertSession(sessionId);
     const existingCount = sessionFiles.read().filter((f) => f.sessionId === sessionId).length;
     const created: StoredFile[] = incoming.map((file, index) => ({
       id: crypto.randomUUID(),
@@ -523,6 +578,11 @@ export const allHandlers = [
         { status: 400 },
       );
     }
+
+    // Sending is what creates a session: the id comes from the client and this is an
+    // upsert, not a lookup (ADR-0008 — the backend has no POST /sessions). A draft
+    // becomes real here and nowhere else.
+    upsertSession(sessionId);
 
     // Snapshot the session's files onto the user message (the 前端-only extension
     // behind the mockup's in-bubble chips), then consume them so the composer's
@@ -639,18 +699,29 @@ export const allHandlers = [
     }
     const searchParams = new URL(request.url).searchParams;
     const theme = searchParams.get('theme') === 'dark' ? 'dark' : 'light';
-    // Each artifact IS a version (deriveArtifactVersions); number it the same way the
-    // client does — by its position among the session's artifact-bearing messages —
-    // so the rendered "· vN" matches the menu.
-    const artifactMessages = messages
-      .read()
-      .filter((m) => m.sessionId === artifact.sessionId && m.artifactId != null);
-    const messageIndex = artifactMessages.findIndex((m) => m.artifactId === artifact.id);
-    const versionN = messageIndex >= 0 ? messageIndex + 1 : 1;
-    const fixture = buildArtifactFixture(artifact.scenario, artifact.kind, versionN);
+    const fixture = buildArtifactFixture(
+      artifact.scenario,
+      artifact.kind,
+      artifactVersionNumber(artifact),
+    );
     // The backend serves text/html directly, not { html } JSON; theme is a query
     // extension only the mock reads (a real backend ignores it).
     return new HttpResponse(fixture[theme], { headers: { 'Content-Type': 'text/html' } });
+  }),
+
+  // The artifact's source before assembly. The chat bubble lazy-fetches it when the
+  // reader expands "view HTML"; the light fixture stands in for the un-themed source.
+  http.get('/api/artifacts/:id/raw', ({ params }) => {
+    const artifact = artifacts.read().find((a) => a.id === params.id);
+    if (!artifact) {
+      return new HttpResponse(null, { status: 404 });
+    }
+    const fixture = buildArtifactFixture(
+      artifact.scenario,
+      artifact.kind,
+      artifactVersionNumber(artifact),
+    );
+    return new HttpResponse(fixture.light, { headers: { 'Content-Type': 'text/plain' } });
   }),
 
   // Rebuilding an artifact whose HTML threw. Every repair here succeeds — a real

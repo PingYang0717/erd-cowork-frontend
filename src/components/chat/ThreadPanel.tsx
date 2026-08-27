@@ -2,6 +2,7 @@ import { DatabaseOutlined, ThunderboltFilled } from '@ant-design/icons';
 import type { ReactNode } from 'react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
+import DataBoundary from '@/components/common/DataBoundary';
 import { ThemeToggle } from '@/components/common/ThemeToggle';
 import { type SendInput, useAgentStream } from '@/hooks/useAgentStream';
 import { useArtifactRepair } from '@/hooks/useArtifactRepair';
@@ -13,7 +14,7 @@ import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
 import { composeAnswerText } from '@/utils/composeAnswerText';
 
 import { ChatComposer } from './ChatComposer';
-import { MessageList } from './MessageList';
+import { type LiveRun, MessageList } from './MessageList';
 import type { Answers } from './QuestionFormCard';
 import { RepairOfferCard } from './RepairOfferCard';
 import styles from './ThreadPanel.module.css';
@@ -49,24 +50,33 @@ function EmptyState({ heading, subtitle }: { heading: string; subtitle: ReactNod
   );
 }
 
+/** The thread pane. The header is deliberately outside the boundary below: it carries
+ *  the theme toggle and the data-source chip, which have nothing to do with which
+ *  conversation is open, and a header that blinks away every time a session loads is a
+ *  worse answer than one that stays put. */
 const ThreadPanel: React.FC = () => {
   const selectedSessionId = useSessionSelectionStore((s) => s.selectedSessionId);
 
-  if (!selectedSessionId) {
-    return (
-      <div className={styles.panel}>
-        <ThreadHeader />
+  return (
+    <div className={styles.panel}>
+      <ThreadHeader />
+      {selectedSessionId ? (
+        // Keyed on the session: every piece of state below belongs to one conversation —
+        // the open stream, the optimistic bubble, each recap's expanded flag. Remounting
+        // is one line where clearing them individually is five, and the five drift.
+        <DataBoundary label="Thread">
+          <ThreadView key={selectedSessionId} sessionId={selectedSessionId} />
+        </DataBoundary>
+      ) : (
         <div className={styles.body}>
           <EmptyState
             heading="Select or start a session"
             subtitle="Start or select a session from the left to begin an analysis."
           />
         </div>
-      </div>
-    );
-  }
-
-  return <ThreadView sessionId={selectedSessionId} />;
+      )}
+    </div>
+  );
 };
 
 function ThreadView({ sessionId }: { sessionId: string }) {
@@ -74,6 +84,7 @@ function ThreadView({ sessionId }: { sessionId: string }) {
   const messages = detail.messages;
   const { state, send, stop } = useAgentStream(sessionId);
   const setStreamedArtifact = useActiveRunStore((s) => s.setStreamedArtifact);
+  const setRunStreaming = useActiveRunStore((s) => s.setRunStreaming);
   const displayedArtifactId = useActiveRunStore((s) => s.displayedArtifactId);
   // The user's words go on screen the moment they send; cleared once the refetched
   // history carries them (streaming flips false after the hook's await-then-DONE).
@@ -93,7 +104,14 @@ function ThreadView({ sessionId }: { sessionId: string }) {
   // An offer belongs to one artifact in one session. Moving away from that session
   // leaves it pointing at something the user is no longer looking at.
   useEffect(() => clearRepair, [sessionId, clearRepair]);
-  const bodyRef = useRef<HTMLDivElement>(null);
+
+  // The Artifact pane refuses a Reload while a run is open; like the artifact itself
+  // this is state another tree needs, so it goes through the store.
+  const isRunStreaming = state.isStreaming;
+  useEffect(() => {
+    setRunStreaming(isRunStreaming);
+    return () => setRunStreaming(false);
+  }, [isRunStreaming, setRunStreaming]);
 
   // Publishing to the Artifact pane is syncing with something outside this tree, and it
   // has to happen the moment the ARTIFACT event lands rather than when the run ends.
@@ -104,19 +122,6 @@ function ThreadView({ sessionId }: { sessionId: string }) {
     // longer on screen.
     return () => setStreamedArtifact(null);
   }, [streamedArtifact, setStreamedArtifact]);
-
-  // The mockup scrolls the thread to the bottom shortly after a new message
-  // renders (40ms, letting layout settle), so long conversations never leave
-  // the latest reply out of view.
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      const body = bodyRef.current;
-      if (body) {
-        body.scrollTop = body.scrollHeight;
-      }
-    }, 40);
-    return () => clearTimeout(timer);
-  }, [messages.length, state.steps.length, state.liveText]);
 
   // Handed to ChatComposer; a fresh identity every render would defeat its memoisation.
   // Refetching after the run lives inside useAgentStream (awaited before DONE); the
@@ -159,19 +164,26 @@ function ThreadView({ sessionId }: { sessionId: string }) {
     return () => unregisterPromptSender(sender);
   }, [handleSend, registerPromptSender, unregisterPromptSender]);
 
+  // A run that ended cleanly hands over to the refetched history — the bubble it left
+  // behind and the one history renders are now the same component, so the swap is
+  // invisible. A run that stopped, failed or is waiting on a reask has something the
+  // history does not carry, so it stays.
   const runEndedVisibly = state.stopped || state.error !== null || state.question !== null;
-  const live =
+  const live: LiveRun | null =
     state.isStreaming || runEndedVisibly
       ? {
           isStreaming: state.isStreaming,
           steps: state.steps,
           liveText: state.liveText,
           stopped: state.stopped,
+          networkError: state.networkError,
           thinking: state.thinking,
           question: state.question,
           codeText: state.codeText,
           tables: state.tables,
           error: state.error,
+          artifact: state.artifact,
+          startedAt: state.startedAt,
         }
       : null;
 
@@ -184,31 +196,34 @@ function ThreadView({ sessionId }: { sessionId: string }) {
   const hasContent = messages.length > 0 || live !== null || optimisticUserText !== null;
 
   return (
-    <div className={styles.panel}>
-      <ThreadHeader />
-      <div ref={bodyRef} role="log" aria-label="Messages" className={styles.body}>
-        {hasContent ? (
-          <MessageList
-            messages={messages}
-            live={live}
-            optimisticUserText={optimisticUserText}
-            lastRunDurationMs={state.durationMs}
-            onAnswer={handleAnswer}
-          />
-        ) : (
+    <>
+      {hasContent ? (
+        <MessageList
+          messages={messages}
+          live={live}
+          optimisticUserText={optimisticUserText}
+          lastRunDurationMs={state.durationMs}
+          onAnswer={handleAnswer}
+          // The offer is about the artifact this conversation just produced, so it
+          // belongs at the tail of the thread and scrolls with it.
+          bottomSlot={
+            repairOffer ? (
+              <RepairOfferCard
+                offer={repairOffer}
+                onConfirm={() => repair(repairOffer.artifactId, repairOffer.errors)}
+                onDismiss={dismissRepair}
+              />
+            ) : null
+          }
+        />
+      ) : (
+        <div className={styles.body}>
           <EmptyState
             heading="Start an analysis"
             subtitle={'Try "Daily monitor (A14)" below, or ask for an SPC analysis on Vt.'}
           />
-        )}
-        {repairOffer && (
-          <RepairOfferCard
-            offer={repairOffer}
-            onConfirm={() => repair(repairOffer.artifactId, repairOffer.errors)}
-            onDismiss={dismissRepair}
-          />
-        )}
-      </div>
+        </div>
+      )}
       <div className={styles.composer}>
         <ChatComposer
           sessionId={sessionId}
@@ -218,7 +233,7 @@ function ThreadView({ sessionId }: { sessionId: string }) {
           onStop={stop}
         />
       </div>
-    </div>
+    </>
   );
 }
 

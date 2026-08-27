@@ -20,7 +20,7 @@ text/html、反問是扁平的 `Question[]`。
 ## 決策
 
 1. **`types/api/` 與後端 DTO 逐字一致**,UI 在使用點解析(`stepsJson` 之類),不設轉換層。
-2. **前端-only 的欄位一律標註為 extension**:`Session.pinned`、`Message.scenario` /
+2. **前端-only 的欄位一律標註為 extension**:`Session.pinnedAt`、`Message.scenario` /
    `attachments`、QUESTION 事件的 `form?: QuestionForm`。mock 會回,真後端不回,UI 降級。
 3. **反問答案組成自然語言**(`utils/composeAnswerText.ts`,值以選項 label 呈現)當新訊息
    送出;等待反問中的 session 收到任何訊息都視為答案。

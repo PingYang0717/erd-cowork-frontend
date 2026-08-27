@@ -176,3 +176,7 @@
 .footer > :last-child {
   margin-left: auto;
 }
+
+.uploadProgress {
+  margin-top: 12px;
+}

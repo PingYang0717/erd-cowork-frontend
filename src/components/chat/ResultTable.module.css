@@ -1,5 +1,9 @@
+/* A table needs a visible boundary to stay readable, but inside a bubble that boundary
+   is a fill one step deeper — not another outline. */
 .wrapper {
-  margin-top: 8px;
+  padding: 9px 10px;
+  border-radius: 9px;
+  background: var(--erd-color-fill-quaternary, rgba(0, 0, 0, 0.02));
 }
 
 /* A wide result scrolls inside its own box; the thread itself never scrolls sideways. */
@@ -28,7 +32,7 @@
 }
 
 .table th {
-  background: var(--erd-color-fill-quaternary, #fafafa);
+  background: var(--erd-color-bg-container, #fff);
   font-weight: 500;
 }
 

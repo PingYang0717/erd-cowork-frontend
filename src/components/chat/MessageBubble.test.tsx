@@ -1,0 +1,159 @@
+import { act, render, screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { describe, expect, it, vi } from 'vitest';
+
+import { INTERRUPTED_TEXTS, REPAIR_RECORD_PREFIXES } from '@/constants/messages';
+import type { StepItem, TableResult } from '@/types/api/index';
+
+import { MessageBubble } from './MessageBubble';
+
+const step = (overrides: Partial<StepItem> = {}): StepItem => ({
+  stepKey: 'scan',
+  title: 'Scanning lots',
+  description: null,
+  status: 'SUCCESS',
+  ...overrides,
+});
+
+const table = (tableId = 't1'): TableResult => ({
+  tableId,
+  intent: 'Top offending lots',
+  columns: ['lot', 'cpk'],
+  rows: [['L1', 0.9]],
+  truncated: false,
+});
+
+describe('MessageBubble', () => {
+  it('renders what the user said, right-aligned and without an agent label', () => {
+    render(<MessageBubble sender="USER" text="Run SPC on Vt" />);
+
+    expect(screen.getByText('Run SPC on Vt')).toBeInTheDocument();
+    expect(screen.queryByText(/eRD AI/)).not.toBeInTheDocument();
+  });
+
+  it('labels an agent reply and renders it as Markdown', () => {
+    render(<MessageBubble sender="AI" text={'Found **two** outliers.'} />);
+
+    expect(screen.getByText('eRD AI')).toBeInTheDocument();
+    expect(screen.getByText('two').tagName).toBe('STRONG');
+  });
+
+  it('places a table where its marker sits in the answer', () => {
+    render(<MessageBubble sender="AI" text={'Before [[table:t1]] after'} tables={[table()]} />);
+
+    expect(screen.getByRole('table', { name: 'Top offending lots' })).toBeInTheDocument();
+    expect(screen.queryByText(/\[\[table:/)).not.toBeInTheDocument();
+  });
+
+  it('still shows a table that no marker placed', () => {
+    render(<MessageBubble sender="AI" text="No markers here." tables={[table()]} />);
+
+    expect(screen.getByRole('table', { name: 'Top offending lots' })).toBeInTheDocument();
+  });
+
+  it('shows the steps as they run, and collapses them into a recap once finished', async () => {
+    const { rerender } = render(
+      <MessageBubble sender="AI" text="" streaming steps={[step({ status: 'RUNNING' })]} />,
+    );
+
+    expect(screen.getByText('Scanning lots')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Worked through/ })).not.toBeInTheDocument();
+
+    rerender(<MessageBubble sender="AI" text="Done." steps={[step()]} />);
+
+    const recap = screen.getByRole('button', { name: 'Worked through 1 steps' });
+    expect(screen.queryByText('Scanning lots')).not.toBeInTheDocument();
+    await userEvent.click(recap);
+    expect(screen.getByText('Scanning lots')).toBeInTheDocument();
+  });
+
+  it('ticks the turn timer while streaming and freezes it once the turn is done', () => {
+    vi.useFakeTimers();
+    try {
+      const startedAt = Date.now();
+      const { rerender } = render(
+        <MessageBubble sender="AI" text="" streaming timerStartedAt={startedAt} />,
+      );
+
+      act(() => {
+        vi.advanceTimersByTime(3000);
+      });
+      expect(screen.getByText('3s')).toBeInTheDocument();
+
+      rerender(<MessageBubble sender="AI" text="Done." durationMs={4200} />);
+      expect(screen.getByText('4.2s')).toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('distinguishes a user-initiated stop from a dropped connection', () => {
+    const { rerender } = render(<MessageBubble sender="AI" text="Partial" stopped />);
+    expect(screen.getByText('Stopped')).toBeInTheDocument();
+
+    rerender(<MessageBubble sender="AI" text="Partial" networkError />);
+    expect(screen.queryByText('Stopped')).not.toBeInTheDocument();
+    expect(screen.getByText('Connection lost — send it again.')).toBeInTheDocument();
+  });
+
+  it('renders the backend’s own record messages as hints, not as agent prose', () => {
+    render(<MessageBubble sender="AI" text={INTERRUPTED_TEXTS[0]} />);
+    expect(screen.getByText(INTERRUPTED_TEXTS[0])).toHaveAttribute('data-record', 'true');
+  });
+
+  it('renders a repair record as a hint too', () => {
+    const text = `${REPAIR_RECORD_PREFIXES[0]}（2 個）`;
+    render(<MessageBubble sender="AI" text={text} />);
+    expect(screen.getByText(text)).toHaveAttribute('data-record', 'true');
+  });
+
+  it('offers the artifact it produced, and a way to read its HTML', () => {
+    render(
+      <MessageBubble
+        sender="AI"
+        text="Here it is."
+        artifact={{ artifactId: 'artifact-1', title: 'SPC dashboard' }}
+      />,
+    );
+
+    expect(screen.getByText('SPC dashboard')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'HTML' })).toBeInTheDocument();
+  });
+
+  it('shows the live HTML instead of the fetchable one while the agent is still writing it', () => {
+    render(
+      <MessageBubble
+        sender="AI"
+        text=""
+        streaming
+        codeText="<html>"
+        artifact={{ artifactId: 'artifact-1', title: 'SPC dashboard' }}
+      />,
+    );
+
+    expect(screen.getAllByRole('button', { name: /HTML/ })).toHaveLength(1);
+  });
+
+  it('carries the attachments that were sent with the message', () => {
+    render(
+      <MessageBubble
+        sender="USER"
+        text="Use these"
+        attachments={[
+          {
+            id: 'f1',
+            name: 'lots.csv',
+            alias: 't1',
+            sizeBytes: 1024,
+            type: 'text/csv',
+            rowCount: null,
+            expired: false,
+          },
+        ]}
+      />,
+    );
+
+    const list = screen.getByRole('list', { name: 'Message attachments' });
+    expect(within(list).getByText(/lots\.csv/)).toBeInTheDocument();
+  });
+});

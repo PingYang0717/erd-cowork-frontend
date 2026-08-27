@@ -20,12 +20,16 @@ _Avoid_: Chat view, Main view
 一段對話（Thread），底下包含多筆訊息與這段對話中產生的 Artifact 清單；使用者可命名、釘選（pin）。
 _Avoid_: Thread, Conversation, Chat
 
+**草稿 Session（Draft session）**:
+按下 New chat 後、第一則訊息送出前的 Session。它只存在於這個瀏覽器分頁裡——id 由前端產生，後端在第一則訊息抵達前不知道它存在。草稿可以被放棄（選走別的 Session、或重新整理）而不留下任何痕跡。
+_Avoid_: 未儲存的 Session, Pending session（草稿不是「等待儲存」，它是「還沒有理由存在」）
+
 **Scenario**:
 使用者請求對應到的一套預先定義分析劇本，目前有四種：SPC、Inline dashboard、Daily monitor、CP Test。一個 Scenario 決定三件事：**要向使用者反問哪些分析條件**、要跑哪一段分析流程、產出哪種 Artifact。
 _Avoid_: Workflow, Flow, Intent, Prompt preset（Scenario 不只是一段預寫好的提問——它是可被執行的劇本）
 
 **分析條件（Analysis condition）**:
-一次 Scenario 執行前必須先確定的參數，由 Agent 以反問卡向使用者收集，例如 SPC 的 Part ID／Time range／Data type，或 CP Test 的角色／Flow／Loop／時間區間。條件送出後，卡片收合成「已設定 N 項分析條件」摘要，留在對話串中。
+一次 Scenario 執行前必須先確定的參數，由 Agent 以反問卡向使用者收集，例如 SPC 的 Part ID／Time range／Data type，或 CP Test 的角色／Flow／Loop／時間區間。條件送出後會被組成一句話（`部件：A14；時間區間：近 7 天`）當作使用者訊息留在對話串中——**答案本身不會被保存**，所以歷史裡的反問卡只能顯示當初問了什麼，顯示不出選了什麼。
 _Avoid_: Parameter, Setting, Filter
 
 **反問（Question form）**:
@@ -43,6 +47,14 @@ _Avoid_: Reasoning, Chain of thought
 **修復（Repair）**:
 Artifact 的 HTML 在 iframe 中執行時拋出 JS 錯誤後，由系統偵測、向使用者提議、經使用者確認才交由 Agent 重新產生一版可執行 HTML 的流程。
 _Avoid_: Fix, Retry, Regenerate（Regenerate 是使用者主動要新版本，Repair 是錯誤驅動）
+
+**重新生成（Regenerate）**:
+使用者主動要求 Agent 再產一版 Artifact。它送出一則訊息、跑一整輪分析，結果是**一個新版本**。
+_Avoid_: Reload, Refresh（那兩個不產生新版本）
+
+**重新整理（Reload）**:
+把 iframe 裡的 Artifact 文件丟掉、以**同一份 HTML** 重新掛載一次。不呼叫 Agent、不產生新版本，用途是讓一個自己卡住的 Artifact 從頭再跑一次它的 script。修復成功後也會觸發一次。
+_Avoid_: Regenerate, Repair（三者互斥：Reload 不重產、Regenerate 是使用者要新版本、Repair 是錯誤驅動的重產）
 
 **Artifact**:
 一次 Scenario 執行後產生的分析成果，形式是一段完整的 HTML（dashboard 或 slides），在 Studio 右側以 sandboxed iframe 呈現；可被命名、釘選、分享、切版本。

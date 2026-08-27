@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it } from 'vitest';
@@ -7,6 +7,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { StudioShell } from '@/components/layouts/StudioShell';
 import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
 import { useStudioLayoutStore } from '@/stores/useStudioLayoutStore';
+import { mockAgentStream } from '@/test/agentStream';
 import { answerAnalysisConditions } from '@/test/studioRun';
 
 import { StudioPage } from './StudioPage';
@@ -73,6 +74,40 @@ describe('Chat composer', () => {
     renderStudioPage();
 
     expect(screen.queryByRole('textbox', { name: 'Message' })).not.toBeInTheDocument();
+  });
+
+  // A Chinese-input user is mid-composition on almost every Enter they press: the key
+  // commits the candidate word, and only a second Enter means "send".
+  it('commits the input-method candidate instead of sending while the user is composing', async () => {
+    const user = userEvent.setup();
+    const stream = mockAgentStream();
+    renderStudioPage();
+    await selectASession(user);
+
+    const textbox = screen.getByRole('textbox', { name: 'Message' });
+    fireEvent.compositionStart(textbox);
+    await user.type(textbox, 'ㄊㄨㄥ');
+    fireEvent.keyDown(textbox, { key: 'Enter' });
+
+    expect(stream.requests).toHaveLength(0);
+    expect(textbox).toHaveValue('ㄊㄨㄥ');
+  });
+
+  it('sends once composition has ended and Enter is pressed again', async () => {
+    const user = userEvent.setup();
+    const stream = mockAgentStream();
+    renderStudioPage();
+    await selectASession(user);
+
+    const textbox = screen.getByRole('textbox', { name: 'Message' });
+    fireEvent.compositionStart(textbox);
+    await user.type(textbox, '統計製程管制');
+    fireEvent.keyDown(textbox, { key: 'Enter' });
+    fireEvent.compositionEnd(textbox);
+    fireEvent.keyDown(textbox, { key: 'Enter' });
+
+    await waitFor(() => expect(stream.requests).toHaveLength(1));
+    expect(stream.requests[0]).toMatchObject({ question: '統計製程管制' });
   });
 
   it('shows the data-source chip alongside the theme toggle in the thread header', () => {
@@ -153,13 +188,17 @@ describe('Scenario matching', () => {
     renderStudioPage();
     await selectASession(user);
 
+    // The thread only exists once it has something in it: an empty session shows the
+    // empty state instead, and there is nothing to scroll.
+    await runScenario(user, 'SPC analysis');
     const log = screen.getByRole('log', { name: 'Messages' });
     Object.defineProperty(log, 'scrollHeight', { value: 640, configurable: true });
-    expect(log.scrollTop).toBe(0);
+    log.scrollTop = 0;
 
-    await runScenario(user, 'SPC analysis');
+    // The user's own words land in the thread the moment they send, which is exactly
+    // the moment the thread has to follow them down.
+    await user.type(screen.getByRole('textbox', { name: 'Message' }), 'And the Cpk?{Enter}');
 
-    // The mockup's 40ms post-render scroll delay.
     await waitFor(() => expect(log.scrollTop).toBe(640));
   });
 

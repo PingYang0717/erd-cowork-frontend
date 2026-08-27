@@ -28,16 +28,16 @@ it implements them.
 
 ## Session
 
-| Method | Path            | Request                                       | Response        |
-| ------ | --------------- | --------------------------------------------- | --------------- |
-| GET    | `/sessions`     | —                                             | `Session[]`     |
-| GET    | `/sessions/:id` | —                                             | `SessionDetail` |
-| POST   | `/sessions`     | `{}` (title defaults to `"New analysis"`)     | `Session` (201) |
-| PATCH  | `/sessions/:id` | `Partial<Pick<Session, 'title' \| 'pinned'>>` | `Session`       |
-| DELETE | `/sessions/:id` | —                                             | 204 No Content  |
+| Method | Path            | Request                                         | Response        |
+| ------ | --------------- | ----------------------------------------------- | --------------- |
+| GET    | `/sessions`     | —                                               | `Session[]`     |
+| GET    | `/sessions/:id` | —                                               | `SessionDetail` |
+| POST   | `/sessions`     | `{}` (title defaults to `"New analysis"`)       | `Session` (201) |
+| PATCH  | `/sessions/:id` | `Partial<Pick<Session, 'title' \| 'pinnedAt'>>` | `Session`       |
+| DELETE | `/sessions/:id` | —                                               | 204 No Content  |
 
 `GET /sessions/:id` 回 `SessionDetail`：session 的 messages 與 files 內嵌其中——後端
-**沒有**獨立的 messages 端點。`POST` / `PATCH` / `DELETE` 與 `Session.pinned` 是前端-only
+**沒有**獨立的 messages 端點。`POST` / `PATCH` / `DELETE` 與 `Session.pinnedAt` 是前端-only
 （後端的 session 由 client 指定 id、第一次送訊息時 upsert，也沒有改名／釘選／刪除），
 live 模式下仍由 MSW 服務，見「傳輸模式」。
 
@@ -140,22 +140,28 @@ QuestionOption { value: string; label: string; hint?: string; unit?: string; lo?
 切換是 build-time 的環境變數，不是 runtime 開關。live 模式可搭配的後端只實作了下表左半，
 其餘端點在 live 模式下**仍由 MSW 服務**。
 
-| 端點群                                                              | mock 模式 | live 模式 |
-| ------------------------------------------------------------------- | --------- | --------- |
-| `GET /sessions`、`GET /sessions/:id`、`POST /sessions/:id/messages` | MSW       | 真後端    |
-| `POST /sessions/:id/files`、`DELETE /sessions/:id/files/:fileId`    | MSW       | 真後端    |
-| `GET /artifacts/:id`（text/html）、`POST /artifacts/:id/repair`     | MSW       | 真後端    |
-| `POST/PATCH/DELETE /sessions`（建立／改名／釘選／刪除，前端-only）  | MSW       | **MSW**   |
-| `/artifacts` 清單、pin、share、generate                             | MSW       | **MSW**   |
-| `/connectors`、`/directory`、DC Item 清單、schedule                 | MSW       | **MSW**   |
+| 端點群                                                                                                  | mock 模式 | live 模式 |
+| ------------------------------------------------------------------------------------------------------- | --------- | --------- |
+| `GET /sessions`、`GET /sessions/:id`、`POST /sessions/:id/messages`                                     | MSW       | 真後端    |
+| `POST /sessions/:id/files`、`DELETE /sessions/:id/files/:fileId`                                        | MSW       | 真後端    |
+| `GET /artifacts/:id`（text/html）、`GET /artifacts/:id/raw`（text/plain）、`POST /artifacts/:id/repair` | MSW       | 真後端    |
+| `PATCH/DELETE /sessions/:id`（改名／釘選／刪除，前端-only）                                             | MSW       | **MSW**   |
+| `/artifacts` 清單、pin、share、generate                                                                 | MSW       | **MSW**   |
+| `/connectors`、`/directory`、DC Item 清單、schedule                                                     | MSW       | **MSW**   |
 
 過濾是 method-aware：`GET /sessions/:id` 放行給真後端的同時，同一路徑上前端-only 的
 `PATCH` / `DELETE` 仍由 MSW 服務。
 
+**沒有建立 session 的端點。** `POST /sessions` 只存在於 mock，而且 UI 不再呼叫它：session
+id 由前端產生，第一次送訊息或上傳檔案時由後端 upsert（[ADR-0008](../adr/0008-new-chat-is-a-client-side-draft.md)）。
+mock 的兩個寫入端點也照做，否則草稿 session 的 `GET /sessions/:id` 會 404。
+
+改名、釘選、刪除三者在 live 模式沒有後端，會 404；它們在[後端回饋清單](./backend-feedback.md)上。
+
 **線路型別即應用型別**（[ADR-0007](../adr/0007-verbatim-backend-wire-contract.md)）：
 `types/api/` 的形狀與後端 DTO 逐字一致（`sender: 'USER' | 'AI'`、`stepsJson` /
 `questionsJson` JSON 字串、`artifactTitle`……），UI 在使用點解析，沒有轉換層。
-前端-only 的欄位（`Session.pinned`、`Message.scenario` / `attachments`、QUESTION 的
+前端-only 的欄位（`Session.pinnedAt`、`Message.scenario` / `attachments`、QUESTION 的
 `form`）在型別上明確標註，真後端不回它們時 UI 各自降級。
 
 ### QUESTION 事件與反問表單的降級

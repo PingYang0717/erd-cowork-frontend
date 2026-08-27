@@ -59,6 +59,21 @@ describe('Artifact panel', () => {
     expect(iframe.getAttribute('srcdoc')).toContain('data-artifact-theme="light"');
   });
 
+  // The sandbox stops the artifact reaching into this app; the policy stops it reaching
+  // out. Both are needed — see utils/artifactCsp.
+  it('locks the artifact down with a content-security policy before it loads anything', async () => {
+    const user = userEvent.setup();
+    renderStudioPage();
+    await selectASessionAndRunSpcScenario(user);
+
+    const iframe = (await screen.findByTitle('Artifact preview')) as HTMLIFrameElement;
+    const srcdoc = iframe.getAttribute('srcdoc') ?? '';
+
+    expect(srcdoc).toContain("default-src 'none'");
+    expect(srcdoc).toContain("connect-src 'none'");
+    expect(srcdoc.indexOf('Content-Security-Policy')).toBeLessThan(srcdoc.indexOf('<title>'));
+  });
+
   it('re-renders the iframe with the dark variant when the app theme is toggled', async () => {
     const user = userEvent.setup();
     renderStudioPage();

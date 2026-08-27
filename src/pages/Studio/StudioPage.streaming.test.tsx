@@ -224,15 +224,18 @@ describe('Streaming a run in the Studio', () => {
 
   // Runs against the scripted mock backend rather than a hand-driven stream: this is a
   // post-run assertion, so there is no intermediate state to hold still.
-  it('reports how long the finished run took', async () => {
+  // The elapsed time belongs to the turn that spent it, so it rides that turn's bubble
+  // rather than sitting at the bottom of the thread where scrolling up leaves it behind.
+  it('reports how long the finished run took, on the bubble that took it', async () => {
     const user = userEvent.setup();
     renderStudioPage();
 
     await startAnalysis(user);
     await answerAnalysisConditions(user);
-    await screen.findByRole('button', { name: /^Worked through \d+ steps$/ });
+    const recap = await screen.findByRole('button', { name: /^Worked through \d+ steps$/ });
 
-    expect(screen.getByText(/^Took \d+(\.\d+)?s$/)).toBeInTheDocument();
+    const bubble = recap.closest('div[class*="aiBubble"]') as HTMLElement;
+    expect(within(bubble).getByText(/^\d+(\.\d+)?s$/)).toBeInTheDocument();
   });
 
   it('shows the artifact in the right pane the moment the run reports it', async () => {

@@ -131,6 +131,27 @@ describe('Artifact repair', () => {
     await waitFor(() => expect(attempts).toBe(2));
   });
 
+  // Retrying is pointless when the data the artifact was built from has been deleted;
+  // the only move left is to re-upload, which is the retention notice's job to say.
+  it('stops offering a retry when the backend says the files are gone', async () => {
+    const user = userEvent.setup();
+    server.use(
+      http.post('/api/artifacts/:id/repair', () =>
+        HttpResponse.json({ code: 'FILES_EXPIRED', message: '檔案已過期' }, { status: 409 }),
+      ),
+    );
+    renderStudioPage();
+
+    const iframe = await runAnalysis(user);
+    reportRuntimeError(iframe, 'boom');
+    await screen.findByText('⚠ 偵測到儀表板執行錯誤（1 個）');
+
+    await user.click(screen.getByRole('button', { name: '修復' }));
+
+    expect(await screen.findByText('檔案已過期，無法修復此儀表板')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '再試一次' })).not.toBeInTheDocument();
+  });
+
   it('drops the offer when the user moves to another session', async () => {
     const user = userEvent.setup();
     renderStudioPage();

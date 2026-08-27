@@ -1,6 +1,6 @@
 # 與 `cowork-master` 的功能比對與設計缺口
 
-比對日期：2026-08-25。對象是 `/Users/py/Downloads/cowork-master`（Spring Boot + MongoDB
+比對日期：2026-08-25，**第 6 節更新於 2026-08-27**。對象是 `/Users/py/Downloads/cowork-master`（Spring Boot + MongoDB
 
 - FastAPI deepagent，前端 React 18 + antd 6）與本專案（React 19 + Vite，MSW mock backend）。
 
@@ -228,13 +228,156 @@ request interceptor 是空的。
 | 13  | **Header／空狀態**        | 標題 + 副標「Import data, prompt eRD AI…」+ AttachmentsPopover；空狀態一行純文字                                                                   | 標題 + 資料來源 chip + ThemeToggle；空狀態 icon 磚 + 標題 + 副標（對齊 mockup）                                                              |
 | 14  | **斷線文案**              | `連線中斷，請重新送出一次`                                                                                                                         | `Connection lost — send it again.`（刻意英文，見第 4 節的文案討論）                                                                          |
 
-### 建議
+### 處理結果（2026-08-27）
 
-- **#2 樂觀 user bubble ——建議補**。一輪分析要跑好幾秒，這段期間使用者看不到自己剛送出的
-  內容，是這次比對裡體感最差的一項。
-- **#10 沒有 invalidate `sessions` ——建議補**。跑完之後左欄 session 的最後活動時間與排序
-  不會更新，成本只是多一個 query key。
-- **#9** 只有在後端真的非同步落庫時才會咬到，等 live 模式接起來再看。
-- **#4** 目前不是 bug（`START` 會清乾淨），但 stopped／error 的殘留區塊會跨越使用者的其他
-  操作，值得順手補一個 `reset()`。
-- 其餘各項多半是本專案刻意的設計（#1、#6、#7、#8、#11、#12、#13），維持現狀。
+**已對齊**：
+
+- **#2 樂觀 user bubble** — 已補（`optimisticUserText`）。
+- **#3 尾巴重複抑制** — 交棒問題已由 MessageBubble 合流解決：跑完的那輪與歷史那輪走同一條
+  render 路徑，長相一致，所以交棒看不出來，不需要對 history 動刀。
+- **#4 `reset()`** — 改以 `<ThreadView key={sessionId}>` 解決。整棵重掛一次清掉 stream
+  state、樂觀泡泡、recap 展開狀態與捲動位置；逐項清會漂移。
+- **#5 耗時位置** — 已搬進該輪的 AI 泡泡，並補上串流中的即時計時。
+- **#9 中止後補追** — 已補（`AbortError` 後兩段 800ms 延遲 invalidate）。
+- **#10 invalidate 範圍／時機** — 已補（`['sessions', id]` 與 `['sessions']` 一起，且
+  在 `DONE` 之前 await）。
+- **#11 自動捲動** — 捲動搬進 `MessageList` 自己的容器，deps 補齊（先前少了樂觀泡泡與
+  repair 卡，兩者出現時不會捲）。
+
+**維持現狀**（本專案刻意的設計）：#1 quick chips 直送、#6 schema-driven `QuestionForm`、
+#7 artifact 發布走 zustand、#8 訊息層級附件、#12 手刻 StepRow、#13 header／空狀態、
+#14 英文文案。
+
+### 這一輪新發現的落差
+
+| #   | 項目                                    | 狀況                                                                                                                                                                                               |
+| --- | --------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 15  | **`[[table:id]]` 標記未處理**           | 🔴 後端在回覆文字裡夾 `[[table:...]]` 指定表格位置，本專案沒有解析，live 模式會把標記原樣印給使用者。**已補**（`utils/tableMarkers.ts`，行內渲染；沒有標記指定位置的表格接在文字後面而不是消失）。 |
+| 16  | **後端持久化的系統紀錄訊息**            | 「回應已中斷…」「已修復儀表板執行錯誤…」會被當成一般 AI 回覆走 markdown 排版。**已補**（`constants/messages.ts` + 泡泡的小灰字分支；比對字串維持中文一字不差）。                                   |
+| 17  | **`useArtifactContent` 註解與行為不符** | docstring 宣稱換 theme 時保留舊文件，實際上換 query key 就會清空 `data`，畫面會閃。**已補**（`placeholderData: keepPreviousData`）。                                                               |
+| 18  | **`ThreadView` 沒有 `key={sessionId}`** | `ArtifactPanel` 有、thread 沒有，stream state 會跨 session 存活。**已補**。                                                                                                                        |
+| 19  | **歷史的「查看 HTML」不存在**           | cowork 的泡泡會 lazy-fetch `/artifacts/{id}/raw`，本專案沒有這條端點也沒有這個分支。**已補**。                                                                                                     |
+
+---
+
+## 7. 操作流程逐段比對（UI 層）
+
+比對日期：2026-08-27，在 `feat/align-interfact` 四顆 commit 之後。第 6 節談的是 chat panel
+內部；這一節走完使用者實際會碰到的每一段流程。
+
+每一列標註差異的性質：**刻意**（本專案的設計決定，維持）／**缺口**（該補）／
+**bug**（現在就是壞的）。
+
+### 7.1 進入 App
+
+|          | `cowork`                                                                     | 本專案                                                                                     | 性質               |
+| -------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ | ------------------ |
+| 落地狀態 | session 清單非空 → 自動選第一筆；清單為空 → 自動開一個草稿。**打開就能打字** | `selectedSessionId` 起始為 `null`，畫面停在「Select or start a session」，**必須先點一下** | **缺口**           |
+| 載入態   | 單一 app 層 `SuspenseLoader` + `ErrorBoundary`                               | 每個 pane 各自 `DataBoundary`（Sessions／Thread／Artifact／Content）                       | 刻意（本專案較細） |
+
+### 7.2 開新對話
+
+兩邊現在一致（ADR-0008）：client 產 id、seed cache、第一則訊息 upsert、重複點是 no-op。
+差別只剩本專案的側欄分 Pinned／Recents 兩組、草稿列不提供 `...` 選單。
+
+### 7.3 送出訊息
+
+|                       | `cowork`                                                                               | 本專案                                                                                                             | 性質             |
+| --------------------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ | ---------------- |
+| **中文輸入法（IME）** | `PromptSender` 以 `compositionstart/end` 記錄組字狀態，組字中按 Enter 只選字**不送出** | `ChatComposer` 的 `onKeyDown` 只看 `e.key === 'Enter' && !e.shiftKey`，**組字中按 Enter 會把未完成的候選字送出去** | 🔴 **bug**       |
+| Quick chips           | `onPick` → 填進輸入框，使用者確認後再送                                                | 點了直接送出                                                                                                       | 刻意（ADR-0006） |
+| 輸入框                | 原生 `textarea`，`max-h-24`                                                            | antd `Input.TextArea`，`autoSize` 1–5 行                                                                           | 刻意             |
+| 送出／停止            | 串流中送出鈕換成灰色停止方塊                                                           | 同                                                                                                                 | 一致             |
+| 送出後                | 樂觀 user 泡泡 + 尾巴去重                                                              | 同                                                                                                                 | 一致             |
+
+`textarea` 那個 `max-h-24`（96px）在對方是硬上限，本專案的 `autoSize` 到 5 行才停，長 prompt
+的體感較好。
+
+### 7.4 檔案
+
+|              | `cowork`                                                                                 | 本專案                                                                   | 性質                       |
+| ------------ | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ | -------------------------- |
+| 模型         | session 層級、伺服器保存                                                                 | 同（`POST /sessions/{id}/files`，經 `SessionDetail.files`）              | 一致                       |
+| 入口         | header 的 `AttachmentsPopover`（顯示 `N/5 · 總大小`）+ composer 的「+」                  | 只有 composer 的「+」                                                    | 缺口（小）                 |
+| 上傳進度     | `Progress` 百分比條                                                                      | **沒有進度顯示**，大檔上傳期間畫面無回饋                                 | **缺口**                   |
+| 保留期／過期 | `GET /api/config` 取 `retentionDays`；過期檔標「已過期」、**擋住送出**並顯示琥珀色警告條 | `UploadedFileInfo.expired` 型別裡有，**UI 一行都沒讀**；也沒讀 `/config` | **缺口**                   |
+| 範例資料集   | `SampleDatasetPicker`，沒有自己資料的人能直接試                                          | 無                                                                       | 刻意（本專案接廠務資料庫） |
+| Connectors   | 無                                                                                       | 10 種資料來源的連線面板                                                  | 刻意（本專案領域價值）     |
+
+過期檔那條在 live 模式會是實際故障：後端清掉檔案之後，使用者會一直送出一個註定失敗的請求，
+而畫面上沒有任何線索。
+
+### 7.5 反問與回答
+
+|          | `cowork`                      | 本專案                                                              | 性質 |
+| -------- | ----------------------------- | ------------------------------------------------------------------- | ---- |
+| 資料模型 | 扁平 `Question[]`，選項是字串 | schema-driven `QuestionForm`（六種欄位、`visibleWhen`、規格上下限） | 刻意 |
+| 出現時機 | 串流結束後才顯示              | **一收到就顯示**（run 正在等使用者，等串流關閉是白等）              | 刻意 |
+| 答完之後 | 卡片留在原地變 disabled       | 卡片消失，答案以一句話成為 user 泡泡                                | 刻意 |
+| 歷史     | disabled 卡片                 | 同（本輪補上，從 `questionsJson` lift）                             | 一致 |
+
+### 7.6 一輪 run 的呈現
+
+本輪合流後兩邊結構已經一致（灰底泡泡、steps 在泡泡內、耗時掛在該輪、即時計時）。剩下的差異：
+
+|            | `cowork`                           | 本專案                                                  | 性質                    |
+| ---------- | ---------------------------------- | ------------------------------------------------------- | ----------------------- |
+| Steps 元件 | `@ant-design/x` 的 `ThoughtChain`  | 手刻 `StepRow` / `StepsRecap`                           | 刻意（ADR-0004）        |
+| Thinking   | 泡泡頂端「Working on it…」可點開   | 獨立的 `Thinking` 摺疊面板                              | 刻意                    |
+| 錯誤呈現   | antd `message.error` toast（8 處） | 全部 inline（`role="alert"` 在泡泡內），**零 toast**    | 刻意（inline 不會錯過） |
+| 步驟展開   | 依 `streaming`                     | 依「turn 是否還在進行」（串流中／被停止／等待未答反問） | 刻意（本專案較準）      |
+
+### 7.7 Artifact
+
+|                        | `cowork`                                                             | 本專案                                                      | 性質             |
+| ---------------------- | -------------------------------------------------------------------- | ----------------------------------------------------------- | ---------------- |
+| 版本切換               | antd `Select`，`v3 · Latest`                                         | 手刻 `VersionSwitcher`（340px 選單、相對時間、已生成綠勾）  | 刻意             |
+| 重新整理（Reload）     | 有，**串流中 disabled**（避免生成到一半重載）                        | 有，**沒有 disabled**                                       | **缺口**（小）   |
+| 重新生成               | 無此概念                                                             | 有（送訊息迭代）                                            | 刻意             |
+| 生成 Artifact          | 無                                                                   | 「預覽 → 生成」兩段式 + coach toast                         | 刻意             |
+| 分享                   | 無                                                                   | 分享 dialog + Directory 收件者                              | 刻意             |
+| Dashboard／Slides 切換 | `Segmented`（Slides 永遠 disabled）                                  | 無此切換；slides 是另一個 Artifact                          | 刻意             |
+| 全螢幕                 | `window.open('/?artifactView=<id>')`，query param 分流的殼頁         | 路由 `/cowork/artifact/:id`，帶 VersionSwitcher／分享／返回 | 刻意（ADR-0002） |
+| CSP                    | `injectCspMeta()` 注入 `<meta http-equiv="Content-Security-Policy">` | **沒有注入 CSP**                                            | **缺口**         |
+
+CSP 那條值得單獨說：兩邊都用 `sandbox="allow-scripts"` + `srcdoc`（opaque origin），本專案
+少了對方那層 `default-src 'none'; connect-src 'none'`。sandbox 已經擋掉同源存取，但沒有
+`connect-src 'none'` 的話，一段惡意或有 bug 的 Artifact HTML 仍可以對外發網路請求。
+
+### 7.8 修復（Repair）
+
+流程兩邊相同（iframe 回報錯誤 → 卡片提議 → 使用者確認 → 呼叫 `/repair` → 重載）。差異：
+
+- 對方成功後跳 `message.success('已修復，儀表板已重新載入')`；本專案靠 iframe 重掛本身傳達。
+- `FILES_EXPIRED` 兩邊都特別處理：本專案多一個 `files-expired` 狀態，卡片改說「檔案已過期，
+  無法修復此儀表板」並收掉「再試一次」——重試跑的是同一份不存在的資料。
+
+### 7.9 Session 管理
+
+|                  | `cowork`                    | 本專案                                            |
+| ---------------- | --------------------------- | ------------------------------------------------- |
+| 清單             | 單一列表，`dayjs.fromNow()` | Pinned／Recents 兩組、可摺疊、相對時間            |
+| 改名／釘選／刪除 | 無                          | 有（live 模式會 404，見 `docs/api/interface.md`） |
+| 側欄收合         | 收合後整條消失，只留展開鈕  | 收合成 icon rail，hover 出 flyout                 |
+
+### 7.10 導覽與版面
+
+本專案多出：路由（`react-router`）、Artifacts 總覽頁（四種篩選、三種排序、縮圖、釘選、
+刪除、複製連結）、Schedule 頁（**仍是 3 行 stub**）、三欄可拖曳寬度、深色模式。
+`cowork` 是單頁、無路由、無深色模式。
+
+### 7.11 處理結果（2026-08-27）
+
+1. ✅ **IME 組字中按 Enter 會送出未完成的字** — 已修（`ChatComposer`）。
+2. ✅ **檔案保留期與過期狀態沒有揭露** — 已補（`GET /config`、`useAppConfig`、過期 chip、
+   琥珀色警告條、擋住送出），連同 7.8 的 `FILES_EXPIRED`。
+3. ✅ **落地就要能打字** — 已補（選最近一筆 session，沒有就自動開草稿）。順帶把 thread header
+   提到 suspense 邊界之外，否則每次載入 session 時主題切換都會閃掉。
+4. ✅ **Artifact iframe 補 CSP meta** — 已補（`utils/artifactCsp.ts`）。
+5. ✅ **上傳進度**、**串流中禁用 Reload** — 都已補。上傳從 `fetch` 改成 XHR，因為 `fetch`
+   回報不了上傳進度。
+
+**仍未處理**：header 的 `AttachmentsPopover`（7.4，小）、Schedule 頁仍是 stub（7.10）。
+
+不建議做的，仍與第 5 節相同：Connector、Artifacts 總覽、分享、版本、深色模式都是本專案相對
+`cowork` 的領域價值，方向是後端補上，不是前端砍掉。
