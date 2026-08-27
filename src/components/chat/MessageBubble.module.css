@@ -19,7 +19,7 @@
   color: #fff;
   padding: 10px 13px;
   border-radius: 14px 14px 4px 14px;
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1.55;
 }
 
@@ -48,9 +48,9 @@
   font-size: 13px;
 }
 
-/* The agent's turn is one surface, not a stack of loose cards. fillTertiary is a
-   translucent overlay, so it reads one step above the thread background in both
-   themes — bgLayout would make the bubble the same colour as the page. */
+/* The agent's turn is one surface, not a stack of loose cards. The fill is cowork's
+   opaque gray-100 (via token, so dark mode keeps its own rung) — a translucent fill
+   read differently against the old gray thread background (ADR-0010). */
 .aiBubble {
   max-width: 85%;
   min-width: 0;
@@ -59,7 +59,7 @@
   gap: 10px;
   padding: 11px 14px;
   border-radius: 14px 14px 14px 4px;
-  background: var(--erd-color-fill-tertiary, rgba(0, 0, 0, 0.04));
+  background: var(--erd-color-chat-bubble-bg, #f3f4f6);
 }
 
 /* Inside the bubble nothing draws its own outline: the bubble is the boundary, and a
