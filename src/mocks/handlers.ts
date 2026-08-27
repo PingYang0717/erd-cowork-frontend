@@ -4,7 +4,7 @@ import { currentUser } from '@/config/currentUser';
 import { DRAFT_SESSION_TITLE } from '@/constants/messages';
 import type { AgentEvent, QuestionForm, StepItem } from '@/types/api/agentEvent';
 import type { Artifact, ArtifactKind } from '@/types/api/artifact';
-import type { Connector, ConnectorStatus } from '@/types/api/connector';
+import type { Connector } from '@/types/api/connector';
 import type { DcItem } from '@/types/api/dcItem';
 import type { Message } from '@/types/api/message';
 import type { ScenarioKey } from '@/types/api/scenario';
@@ -13,7 +13,6 @@ import type { UploadedFileInfo } from '@/types/api/upload';
 
 import { buildArtifactFixture } from './artifactFixtures';
 import { DC_ITEM_FIXTURES, ROWS_PER_DC_ITEM } from './dcItemFixtures';
-import { DIRECTORY_FIXTURES } from './directoryFixtures';
 import { createPersistedResource } from './persistedResource';
 import { dcItemQuestion, flattenQuestionForm, openingQuestion } from './questionFixtures';
 import { matchScenario, SCENARIO_FIXTURES, SLIDES_STEP } from './scenarioFixtures';
@@ -68,11 +67,6 @@ const ALICE_USER_ID = 'u-002';
 // browsers holding the version-store shape reseed.
 interface StoredArtifact extends Omit<Artifact, 'mine'> {
   ownerId: string;
-}
-
-function toArtifactDto(stored: StoredArtifact): Artifact {
-  const { ownerId, ...rest } = stored;
-  return { ...rest, mine: ownerId === currentUser.id };
 }
 
 const artifacts = createPersistedResource<StoredArtifact>('erd-cowork:artifacts:v3', [
@@ -455,40 +449,6 @@ export const allHandlers = [
     return HttpResponse.json(sessions.read());
   }),
 
-  http.post('/api/sessions', async ({ request }) => {
-    const body = (await request.json()) as Partial<Pick<Session, 'title'>>;
-    const session: Session = {
-      id: crypto.randomUUID(),
-      title: body.title?.trim() || DRAFT_SESSION_TITLE,
-      pinnedAt: null,
-      updatedAt: new Date().toISOString(),
-    };
-    sessions.write([...sessions.read(), session]);
-    return HttpResponse.json(session, { status: 201 });
-  }),
-
-  http.patch('/api/sessions/:id', async ({ params, request }) => {
-    const body = (await request.json()) as Partial<Pick<Session, 'title' | 'pinnedAt'>>;
-    const all = sessions.read();
-    const existing = all.find((session) => session.id === params.id);
-    if (!existing) {
-      return new HttpResponse(null, { status: 404 });
-    }
-    const updated: Session = {
-      ...existing,
-      ...body,
-      updatedAt: new Date().toISOString(),
-    };
-    sessions.write(all.map((session) => (session.id === params.id ? updated : session)));
-    return HttpResponse.json(updated);
-  }),
-
-  http.delete('/api/sessions/:id', ({ params }) => {
-    const all = sessions.read();
-    sessions.write(all.filter((session) => session.id !== params.id));
-    return new HttpResponse(null, { status: 204 });
-  }),
-
   // The backend has no standalone messages endpoint: a session's messages and
   // files are nested inside its detail.
   http.get('/api/sessions/:sessionId', ({ params }) => {
@@ -637,44 +597,6 @@ export const allHandlers = [
     return streamRun(sessionId, scenarioKey, artifactKind);
   }),
 
-  http.get('/api/dc-items', () => HttpResponse.json(dcItems.read())),
-
-  http.post('/api/dc-items', async ({ request }) => {
-    const { name } = (await request.json()) as { name: string };
-    const id = name.trim().toLowerCase().replace(/\s+/g, '-');
-    const existing = dcItems.read().find((item) => item.id === id);
-    if (existing) {
-      return HttpResponse.json(existing, { status: 200 });
-    }
-
-    // A custom item has no spec limits of its own — it is charted without them.
-    const created: DcItem = { id, name: name.trim(), unit: '', lo: 0, hi: 0, custom: true };
-    dcItems.write([...dcItems.read(), created]);
-    return HttpResponse.json(created, { status: 201 });
-  }),
-
-  http.get('/api/artifacts', () => {
-    return HttpResponse.json(artifacts.read().map(toArtifactDto));
-  }),
-
-  http.patch('/api/artifacts/:id', async ({ params, request }) => {
-    const body = (await request.json()) as Partial<Pick<Artifact, 'pinned'>>;
-    const all = artifacts.read();
-    const existing = all.find((a) => a.id === params.id);
-    if (!existing) {
-      return new HttpResponse(null, { status: 404 });
-    }
-    const updated: StoredArtifact = { ...existing, ...body };
-    artifacts.write(all.map((a) => (a.id === params.id ? updated : a)));
-    return HttpResponse.json(toArtifactDto(updated));
-  }),
-
-  http.delete('/api/artifacts/:id', ({ params }) => {
-    const all = artifacts.read();
-    artifacts.write(all.filter((a) => a.id !== params.id));
-    return new HttpResponse(null, { status: 204 });
-  }),
-
   http.get('/api/artifacts/:id', ({ params, request }) => {
     const artifact = artifacts.read().find((a) => a.id === params.id);
     if (!artifact) {
@@ -716,85 +638,6 @@ export const allHandlers = [
       return new HttpResponse(null, { status: 404 });
     }
     return HttpResponse.json({ repaired: true });
-  }),
-
-  // 前端-only：把這個 Artifact 標記為已生成（每個版本就是一個 Artifact，所以這
-  // 天生就是 per-version 狀態）。
-  http.post('/api/artifacts/:id/generate', ({ params }) => {
-    const all = artifacts.read();
-    const existing = all.find((a) => a.id === params.id);
-    if (!existing) {
-      return new HttpResponse(null, { status: 404 });
-    }
-    const updated: StoredArtifact = { ...existing, generated: true };
-    artifacts.write(all.map((a) => (a.id === params.id ? updated : a)));
-    return HttpResponse.json(toArtifactDto(updated));
-  }),
-
-  http.post('/api/artifacts/:id/share', async ({ params, request }) => {
-    const all = artifacts.read();
-    const existing = all.find((a) => a.id === params.id);
-    if (!existing) {
-      return new HttpResponse(null, { status: 404 });
-    }
-    const body = (await request.json()) as { targetIds: string[] };
-    if (!body.targetIds?.length) {
-      return new HttpResponse(null, { status: 400 });
-    }
-    const updated: StoredArtifact = { ...existing, shared: true };
-    artifacts.write(all.map((a) => (a.id === params.id ? updated : a)));
-
-    const url = `${new URL(request.url).origin}/cowork/artifact/${params.id}`;
-    return HttpResponse.json({ url, artifact: toArtifactDto(updated) });
-  }),
-
-  http.get('/api/directory', () => {
-    return HttpResponse.json(DIRECTORY_FIXTURES);
-  }),
-
-  http.get('/api/connectors', () => {
-    return HttpResponse.json(connectors.read());
-  }),
-
-  http.patch('/api/connectors/:id', async ({ params, request }) => {
-    const body = (await request.json()) as { status: ConnectorStatus };
-    const all = connectors.read();
-    const existing = all.find((c) => c.id === params.id);
-    if (!existing) {
-      return new HttpResponse(null, { status: 404 });
-    }
-    const updated: Connector = { ...existing, status: body.status };
-    connectors.write(all.map((c) => (c.id === params.id ? updated : c)));
-    return HttpResponse.json(updated);
-  }),
-
-  http.post('/api/connectors', async ({ request }) => {
-    const body = (await request.json()) as { name: string };
-    const name = body.name?.trim();
-    if (!name) {
-      return new HttpResponse(null, { status: 400 });
-    }
-    const id =
-      'c_' +
-      name
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '_')
-        .replace(/^_|_$/g, '');
-    const all = connectors.read();
-    const existing = all.find((c) => c.id === id);
-    if (existing) {
-      return HttpResponse.json(existing);
-    }
-    const created: Connector = {
-      id,
-      name,
-      description: 'Custom RD data source',
-      category: 'Custom',
-      status: 'connected',
-      custom: true,
-    };
-    connectors.write([...all, created]);
-    return HttpResponse.json(created, { status: 201 });
   }),
 ];
 
