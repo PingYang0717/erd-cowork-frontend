@@ -5,8 +5,9 @@ body,
   margin: 0;
 }
 
-/* Global chrome from eRDWorkspace20260819.html: antialiased type and the
-   8px custom scrollbar (WebKit/Blink; Firefox keeps its native bar).
+/* Global chrome: antialiased type (eRDWorkspace20260819.html) and the 9px custom
+   scrollbar from the cowork mockup (ADR-0010; WebKit/Blink, Firefox keeps its
+   native bar).
    The stack must stay in step with `FONT_FAMILY` in `app/providers.tsx`, which
    is what antd puts on its own subtree: without a rule here `body` falls back
    to whatever the browser picks for `lang="zh-Hant"` (PingFang TC on macOS),
@@ -19,13 +20,13 @@ body {
 }
 
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 9px;
+  height: 9px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--erd-color-fill-tertiary, rgba(0, 0, 0, 0.15));
-  border-radius: 4px;
+  background: var(--erd-scrollbar-thumb, rgba(0, 0, 0, 0.14));
+  border-radius: 5px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
