@@ -17,3 +17,20 @@ export function describeLoadError(error: Error): { heading: string; detail: stri
   }
   return { heading: '這個區塊載入失敗', detail: error.message };
 }
+
+/** What to tell the user about a failed action (mutation). The backend's own
+ *  `{ code, message }` wins; a backend that is not answering gets named; anything
+ *  else falls back to "not ready yet" — per the decision that nothing is disabled
+ *  up front, the error is how the user learns an endpoint has not landed. */
+export function describeActionError(error: unknown): string {
+  if (axios.isAxiosError(error)) {
+    if (error.response === undefined) {
+      return '無法連線到後端服務，請確認服務已啟動後重試。';
+    }
+    const body = error.response.data as { message?: string } | undefined;
+    if (body?.message) {
+      return body.message;
+    }
+  }
+  return '後端尚未就緒，請稍後再試。';
+}

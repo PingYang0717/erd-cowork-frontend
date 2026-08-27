@@ -15,9 +15,10 @@ export const sessionApi = {
   renameSession: (id: string, title: string) =>
     apiClient.patch<Session>(`/sessions/${id}`, { title }),
 
-  /** `pinnedAt` 是釘選當下的時間戳；傳 null 表示取消釘選。 */
-  setSessionPinned: (id: string, pinnedAt: string | null) =>
-    apiClient.patch<Session>(`/sessions/${id}`, { pinnedAt }),
+  /** Toggles the pin (artifact-family style): no body, the backend decides the
+   *  direction and stamps the time. Response is `{ id, pinnedAt | null }`. */
+  togglePin: (id: string) =>
+    apiClient.post<{ id: string; pinnedAt: string | null }>(`/sessions/${id}/pin`),
 
   deleteSession: (id: string) => apiClient.delete<void>(`/sessions/${id}`),
 };

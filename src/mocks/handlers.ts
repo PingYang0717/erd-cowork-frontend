@@ -550,6 +550,41 @@ export const allHandlers = [
     return new HttpResponse(null, { status: 204 });
   }),
 
+  // The three session writes, as agreed with the backend (api-checklist.md):
+  // rename is a PATCH, pin is an artifact-family toggle that stamps its own time
+  // and answers { id, pinnedAt }, delete answers a bare 200.
+  http.patch('/api/sessions/:sessionId', async ({ params, request }) => {
+    const body = (await request.json()) as { title?: string };
+    const all = sessions.read();
+    const session = all.find((stored) => stored.id === params.sessionId);
+    if (!session) {
+      return new HttpResponse(null, { status: 404 });
+    }
+    const updated = { ...session, ...(body.title !== undefined ? { title: body.title } : {}) };
+    sessions.write(all.map((stored) => (stored.id === updated.id ? updated : stored)));
+    return HttpResponse.json(updated);
+  }),
+
+  http.post('/api/sessions/:sessionId/pin', ({ params }) => {
+    const all = sessions.read();
+    const session = all.find((stored) => stored.id === params.sessionId);
+    if (!session) {
+      return new HttpResponse(null, { status: 404 });
+    }
+    const pinnedAt = session.pinnedAt === null ? new Date().toISOString() : null;
+    sessions.write(
+      all.map((stored) => (stored.id === session.id ? { ...stored, pinnedAt } : stored)),
+    );
+    return HttpResponse.json({ id: session.id, pinnedAt });
+  }),
+
+  http.delete('/api/sessions/:sessionId', ({ params }) => {
+    sessions.write(sessions.read().filter((stored) => stored.id !== params.sessionId));
+    messages.write(messages.read().filter((message) => message.sessionId !== params.sessionId));
+    sessionFiles.write(sessionFiles.read().filter((file) => file.sessionId !== params.sessionId));
+    return new HttpResponse(null, { status: 200 });
+  }),
+
   // A run is delivered as an agent-event stream, not a computed reply (ADR-0005).
   // The whole scripted run is written at once and the stream closed: tests that need
   // to observe an intermediate state drive their own stream via `src/test/agentStream.ts`
