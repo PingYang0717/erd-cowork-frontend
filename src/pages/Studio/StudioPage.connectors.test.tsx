@@ -5,6 +5,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { StudioShell } from '@/components/layouts/StudioShell';
+import { BACKEND_UNSUPPORTED } from '@/constants/messages';
 import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
 import { useStudioLayoutStore } from '@/stores/useStudioLayoutStore';
 
@@ -92,37 +93,22 @@ describe('Connectors panel', () => {
     expect(screen.getByText('No access')).toBeInTheDocument();
   });
 
-  it('connects a connector from the panel, and the status persists across a simulated reload', async () => {
-    const user = userEvent.setup();
-    const { unmount } = renderStudioPage();
-    await selectASessionAndOpenConnectors(user);
-
-    const connectButton = await screen.findByRole('button', { name: 'Connect Lot Info' });
-    await user.click(connectButton);
-
-    expect(await screen.findByRole('button', { name: 'Disconnect Lot Info' })).toBeInTheDocument();
-
-    // Reload: unmount, then a fresh QueryClient + fresh render, so the only
-    // way the new status survives is if the mock backend (localStorage-backed)
-    // actually persisted it. Session selection (Zustand) is a module
-    // singleton unaffected by unmount, so the same session is still selected
-    // and the composer is available immediately.
-    unmount();
-    renderStudioPage();
-    const reloadedUser = userEvent.setup();
-    await screen.findByRole('textbox', { name: 'Message' });
-    await openConnectorsPanel(reloadedUser);
-    expect(await screen.findByRole('button', { name: 'Disconnect Lot Info' })).toBeInTheDocument();
-  });
-
-  it('disconnects a connected connector from the panel', async () => {
+  // Connecting and disconnecting were driven from here and asserted across a simulated
+  // reload. The backend has no connector endpoints (ADR-0009), so the panel is a
+  // read-only view of the data it is given, and every toggle says so.
+  it('disables connecting and disconnecting, saying why', async () => {
     const user = userEvent.setup();
     renderStudioPage();
     await selectASessionAndOpenConnectors(user);
 
-    const disconnectButton = await screen.findByRole('button', { name: 'Disconnect Inline' });
-    await user.click(disconnectButton);
+    const connect = await screen.findByRole('button', { name: 'Connect Lot Info' });
+    expect(connect).toBeDisabled();
+    expect(connect).toHaveAttribute('title', BACKEND_UNSUPPORTED);
 
-    expect(await screen.findByRole('button', { name: 'Connect Inline' })).toBeInTheDocument();
+    const disconnect = screen.getByRole('button', { name: 'Disconnect Inline' });
+    expect(disconnect).toBeDisabled();
+    expect(disconnect).toHaveAttribute('title', BACKEND_UNSUPPORTED);
+
+    expect(screen.getByRole('button', { name: /^Add$/ })).toBeDisabled();
   });
 });

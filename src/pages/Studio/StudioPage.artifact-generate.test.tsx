@@ -5,6 +5,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { StudioShell } from '@/components/layouts/StudioShell';
+import { BACKEND_UNSUPPORTED } from '@/constants/messages';
 import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
 import { useStudioLayoutStore } from '@/stores/useStudioLayoutStore';
 import { useThemeStore } from '@/stores/useThemeStore';
@@ -33,7 +34,10 @@ describe('Per-version Artifact generation', () => {
     useThemeStore.setState(useThemeStore.getInitialState());
   });
 
-  it('offers 生成 Artifact for a fresh (regenerated) version, and generating flips it to the 已生成 chip', async () => {
+  // Generating and sharing both had backend-less endpoints behind them (ADR-0009), so
+  // the two tests that drove 生成 → 已生成 → Share now assert the pair is disabled.
+  // What still works — a fresh version being recognised as ungenerated — is kept.
+  it('offers a disabled 生成 Artifact for a fresh (regenerated) version', async () => {
     const user = userEvent.setup();
     renderStudioPage();
 
@@ -44,40 +48,28 @@ describe('Per-version Artifact generation', () => {
     // Regenerating produces a new, not-yet-generated version.
     await user.click(await screen.findByRole('button', { name: 'Regenerate artifact' }));
 
-    const generateButton = await screen.findByRole('button', { name: '生成 Artifact' });
+    expect(await screen.findByRole('button', { name: '生成 Artifact' })).toBeDisabled();
     expect(screen.queryByText('已生成')).not.toBeInTheDocument();
-
-    await user.click(generateButton);
-
-    expect(await screen.findByText('已生成')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: '生成 Artifact' })).not.toBeInTheDocument();
   });
 
-  it('gates the Share button on the current version being generated', async () => {
+  it('disables Share on both a generated and an ungenerated version, saying why', async () => {
     const user = userEvent.setup();
     renderStudioPage();
 
     await user.click(await screen.findByRole('button', { name: 'SPC — Vt (gate CD)' }));
     await screen.findByText('已生成');
 
-    // Generated version: share is enabled.
-    expect(screen.getByRole('button', { name: 'Share artifact' })).toBeEnabled();
-
-    // A fresh ungenerated version disables share with an explanatory tooltip.
-    await user.click(await screen.findByRole('button', { name: 'Regenerate artifact' }));
-    await screen.findByRole('button', { name: '生成 Artifact' });
-
     const share = screen.getByRole('button', { name: 'Share artifact' });
     expect(share).toBeDisabled();
-
     await user.hover(share);
-    expect(await screen.findByRole('tooltip')).toHaveTextContent('請先生成 Artifact');
+    expect(await screen.findByRole('tooltip')).toHaveTextContent(BACKEND_UNSUPPORTED);
     await user.unhover(share);
 
-    // Generating unlocks it again.
-    await user.click(screen.getByRole('button', { name: '生成 Artifact' }));
-    await screen.findByText('已生成');
-    expect(screen.getByRole('button', { name: 'Share artifact' })).toBeEnabled();
+    // Still disabled on a fresh version — the reason is the missing endpoint, not the
+    // version's generated state.
+    await user.click(await screen.findByRole('button', { name: 'Regenerate artifact' }));
+    await screen.findByRole('button', { name: '生成 Artifact' });
+    expect(screen.getByRole('button', { name: 'Share artifact' })).toBeDisabled();
   });
 
   it('keeps each version’s generated state independent when switching versions', async () => {

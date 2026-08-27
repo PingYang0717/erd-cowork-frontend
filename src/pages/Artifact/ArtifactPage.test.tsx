@@ -119,12 +119,8 @@ describe('Artifact full-page view', () => {
 
     await screen.findByTitle('Artifact preview');
 
-    // Share is enabled (the seeded latest version is generated) and opens the dialog.
-    const share = screen.getByRole('button', { name: 'Share artifact' });
-    expect(share).toBeEnabled();
-    await user.click(share);
-    expect(await screen.findByRole('dialog', { name: '分享 Artifact' })).toBeInTheDocument();
-    await user.keyboard('{Escape}');
+    // Share is present but disabled — no backend share endpoint yet (ADR-0009).
+    expect(screen.getByRole('button', { name: 'Share artifact' })).toBeDisabled();
 
     await user.click(screen.getByRole('button', { name: 'Refresh artifact' }));
     expect(await screen.findByTitle('Artifact preview')).toBeInTheDocument();

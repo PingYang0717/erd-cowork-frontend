@@ -5,6 +5,7 @@ import { http, HttpResponse } from 'msw';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 
+import { BACKEND_UNSUPPORTED } from '@/constants/messages';
 import { server } from '@/mocks/server';
 import { ArtifactPage } from '@/pages/Artifact/ArtifactPage';
 import type { Artifact } from '@/types/api/index';
@@ -94,32 +95,13 @@ describe('Artifacts gallery', () => {
     expect(namesByRecency[2]).toContain('Daily monitor');
   });
 
-  it('pins an Artifact from its card, and the pinned state persists across a simulated reload', async () => {
-    const user = userEvent.setup();
+  // Pinning used to be clicked here and asserted across a simulated reload. There is no
+  // backend endpoint behind it (ADR-0009), so the button states what it cannot do.
+  it('disables the card pin button, saying why', async () => {
     renderGalleryPage();
     await screen.findByRole('button', { name: 'SPC analysis — Vt (gate CD)' });
 
-    const pinButton = screen.getByRole('button', {
-      name: 'Pin SPC analysis — Vt (gate CD)',
-    });
-    await user.click(pinButton);
-
-    expect(
-      await screen.findByRole('button', { name: 'Unpin SPC analysis — Vt (gate CD)' }),
-    ).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /^Pinned/ })).toHaveTextContent('2');
-
-    // Reload: fresh QueryClient + fresh render, so the only way pinned state
-    // survives is if the mock backend (localStorage-backed) actually persisted it.
-    renderGalleryPage();
-    const pinnedFilters = await screen.findAllByRole('button', { name: /^Pinned/ });
-    const reloadedPinnedFilter = pinnedFilters[pinnedFilters.length - 1];
-    expect(reloadedPinnedFilter).toHaveTextContent('2');
-
-    const reloadedGalleries = screen.getAllByRole('button', {
-      name: 'Unpin SPC analysis — Vt (gate CD)',
-    });
-    expect(reloadedGalleries.length).toBeGreaterThan(0);
+    expect(screen.getByRole('button', { name: 'Pin SPC analysis — Vt (gate CD)' })).toBeDisabled();
   });
 
   it("shows Pin, Copy Link, Share, and Delete in an owned card's more-actions menu", async () => {
@@ -130,10 +112,17 @@ describe('Artifacts gallery', () => {
     await user.click(
       screen.getByRole('button', { name: 'More actions for SPC analysis — Vt (gate CD)' }),
     );
-    expect(screen.getByRole('menuitem', { name: 'Pin' })).toBeInTheDocument();
-    expect(screen.getByRole('menuitem', { name: 'Copy link' })).toBeInTheDocument();
-    expect(screen.getByRole('menuitem', { name: 'Share' })).toBeInTheDocument();
-    expect(screen.getByRole('menuitem', { name: 'Delete' })).toBeInTheDocument();
+    // Copy link is the only one with nothing behind it to wait for: it reads the
+    // current URL. The other three are disabled until the backend has the endpoints.
+    expect(screen.getByRole('menuitem', { name: 'Copy link' })).not.toHaveAttribute(
+      'aria-disabled',
+      'true',
+    );
+    for (const label of ['Pin', 'Share', 'Delete']) {
+      const item = screen.getByRole('menuitem', { name: new RegExp(`^${label}`) });
+      expect(item).toHaveAttribute('aria-disabled', 'true');
+      expect(within(item).getByText(BACKEND_UNSUPPORTED)).toBeInTheDocument();
+    }
   });
 
   it('hides Share in the more-actions menu of a "Shared to me" card', async () => {
@@ -142,30 +131,8 @@ describe('Artifacts gallery', () => {
     await screen.findByRole('button', { name: 'Daily monitor (A14)' });
 
     await user.click(screen.getByRole('button', { name: 'More actions for Daily monitor (A14)' }));
-    expect(screen.getByRole('menuitem', { name: 'Pin' })).toBeInTheDocument();
-    expect(screen.queryByRole('menuitem', { name: 'Share' })).not.toBeInTheDocument();
-  });
-
-  it('deletes an Artifact from its card menu, and the deletion persists across a simulated reload', async () => {
-    const user = userEvent.setup();
-    renderGalleryPage();
-    await screen.findByRole('button', { name: 'SPC analysis — Vt (gate CD)' });
-
-    await user.click(
-      screen.getByRole('button', { name: 'More actions for SPC analysis — Vt (gate CD)' }),
-    );
-    await user.click(screen.getByRole('menuitem', { name: 'Delete' }));
-
-    expect(
-      screen.queryByRole('button', { name: 'SPC analysis — Vt (gate CD)' }),
-    ).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /^All/ })).toHaveTextContent('2');
-
-    renderGalleryPage();
-    await screen.findByRole('button', { name: 'Inline dashboard — W12' });
-    expect(screen.queryAllByRole('button', { name: 'SPC analysis — Vt (gate CD)' })).toHaveLength(
-      0,
-    );
+    expect(screen.getByRole('menuitem', { name: /^Pin/ })).toBeInTheDocument();
+    expect(screen.queryByRole('menuitem', { name: /^Share/ })).not.toBeInTheDocument();
   });
 
   it("copies an Artifact's link to the clipboard from its card menu", async () => {
@@ -181,19 +148,6 @@ describe('Artifacts gallery', () => {
     await user.click(screen.getByRole('menuitem', { name: 'Copy link' }));
 
     expect(writeText).toHaveBeenCalledWith(expect.stringContaining('/cowork/artifact/artifact-1'));
-  });
-
-  it('opens the share dialog for an Artifact from its card menu', async () => {
-    const user = userEvent.setup();
-    renderGalleryPage();
-    await screen.findByRole('button', { name: 'SPC analysis — Vt (gate CD)' });
-
-    await user.click(
-      screen.getByRole('button', { name: 'More actions for SPC analysis — Vt (gate CD)' }),
-    );
-    await user.click(screen.getByRole('menuitem', { name: 'Share' }));
-
-    expect(await screen.findByRole('dialog', { name: '分享 Artifact' })).toBeInTheDocument();
   });
 
   it('distinguishes kinds by thumbnail, names the producing session, and badges sharing states', async () => {
@@ -224,29 +178,33 @@ describe('Artifacts gallery', () => {
     expect(within(spcCard).queryByText('Shared to me')).not.toBeInTheDocument();
   });
 
-  it('shows the primary "Shared" badge in the meta row once an Artifact has been shared', async () => {
-    const user = userEvent.setup();
-    renderGalleryPage();
-    await screen.findByRole('button', { name: 'SPC analysis — Vt (gate CD)' });
-
-    const spcCard = screen
-      .getByRole('button', { name: 'SPC analysis — Vt (gate CD)' })
-      .closest('[role="listitem"]') as HTMLElement;
-    expect(within(spcCard).queryByText('Shared')).not.toBeInTheDocument();
-
-    await user.click(
-      screen.getByRole('button', { name: 'More actions for SPC analysis — Vt (gate CD)' }),
+  // Sharing is disabled (ADR-0009), so the badge is asserted from the data that would
+  // arrive once something has been shared, rather than by sharing it here.
+  it('shows the primary "Shared" badge in the meta row for an Artifact already shared', async () => {
+    server.use(
+      http.get('/api/artifacts', () =>
+        HttpResponse.json([
+          {
+            id: 'artifact-1',
+            sessionId: 'session-1',
+            name: 'SPC analysis — Vt (gate CD)',
+            kind: 'dashboard',
+            scenario: 'spc',
+            pinned: false,
+            mine: true,
+            shared: true,
+            generated: true,
+            createdAt: '2026-08-20T09:15:00.000Z',
+          },
+        ]),
+      ),
     );
-    await user.click(screen.getByRole('menuitem', { name: 'Share' }));
+    renderGalleryPage();
 
-    const dialog = await screen.findByRole('dialog', { name: '分享 Artifact' });
-    const picker = within(dialog).getByRole('combobox');
-    await user.type(picker, '鄭凱宇');
-    await user.click(await screen.findByRole('option', { name: /CHXXGHYC/ }));
-    await user.click(within(dialog).getByRole('button', { name: '分享' }));
-    await user.click(within(dialog).getByRole('button', { name: '完成' }));
-
-    expect(await within(spcCard).findByText('Shared')).toBeInTheDocument();
+    const spcCard = (
+      await screen.findByRole('button', { name: 'SPC analysis — Vt (gate CD)' })
+    ).closest('[role="listitem"]') as HTMLElement;
+    expect(within(spcCard).getByText('Shared')).toBeInTheDocument();
   });
 
   it('de-duplicates "Shared to me" by artifact id without collapsing distinct same-name artifacts', async () => {

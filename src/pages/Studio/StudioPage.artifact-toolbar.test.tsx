@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -36,40 +36,18 @@ describe('Artifact panel toolbar', () => {
     useThemeStore.setState(useThemeStore.getInitialState());
   });
 
-  it('shows a "已生成" badge for a rendered Artifact, and the Share button opens the share dialog', async () => {
+  // Two tests used to open the share dialog from here and drive a share through it.
+  // Sharing has no backend endpoint (ADR-0009): the button is disabled at its entry
+  // point so the dialog never opens onto a form that could not submit.
+  it('shows a "已生成" badge for a rendered Artifact, and disables the Share button', async () => {
     const user = userEvent.setup();
     renderStudioPage();
 
     await user.click(await screen.findByRole('button', { name: 'SPC — Vt (gate CD)' }));
 
     expect(await screen.findByText('已生成')).toBeInTheDocument();
-
-    await user.click(await screen.findByRole('button', { name: 'Share artifact' }));
-
-    expect(await screen.findByRole('dialog', { name: '分享 Artifact' })).toBeInTheDocument();
-  });
-
-  it('keeps the "已生成" badge and the plain Share button once the Artifact has been shared', async () => {
-    const user = userEvent.setup();
-    renderStudioPage();
-
-    await user.click(await screen.findByRole('button', { name: 'SPC — Vt (gate CD)' }));
-    await user.click(await screen.findByRole('button', { name: 'Share artifact' }));
-
-    const dialog = await screen.findByRole('dialog', { name: '分享 Artifact' });
-    const picker = within(dialog).getByRole('combobox');
-    await user.type(picker, '鄭凱宇');
-    await user.click(await screen.findByRole('option', { name: /CHXXGHYC/ }));
-    await user.click(within(dialog).getByRole('button', { name: '分享' }));
-    await user.click(within(dialog).getByRole('button', { name: '完成' }));
-
-    // The panel chip persists (the closing dialog's info card may still hold
-    // its own 已生成 chip mid-transition, hence getAllByText).
-    expect(screen.getAllByText('已生成').length).toBeGreaterThan(0);
-    // The mockup has no extra shared checkmark on the share button; it stays
-    // the plain, enabled Share control after sharing.
-    expect(screen.getByRole('button', { name: 'Share artifact' })).toBeEnabled();
-    expect(screen.queryByRole('button', { name: 'Artifact shared' })).not.toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Share artifact' })).toBeDisabled();
+    expect(screen.queryByRole('dialog', { name: '分享 Artifact' })).not.toBeInTheDocument();
   });
 
   it('opens the Artifact’s full-page view in a new tab', async () => {
