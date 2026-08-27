@@ -1,8 +1,8 @@
 /* Inside a message bubble the outline is the bubble's; depth comes from a fill one
-   step deeper than it. */
+   step deeper than it — cowork's gray-200 against the gray-100 bubble (ADR-0010). */
 .panel {
   border-radius: 9px;
-  background: var(--erd-color-fill-quaternary, rgba(0, 0, 0, 0.02));
+  background: var(--erd-color-chat-code-bg, #e5e7eb);
 }
 
 .toggle {

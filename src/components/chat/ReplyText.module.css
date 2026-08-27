@@ -1,6 +1,6 @@
-/* Matches the plain-paragraph reply this replaced: fs13.5 / lh1.6 from the mockup. */
+/* cowork's reply body is text-sm (14px); leading stays ours (ADR-0010). */
 .reply {
-  font-size: 13.5px;
+  font-size: 14px;
   line-height: 1.6;
   color: var(--erd-color-text, rgba(0, 0, 0, 0.88));
 }
