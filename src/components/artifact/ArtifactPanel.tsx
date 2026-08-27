@@ -10,6 +10,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { Tooltip } from '@/components/common/Tooltip';
+import { BACKEND_UNSUPPORTED } from '@/constants/messages';
 import { useArtifactContent } from '@/hooks/useArtifactContent';
 import { useGenerateArtifact } from '@/hooks/useArtifactMutations';
 import { useArtifacts } from '@/hooks/useArtifacts';
@@ -173,24 +174,26 @@ function ArtifactPanelContent({
             </span>
           </Tooltip>
         ) : (
-          <button
-            type="button"
-            className={styles.generateButton}
-            disabled={generateArtifact.isPending}
-            onClick={() => generateArtifact.mutate(artifactId, { onSuccess: startCoach })}
-          >
-            生成 Artifact
-          </button>
+          // Disabled until the backend has POST /artifacts/{id}/generate (ADR-0009).
+          <Tooltip content={BACKEND_UNSUPPORTED}>
+            <button
+              type="button"
+              className={styles.generateButton}
+              disabled
+              onClick={() => generateArtifact.mutate(artifactId, { onSuccess: startCoach })}
+            >
+              生成 Artifact
+            </button>
+          </Tooltip>
         )}
-        <Tooltip
-          content={isGenerated ? '分享' : '請先生成 Artifact'}
-          wrapperClassName={styles.shareButtonSlot}
-        >
+        {/* Share is disabled at its entry point, so the dialog never opens onto a
+            recipient search that could not submit anything (ADR-0009). */}
+        <Tooltip content={BACKEND_UNSUPPORTED} wrapperClassName={styles.shareButtonSlot}>
           <button
             type="button"
             className={styles.shareButton}
             aria-label="Share artifact"
-            disabled={!isGenerated}
+            disabled
             onClick={() => setIsShareOpen(true)}
           >
             <ShareAltOutlined aria-hidden />

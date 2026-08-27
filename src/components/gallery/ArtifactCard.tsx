@@ -13,6 +13,9 @@ import { Dropdown } from 'antd';
 import React, { useState } from 'react';
 
 import { ShareArtifactDialog } from '@/components/artifact/ShareArtifactDialog';
+import { Tooltip } from '@/components/common/Tooltip';
+import { UnsupportedLabel } from '@/components/common/UnsupportedLabel';
+import { BACKEND_UNSUPPORTED } from '@/constants/messages';
 import { useDeleteArtifact, useSetArtifactPinned } from '@/hooks/useArtifactMutations';
 import { useSessions } from '@/hooks/useSessions';
 import type { Artifact } from '@/types/api/index';
@@ -33,22 +36,31 @@ const ArtifactCard: React.FC<ArtifactCardProps> = ({ artifact, onOpen }) => {
   const { data: sessions } = useSessions();
   const sessionTitle = sessions?.find((s) => s.id === artifact.sessionId)?.title;
 
+  // Pin, Share and Delete are disabled: no backend endpoint stands behind them yet
+  // (ADR-0009). Copy link survives — it reads the current URL and touches no API.
   const menuItems = [
     {
       key: 'pin',
-      label: artifact.pinned ? 'Unpin' : 'Pin',
+      label: <UnsupportedLabel label={artifact.pinned ? 'Unpin' : 'Pin'} />,
       icon: artifact.pinned ? <PushpinFilled aria-hidden /> : <PushpinOutlined aria-hidden />,
+      disabled: true,
     },
     { key: 'copyLink', label: 'Copy link', icon: <CopyOutlined aria-hidden /> },
     artifact.sharedBy
       ? null
-      : { key: 'share', label: 'Share', icon: <ShareAltOutlined aria-hidden /> },
+      : {
+          key: 'share',
+          label: <UnsupportedLabel label="Share" />,
+          icon: <ShareAltOutlined aria-hidden />,
+          disabled: true,
+        },
     { type: 'divider' as const },
     {
       key: 'delete',
-      label: 'Delete',
+      label: <UnsupportedLabel label="Delete" />,
       danger: true,
       icon: <DeleteOutlined aria-hidden />,
+      disabled: true,
     },
   ].filter((item): item is NonNullable<typeof item> => item !== null);
 
@@ -101,15 +113,18 @@ const ArtifactCard: React.FC<ArtifactCardProps> = ({ artifact, onOpen }) => {
           </span>
         </span>
       </button>
-      <button
-        type="button"
-        className={styles.pinButton}
-        aria-label={artifact.pinned ? `Unpin ${artifact.name}` : `Pin ${artifact.name}`}
-        aria-pressed={artifact.pinned}
-        onClick={() => setArtifactPinned.mutate({ id: artifact.id, pinned: !artifact.pinned })}
-      >
-        {artifact.pinned ? <PushpinFilled aria-hidden /> : <PushpinOutlined aria-hidden />}
-      </button>
+      <Tooltip content={BACKEND_UNSUPPORTED} wrapperClassName={styles.pinButtonSlot}>
+        <button
+          type="button"
+          className={styles.pinButton}
+          aria-label={artifact.pinned ? `Unpin ${artifact.name}` : `Pin ${artifact.name}`}
+          aria-pressed={artifact.pinned}
+          disabled
+          onClick={() => setArtifactPinned.mutate({ id: artifact.id, pinned: !artifact.pinned })}
+        >
+          {artifact.pinned ? <PushpinFilled aria-hidden /> : <PushpinOutlined aria-hidden />}
+        </button>
+      </Tooltip>
       <Dropdown
         trigger={['click']}
         overlayClassName="erd-menu"

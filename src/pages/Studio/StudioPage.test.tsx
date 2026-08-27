@@ -1,10 +1,13 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { http, HttpResponse } from 'msw';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { StudioShell } from '@/components/layouts/StudioShell';
+import { BACKEND_UNSUPPORTED } from '@/constants/messages';
+import { server } from '@/mocks/server';
 import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
 import { useStudioLayoutStore } from '@/stores/useStudioLayoutStore';
 
@@ -182,13 +185,21 @@ describe('Session rail', () => {
   });
 
   it('keeps the Recents header visible when there are no recent sessions, with an empty-state line', async () => {
-    const user = userEvent.setup();
-    renderStudioPage();
-
-    await user.click(
-      await screen.findByRole('button', { name: 'More actions for Defect pareto — W12' }),
+    // Every session pinned, so Recents is empty. Deleting one used to be how this test
+    // got here; delete is disabled until the backend has the endpoint (ADR-0009).
+    server.use(
+      http.get('/api/sessions', () =>
+        HttpResponse.json([
+          {
+            id: 'session-1',
+            title: 'SPC — Vt (gate CD)',
+            pinnedAt: '2026-08-20T09:05:00.000Z',
+            updatedAt: '2026-08-20T09:00:00.000Z',
+          },
+        ]),
+      ),
     );
-    await user.click(screen.getByRole('menuitem', { name: 'Delete' }));
+    renderStudioPage();
 
     const recents = await screen.findByRole('region', { name: 'Recents sessions' });
     expect(await within(recents).findByText('No recent chats.')).toBeInTheDocument();
@@ -210,116 +221,22 @@ describe('Session rail', () => {
     expect(previouslySelected).not.toHaveAttribute('aria-current', 'true');
   });
 
-  it('pins a recent session from its more-actions menu, moving it into Pinned', async () => {
+  // Pin, rename and delete were covered by five tests that clicked through the menu and
+  // asserted the session moved, was renamed, or disappeared. The backend has none of
+  // those endpoints (ADR-0009), so the menu items are disabled and the behaviour they
+  // described does not exist to test. What is left to protect is that they are visibly
+  // disabled rather than quietly inert — and that nobody re-enables them by accident.
+  it('disables pin, rename and delete in a session menu, saying why', async () => {
     const user = userEvent.setup();
     renderStudioPage();
 
     await screen.findByRole('region', { name: 'Pinned sessions' });
     await user.click(screen.getByRole('button', { name: 'More actions for Defect pareto — W12' }));
-    await user.click(screen.getByRole('menuitem', { name: 'Pin' }));
 
-    const pinned = await screen.findByRole('region', { name: 'Pinned sessions' });
-    expect(
-      await within(pinned).findByRole('button', { name: 'Defect pareto — W12' }),
-    ).toBeInTheDocument();
-    // The Recents header stays put with its empty-state line (ticket 12).
-    const recents = screen.getByRole('region', { name: 'Recents sessions' });
-    expect(within(recents).getByText('No recent chats.')).toBeInTheDocument();
-  });
-
-  it('unpins a pinned session from its more-actions menu, moving it into Recent', async () => {
-    const user = userEvent.setup();
-    renderStudioPage();
-
-    await screen.findByRole('region', { name: 'Pinned sessions' });
-    await user.click(screen.getByRole('button', { name: 'More actions for SPC — Vt (gate CD)' }));
-    await user.click(screen.getByRole('menuitem', { name: 'Unpin' }));
-
-    expect(screen.queryByRole('region', { name: 'Pinned sessions' })).not.toBeInTheDocument();
-    const recent = screen.getByRole('region', { name: 'Recents sessions' });
-    expect(
-      await within(recent).findByRole('button', { name: 'SPC — Vt (gate CD)' }),
-    ).toBeInTheDocument();
-  });
-
-  it('renames a session from its more-actions menu by pressing Enter', async () => {
-    const user = userEvent.setup();
-    renderStudioPage();
-
-    await screen.findByRole('region', { name: 'Pinned sessions' });
-    await user.click(screen.getByRole('button', { name: 'More actions for Defect pareto — W12' }));
-    await user.click(screen.getByRole('menuitem', { name: 'Rename' }));
-
-    const input = screen.getByRole('textbox', { name: 'Rename Defect pareto — W12' });
-    await user.clear(input);
-    await user.type(input, 'Defect pareto — W13{Enter}');
-
-    expect(await screen.findByRole('button', { name: 'Defect pareto — W13' })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Defect pareto — W12' })).not.toBeInTheDocument();
-  });
-
-  it('cancels a rename in progress by pressing Escape', async () => {
-    const user = userEvent.setup();
-    renderStudioPage();
-
-    await screen.findByRole('region', { name: 'Pinned sessions' });
-    await user.click(screen.getByRole('button', { name: 'More actions for Defect pareto — W12' }));
-    await user.click(screen.getByRole('menuitem', { name: 'Rename' }));
-
-    const input = screen.getByRole('textbox', { name: 'Rename Defect pareto — W12' });
-    await user.clear(input);
-    await user.type(input, 'Should not save{Escape}');
-
-    expect(screen.getByRole('button', { name: 'Defect pareto — W12' })).toBeInTheDocument();
-    expect(screen.queryByText('Should not save')).not.toBeInTheDocument();
-  });
-
-  it('deletes a session from its more-actions menu', async () => {
-    const user = userEvent.setup();
-    renderStudioPage();
-
-    await user.click(
-      await screen.findByRole('button', { name: 'More actions for Defect pareto — W12' }),
-    );
-    await user.click(screen.getByRole('menuitem', { name: 'Delete' }));
-
-    expect(screen.queryByRole('button', { name: 'Defect pareto — W12' })).not.toBeInTheDocument();
-    // The Recents header stays put with its empty-state line (ticket 12).
-    const recents = screen.getByRole('region', { name: 'Recents sessions' });
-    expect(within(recents).getByText('No recent chats.')).toBeInTheDocument();
-  });
-
-  // Starts from a session the backend already knows about, not from "New chat": a
-  // draft has nothing to rename or pin until its first message persists it (ADR-0008).
-  it('keeps a renamed and pinned session in the right section after a simulated reload', async () => {
-    const user = userEvent.setup();
-    renderStudioPage();
-
-    await screen.findByRole('region', { name: 'Pinned sessions' });
-
-    await user.click(
-      await screen.findByRole('button', { name: 'More actions for Defect pareto — W12' }),
-    );
-    await user.click(screen.getByRole('menuitem', { name: 'Rename' }));
-    const input = screen.getByRole('textbox', { name: 'Rename Defect pareto — W12' });
-    await user.clear(input);
-    await user.type(input, 'CP Test triage{Enter}');
-    await screen.findByRole('button', { name: 'CP Test triage' });
-
-    await user.click(screen.getByRole('button', { name: 'More actions for CP Test triage' }));
-    await user.click(screen.getByRole('menuitem', { name: 'Pin' }));
-
-    const pinnedBeforeReload = await screen.findByRole('region', { name: 'Pinned sessions' });
-    expect(
-      await within(pinnedBeforeReload).findByRole('button', { name: 'CP Test triage' }),
-    ).toBeInTheDocument();
-
-    await renderReloadedStudioPage();
-
-    const pinnedGroups = await screen.findAllByRole('region', { name: 'Pinned sessions' });
-    const reloadedPinned = pinnedGroups[pinnedGroups.length - 1];
-    expect(
-      await within(reloadedPinned).findByRole('button', { name: 'CP Test triage' }),
-    ).toBeInTheDocument();
+    for (const label of ['Pin', 'Rename', 'Delete']) {
+      const item = screen.getByRole('menuitem', { name: new RegExp(`^${label}`) });
+      expect(item).toHaveAttribute('aria-disabled', 'true');
+      expect(within(item).getByText(BACKEND_UNSUPPORTED)).toBeInTheDocument();
+    }
   });
 });
