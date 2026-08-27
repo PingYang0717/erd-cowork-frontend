@@ -27,7 +27,7 @@
 .reply code {
   padding: 1px 5px;
   border-radius: 4px;
-  background: var(--erd-color-fill-tertiary, #f5f5f5);
+  background: var(--erd-color-chat-code-bg, #e5e7eb);
   font-size: 12.5px;
 }
 
@@ -35,7 +35,7 @@
   margin: 8px 0;
   padding: 10px 12px;
   border-radius: 8px;
-  background: var(--erd-color-fill-tertiary, #f5f5f5);
+  background: var(--erd-color-chat-code-bg, #e5e7eb);
   overflow-x: auto;
 }
 
@@ -44,7 +44,8 @@
   background: none;
 }
 
-/* A wide table scrolls inside its own box rather than widening the thread. */
+/* A wide table scrolls inside its own box rather than widening the thread.
+   Borders, header tint and zebra rows follow cowork's markdown table (ADR-0010). */
 .reply table {
   display: block;
   width: max-content;
@@ -52,12 +53,22 @@
   margin: 8px 0;
   border-collapse: collapse;
   overflow-x: auto;
-  font-size: 12.5px;
+  font-size: 12px;
 }
 
 .reply th,
 .reply td {
-  padding: 5px 10px;
-  border: 1px solid var(--erd-color-border-secondary, #f0f0f0);
+  padding: 4px 8px;
+  border: 1px solid var(--erd-color-chat-border, #e5e7eb);
   text-align: left;
+}
+
+.reply th {
+  background: var(--erd-color-chat-stripe-bg, #f9fafb);
+  font-weight: 500;
+  color: var(--erd-color-text-secondary, rgba(0, 0, 0, 0.65));
+}
+
+.reply tbody tr:nth-child(even) {
+  background: var(--erd-color-chat-stripe-bg, #f9fafb);
 }
