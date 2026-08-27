@@ -7,13 +7,12 @@ export interface CurrentUser {
   readonly department: string;
 }
 
-/** The signed-in user.
+/** The signed-in user, as the mock backend sees them (test-only — the app itself never
+ *  imports this; ownership like `isOwn` comes from the real backend).
  *
- *  `id` is not a fixture: it is the same value that travels as `X-User-Id`, so anything
- *  that resolves ownership (the Gallery's "Yours" filter, the mock backend's `mine`)
- *  agrees with what the backend would decide. `name` and `department` are still
- *  placeholders — v1 has no directory lookup for the current user.
- */
+ *  `id` is not a fixture: it reads the same value that travels as `X-User-Id`, so the
+ *  mock's ownership deriving (`toArtifactDto`) agrees with what a backend filtering by
+ *  that header would decide. `name` and `department` are placeholders. */
 export const currentUser: CurrentUser = {
   get id() {
     return getAuthHeaders()['X-User-Id'] ?? 'anonymous';

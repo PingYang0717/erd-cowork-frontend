@@ -1,6 +1,5 @@
 import { http, HttpResponse } from 'msw';
 
-import { currentUser } from '@/config/currentUser';
 import { DRAFT_SESSION_TITLE } from '@/constants/messages';
 import type { AgentEvent, QuestionForm, StepItem } from '@/types/api/agentEvent';
 import type { Artifact } from '@/types/api/artifact';
@@ -13,20 +12,11 @@ import type { UploadedFileInfo } from '@/types/api/upload';
 
 import type { ArtifactKind } from './artifactFixtures';
 import { buildArtifactFixture } from './artifactFixtures';
+import { currentUser } from './currentUser';
 import { DC_ITEM_FIXTURES, ROWS_PER_DC_ITEM } from './dcItemFixtures';
 import { createPersistedResource } from './persistedResource';
 import { dcItemQuestion, flattenQuestionForm, openingQuestion } from './questionFixtures';
 import { matchScenario, SCENARIO_FIXTURES, SLIDES_STEP } from './scenarioFixtures';
-
-interface ExampleWidget {
-  id: string;
-  name: string;
-}
-
-const exampleWidgets = createPersistedResource<ExampleWidget>('erd-cowork:example-widgets', [
-  { id: 'w1', name: 'Inline Dashboard' },
-  { id: 'w2', name: 'SPC Analysis' },
-]);
 
 // Messages persist in the backend wire shape; sessionId is the mock store's own
 // bookkeeping (the real backend nests messages inside SessionDetail) and is
@@ -486,10 +476,6 @@ export const allHandlers = [
       },
     }),
   ),
-
-  http.get('/api/example-widgets', () => {
-    return HttpResponse.json(exampleWidgets.read());
-  }),
 
   http.get('/api/sessions', () => {
     return HttpResponse.json(sessions.read());

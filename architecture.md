@@ -49,7 +49,6 @@ src/
     session/    Session 列表與收合軌
     common/     Tooltip、ThemeToggle、ErrorBoundary、SuspenseLoader、DataBoundary
     layouts/    StudioShell、StudioLayout、ResizeHandle
-  config/       執行期設定(currentUser)
   constants/    共用常數(storage key、DRAFT_SESSION_TITLE)
   hooks/        資料 hook(useSessions…)與跨元件 UI hook(useDebouncedValue…)
   stores/       Zustand store
