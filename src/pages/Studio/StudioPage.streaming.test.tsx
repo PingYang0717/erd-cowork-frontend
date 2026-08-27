@@ -154,7 +154,7 @@ describe('Streaming a run in the Studio', () => {
       expect(screen.queryByRole('status', { name: 'eRD AI is working' })).not.toBeInTheDocument(),
     );
     expect(screen.getByText('Recomputed control limits.')).toBeInTheDocument();
-    expect(screen.getByText('eRD AI · stopped')).toBeInTheDocument();
+    expect(screen.getByText('eRD AI · 已停止')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Send message' })).toBeInTheDocument();
   });
 
@@ -169,7 +169,7 @@ describe('Streaming a run in the Studio', () => {
 
     act(() => stream.disconnect());
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('Connection lost — send it again.');
+    expect(await screen.findByRole('alert')).toHaveTextContent('⚠ 連線中斷，請重新送出一次');
     expect(screen.queryByRole('status', { name: 'eRD AI is working' })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Send message' })).toBeInTheDocument();
   });
