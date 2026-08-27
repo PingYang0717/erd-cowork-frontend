@@ -54,7 +54,6 @@ src/
   bootstrap/    # internal 環境啟動接縫(import.meta.glob 偵測 internal.impl.ts,ADR-0011)
   components/   # 依 domain 切:artifact / chat / connectors / files /
                 #   gallery / session / common / layouts
-  config/       # 執行期設定(currentUser)
   constants/    # 共用常數(storage key 等)
   hooks/        # 資料 hook 與跨元件的 UI hook
   stores/       # Zustand store
