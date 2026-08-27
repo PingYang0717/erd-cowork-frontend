@@ -15,7 +15,7 @@
 ## 中 — Session 管理
 
 3. **Session CRUD**:建立(`POST /sessions`)、改名、釘選、刪除。目前這四個功能
-   live 模式下只存在於 MSW,對真後端無效;`Session.pinned` 是前端-only 欄位。
+   live 模式下只存在於 MSW,對真後端無效;`Session.pinnedAt`(釘選時間戳,未釘選為 `null`)是前端-only 欄位。
 
 ## 中 — 檔案與訊息
 

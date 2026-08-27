@@ -237,17 +237,18 @@ async function parseMultipartFiles(
   return files;
 }
 
-const sessions = createPersistedResource<Session>('erd-cowork:sessions', [
+// :v2 — sessions persisted before this carry the old boolean `pinned` field.
+const sessions = createPersistedResource<Session>('erd-cowork:sessions:v2', [
   {
     id: 'session-1',
     title: 'SPC — Vt (gate CD)',
-    pinned: true,
+    pinnedAt: '2026-08-20T09:05:00.000Z',
     updatedAt: '2026-08-20T09:00:00.000Z',
   },
   {
     id: 'session-2',
     title: 'Defect pareto — W12',
-    pinned: false,
+    pinnedAt: null,
     updatedAt: '2026-08-19T09:00:00.000Z',
   },
 ]);
@@ -432,7 +433,7 @@ export function upsertSession(sessionId: string): void {
 
   sessions.write([
     ...all,
-    { id: sessionId, title: DRAFT_SESSION_TITLE, pinned: false, updatedAt: now },
+    { id: sessionId, title: DRAFT_SESSION_TITLE, pinnedAt: null, updatedAt: now },
   ]);
 }
 
@@ -476,7 +477,7 @@ export const allHandlers = [
     const session: Session = {
       id: crypto.randomUUID(),
       title: body.title?.trim() || DRAFT_SESSION_TITLE,
-      pinned: false,
+      pinnedAt: null,
       updatedAt: new Date().toISOString(),
     };
     sessions.write([...sessions.read(), session]);
@@ -484,7 +485,7 @@ export const allHandlers = [
   }),
 
   http.patch('/api/sessions/:id', async ({ params, request }) => {
-    const body = (await request.json()) as Partial<Pick<Session, 'title' | 'pinned'>>;
+    const body = (await request.json()) as Partial<Pick<Session, 'title' | 'pinnedAt'>>;
     const all = sessions.read();
     const existing = all.find((session) => session.id === params.id);
     if (!existing) {
