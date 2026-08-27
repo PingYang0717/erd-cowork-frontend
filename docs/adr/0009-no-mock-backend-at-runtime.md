@@ -24,7 +24,7 @@ build-time flag 決定」的部分,並終結 [ADR-0007](0007-verbatim-backend-wi
    `mocks/browser.ts`、`LIVE_BACKED` 過濾一併刪除。只有一種模式:打真後端。
 2. **後端未實作的讀取,在 api 模組回 stub**——就寫在它假裝的那個函式旁邊,不抽成
    `stubs/` 目錄,這樣呼叫端一眼看得出哪條是假的。目前三條:`GET /artifacts`、
-   `GET /connectors`、`GET /directory`。
+   `GET /connectors`、`GET /directory`。（`GET /artifacts` 一度也在此列,後端上線後已移除。）
 3. **後端未實作的寫入,在 UI 停用**,標示「後端尚未支援」。按鈕用既有的延遲 Tooltip;
    選單項目不行(停用的項目吞掉 pointer event),所以理由直接寫在畫面上
    (`UnsupportedLabel`)。

@@ -2,61 +2,9 @@ import type { Artifact, ArtifactTheme, DirectoryEntry } from '@/types/api/index'
 
 import { apiClient } from './apiClient';
 
-/** Stubs for the two reads the backend has not built yet (ADR-0009). They are the
- *  fixtures the mock backend used to serve, verbatim: the Gallery's four filters and
- *  three sorts only mean something against data that varies. Nothing writes to them —
- *  every control that would is disabled — so a plain constant is the whole story. */
-const STUB_ARTIFACTS: Artifact[] = [
-  {
-    id: 'artifact-1',
-    title: 'SPC analysis — Vt (gate CD)',
-    sessionId: 'session-1',
-    sessionTitle: 'SPC — Vt (gate CD)',
-    pinnedAt: null,
-    publishedAt: '2026-08-20T09:20:00.000Z',
-    createdAt: '2026-08-20T09:15:00.000Z',
-    owner: 'u-001',
-    ownerDisplay: 'Alex Chen',
-    canPin: true,
-    canShare: true,
-    isOwn: true,
-    isShared: false,
-    hasPersonalCopy: false,
-  },
-  {
-    id: 'artifact-2',
-    title: 'Inline dashboard — W12',
-    sessionId: 'session-1',
-    sessionTitle: 'SPC — Vt (gate CD)',
-    pinnedAt: '2026-08-21T10:05:00.000Z',
-    publishedAt: '2026-08-21T10:02:00.000Z',
-    createdAt: '2026-08-21T10:00:00.000Z',
-    owner: 'u-001',
-    ownerDisplay: 'Alex Chen',
-    canPin: true,
-    canShare: true,
-    isOwn: true,
-    isShared: false,
-    hasPersonalCopy: false,
-  },
-  {
-    id: 'artifact-3',
-    title: 'Daily monitor (A14)',
-    sessionId: 'session-2',
-    sessionTitle: 'Defect pareto — W12',
-    pinnedAt: null,
-    publishedAt: '2026-08-19T08:35:00.000Z',
-    createdAt: '2026-08-19T08:30:00.000Z',
-    owner: 'u-002',
-    ownerDisplay: 'Alice Wu',
-    canPin: true,
-    // Not the owner: a shared Artifact cannot be shared onward.
-    canShare: false,
-    isOwn: false,
-    isShared: true,
-    hasPersonalCopy: false,
-  },
-];
+/** Stub for the one read the backend has not built yet (ADR-0009): the directory the
+ *  share dialog searches. Sharing is disabled, so nothing reaches it — but the dialog
+ *  still renders behind that disabled entry point. */
 const DEPARTMENT_CODES = [
   'A10INTD1-1',
   'A10INTD1-2',
@@ -99,8 +47,7 @@ export interface ArtifactShareResult {
 }
 
 export const artifactApi = {
-  /** Stubbed: the backend serves a single Artifact's HTML but has no listing (ADR-0009). */
-  listArtifacts: () => Promise.resolve(STUB_ARTIFACTS),
+  listArtifacts: () => apiClient.get<Artifact[]>('/artifacts'),
 
   /** The backend returns the artifact's HTML as text/html directly. `responseType`
    *  is explicit so a document that happens to parse as JSON still arrives as text.

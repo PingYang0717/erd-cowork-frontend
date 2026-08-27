@@ -1,15 +1,36 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { http, HttpResponse } from 'msw';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { artifactApi } from '@/api/artifactApi';
 import { BACKEND_UNSUPPORTED } from '@/constants/messages';
+import { server } from '@/mocks/server';
 import { ArtifactPage } from '@/pages/Artifact/ArtifactPage';
 import type { Artifact } from '@/types/api/index';
 
 import { ArtifactsGalleryPage } from './ArtifactsGalleryPage';
+
+/** One Artifact in the fixed contract's shape, for the tests that need to state their
+ *  own data rather than take the seeded three. */
+function artifactDto(over: Partial<Artifact> & Pick<Artifact, 'id' | 'title'>): Artifact {
+  return {
+    sessionId: 'session-1',
+    sessionTitle: 'SPC — Vt (gate CD)',
+    pinnedAt: null,
+    publishedAt: '2026-08-20T09:20:00.000Z',
+    createdAt: '2026-08-20T09:15:00.000Z',
+    owner: 'u-001',
+    ownerDisplay: 'Alex Chen',
+    canPin: true,
+    canShare: true,
+    isOwn: true,
+    isShared: false,
+    hasPersonalCopy: false,
+    ...over,
+  };
+}
 
 function renderGalleryPage() {
   const queryClient = new QueryClient();
@@ -98,40 +119,37 @@ describe('Artifacts gallery', () => {
     expect(namesByRecency[2]).toContain('Daily monitor');
   });
 
-  // Pinning has a backend endpoint again. What the card cannot yet show is the
-  // *result*: the listing it renders from is still stubbed (ADR-0009), so a pin
-  // changes nothing on screen until GET /artifacts is real. What is testable — and
-  // what breaks first if the wiring is wrong — is that the click reaches the endpoint.
-  it('pins from the card, toggling through the backend rather than asserting a direction', async () => {
-    const togglePin = vi.spyOn(artifactApi, 'togglePin').mockResolvedValue({} as Artifact);
+  it('pins an Artifact from its card, and the pinned state persists across a simulated reload', async () => {
     const user = userEvent.setup();
     renderGalleryPage();
     await screen.findByRole('button', { name: 'SPC analysis — Vt (gate CD)' });
 
+    // No direction is sent: the pin endpoint is a toggle the backend resolves.
     await user.click(screen.getByRole('button', { name: 'Pin SPC analysis — Vt (gate CD)' }));
 
-    expect(togglePin).toHaveBeenCalledWith('artifact-1');
+    expect(
+      await screen.findByRole('button', { name: 'Unpin SPC analysis — Vt (gate CD)' }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^Pinned/ })).toHaveTextContent('2');
+
+    // Reload: fresh QueryClient + fresh render, so the only way pinned state survives
+    // is if the backend actually persisted it.
+    renderGalleryPage();
+    const pinnedFilters = await screen.findAllByRole('button', { name: /^Pinned/ });
+    expect(pinnedFilters[pinnedFilters.length - 1]).toHaveTextContent('2');
+    expect(
+      screen.getAllByRole('button', { name: 'Unpin SPC analysis — Vt (gate CD)' }).length,
+    ).toBeGreaterThan(0);
   });
 
   it('disables the pin button when the user may not pin this Artifact', async () => {
-    vi.spyOn(artifactApi, 'listArtifacts').mockResolvedValue([
-      {
-        id: 'artifact-1',
-        title: 'SPC analysis — Vt (gate CD)',
-        sessionId: 'session-1',
-        sessionTitle: 'SPC — Vt (gate CD)',
-        pinnedAt: null,
-        publishedAt: '2026-08-20T09:20:00.000Z',
-        createdAt: '2026-08-20T09:15:00.000Z',
-        owner: 'u-001',
-        ownerDisplay: 'Alex Chen',
-        canPin: false,
-        canShare: true,
-        isOwn: true,
-        isShared: false,
-        hasPersonalCopy: false,
-      },
-    ]);
+    server.use(
+      http.get('/api/artifacts', () =>
+        HttpResponse.json([
+          artifactDto({ id: 'artifact-1', title: 'SPC analysis — Vt (gate CD)', canPin: false }),
+        ]),
+      ),
+    );
     renderGalleryPage();
     await screen.findByRole('button', { name: 'SPC analysis — Vt (gate CD)' });
 
@@ -209,29 +227,16 @@ describe('Artifacts gallery', () => {
     expect(within(spcCard).queryByText('Shared to me')).not.toBeInTheDocument();
   });
 
-  // Sharing is disabled (ADR-0009), so the badge is asserted from the data that would
-  // arrive once something has been shared, rather than by sharing it here.
+  // Sharing is still disabled (ADR-0009), so the badge is asserted from the data that
+  // arrives once something has been shared, rather than by sharing it here.
   it('shows the primary "Shared" badge in the meta row for an Artifact already shared', async () => {
-    // The listing is stubbed in the api module now (ADR-0009), so the seam a test
-    // substitutes data at is that function — not an HTTP handler.
-    vi.spyOn(artifactApi, 'listArtifacts').mockResolvedValue([
-      {
-        id: 'artifact-1',
-        title: 'SPC analysis — Vt (gate CD)',
-        sessionId: 'session-1',
-        sessionTitle: 'SPC — Vt (gate CD)',
-        pinnedAt: null,
-        publishedAt: '2026-08-20T09:20:00.000Z',
-        createdAt: '2026-08-20T09:15:00.000Z',
-        owner: 'u-001',
-        ownerDisplay: 'Alex Chen',
-        canPin: true,
-        canShare: true,
-        isOwn: true,
-        isShared: true,
-        hasPersonalCopy: false,
-      },
-    ]);
+    server.use(
+      http.get('/api/artifacts', () =>
+        HttpResponse.json([
+          artifactDto({ id: 'artifact-1', title: 'SPC analysis — Vt (gate CD)', isShared: true }),
+        ]),
+      ),
+    );
     renderGalleryPage();
 
     const spcCard = (
@@ -241,30 +246,29 @@ describe('Artifacts gallery', () => {
   });
 
   it('de-duplicates "Shared to me" by artifact id without collapsing distinct same-name artifacts', async () => {
-    const shared = (over: Partial<Artifact> & Pick<Artifact, 'id' | 'title'>): Artifact => ({
-      sessionId: 'session-2',
-      sessionTitle: 'Defect pareto — W12',
-      pinnedAt: null,
-      publishedAt: '2026-08-19T08:35:00.000Z',
-      createdAt: '2026-08-19T08:30:00.000Z',
-      owner: 'u-002',
-      ownerDisplay: 'Alice Wu',
-      canPin: true,
-      // Someone else's Artifact: it cannot be shared onward.
-      canShare: false,
-      isOwn: false,
-      isShared: true,
-      hasPersonalCopy: false,
-      ...over,
-    });
-    vi.spyOn(artifactApi, 'listArtifacts').mockResolvedValue([
-      // The same artifact shared to the user twice: one row survives.
-      shared({ id: 'artifact-9', title: 'Daily monitor (A14)' }),
-      shared({ id: 'artifact-9', title: 'Daily monitor (A14)' }),
-      // Two different artifacts that happen to share a name: both stay.
-      shared({ id: 'artifact-10', title: 'Q3 report', ownerDisplay: 'Bob Lin' }),
-      shared({ id: 'artifact-11', title: 'Q3 report', ownerDisplay: 'Carol Kao' }),
-    ]);
+    const shared = (over: Partial<Artifact> & Pick<Artifact, 'id' | 'title'>) =>
+      // Someone else's Artifact: not own, and not shareable onward.
+      artifactDto({
+        sessionId: 'session-2',
+        sessionTitle: 'Defect pareto — W12',
+        ownerDisplay: 'Alice Wu',
+        isOwn: false,
+        canShare: false,
+        isShared: true,
+        ...over,
+      });
+    server.use(
+      http.get('/api/artifacts', () =>
+        HttpResponse.json([
+          // The same artifact shared to the user twice: one row survives.
+          shared({ id: 'artifact-9', title: 'Daily monitor (A14)' }),
+          shared({ id: 'artifact-9', title: 'Daily monitor (A14)' }),
+          // Two different artifacts that happen to share a name: both stay.
+          shared({ id: 'artifact-10', title: 'Q3 report', ownerDisplay: 'Bob Lin' }),
+          shared({ id: 'artifact-11', title: 'Q3 report', ownerDisplay: 'Carol Kao' }),
+        ]),
+      ),
+    );
 
     const user = userEvent.setup();
     renderGalleryPage();

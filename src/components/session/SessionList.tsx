@@ -22,7 +22,7 @@ import {
   useRenameSession,
   useSetSessionPinned,
 } from '@/hooks/useSessionMutations';
-import { useGenerateCoachStore } from '@/stores/useGenerateCoachStore';
+import { usePublishCoachStore } from '@/stores/usePublishCoachStore';
 import type { Session } from '@/types/api/session';
 import { dispatchMenuAction } from '@/utils/dispatchMenuAction';
 import { formatRelativeTime } from '@/utils/formatRelativeTime';
@@ -234,7 +234,7 @@ const SessionList: React.FC<SessionListProps> = ({ onCollapse, artifactsCount })
   } = useSessionGroups();
   const navigate = useNavigate();
   const location = useLocation();
-  const isCoaching = useGenerateCoachStore((s) => s.isActive);
+  const isCoaching = usePublishCoachStore((s) => s.isActive);
 
   return (
     <div className={styles.sessionList}>
