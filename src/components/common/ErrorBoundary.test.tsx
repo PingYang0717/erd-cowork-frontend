@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { AxiosError } from 'axios';
 import { describe, expect, it, vi } from 'vitest';
 
 import { ErrorBoundary } from './ErrorBoundary';
@@ -23,6 +24,26 @@ describe('ErrorBoundary', () => {
 
     expect(screen.getByRole('alert')).toHaveTextContent('這個區塊載入失敗');
     expect(screen.getByText('連線中斷')).toBeInTheDocument();
+  });
+
+  // The app has no mock backend to fall back on (ADR-0009), so "the backend is not
+  // running" is the failure a developer meets most often. It must not read as a bug.
+  it('names an unreachable backend instead of showing axios’s "Network Error"', () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    function ExplodeOffline(): never {
+      throw new AxiosError('Network Error', 'ERR_NETWORK');
+    }
+
+    render(
+      <ErrorBoundary>
+        <ExplodeOffline />
+      </ErrorBoundary>,
+    );
+
+    expect(screen.getByRole('alert')).toHaveTextContent('無法連線到後端服務');
+    expect(screen.queryByText('Network Error')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '重試' })).toBeInTheDocument();
   });
 
   it('remounts the subtree when the user retries', async () => {

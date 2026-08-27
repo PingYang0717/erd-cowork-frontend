@@ -1,5 +1,7 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
 
+import { describeLoadError } from '@/utils/describeLoadError';
+
 import styles from './ErrorBoundary.module.css';
 
 interface Props {
@@ -46,10 +48,12 @@ export class ErrorBoundary extends Component<Props, State> {
       return fallback(error, this.retry);
     }
 
+    const { heading, detail } = describeLoadError(error);
+
     return (
       <div role="alert" className={styles.panel}>
-        <p className={styles.heading}>這個區塊載入失敗</p>
-        <p className={styles.message}>{error.message}</p>
+        <p className={styles.heading}>{heading}</p>
+        <p className={styles.message}>{detail}</p>
         <button type="button" className={styles.retry} onClick={this.retry}>
           重試
         </button>
