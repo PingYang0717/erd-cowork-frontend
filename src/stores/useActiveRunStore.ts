@@ -19,15 +19,31 @@ interface ActiveRunState {
   /** Artifact produced by the run in progress; null when no run has produced one. */
   streamedArtifact: StreamedArtifact | null;
   setStreamedArtifact: (artifact: StreamedArtifact | null) => void;
+  /** Whether a run is open right now. The Artifact pane needs it to refuse a Reload
+   *  mid-run: the version on screen is still being written, and remounting the frame
+   *  would show a half-finished document as if it were the result. */
+  isRunStreaming: boolean;
+  setRunStreaming: (isStreaming: boolean) => void;
   /** Artifact the Artifact pane is currently showing; the thread sends it as
    *  baseArtifactId so the backend iterates on what the user is looking at. */
   displayedArtifactId: string | null;
   setDisplayedArtifactId: (artifactId: string | null) => void;
+  /** Bumped to throw the artifact's document away and mount a fresh one. Two callers
+   *  share it and neither can see the other: the panel's own Reload button, and a
+   *  repair that finished in the thread. Lives here because that is the only channel
+   *  those two trees have (ADR-0001). */
+  artifactReloadNonce: number;
+  bumpArtifactReload: () => void;
 }
 
 export const useActiveRunStore = create<ActiveRunState>((set) => ({
   streamedArtifact: null,
   setStreamedArtifact: (streamedArtifact) => set({ streamedArtifact }),
+  isRunStreaming: false,
+  setRunStreaming: (isRunStreaming) => set({ isRunStreaming }),
   displayedArtifactId: null,
   setDisplayedArtifactId: (displayedArtifactId) => set({ displayedArtifactId }),
+  artifactReloadNonce: 0,
+  bumpArtifactReload: () =>
+    set((state) => ({ artifactReloadNonce: state.artifactReloadNonce + 1 })),
 }));

@@ -1,5 +1,6 @@
 import { http, HttpResponse } from 'msw';
 
+import { upsertSession } from '@/mocks/handlers';
 import { server } from '@/mocks/server';
 import type { AgentEvent } from '@/types/api/agentEvent';
 
@@ -41,7 +42,10 @@ export function mockAgentStream(): MockAgentStream {
   }
 
   server.use(
-    http.post(`${API_BASE}/sessions/:sessionId/messages`, async ({ request }) => {
+    http.post(`${API_BASE}/sessions/:sessionId/messages`, async ({ params, request }) => {
+      // Sending is what creates the session (ADR-0008); a stub standing in for this
+      // endpoint has to do that too, or the post-run refetch 404s on a draft.
+      upsertSession(params.sessionId as string);
       requests.push(await request.clone().json());
       userIds.push(request.headers.get('X-User-Id'));
       request.signal.addEventListener('abort', () => {

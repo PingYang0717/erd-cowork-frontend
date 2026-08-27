@@ -31,10 +31,14 @@ import styles from './SessionList.module.css';
 function SessionRow({
   session,
   isSelected,
+  isDraft,
   onSelect,
 }: {
   session: Session;
   isSelected: boolean;
+  /** A draft exists only in this client until its first message (ADR-0008). Rename,
+   *  pin and delete have nothing to act on, so the row offers none of them. */
+  isDraft: boolean;
   onSelect: (id: string) => void;
 }) {
   const setSessionPinned = useSetSessionPinned();
@@ -42,14 +46,15 @@ function SessionRow({
   const deleteSession = useDeleteSession();
   const [isRenaming, setIsRenaming] = useState(false);
   const [renameDraft, setRenameDraft] = useState(session.title);
+  const isPinned = session.pinnedAt !== null;
 
   // Dividers between every item, per the mockup's session menu. The Pin icon
   // deliberately keeps its filled-when-pinned variant (spec exception).
   const menuItems = [
     {
       key: 'pin',
-      label: session.pinned ? 'Unpin' : 'Pin',
-      icon: session.pinned ? <PushpinFilled aria-hidden /> : <PushpinOutlined aria-hidden />,
+      label: isPinned ? 'Unpin' : 'Pin',
+      icon: isPinned ? <PushpinFilled aria-hidden /> : <PushpinOutlined aria-hidden />,
     },
     { type: 'divider' as const },
     { key: 'rename', label: 'Rename', icon: <EditOutlined aria-hidden /> },
@@ -59,7 +64,7 @@ function SessionRow({
 
   function handleMenuClick(key: string) {
     dispatchMenuAction(key, {
-      pin: () => setSessionPinned.mutate({ id: session.id, pinned: !session.pinned }),
+      pin: () => setSessionPinned.mutate({ id: session.id, pinned: !isPinned }),
       rename: () => {
         setRenameDraft(session.title);
         setIsRenaming(true);
@@ -110,26 +115,28 @@ function SessionRow({
         onClick={() => onSelect(session.id)}
       >
         <span className={styles.sessionRowTitle}>
-          {session.pinned && <PushpinOutlined aria-hidden className={styles.pinIndicator} />}
+          {isPinned && <PushpinOutlined aria-hidden className={styles.pinIndicator} />}
           {session.title}
         </span>
         <span className={styles.sessionRowTimestamp} aria-hidden="true">
           {formatRelativeTime(session.updatedAt)}
         </span>
       </button>
-      <Dropdown
-        trigger={['click']}
-        overlayClassName="erd-menu"
-        menu={{ items: menuItems, onClick: ({ key }) => handleMenuClick(key) }}
-      >
-        <button
-          type="button"
-          className={styles.moreActionsButton}
-          aria-label={`More actions for ${session.title}`}
+      {!isDraft && (
+        <Dropdown
+          trigger={['click']}
+          overlayClassName="erd-menu"
+          menu={{ items: menuItems, onClick: ({ key }) => handleMenuClick(key) }}
         >
-          <MoreOutlined aria-hidden />
-        </button>
-      </Dropdown>
+          <button
+            type="button"
+            className={styles.moreActionsButton}
+            aria-label={`More actions for ${session.title}`}
+          >
+            <MoreOutlined aria-hidden />
+          </button>
+        </Dropdown>
+      )}
     </li>
   );
 }
@@ -138,12 +145,15 @@ export function SessionGroup({
   label,
   sessions,
   selectedSessionId,
+  draftSessionId,
   onSelect,
   emptyFallback,
 }: {
   label: string;
   sessions: Session[];
   selectedSessionId: string | null;
+  /** The open draft, if any — the one row without a more-actions menu. */
+  draftSessionId?: string | null;
   onSelect: (id: string) => void;
   /** When set, an empty group keeps its header and shows this line instead of vanishing. */
   emptyFallback?: string;
@@ -180,6 +190,7 @@ export function SessionGroup({
                 key={session.id}
                 session={session}
                 isSelected={session.id === selectedSessionId}
+                isDraft={session.id === draftSessionId}
                 onSelect={onSelect}
               />
             ))}
@@ -195,8 +206,14 @@ interface SessionListProps {
 }
 
 const SessionList: React.FC<SessionListProps> = ({ onCollapse, artifactsCount }) => {
-  const { pinned, recent, selectedSessionId, selectAndNavigate, createAndNavigate } =
-    useSessionGroups();
+  const {
+    pinned,
+    recent,
+    draftSessionId,
+    selectedSessionId,
+    selectAndNavigate,
+    createAndNavigate,
+  } = useSessionGroups();
   const navigate = useNavigate();
   const location = useLocation();
   const isCoaching = useGenerateCoachStore((s) => s.isActive);
@@ -255,6 +272,7 @@ const SessionList: React.FC<SessionListProps> = ({ onCollapse, artifactsCount })
           label="Recents"
           sessions={recent}
           selectedSessionId={selectedSessionId}
+          draftSessionId={draftSessionId}
           onSelect={selectAndNavigate}
           emptyFallback="No recent chats."
         />
