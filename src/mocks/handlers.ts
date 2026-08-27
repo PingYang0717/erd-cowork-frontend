@@ -1,7 +1,6 @@
 import { http, HttpResponse } from 'msw';
 
 import { currentUser } from '@/config/currentUser';
-import { isLive } from '@/config/transport';
 import { DRAFT_SESSION_TITLE } from '@/constants/messages';
 import type { AgentEvent, QuestionForm, StepItem } from '@/types/api/agentEvent';
 import type { Artifact, ArtifactKind } from '@/types/api/artifact';
@@ -399,22 +398,6 @@ function streamRun(
 }
 
 const dcItems = createPersistedResource<DcItem>('erd-cowork:dc-items', DC_ITEM_FIXTURES);
-
-/** What the live backend serves, as "METHOD path" pairs. Filtering is method-aware:
- *  GET /sessions/{id} is live-backed while PATCH and DELETE on the same session path
- *  (rename, pin, delete — features the backend does not have) stay mocked even in
- *  live mode (`docs/api/interface.md` → live 端點覆蓋範圍). */
-const LIVE_BACKED = [
-  'GET /api/config',
-  'GET /api/sessions',
-  'GET /api/sessions/:sessionId',
-  'POST /api/sessions/:sessionId/messages',
-  'POST /api/sessions/:sessionId/files',
-  'DELETE /api/sessions/:sessionId/files/:fileId',
-  'GET /api/artifacts/:id',
-  'GET /api/artifacts/:id/raw',
-  'POST /api/artifacts/:id/repair',
-];
 
 /** Creates the session if this client has never sent to it before, and stamps its
  *  last activity either way. Mirrors ChatSession implementing Persistable<String>:
@@ -815,17 +798,6 @@ export const allHandlers = [
   }),
 ];
 
-/** What MSW should intercept for the given transport. Exported as a function so the
- *  transport test can check both modes without rebuilding the module. */
-export function handlersForTransport(mode: 'mock' | 'live') {
-  if (mode === 'mock') {
-    return allHandlers;
-  }
-  return allHandlers.filter(
-    (handler) =>
-      !LIVE_BACKED.includes(`${String(handler.info.method)} ${String(handler.info.path)}`),
-  );
-}
-
-/** What MSW should intercept for the configured transport. */
-export const handlers = handlersForTransport(isLive ? 'live' : 'mock');
+/** Every handler, registered for tests. The app itself no longer runs MSW — see
+ *  ADR-0009; endpoints the backend has not built are stubbed in `src/api/`. */
+export const handlers = allHandlers;
