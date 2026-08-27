@@ -87,6 +87,30 @@ client abort，前端會在 abort 後兩段 800ms invalidate 追後端非同步�
 
 ---
 
+## 待確認（後端請補這些）
+
+前端 mutation 一律 invalidate 後重抓、不把 mutation 回應寫進快取，所以 pin/publish 回
+瘦身版（id＋時間戳）**相容**；delete 回 200 無 body 也沒問題。剩下要定案的：
+
+1. **Pin/publish 回應的確切 JSON**：欄位名是 `pinnedAt` / `publishedAt` 嗎？unpin（再按
+   一次 pin）與 unpublish 回 `pinnedAt: null` / `publishedAt: null` 還是別的形狀？
+   session 的 pin 也是同一家族嗎？
+2. **錯誤 body 是否帶 `code`**：前端兩處依賴 `code` 而非 message——repair 的
+   `FILES_EXPIRED` 分支、SSE 開流失敗的錯誤顯示。若 delete 類只回 message 沒關係，
+   但全域錯誤形狀請定案（`{ code, message }` 或 `{ message }`）。
+3. **`GET /artifacts` 的欄位齊不齊**：定版契約裡的 `sessionTitle`、`ownerDisplay`、
+   `canPin`、`canShare`、`isOwn`、`isShared`、`hasPersonalCopy` 都會回嗎？規劃中的
+   `type`（dashboard/slides）什麼時候進來？
+4. **Session 寫入三條**（#4–#6）：rename/pin 的回應是完整 `Session` 還是也走
+   id＋時間戳？pin 的請求形狀用 `PATCH { pinnedAt }` 還是想改成像 artifact 的
+   `POST /pin` 切換式？
+5. **Connector / Directory**（#19–#22）：`status` 的 enum 值與欄位名是否照
+   `types/api/connector.ts` / `directory.ts`？
+6. **Share**（#18）：回應的 `url` 是絕對網址嗎？`targetIds` 收部門／課別／個人
+   混合 id 可以嗎？
+7. **時間戳格式**：全部 ISO-8601 字串（前端 `formatRelativeTime` 直接 `new Date()` 解析）？
+8. **internal 環境的身分 header**：仍是 `X-User-Id`，還是 SSO/gateway 換名字？
+
 ### 狀態圖例
 
 - ✅ 已接：前端現在就會打，後端已有實作（cowork master 的 11 條基準）
