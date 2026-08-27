@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import React, { useEffect, useMemo, useRef } from 'react';
 
+import { useActiveRunStore } from '@/stores/useActiveRunStore';
 import type { Message, QuestionForm, StepItem, TableResult } from '@/types/api/index';
 import { liftQuestions } from '@/utils/liftQuestions';
 
@@ -93,6 +94,12 @@ const MessageList: React.FC<MessageListProps> = ({
   bottomSlot,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
+  // Published by the Artifact pane, so a chip's "shown right →" is decided by what is
+  // actually on the right rather than by a guess the two could disagree on.
+  const displayedArtifactId = useActiveRunStore((s) => s.displayedArtifactId);
+  // Zustand's setter identity is stable, so passing it down does not defeat
+  // MessageBubble's memoisation on every streamed token.
+  const pickArtifact = useActiveRunStore((s) => s.pickArtifact);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -129,6 +136,8 @@ const MessageList: React.FC<MessageListProps> = ({
               : null
           }
           question={parsedHistory[index].question}
+          artifactShown={message.artifactId !== null && message.artifactId === displayedArtifactId}
+          onPickArtifact={pickArtifact}
           questionDisabled
           // The turn that just finished is the tail of the history once the live bubble
           // has handed over; nothing older has a duration to show.
@@ -146,6 +155,8 @@ const MessageList: React.FC<MessageListProps> = ({
           text={live.liveText}
           steps={live.steps}
           artifact={live.artifact}
+          artifactShown={live.artifact !== null && live.artifact.artifactId === displayedArtifactId}
+          onPickArtifact={pickArtifact}
           streaming={live.isStreaming}
           stopped={live.stopped}
           networkError={live.networkError}

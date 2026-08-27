@@ -154,17 +154,59 @@
 }
 
 /* The artifact hand-off is the one thing in the bubble the reader is meant to act on,
-   so it keeps a raised surface rather than dissolving into the bubble. */
+   so it keeps a raised surface with its own border — cowork's full-width card
+   (ADR-0010). */
 .artifactChip {
-  align-self: flex-start;
-  display: inline-flex;
+  align-self: stretch;
+  display: flex;
   align-items: center;
   gap: 8px;
   padding: 8px 12px;
   border-radius: 9px;
+  border: 1px solid var(--erd-color-chat-border, #e5e7eb);
   background: var(--erd-color-bg-container, #fff);
   font-size: 12.5px;
   line-height: normal;
+}
+
+.artifactChipTitle {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: left;
+  font-weight: 500;
+  color: var(--erd-color-text-secondary, rgba(0, 0, 0, 0.65));
+}
+
+/* Reset the button back to the chip it looks like, then give it the affordances a
+   button owes the user: a pointer, a hover, and a visible focus ring. */
+.artifactChipButton {
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 0.15s,
+    background 0.15s;
+}
+
+.artifactChipButton:hover {
+  border-color: var(--erd-color-primary-border, #91caff);
+  background: var(--erd-color-primary-bg, #e6f4ff);
+}
+
+.artifactChipButton:focus-visible {
+  outline: 2px solid var(--erd-color-primary, #1677ff);
+  outline-offset: 2px;
+}
+
+/* The one currently on the pane, so a thread with several Artifacts shows which of
+   them the right-hand side is answering for. */
+.artifactChipShown {
+  border-color: var(--erd-color-primary-border, #91caff);
+  background: var(--erd-color-primary-bg, #e6f4ff);
 }
 
 .artifactChipIcon {

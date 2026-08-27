@@ -56,7 +56,11 @@ function ArtifactPanelView({ sessionId }: { sessionId: string }) {
   const { data: detail } = useSessionDetail(sessionId);
   const streamedArtifact = useActiveRunStore((s) => s.streamedArtifact);
   const setDisplayedArtifactId = useActiveRunStore((s) => s.setDisplayedArtifactId);
-  const [selectedArtifactId, setSelectedArtifactId] = useState<string | null>(null);
+  // The pick lives in the store rather than here because the version menu is no longer
+  // the only thing that makes one: a past reply's Artifact chip picks too.
+  const selectedArtifactId = useActiveRunStore((s) => s.pickedArtifactId);
+  const pickArtifact = useActiveRunStore((s) => s.pickArtifact);
+  const clearPickedArtifact = useActiveRunStore((s) => s.clearPickedArtifact);
 
   // Every artifact-bearing message is a version; a live-stream artifact that the
   // refetch has not caught up with yet is appended as the next one.
@@ -77,16 +81,14 @@ function ArtifactPanelView({ sessionId }: { sessionId: string }) {
 
   // A newly produced artifact takes over ONCE (the user asked for it); after that a
   // manual pick wins again — continuous streamed priority would pin the panel to the
-  // last run forever and make the version menu inert. Adjusted during render (the
-  // sanctioned derived-state pattern), not in an effect.
+  // last run forever and make the version menu inert. The take-over happens where the
+  // artifact arrives (`setStreamedArtifact` drops the pick), so nothing needs
+  // adjusting during render here.
   const streamedId = streamedArtifact?.artifactId ?? null;
-  const [takenOverStreamedId, setTakenOverStreamedId] = useState<string | null>(streamedId);
-  if (streamedId !== takenOverStreamedId) {
-    setTakenOverStreamedId(streamedId);
-    if (streamedId) {
-      setSelectedArtifactId(null);
-    }
-  }
+
+  // A pick belongs to the thread it was made in. This view is keyed by session, so the
+  // unmount that a session switch causes is what retires it.
+  useEffect(() => clearPickedArtifact, [clearPickedArtifact]);
 
   const activeVersion =
     versions.find((v) => v.artifactId === selectedArtifactId) ??
@@ -110,7 +112,7 @@ function ArtifactPanelView({ sessionId }: { sessionId: string }) {
       artifactId={artifactId}
       versions={versions}
       activeVersion={activeVersion}
-      onSelectVersion={setSelectedArtifactId}
+      onSelectVersion={pickArtifact}
     />
   );
 }

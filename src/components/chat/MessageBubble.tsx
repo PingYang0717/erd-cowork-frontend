@@ -52,6 +52,12 @@ export interface MessageBubbleProps {
   onAnswer?: (answers: Answers) => void;
   codeText?: string | null;
   tables?: TableResult[];
+  /** True when this reply's artifact is the one the Artifact pane is showing; the
+   *  chip then states the fact instead of offering the hand-off. */
+  artifactShown?: boolean;
+  /** Puts this reply's artifact on the Artifact pane. Without it the chip is a plain
+   *  label (full-page artifact view has no pane to hand to). */
+  onPickArtifact?: (artifactId: string) => void;
   error?: { code: string; message: string } | null;
   /** How long the turn behind this bubble took; shown once it is over. */
   durationMs?: number | null;
@@ -173,6 +179,8 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
   onAnswer,
   codeText,
   tables,
+  artifactShown = false,
+  onPickArtifact,
   error,
   durationMs,
   timerStartedAt,
@@ -263,13 +271,37 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
           <ResultTable key={table.tableId} table={table} />
         ))}
 
-        {artifact && (
-          <div className={styles.artifactChip}>
-            <AppstoreOutlined aria-hidden className={styles.artifactChipIcon} />
-            <span>{artifact.title}</span>
-            <span className={styles.artifactChipHint}>shown right →</span>
-          </div>
-        )}
+        {artifact &&
+          (onPickArtifact ? (
+            /* Clickable, like cowork's: the pane can only be steered from its own
+               version menu otherwise, so an earlier reply's chip would claim "shown
+               right" about something that is not on the right at all (ADR-0010). */
+            <button
+              type="button"
+              className={`${styles.artifactChip} ${styles.artifactChipButton} ${
+                artifactShown ? styles.artifactChipShown : ''
+              }`}
+              aria-label={
+                artifactShown
+                  ? `${artifact.title} — shown in the Artifact panel`
+                  : `Show ${artifact.title} in the Artifact panel`
+              }
+              aria-current={artifactShown ? 'true' : undefined}
+              onClick={() => onPickArtifact(artifact.artifactId)}
+            >
+              <AppstoreOutlined aria-hidden className={styles.artifactChipIcon} />
+              <span className={styles.artifactChipTitle}>{artifact.title}</span>
+              <span className={styles.artifactChipHint}>
+                {artifactShown ? 'shown right →' : 'show right →'}
+              </span>
+            </button>
+          ) : (
+            <div className={styles.artifactChip}>
+              <AppstoreOutlined aria-hidden className={styles.artifactChipIcon} />
+              <span className={styles.artifactChipTitle}>{artifact.title}</span>
+              <span className={styles.artifactChipHint}>shown right →</span>
+            </div>
+          ))}
         {/* The source is only fetchable once the run has stopped writing it; while it is
             still arriving, the live panel above is the same content. */}
         {artifact && !codeText && <HtmlCodePanel artifactId={artifact.artifactId} />}
