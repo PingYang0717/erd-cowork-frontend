@@ -9,7 +9,7 @@ import styles from './VersionSwitcher.module.css';
 
 // The mockup's custom version menu (340 wide): a 版本 · 共 N 個 header row,
 // primary-bg highlight + primary vN on the current version, per-row relative
-// time and a green generated check. Shared by the Studio panel and the
+// time and a green check on published versions. Shared by the Studio panel and the
 // full-page view's toolbar.
 interface VersionSwitcherProps {
   versions: ArtifactVersion[];
@@ -65,7 +65,7 @@ const VersionSwitcher: React.FC<VersionSwitcherProps> = ({ versions, activeVersi
       {isOpen && (
         <div role="menu" className={styles.versionMenu}>
           <div className={styles.versionMenuHeader}>
-            版本 · 共 {versions.length} 個，可切換後再生成
+            版本 · 共 {versions.length} 個，可切換後再發布
           </div>
           {newestFirst.map((v) => {
             const isCurrent = v.artifactId === activeVersion?.artifactId;
@@ -90,8 +90,8 @@ const VersionSwitcher: React.FC<VersionSwitcherProps> = ({ versions, activeVersi
                 <span className={styles.versionMenuItemTime}>
                   {v.createdAt ? formatRelativeTime(v.createdAt) : ''}
                 </span>
-                {v.generated && (
-                  <CheckOutlined aria-label="已生成" className={styles.versionMenuItemCheck} />
+                {v.publishedAt != null && (
+                  <CheckOutlined aria-label="已發布" className={styles.versionMenuItemCheck} />
                 )}
               </button>
             );

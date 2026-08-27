@@ -75,10 +75,10 @@ const ArtifactFullPageView: React.FC<ArtifactFullPageViewProps> = ({ artifactId 
         )}
 
         <div className={styles.headerCenter}>
-          {routeArtifact?.sharedBy ? (
+          {routeArtifact && !routeArtifact.isOwn ? (
             <div className={styles.sharedToMeHeader} aria-label="Shared to me">
               <UsergroupAddOutlined aria-hidden className={styles.sharedToMeIcon} />
-              <span className={styles.sharedToMeName}>{routeArtifact.sharedBy}</span>
+              <span className={styles.sharedToMeName}>{routeArtifact.ownerDisplay}</span>
               <span className={styles.sharedToMeBadge}>Shared to me</span>
             </div>
           ) : (
@@ -173,7 +173,7 @@ function SessionVersionSwitcher({
     () =>
       deriveArtifactVersions(detail.messages).map((version) => ({
         ...version,
-        generated: artifacts.find((a) => a.id === version.artifactId)?.generated,
+        publishedAt: artifacts.find((a) => a.id === version.artifactId)?.publishedAt,
       })),
     [detail.messages, artifacts],
   );
