@@ -144,17 +144,22 @@ QuestionOption { value: string; label: string; hint?: string; unit?: string; lo?
 **一次執行可以反問多次。** SPC 開場問一次分析條件，執行途中發現 DC Item 過多時再問一次。
 執行結束後「補齊全部 N 項」的提議不是反問，不走 QUESTION。
 
-### 目前以 stub 供應或停用的端點
+### 後端還沒有的端點怎麼辦（2026-08-27 改策）
 
-app 執行時不再有 mock 後端（[ADR-0009](../adr/0009-no-mock-backend-at-runtime.md)）。後端
-還沒建好的端點分兩類：
+app 執行時不再有 mock 後端（[ADR-0009](../adr/0009-no-mock-backend-at-runtime.md)），
+而且 **UI 不再有任何 disabled 的入口**：所有動作直接打 API，端點還沒落地就把後端的
+`{ code, message }` 以 toast 呈現（`describeActionError`）——錯誤訊息就是「還沒 ready」
+的告知方式。例外兩類：
 
-| 類別             | 端點                                                                                                             | 前端行為                            |
-| ---------------- | ---------------------------------------------------------------------------------------------------------------- | ----------------------------------- |
-| **stub**（讀取） | `GET /connectors`、`GET /directory`                                                                              | `src/api/` 直接回固定資料，不發請求 |
-| **停用**（寫入） | `PATCH`/`DELETE /sessions/:id`、`DELETE /artifacts/:id`、`POST /artifacts/:id/share`、`PATCH`/`POST /connectors` | UI 上 disabled，標「後端尚未支援」  |
+| 類別                  | 端點/功能                                   | 前端行為                                                            |
+| --------------------- | ------------------------------------------- | ------------------------------------------------------------------- |
+| **stub**（讀取）      | `GET /connectors`（目錄）、`GET /directory` | `src/api/` 直接回固定資料，不發請求                                 |
+| **localStorage 偏好** | Connector 的連線/自訂來源選取               | 使用者偏好存 localStorage（`erd-cowork:connector-prefs`），不打後端 |
 
-MSW 只在**測試**裡跑，服務的是上表以外、後端真的有的那幾條，加上 SSE 劇本。
+**Regenerate 已移除**：後端沒有 regenerate 概念；迭代＝對話裡再送一句話（自動帶
+`baseArtifactId`），產物是下一個版本。
+
+MSW 只在**測試**裡跑，服務後端真的有的那幾條，加上 SSE 劇本與 share 的未就緒錯誤。
 
 **沒有建立 session 的端點。** session id 由前端產生，第一次送訊息或上傳檔案時由後端
 upsert（[ADR-0008](../adr/0008-new-chat-is-a-client-side-draft.md)）。

@@ -48,13 +48,9 @@ _Avoid_: Reasoning, Chain of thought
 Artifact 的 HTML 在 iframe 中執行時拋出 JS 錯誤後，由系統偵測、向使用者提議、經使用者確認才交由 Agent 重新產生一版可執行 HTML 的流程。
 _Avoid_: Fix, Retry, Regenerate（Regenerate 是使用者主動要新版本，Repair 是錯誤驅動）
 
-**重新生成（Regenerate）**:
-使用者主動要求 Agent 再產一版 Artifact。它送出一則訊息、跑一整輪分析，結果是**一個新版本**。
-_Avoid_: Reload, Refresh（那兩個不產生新版本）、發布（發布不產生任何東西，只是把既有的一版交出去）
-
 **重新整理（Reload）**:
 把 iframe 裡的 Artifact 文件丟掉、以**同一份 HTML** 重新掛載一次。不呼叫 Agent、不產生新版本，用途是讓一個自己卡住的 Artifact 從頭再跑一次它的 script。修復成功後也會觸發一次。
-_Avoid_: Regenerate, Repair（三者互斥：Reload 不重產、Regenerate 是使用者要新版本、Repair 是錯誤驅動的重產）
+_Avoid_: Repair（Reload 不重產，Repair 是錯誤驅動的重產）。「重新生成（Regenerate）」已不存在——迭代是使用者在對話裡再送一句話（帶 `baseArtifactId`），產物就是下一個版本，沒有專屬按鈕
 
 **Artifact**:
 一次 Scenario 執行後產生的分析成果，形式是一段完整的 HTML（dashboard 或 slides），在 Studio 右側以 sandboxed iframe 呈現；可被命名、釘選、發布、分享、切版本。
@@ -71,7 +67,7 @@ _Avoid_: 生成、Generate（畫面上的按鈕曾叫「生成 Artifact」，但
 同一個 Artifact 的歷史產出版本，可在版本切換選單中選擇檢視。
 
 **Connector**:
-一個資料來源的連線狀態（已連線／可連線／已過期／無權限），例如 Inline、WAT、CP、Lot Info、Lot Abnormal、Process、Defect、TEM、Recipe、Offline Tool Log。連線狀態是帳號層級的事實，跨 Session 共用。Scenario 執行時會參照已連線的 Connector 取得資料，**也決定分析條件表單上 Data type 有哪些可選**。
+一個資料來源的連線狀態（已連線／可連線／已過期／無權限），例如 Inline、WAT、CP、Lot Info、Lot Abnormal、Process、Defect、TEM、Recipe、Offline Tool Log。跨 Session 共用；目前是**使用者偏好**（選了哪些來源，存 localStorage），後端連線端點落地後升級為帳號層級的事實。Scenario 執行時會參照已連線的 Connector 取得資料，**也決定分析條件表單上 Data type 有哪些可選**。
 _Avoid_: Data source, Integration
 
 **保留期（Retention）**:
