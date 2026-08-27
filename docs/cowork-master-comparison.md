@@ -245,8 +245,15 @@ request interceptor 是空的。
   repair 卡，兩者出現時不會捲）。
 
 **維持現狀**（本專案刻意的設計）：#1 quick chips 直送、#6 schema-driven `QuestionForm`、
-#7 artifact 發布走 zustand、#8 訊息層級附件、#12 手刻 StepRow、#13 header／空狀態、
-#14 英文文案。
+#7 artifact 發布走 zustand、#8 訊息層級附件、#12 手刻 StepRow、#13 header／空狀態。
+
+> **2026-08-27（第二輪，[ADR-0010](adr/0010-chat-panel-presentation-follows-cowork.md)）**：
+> chat panel 的呈現語彙改以 cowork 為準，這一輪已對齊——thread 白底與不透明泡泡、
+> `Inter Variable + Noto Sans TC` 字體、`ResultTable` 換 antd Table（分頁／浮點精度／
+> 「(前 200 列)」）、markdown 表格樣式、**Artifact chip 可點**（把該版本放回右側，
+> 11933cb 的 revert 已翻案重做）、HTML 面板樣式與中文 label、全域 scrollbar。
+> **#14 英文文案的定調修正**：cowork 用中文的字串（已停止生成、連線中斷、查看 HTML、
+> 載入中…）跟進中文；cowork 本身是英文的（chips、placeholder、空狀態）維持英文。
 
 ### 這一輪新發現的落差
 

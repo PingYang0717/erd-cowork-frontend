@@ -53,32 +53,31 @@ interface ResultTableProps {
  *  Rendering is cowork upstream's: an intent caption over an antd Table that paginates
  *  past 20 rows and scrolls sideways instead of widening the thread (ADR-0010). */
 const ResultTable: React.FC<ResultTableProps> = ({ table }) => {
-  // Defensive: the wire contract guarantees both fields, but a contract violation
-  // (e.g. Jackson nulling a missing field upstream) must not crash the live bubble.
-  const columns = table.columns ?? [];
-  const rows = table.rows ?? [];
-
+  // The `?? []` fallbacks are defensive: the wire contract guarantees both fields, but
+  // a contract violation (e.g. Jackson nulling a missing field upstream) must not crash
+  // the live bubble. They live inside the memos so the deps are the wire fields
+  // themselves, not a fresh array per render.
   const tableColumns: TableColumnsType<ResultTableRecord> = useMemo(
     () =>
-      columns.map((columnName, columnIndex) => ({
+      (table.columns ?? []).map((columnName, columnIndex) => ({
         title: columnName,
         dataIndex: `col_${columnIndex}`,
         key: `col_${columnIndex}`,
         render: (value: TableCellValue) => formatCellValue(value),
       })),
-    [columns],
+    [table.columns],
   );
 
   const dataSource: ResultTableRecord[] = useMemo(
     () =>
-      rows.map((row, rowIndex) => {
+      (table.rows ?? []).map((row, rowIndex) => {
         const record: ResultTableRecord = { key: `row-${rowIndex}` };
         row.forEach((cellValue, columnIndex) => {
           record[`col_${columnIndex}`] = cellValue;
         });
         return record;
       }),
-    [rows],
+    [table.rows],
   );
 
   return (
@@ -88,7 +87,7 @@ const ResultTable: React.FC<ResultTableProps> = ({ table }) => {
         columns={tableColumns}
         dataSource={dataSource}
         size="small"
-        pagination={rows.length > PAGINATION_THRESHOLD ? { pageSize: PAGE_SIZE } : false}
+        pagination={dataSource.length > PAGINATION_THRESHOLD ? { pageSize: PAGE_SIZE } : false}
         scroll={{ x: 'max-content' }}
         components={{
           // antd offers no aria-label prop; the intent must still be the table's
