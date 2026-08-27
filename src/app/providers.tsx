@@ -11,11 +11,11 @@ const queryClient = new QueryClient();
 // AppProviders for why these stay on the light values in both themes.
 const SEED = THEME_TOKENS.light;
 
-// Matches eRDWorkspace20260819.html's `body { font-family: ... }` exactly —
-// antd's own default token stack swaps in 'Noto Sans' + emoji fonts instead
-// of PingFang TC / Microsoft JhengHei, which is close but not the mockup.
+// cowork upstream's stack (its theme/fonts.ts, ADR-0010): self-hosted Inter Variable +
+// Noto Sans TC, imported in main.tsx, with the platform CJK faces as fallback. Must
+// stay in step with the body rule in index.css.
 const FONT_FAMILY =
-  '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "PingFang TC", "Microsoft JhengHei", sans-serif';
+  "'Inter Variable', 'Noto Sans TC', -apple-system, 'PingFang TC', 'Microsoft JhengHei', sans-serif";
 
 // ConfigProvider's theme algorithm only affects antd components themselves;
 // plain HTML (body, <h1>, etc.) has no background/text color of its own, so
