@@ -4,7 +4,6 @@ import {
   ExportOutlined,
   ReloadOutlined,
   ShareAltOutlined,
-  SyncOutlined,
 } from '@ant-design/icons';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -16,7 +15,6 @@ import { useArtifacts } from '@/hooks/useArtifacts';
 import { useArtifactTheme } from '@/hooks/useArtifactTheme';
 import { useSessionDetail } from '@/hooks/useSessionDetail';
 import { useActiveRunStore } from '@/stores/useActiveRunStore';
-import { usePendingPromptStore } from '@/stores/usePendingPromptStore';
 import { usePublishCoachStore } from '@/stores/usePublishCoachStore';
 import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
 import type { ArtifactVersion } from '@/types/api/index';
@@ -137,7 +135,6 @@ function ArtifactPanelContent({
   const { data: artifacts } = useArtifacts();
   const artifact = artifacts?.find((a) => a.id === artifactId);
   const publishArtifact = usePublishArtifact();
-  const sendPrompt = usePendingPromptStore((s) => s.sendPrompt);
   const startCoach = usePublishCoachStore((s) => s.start);
 
   // Enrich the derived versions with each artifact's published state for the menu's
@@ -209,20 +206,6 @@ function ArtifactPanelContent({
             onClick={bumpArtifactReload}
           >
             <ReloadOutlined aria-hidden />
-          </button>
-        </Tooltip>
-        <Tooltip content="重新生成">
-          <button
-            type="button"
-            className={styles.iconButton}
-            aria-label="Regenerate artifact"
-            onClick={() =>
-              // The mockup's regenerate sends a chat message (cwRegen); the run
-              // iterates on this artifact and lands as the next version.
-              sendPrompt?.({ question: 'Regenerate the dashboard.', baseArtifactId: artifactId })
-            }
-          >
-            <SyncOutlined aria-hidden />
           </button>
         </Tooltip>
         <Tooltip content="在新分頁開啟預覽">
