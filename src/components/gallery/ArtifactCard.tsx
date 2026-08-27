@@ -117,6 +117,8 @@ const ArtifactCard: React.FC<ArtifactCardProps> = ({ artifact, onOpen }) => {
       <Dropdown
         trigger={['click']}
         classNames={{ root: 'erd-menu' }}
+        transitionName=""
+
         menu={{ items: menuItems, onClick: ({ key }) => handleMenuClick(key) }}
       >
         <button

@@ -150,6 +150,10 @@ function SessionRow({
         <Dropdown
           trigger={['click']}
           classNames={{ root: 'erd-menu' }}
+          // The mockup's menu just appears; antd's 0.2s slide reads as lag on a
+          // 150px panel. Empty transitionName disables the motion outright.
+          transitionName=""
+
           menu={{ items: menuItems, onClick: ({ key }) => handleMenuClick(key) }}
         >
           <button
