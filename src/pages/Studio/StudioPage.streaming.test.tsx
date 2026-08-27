@@ -180,12 +180,13 @@ describe('Streaming a run in the Studio', () => {
     renderStudioPage();
 
     await startAnalysis(user);
-    expect(screen.queryByRole('button', { name: 'HTML' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /HTML/ })).not.toBeInTheDocument();
 
     act(() => stream.push({ type: 'CODE', delta: '<div id="chart"' }));
     act(() => stream.push({ type: 'CODE', delta: '></div>' }));
 
-    const toggle = await screen.findByRole('button', { name: 'HTML' });
+    // The label says the source is still being written (cowork's wording).
+    const toggle = await screen.findByRole('button', { name: '產生中的 HTML' });
     expect(toggle).toHaveAttribute('aria-expanded', 'false');
 
     await user.click(toggle);

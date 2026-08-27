@@ -1,8 +1,8 @@
+import { CodeOutlined, DownOutlined, UpOutlined } from '@ant-design/icons';
 import React, { useEffect, useRef, useState } from 'react';
 
 import { artifactApi } from '@/api/artifactApi';
 
-import { CollapsiblePanel } from './CollapsiblePanel';
 import styles from './HtmlCodePanel.module.css';
 
 interface HtmlCodePanelProps {
@@ -24,7 +24,9 @@ interface FetchOutcome {
 }
 
 /** The artifact's HTML, collapsed by default. Live during a run, fetched on demand
- *  afterwards — the reader does not care which, so both wear the same panel. */
+ *  afterwards — the reader does not care which, so both wear the same panel. The row
+ *  itself is cowork's: code glyph on the left, chevron on the right, and the label
+ *  says whether the source is still being written (ADR-0010). */
 const HtmlCodePanel: React.FC<HtmlCodePanelProps> = ({ code, artifactId, autoScroll = false }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [outcome, setOutcome] = useState<FetchOutcome | null>(null);
@@ -66,21 +68,43 @@ const HtmlCodePanel: React.FC<HtmlCodePanelProps> = ({ code, artifactId, autoScr
 
   const shownCode = hasLiveCode ? code : resolved?.status === 'ok' ? resolved.code : null;
   const isLoading = !hasLiveCode && artifactId !== undefined && resolved === null;
+  // cowork's three labels: writing, written this run, fetchable from a past turn.
+  const label = hasLiveCode ? (autoScroll ? '產生中的 HTML' : 'HTML') : '查看 HTML';
 
   return (
-    <CollapsiblePanel
-      label="HTML"
-      isExpanded={isExpanded}
-      onToggle={() => setIsExpanded((expanded) => !expanded)}
-    >
-      {isLoading && <p className={styles.note}>Loading…</p>}
-      {resolved?.status === 'error' && <p className={styles.note}>No source available.</p>}
-      {shownCode !== null && (
-        <pre ref={codeRef} className={styles.code}>
-          {shownCode}
-        </pre>
+    <div className={styles.panel}>
+      <button
+        type="button"
+        className={styles.toggle}
+        aria-expanded={isExpanded}
+        onClick={() => setIsExpanded((expanded) => !expanded)}
+      >
+        <CodeOutlined aria-hidden className={styles.toggleIcon} />
+        <span className={styles.toggleLabel}>
+          {/* The mockup's literal glyph prefix, kept out of the accessible name. */}
+          <span aria-hidden>{'</> '}</span>
+          {label}
+        </span>
+        {isExpanded ? (
+          <UpOutlined aria-hidden className={styles.chevron} />
+        ) : (
+          <DownOutlined aria-hidden className={styles.chevron} />
+        )}
+      </button>
+      {isExpanded && (
+        <div className={styles.body}>
+          {isLoading && <p className={styles.note}>載入中…</p>}
+          {resolved?.status === 'error' && (
+            <p className={styles.note}>此版本無原始碼可檢視（無法載入）</p>
+          )}
+          {shownCode !== null && (
+            <pre ref={codeRef} className={styles.code}>
+              {shownCode}
+            </pre>
+          )}
+        </div>
       )}
-    </CollapsiblePanel>
+    </div>
   );
 };
 
