@@ -22,7 +22,6 @@ import { Button, Input, Modal } from 'antd';
 import type { ReactNode } from 'react';
 import React, { useState } from 'react';
 
-import { BACKEND_UNSUPPORTED } from '@/constants/messages';
 import { useAddConnector, useSetConnectorStatus } from '@/hooks/useConnectorMutations';
 import { useConnectors } from '@/hooks/useConnectors';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
@@ -103,9 +102,8 @@ const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ open, onClose }) => {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('All');
   const [addValue, setAddValue] = useState('');
 
-  // Every write here (connect, disconnect, add) is disabled: the backend has no
-  // connector endpoints yet (ADR-0009), so the panel is a read-only view of state
-  // that arrives stubbed. Handlers stay wired for the day those endpoints land.
+  // Connect, disconnect and add write the user's preference to localStorage — the
+  // backend has no connector endpoints this round, and a choice is the user's to keep.
   const connectedConnectors = selectConnected(connectors);
   const connectedCount = connectedConnectors.length;
 
@@ -176,8 +174,6 @@ const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ open, onClose }) => {
             <button
               type="button"
               className={styles.clearAll}
-              disabled
-              title={BACKEND_UNSUPPORTED}
               onClick={() => connectedConnectors.forEach((c) => toggle(c))}
             >
               Clear all
@@ -195,8 +191,6 @@ const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ open, onClose }) => {
                 <button
                   type="button"
                   className={styles.selectedChipRemove}
-                  disabled
-                  title={BACKEND_UNSUPPORTED}
                   aria-label={`Remove ${connector.name} from selected sources`}
                   onClick={() => toggle(connector)}
                 >
@@ -285,8 +279,7 @@ const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ open, onClose }) => {
                   data-state={isPending ? 'connecting' : connector.status}
                   shape="circle"
                   size="small"
-                  disabled
-                  title={BACKEND_UNSUPPORTED}
+                  disabled={connector.status === 'no_access'}
                   aria-label={
                     isConnected ? `Disconnect ${connector.name}` : `Connect ${connector.name}`
                   }
@@ -309,12 +302,7 @@ const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ open, onClose }) => {
           onChange={(e) => setAddValue(e.target.value)}
           onPressEnter={submitAddConnector}
         />
-        <Button
-          icon={<PlusOutlined aria-hidden />}
-          disabled
-          title={BACKEND_UNSUPPORTED}
-          onClick={submitAddConnector}
-        >
+        <Button icon={<PlusOutlined aria-hidden />} onClick={submitAddConnector}>
           Add
         </Button>
       </div>
