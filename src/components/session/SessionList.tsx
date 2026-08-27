@@ -130,11 +130,17 @@ function SessionRow({
         type="button"
         className={styles.sessionRow}
         aria-current={isSelected ? 'true' : undefined}
+        // The elided name has to be readable somewhere: the rail caps at 460px, so a
+        // long name may never fit. Hovering shows it whole, at any width.
+        title={session.title}
         onClick={() => onSelect(session.id)}
       >
         <span className={styles.sessionRowTitle}>
           {isPinned && <PushpinOutlined aria-hidden className={styles.pinIndicator} />}
-          {session.title}
+          {/* Its own box, because text-overflow elides text boxes, not flex rows: the
+              name shrinks to "…" when the rail is narrow and comes back whole when
+              there is room. */}
+          <span className={styles.sessionRowTitleText}>{session.title}</span>
         </span>
         <span className={styles.sessionRowTimestamp} aria-hidden="true">
           {formatRelativeTime(session.updatedAt)}
@@ -143,7 +149,7 @@ function SessionRow({
       {!isDraft && (
         <Dropdown
           trigger={['click']}
-          overlayClassName="erd-menu"
+          classNames={{ root: 'erd-menu' }}
           menu={{ items: menuItems, onClick: ({ key }) => handleMenuClick(key) }}
         >
           <button

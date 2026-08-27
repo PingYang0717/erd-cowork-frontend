@@ -215,6 +215,11 @@
   display: flex;
   align-items: center;
   max-width: 100%;
+  min-width: 0;
+}
+
+.sessionRowTitleText {
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -227,6 +232,7 @@
 }
 
 .pinIndicator {
+  flex: none;
   margin-right: 6px;
   color: var(--erd-color-text-tertiary, #8c8c8c);
 }
