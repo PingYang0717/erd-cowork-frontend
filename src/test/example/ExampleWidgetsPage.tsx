@@ -8,7 +8,7 @@ interface ExampleWidget {
 }
 
 function fetchExampleWidgets() {
-  return apiClient.get<ExampleWidget[]>('/example-widgets');
+  return apiClient.get<ExampleWidget[]>('/example-widgets').then((res) => res.data);
 }
 
 export function ExampleWidgetsPage() {

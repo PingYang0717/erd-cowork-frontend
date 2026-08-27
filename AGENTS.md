@@ -104,9 +104,10 @@ Husky + lint-staged 會自動跑 `oxlint --fix` → `eslint --fix` → `prettier
 
 ### 多使用者身分
 
-- 所有 API 請求帶 `X-User-Id`,由 `api/identity.ts` 的 `getAuthHeaders()` 供應
-- v1:localStorage 的匿名 UUID,axios interceptor 附加;`agentApi` 的 raw fetch 共用同一個 helper
-- internal 環境:SSO / gateway 注入,前端安裝回傳 `{}` 的 provider,不覆蓋它
+- 所有 API 請求帶 `X-User-Id`,由 `api/apiClient.ts` 的 `getAuthHeaders()` 供應(cowork 檔案級對齊,ADR-0011)
+- v1:localStorage 的匿名 UUID(key `erd_user_id`),axios interceptor 附加;`agentApi` 的 raw fetch 共用同一個 helper
+- internal 環境:`setAuthHeaderProvider()` 換 provider,回傳值**完全取代**預設 header(回傳什麼就送什麼;「回傳 `{}` 讓 gateway 蓋」是其合法特例)。provider 每次請求都被呼叫,NEVER 快取回傳值
+- 啟動接縫:`src/bootstrap/internal.ts`(`import.meta.glob` 偵測 `internal.impl.ts`),`main.tsx` 在 mount 前 await,失敗不 mount、不 catch
 
 ### 測試
 

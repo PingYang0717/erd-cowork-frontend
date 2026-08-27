@@ -1,8 +1,6 @@
-import { getAuthHeaders } from '@/api/identity';
+import { getAuthHeaders } from '@/api/apiClient';
 import type { AgentEvent } from '@/types/api/agentEvent';
 import { createSseParser } from '@/utils/sseParser';
-
-const API_BASE = import.meta.env.VITE_API_BASE_URL ?? '';
 
 /** A refusal the backend reported before the stream opened, carrying its own code so
  *  the UI can say something better than "request failed". */
@@ -34,7 +32,7 @@ export interface SendMessageArgs {
 export async function* streamAgentMessage(
   args: SendMessageArgs,
 ): AsyncGenerator<AgentEvent, void, void> {
-  const response = await fetch(`${API_BASE}/sessions/${args.sessionId}/messages`, {
+  const response = await fetch(`/api/sessions/${args.sessionId}/messages`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

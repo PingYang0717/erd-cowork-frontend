@@ -10,9 +10,16 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 
 import { App } from '@/app/App';
+import { initInternalRuntime } from '@/bootstrap/internal';
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
-);
+function mountApp(): void {
+  createRoot(document.getElementById('root')!).render(
+    <StrictMode>
+      <App />
+    </StrictMode>,
+  );
+}
+
+// internal 環境的初始化 MUST 在 mount 前完成(SSO 決定 X-User-Id);預設環境是 no-op 立即 resolve。
+// 刻意不 catch:初始化失敗時讓 rejection 浮上 console 且不 mount,NEVER 以匿名身分繼續。
+void initInternalRuntime().then(mountApp);

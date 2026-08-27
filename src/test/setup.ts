@@ -1,3 +1,6 @@
+// Seeds the anonymous user id BEFORE the mocks' module graph loads — fixtures capture
+// `currentUser.id` at module-load time. Side-effect import; must stay first.
+import './seedTestIdentity';
 import '@testing-library/jest-dom/vitest';
 
 import { cleanup, configure } from '@testing-library/react';
@@ -5,6 +8,9 @@ import { afterAll, afterEach, beforeAll } from 'vitest';
 
 import { setStreamPace } from '@/mocks/handlers';
 import { server } from '@/mocks/server';
+
+import { installFormDataWire } from './formDataWire';
+import { TEST_USER_ID } from './seedTestIdentity';
 
 // jsdom doesn't implement ResizeObserver; antd components (e.g. Dropdown)
 // use it internally via rc-resize-observer.
@@ -34,6 +40,10 @@ window.matchMedia ??= (query: string): MediaQueryList =>
 // not enough under a parallel run — which is a scheduling artefact, not a real failure.
 configure({ asyncUtilTimeout: 5000 });
 
+// FormData → browser-equivalent multipart bytes, so filenames survive the jsdom → MSW
+// hop (see formDataWire.ts). Installed once per test process.
+installFormDataWire();
+
 beforeAll(() => {
   // The mock backend paces a run so mock mode looks like a real one; tests do not need
   // to sit through it.
@@ -45,6 +55,7 @@ afterEach(() => {
   cleanup();
   server.resetHandlers();
   localStorage.clear();
+  localStorage.setItem('erd_user_id', TEST_USER_ID);
 });
 
 afterAll(() => server.close());

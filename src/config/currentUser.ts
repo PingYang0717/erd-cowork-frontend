@@ -1,4 +1,4 @@
-import { getAuthHeaders } from '@/api/identity';
+import { getAuthHeaders } from '@/api/apiClient';
 
 export interface CurrentUser {
   /** Whoever this browser is, as far as the backend is concerned. */

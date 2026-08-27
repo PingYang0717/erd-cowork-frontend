@@ -5,7 +5,7 @@ import { server } from '@/mocks/server';
 
 import { artifactApi } from './artifactApi';
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL ?? '';
+const API_BASE = '/api';
 
 /** Captures the URL the next artifact-content request actually goes out with. */
 function captureContentRequest(): { url: () => URL } {
