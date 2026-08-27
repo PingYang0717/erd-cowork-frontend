@@ -1,3 +1,14 @@
+> **狀態註記(2026-08-28)**:後端此後陸續補上,本文的清單已多處過時——
+> **stub 只剩兩條**:`GET /connectors`(且已改制:目錄是前端常數,連線狀態是使用者
+> 偏好存 localStorage,`805ac2c`)與 `GET /directory`;`GET /artifacts` 早已上線。
+> **停用的寫入陸續解鎖**:session 改名/釘選/刪除(`01c40a0`)、Artifact 刪除與分享
+> (`10e61cc`)皆接真後端,「復活測試」表中 StudioPage 的 pin/rename/delete、
+> ArtifactsGalleryPage 的 pin/delete/分享對話框等列已消化。「Regenerate」按鈕則整個
+> 移除(`7fb5edd`,迭代改由對話帶 `baseArtifactId`)。尚未落地的:`GET /directory`
+> 仍是 stub(分享對話框的搜尋)、`unpublish` 沒有 UI 呼叫端、Schedule 頁仍是占位。
+> 本文的**原則**(不 mock、stub 寫在函式旁、停用標示在入口)不變,測試也仍以 MSW
+> 服務(test-only)。
+
 # 0009. 執行時不再有 mock 後端,未實作的端點回 stub、操作停用
 
 日期:2026-08-27
