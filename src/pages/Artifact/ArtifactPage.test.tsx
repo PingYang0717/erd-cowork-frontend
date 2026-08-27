@@ -119,8 +119,9 @@ describe('Artifact full-page view', () => {
 
     await screen.findByTitle('Artifact preview');
 
-    // Share is present but disabled — no backend share endpoint yet (ADR-0009).
-    expect(screen.getByRole('button', { name: 'Share artifact' })).toBeDisabled();
+    // Share is live: clicking opens the recipient dialog (the submit surfaces the
+    // backend's own answer, ready or not).
+    expect(screen.getByRole('button', { name: 'Share artifact' })).toBeEnabled();
 
     await user.click(screen.getByRole('button', { name: 'Refresh artifact' }));
     expect(await screen.findByTitle('Artifact preview')).toBeInTheDocument();

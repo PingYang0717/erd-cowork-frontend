@@ -12,7 +12,6 @@ import { useLocation, useNavigate } from 'react-router-dom';
 
 import { ThemeToggle } from '@/components/common/ThemeToggle';
 import { Tooltip } from '@/components/common/Tooltip';
-import { BACKEND_UNSUPPORTED } from '@/constants/messages';
 import { useArtifactContent } from '@/hooks/useArtifactContent';
 import { artifactQueryKey, useArtifacts } from '@/hooks/useArtifacts';
 import { useArtifactTheme } from '@/hooks/useArtifactTheme';
@@ -93,13 +92,11 @@ const ArtifactFullPageView: React.FC<ArtifactFullPageViewProps> = ({ artifactId 
           )}
         </div>
 
-        {/* Disabled at the entry point — no backend share endpoint yet (ADR-0009). */}
-        <Tooltip content={BACKEND_UNSUPPORTED}>
+        <Tooltip content="分享">
           <button
             type="button"
             className={styles.shareButton}
             aria-label="Share artifact"
-            disabled
             onClick={() => setIsShareOpen(true)}
           >
             <ShareAltOutlined aria-hidden />
