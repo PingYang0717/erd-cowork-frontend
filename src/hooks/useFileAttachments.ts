@@ -1,7 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 
-import { fileApi } from '@/api/fileApi';
+import { deleteFile, uploadFiles } from '@/api/fileApi';
 import { planFileAdditions } from '@/utils/uploadValidation';
 
 import { sessionDetailQueryKey, useSessionDetail } from './useSessionDetail';
@@ -35,7 +35,7 @@ export function useFileAttachments(sessionId: string) {
 
     setUploadPercent(0);
     try {
-      await fileApi.uploadFiles(sessionId, plan.accepted, setUploadPercent);
+      await uploadFiles(sessionId, plan.accepted, setUploadPercent);
       await queryClient.invalidateQueries({ queryKey: sessionDetailQueryKey(sessionId) });
     } catch {
       setError('上傳失敗，請再試一次。');
@@ -45,7 +45,7 @@ export function useFileAttachments(sessionId: string) {
   }
 
   async function removeFile(fileId: string) {
-    await fileApi.deleteFile(sessionId, fileId);
+    await deleteFile(sessionId, fileId);
     setError('');
     await queryClient.invalidateQueries({ queryKey: sessionDetailQueryKey(sessionId) });
   }

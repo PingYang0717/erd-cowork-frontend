@@ -5,7 +5,6 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { StudioShell } from '@/components/layouts/StudioShell';
-import { BACKEND_UNSUPPORTED } from '@/constants/messages';
 import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
 import { useStudioLayoutStore } from '@/stores/useStudioLayoutStore';
 import { useThemeStore } from '@/stores/useThemeStore';
@@ -46,7 +45,10 @@ describe('Per-version Artifact publishing', () => {
     expect(await screen.findByText('已發布')).toBeInTheDocument();
 
     // Regenerating produces a new, not-yet-published version.
-    await user.click(await screen.findByRole('button', { name: 'Regenerate artifact' }));
+    await user.type(
+      await screen.findByRole('textbox', { name: 'Message' }),
+      'Regenerate the dashboard.{Enter}',
+    );
 
     const publishButton = await screen.findByRole('button', { name: '發布 Artifact' });
     expect(screen.queryByText('已發布')).not.toBeInTheDocument();
@@ -57,17 +59,15 @@ describe('Per-version Artifact publishing', () => {
     expect(screen.queryByRole('button', { name: '發布 Artifact' })).not.toBeInTheDocument();
   });
 
-  it('disables Share on a published version too — the endpoint is what is missing, not the publish', async () => {
+  it('opens the share dialog from the toolbar', async () => {
     const user = userEvent.setup();
     renderStudioPage();
 
     await user.click(await screen.findByRole('button', { name: 'SPC — Vt (gate CD)' }));
     await screen.findByText('已發布');
 
-    const share = screen.getByRole('button', { name: 'Share artifact' });
-    expect(share).toBeDisabled();
-    await user.hover(share);
-    expect(await screen.findByRole('tooltip')).toHaveTextContent(BACKEND_UNSUPPORTED);
+    await user.click(screen.getByRole('button', { name: 'Share artifact' }));
+    expect(await screen.findByRole('dialog', { name: /分享/ })).toBeInTheDocument();
   });
 
   it('keeps each version’s published state independent when switching versions', async () => {
@@ -77,7 +77,10 @@ describe('Per-version Artifact publishing', () => {
     await user.click(await screen.findByRole('button', { name: 'SPC — Vt (gate CD)' }));
     await screen.findByText('已發布');
 
-    await user.click(await screen.findByRole('button', { name: 'Regenerate artifact' }));
+    await user.type(
+      await screen.findByRole('textbox', { name: 'Message' }),
+      'Regenerate the dashboard.{Enter}',
+    );
     await screen.findByRole('button', { name: '發布 Artifact' });
 
     // Switch back to the seeded, already-published v1: the chip returns.

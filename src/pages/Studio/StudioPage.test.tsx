@@ -6,7 +6,6 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { StudioShell } from '@/components/layouts/StudioShell';
-import { BACKEND_UNSUPPORTED } from '@/constants/messages';
 import { server } from '@/mocks/server';
 import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
 import { useStudioLayoutStore } from '@/stores/useStudioLayoutStore';
@@ -219,24 +218,5 @@ describe('Session rail', () => {
     const newSession = await within(recent).findByRole('button', { name: 'New analysis' });
     expect(newSession).toHaveAttribute('aria-current', 'true');
     expect(previouslySelected).not.toHaveAttribute('aria-current', 'true');
-  });
-
-  // Pin, rename and delete were covered by five tests that clicked through the menu and
-  // asserted the session moved, was renamed, or disappeared. The backend has none of
-  // those endpoints (ADR-0009), so the menu items are disabled and the behaviour they
-  // described does not exist to test. What is left to protect is that they are visibly
-  // disabled rather than quietly inert — and that nobody re-enables them by accident.
-  it('disables pin, rename and delete in a session menu, saying why', async () => {
-    const user = userEvent.setup();
-    renderStudioPage();
-
-    await screen.findByRole('region', { name: 'Pinned sessions' });
-    await user.click(screen.getByRole('button', { name: 'More actions for Defect pareto — W12' }));
-
-    for (const label of ['Pin', 'Rename', 'Delete']) {
-      const item = screen.getByRole('menuitem', { name: new RegExp(`^${label}`) });
-      expect(item).toHaveAttribute('aria-disabled', 'true');
-      expect(within(item).getByText(BACKEND_UNSUPPORTED)).toBeInTheDocument();
-    }
   });
 });

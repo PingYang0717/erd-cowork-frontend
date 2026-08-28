@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 
 import { server } from '@/mocks/server';
 
-import { fileApi } from './fileApi';
+import { uploadFiles } from './fileApi';
 
 function csv(name: string, sizeBytes: number): File {
   return new File([new Uint8Array(sizeBytes)], name, { type: 'text/csv' });
@@ -14,9 +14,7 @@ describe('fileApi.uploadFiles progress', () => {
   it('reports progress and finishes at 100', async () => {
     const seen: number[] = [];
 
-    await fileApi.uploadFiles('session-2', [csv('lots.csv', 2048)], (percent) =>
-      seen.push(percent),
-    );
+    await uploadFiles('session-2', [csv('lots.csv', 2048)], (percent) => seen.push(percent));
 
     expect(seen.length).toBeGreaterThan(0);
     expect(seen.at(-1)).toBe(100);
@@ -26,9 +24,7 @@ describe('fileApi.uploadFiles progress', () => {
   it('never reports backwards', async () => {
     const seen: number[] = [];
 
-    await fileApi.uploadFiles('session-2', [csv('lots.csv', 4096)], (percent) =>
-      seen.push(percent),
-    );
+    await uploadFiles('session-2', [csv('lots.csv', 4096)], (percent) => seen.push(percent));
 
     expect([...seen].sort((a, b) => a - b)).toEqual(seen);
   });
@@ -40,11 +36,11 @@ describe('fileApi.uploadFiles progress', () => {
       ),
     );
 
-    await expect(fileApi.uploadFiles('session-2', [csv('lots.csv', 16)])).rejects.toThrow();
+    await expect(uploadFiles('session-2', [csv('lots.csv', 16)])).rejects.toThrow();
   });
 
   it('still uploads when no one is listening for progress', async () => {
-    const uploaded = await fileApi.uploadFiles('session-2', [csv('lots.csv', 16)]);
+    const uploaded = await uploadFiles('session-2', [csv('lots.csv', 16)]);
 
     expect(uploaded[0]).toMatchObject({ name: 'lots.csv' });
   });

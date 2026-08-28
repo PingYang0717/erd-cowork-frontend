@@ -14,7 +14,7 @@
 | 路由              | React Router                                   | v6+ 寫法(`createBrowserRouter` / `<Routes>`)                          |
 | Client 端全域狀態 | Zustand                                        | 只放 UI 狀態(sidebar 開關、theme、跨頁草稿等)                         |
 | Server 端資料狀態 | TanStack Query                                 | API 資料一律走這裡,不放進 Zustand                                     |
-| API 呼叫層        | Axios + 自訂 API client                        | 見第 5 節                                                             |
+| API 呼叫層        | Axios(與 cowork 檔案級同形,ADR-0011)           | 見第 5 節                                                             |
 | 表單              | 目前以 `useState` 手刻(未安裝 React Hook Form) | 表單只有分享對話框、connector 新增、session 改名三處;複雜度上來再引入 |
 | Lint / Format     | oxlint 1.71 + ESLint 9 + Prettier 3.9          | 兩個 linter 並存,分工見第 7 節;強制在 commit 前執行                   |
 | Git hook          | Husky + lint-staged                            |                                                                       |
@@ -34,9 +34,12 @@
 
 ```
 src/
-  api/          apiClient(Axios instance)、identity、各 endpoint module
-                (agentApi / sessionApi / messageApi / artifactApi /
-                 connectorApi / uploadApi / liveAdapter)
+  api/          apiClient(Axios instance + 匿名身分與 auth header provider,
+                與 cowork 檔案級同形——ADR-0011)、各 endpoint module
+                (agentApi / sessionApi / artifactApi / configApi /
+                 connectorApi / fileApi)
+  bootstrap/    internal 環境啟動接縫:import.meta.glob 偵測 internal.impl.ts
+                (只存在於 internal 環境),main.tsx 在 mount 前 await 它
   components/   依 domain 切
     artifact/   Artifact 面板、全頁檢視、版本選單、分享 dialog
     chat/       對話串、composer、反問卡、思考/產碼面板、結果表格
@@ -46,14 +49,13 @@ src/
     session/    Session 列表與收合軌
     common/     Tooltip、ThemeToggle、ErrorBoundary、SuspenseLoader、DataBoundary
     layouts/    StudioShell、StudioLayout、ResizeHandle
-  config/       執行期設定(transport、currentUser)
-  constants/    共用常數(storage key)
+  constants/    共用常數(storage key、DRAFT_SESSION_TITLE)
   hooks/        資料 hook(useSessions…)與跨元件 UI hook(useDebouncedValue…)
   stores/       Zustand store
   theme/        design token
-  types/        共用型別
+  types/        共用型別(types/api/ 與後端 DTO 逐字一致——ADR-0007)
   utils/        純函式
-  app/          進入點、Router、Providers
+  app/          Router、Providers(進入點是 src/main.tsx)
   pages/        路由頁面——只組裝、只放 DataBoundary
   mocks/ test/  MSW handler 與測試工具（test-only，app 不跑 MSW）
 ```
@@ -167,8 +169,9 @@ pending 由 `<SuspenseLoader>` 顯示、失敗由 `<ErrorBoundary>` 接,兩者�
 
 Mutation 的錯誤走 `onError` callback——它不是 render 期的例外,ErrorBoundary 接不到。
 
-**例外要寫理由。** 目前只有一個:`useArtifactContent` 留在 `useQuery`,因為它的 key 帶著
-theme 與版本,換成 suspense 會讓 iframe 在每次切換時卸載重掛。
+**例外要寫理由。** 目前只有一個:`useArtifactContent` 留在 `useQuery` +
+`keepPreviousData`,因為它的 key 成員(artifactId、reloadNonce)都在文件已上畫面時變動,
+suspend 會把面板閃成 fallback;keepPreviousData 讓舊文件撐到新 HTML 到手。
 
 ### 效能
 
@@ -182,10 +185,16 @@ theme 與版本,換成 suspense 會讓 iframe 在每次切換時卸載重掛。
 
 ### 多使用者身分
 
-所有請求帶 `X-User-Id`,唯一來源是 `api/identity.ts` 的 `getAuthHeaders()`:axios
-interceptor 與 `agentApi` 的 raw fetch 共用它——串流那條路不經過 axios,漏掉 header 會被
-後端當成另一個使用者。v1 是 localStorage 的匿名 UUID;internal 環境安裝一個回傳 `{}` 的
-provider,讓 SSO / gateway 注入的 header 不被覆蓋。
+所有請求帶 `X-User-Id`,唯一來源是 `api/apiClient.ts` 的 `getAuthHeaders()`(cowork
+檔案級同形,ADR-0011):axios interceptor 與 `agentApi` 的 raw fetch 共用它——串流那條
+路不經過 axios,漏掉 header 會被後端當成另一個使用者。v1 是 localStorage 的匿名 UUID
+(key `erd_user_id`,`getUserId` 每次直讀、不快取)。
+
+internal 環境用 `setAuthHeaderProvider()` 換 provider:回傳值**完全取代**預設 header,
+回傳什麼就送什麼(「回傳 `{}` 讓 gateway 蓋」是其合法特例)。provider 每次請求都被
+呼叫,NEVER 快取回傳值——internal 的 token 會背景刷新,快取住會在過期後開始 401。
+啟動時序由 `src/bootstrap/internal.ts` 保證:`main.tsx` 在 mount 前
+`await initInternalRuntime()`,初始化失敗就不 mount、不 catch,NEVER 以匿名身分繼續。
 
 ---
 
@@ -242,54 +251,48 @@ export const useThemeStore = create<ThemeState>()(
 
 ---
 
-## 5. API 呼叫層(Axios + 自訂 API client)
+## 5. API 呼叫層(Axios,與 cowork 檔案級同形——ADR-0011)
 
-```ts
-// src/api/apiClient.ts
-import axios from 'axios';
+`src/api/apiClient.ts` 與 cowork 上游逐行同形,**不要為本專案便利改它**(改了就失去
+diff-zero 的對齊價值)。它做兩件事:raw axios instance(baseURL 寫死 `/api`、無
+timeout、無環境變數),加上身分——`getUserId`(localStorage 匿名 UUID)、
+`getAuthHeaders`、`setAuthHeaderProvider`(internal SSO 接縫,語意見 3.5 節)。
+request interceptor 把 `getAuthHeaders()` 的回傳逐一放上 header。
 
-export const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL,
-  timeout: 10000,
-});
-
-apiClient.interceptors.request.use((config) => {
-  // 統一附加 token 等邏輯放這裡,不要讓每個 feature 各自處理
-  return config;
-});
-
-apiClient.interceptors.response.use(
-  (response) => response.data, // 統一在這裡拆掉 response.data,呼叫端拿到的就是資料本身
-  (error) => Promise.reject(error),
-);
-```
+**沒有 response unwrap interceptor**:axios 回傳 `AxiosResponse<T>`,每個 endpoint
+module 在呼叫點自己 `.then((res) => res.data)`。這層重複是 cowork 同形的代價,刻意
+不包回去。
 
 **規則:每個 endpoint module 放在 `src/api/`,不要直接在元件內寫 `apiClient.get(...)`。**
 
 ```ts
 // src/api/userApi.ts
 import { apiClient } from '@/api/apiClient';
-import type { UserDTO } from '@/types/user';
+import type { UserDTO } from '@/types/api/user';
 
 export const userApi = {
-  getUser: (id: string) => apiClient.get<UserDTO>(`/users/${id}`),
+  getUser: (id: string) => apiClient.get<UserDTO>(`/users/${id}`).then((res) => res.data),
   updateUser: (id: string, payload: Partial<UserDTO>) =>
-    apiClient.patch<UserDTO>(`/users/${id}`, payload),
+    apiClient.patch<UserDTO>(`/users/${id}`, payload).then((res) => res.data),
 };
 ```
 
 ```ts
 // src/hooks/useUser.ts
-import { useQuery } from '@tanstack/react-query';
+import { useSuspenseQuery } from '@tanstack/react-query';
 import { userApi } from '../api/userApi';
 
 export function useUser(id: string) {
-  return useQuery({
+  return useSuspenseQuery({
     queryKey: ['user', id],
     queryFn: () => userApi.getUser(id),
   });
 }
 ```
+
+兩條不走 axios 的路,auth header 都 MUST 自帶 `...getAuthHeaders()`:`agentApi` 的
+raw fetch(axios 無法逐塊讀 SSE body)。dev/preview 的 `/api` 由 `vite.config.ts`
+proxy 到 `localhost:8080`;部署走反向代理,與 vite 無關。
 
 ---
 
@@ -399,4 +402,5 @@ antd 自己畫的對話框外框(邊框、陰影、遮罩)CSS Module 碰不到,�
 (舊版是 `.ant-modal-content`),選錯就是整條規則靜靜失效。
 
 Artifact 在 iframe 內(ADR-0001)讀不到外層的 CSS 變數,所以
-`src/mocks/artifactFixtures.ts` 自帶一份同值的色票 —— 改色時兩邊要一起改。
+`src/mocks/artifactFixtures.ts` 自帶一份同值的亮色色票(Artifact HTML 沒有 theme
+變體——ADR-0001 狀態註記)—— 改亮色色票時兩邊要一起改。

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL ?? '';
+const API_BASE = '/api';
 
 /** The raw endpoint serves the artifact's HTML before assembly — the source an
  *  engineer reads in the chat bubble, and the text a later turn is iterated from. */

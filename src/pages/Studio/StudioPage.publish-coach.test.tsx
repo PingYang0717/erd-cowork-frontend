@@ -99,7 +99,10 @@ describe('Publish feedback: badge count, coach highlight, toast', () => {
     expect(await artifactsNav()).not.toHaveAttribute('data-coach');
 
     // Publish another version to bring the toast back, then navigate.
-    await user.click(await screen.findByRole('button', { name: 'Regenerate artifact' }));
+    await user.type(
+      await screen.findByRole('textbox', { name: 'Message' }),
+      'Regenerate the dashboard.{Enter}',
+    );
     await user.click(await screen.findByRole('button', { name: '發布 Artifact' }));
     const toast2 = await screen.findByRole('status', { name: 'Artifact 已發布' });
     await user.click(within(toast2).getByRole('button', { name: '前往 Artifacts' }));

@@ -20,7 +20,7 @@ export interface MockAgentStream {
   readonly userIds: (string | null)[];
 }
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL ?? '';
+const API_BASE = '/api';
 
 /** Replaces the message endpoint with a stream the test drives event by event.
  *  Nothing is on a timer: the test decides when the next event arrives, so every

@@ -15,12 +15,11 @@ import { Button, Dropdown, Input } from 'antd';
 import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
-import { UnsupportedLabel } from '@/components/common/UnsupportedLabel';
 import { useSessionGroups } from '@/hooks/useSessionGroups';
 import {
   useDeleteSession,
   useRenameSession,
-  useSetSessionPinned,
+  useToggleSessionPin,
 } from '@/hooks/useSessionMutations';
 import { usePublishCoachStore } from '@/stores/usePublishCoachStore';
 import type { Session } from '@/types/api/session';
@@ -42,7 +41,7 @@ function SessionRow({
   isDraft: boolean;
   onSelect: (id: string) => void;
 }) {
-  const setSessionPinned = useSetSessionPinned();
+  const toggleSessionPin = useToggleSessionPin();
   const renameSession = useRenameSession();
   const deleteSession = useDeleteSession();
   const [isRenaming, setIsRenaming] = useState(false);
@@ -53,36 +52,32 @@ function SessionRow({
   // deliberately keeps its filled-when-pinned variant (spec exception).
   //
   // All three are disabled: the backend has no rename, pin or delete for a session
-  // (ADR-0009). They stay in the menu — and keep their handlers below — so that what
-  // the product offers is still visible, and so the day the endpoints land the only
-  // change is dropping `disabled`.
+  // Live against the backend: nothing here is disabled up front. An endpoint that has
+  // not landed answers with an error the mutation toasts to the user instead.
   const menuItems = [
     {
       key: 'pin',
-      label: <UnsupportedLabel label={isPinned ? 'Unpin' : 'Pin'} />,
+      label: isPinned ? 'Unpin' : 'Pin',
       icon: isPinned ? <PushpinFilled aria-hidden /> : <PushpinOutlined aria-hidden />,
-      disabled: true,
     },
     { type: 'divider' as const },
     {
       key: 'rename',
-      label: <UnsupportedLabel label="Rename" />,
+      label: 'Rename',
       icon: <EditOutlined aria-hidden />,
-      disabled: true,
     },
     { type: 'divider' as const },
     {
       key: 'delete',
-      label: <UnsupportedLabel label="Delete" />,
+      label: 'Delete',
       danger: true,
       icon: <DeleteOutlined aria-hidden />,
-      disabled: true,
     },
   ];
 
   function handleMenuClick(key: string) {
     dispatchMenuAction(key, {
-      pin: () => setSessionPinned.mutate({ id: session.id, pinned: !isPinned }),
+      pin: () => toggleSessionPin.mutate(session.id),
       rename: () => {
         setRenameDraft(session.title);
         setIsRenaming(true);
@@ -150,6 +145,10 @@ function SessionRow({
         <Dropdown
           trigger={['click']}
           classNames={{ root: 'erd-menu' }}
+          // The mockup's menu just appears; antd's 0.2s slide reads as lag on a
+          // 150px panel. Empty transitionName disables the motion outright.
+          transitionName=""
+
           menu={{ items: menuItems, onClick: ({ key }) => handleMenuClick(key) }}
         >
           <button

@@ -8,7 +8,6 @@ import { StudioShell } from '@/components/layouts/StudioShell';
 import { useActiveRunStore } from '@/stores/useActiveRunStore';
 import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
 import { useStudioLayoutStore } from '@/stores/useStudioLayoutStore';
-import { useThemeStore } from '@/stores/useThemeStore';
 import { mockAgentStream } from '@/test/agentStream';
 import { answerAnalysisConditions } from '@/test/studioRun';
 
@@ -60,7 +59,6 @@ describe('Artifact Reload', () => {
     useStudioLayoutStore.setState(useStudioLayoutStore.getInitialState());
     useSessionSelectionStore.setState(useSessionSelectionStore.getInitialState());
     useActiveRunStore.setState(useActiveRunStore.getInitialState());
-    useThemeStore.setState(useThemeStore.getInitialState());
   });
 
   it('mounts a fresh document when the user reloads the artifact', async () => {
@@ -87,22 +85,6 @@ describe('Artifact Reload', () => {
     await waitFor(() =>
       expect(screen.getByRole('button', { name: 'Reload artifact' })).toBeEnabled(),
     );
-  });
-
-  it('keeps the same document when only the theme changes', async () => {
-    const user = userEvent.setup();
-    renderStudioPage();
-    const before = await runSpcScenario(user);
-
-    act(() => {
-      useThemeStore.getState().toggleTheme();
-    });
-
-    await waitFor(() => {
-      const iframe = screen.getByTitle('Artifact preview') as HTMLIFrameElement;
-      expect(iframe.getAttribute('srcdoc')).toContain('data-artifact-theme="dark"');
-    });
-    expect(screen.getByTitle('Artifact preview')).toBe(before);
   });
 
   it('mounts a fresh document once a repair has rebuilt the artifact', async () => {

@@ -36,18 +36,14 @@ describe('Artifact panel toolbar', () => {
     useThemeStore.setState(useThemeStore.getInitialState());
   });
 
-  // Two tests used to open the share dialog from here and drive a share through it.
-  // Sharing has no backend endpoint (ADR-0009): the button is disabled at its entry
-  // point so the dialog never opens onto a form that could not submit.
-  it('shows a "已發布" badge for a rendered Artifact, and disables the Share button', async () => {
+  it('shows a "已發布" badge for a rendered Artifact, with Share live beside it', async () => {
     const user = userEvent.setup();
     renderStudioPage();
 
     await user.click(await screen.findByRole('button', { name: 'SPC — Vt (gate CD)' }));
 
     expect(await screen.findByText('已發布')).toBeInTheDocument();
-    expect(await screen.findByRole('button', { name: 'Share artifact' })).toBeDisabled();
-    expect(screen.queryByRole('dialog', { name: '分享 Artifact' })).not.toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Share artifact' })).toBeEnabled();
   });
 
   it('opens the Artifact’s full-page view in a new tab', async () => {
@@ -67,24 +63,24 @@ describe('Artifact panel toolbar', () => {
     openSpy.mockRestore();
   });
 
-  it('shows the custom delayed tooltip on the Regenerate button instead of a native title', async () => {
+  it('shows the custom delayed tooltip on the Reload button instead of a native title', async () => {
     const user = userEvent.setup();
     renderStudioPage();
 
     await user.click(await screen.findByRole('button', { name: 'SPC — Vt (gate CD)' }));
 
-    const regenerate = await screen.findByRole('button', { name: 'Regenerate artifact' });
-    expect(regenerate).not.toHaveAttribute('title');
+    const reload = await screen.findByRole('button', { name: 'Reload artifact' });
+    expect(reload).not.toHaveAttribute('title');
 
-    await user.hover(regenerate);
+    await user.hover(reload);
     const tip = await screen.findByRole('tooltip');
-    expect(tip).toHaveTextContent('重新生成');
+    expect(tip).toHaveTextContent('重新整理');
 
-    await user.unhover(regenerate);
+    await user.unhover(reload);
     await waitFor(() => expect(screen.queryByRole('tooltip')).not.toBeInTheDocument());
   });
 
-  it('regenerates the Artifact via a chat turn, adding and switching to a new version', async () => {
+  it('iterates the Artifact via a chat turn, adding and switching to a new version', async () => {
     const user = userEvent.setup();
     renderStudioPage();
 
@@ -95,8 +91,12 @@ describe('Artifact panel toolbar', () => {
     expect(screen.getAllByRole('menuitem')).toHaveLength(1);
     await user.keyboard('{Escape}');
 
-    // Regenerate streams a new run whose artifact becomes v2 and takes over.
-    await user.click(await screen.findByRole('button', { name: 'Regenerate artifact' }));
+    // An iteration typed into the composer streams a new run whose artifact becomes
+    // v2 and takes over (it rides baseArtifactId, so the scenario is inherited).
+    await user.type(
+      await screen.findByRole('textbox', { name: 'Message' }),
+      'Regenerate the dashboard.{Enter}',
+    );
     await screen.findByRole('button', { name: '發布 Artifact' });
 
     await user.click(await screen.findByRole('button', { name: '切換版本' }));

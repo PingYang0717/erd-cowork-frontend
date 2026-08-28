@@ -32,11 +32,14 @@ function artifactSrcdoc() {
 }
 
 /** Puts two artifact-bearing messages in one thread: the seeded session has one, and
- *  regenerating sends a chat turn that lands as the next. */
+ *  a typed iteration lands as the next. */
 async function threadWithTwoArtifacts(user: ReturnType<typeof userEvent.setup>) {
   await user.click(await screen.findByRole('button', { name: 'SPC — Vt (gate CD)' }));
   await screen.findByTitle('Artifact preview');
-  await user.click(await screen.findByRole('button', { name: 'Regenerate artifact' }));
+  await user.type(
+    await screen.findByRole('textbox', { name: 'Message' }),
+    'Regenerate the dashboard.{Enter}',
+  );
   await expect.poll(artifactSrcdoc, { timeout: 5000 }).toContain('· v2');
 }
 
@@ -88,7 +91,10 @@ describe("A past reply's Artifact chip", () => {
     await user.click(screen.getByRole('button', { name: /^Show .* in the Artifact panel$/ }));
     await expect.poll(artifactSrcdoc).toContain('· v1');
 
-    await user.click(await screen.findByRole('button', { name: 'Regenerate artifact' }));
+    await user.type(
+      await screen.findByRole('textbox', { name: 'Message' }),
+      'Regenerate the dashboard.{Enter}',
+    );
     await expect.poll(artifactSrcdoc, { timeout: 5000 }).toContain('· v3');
   });
 });
