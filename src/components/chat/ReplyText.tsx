@@ -1,8 +1,12 @@
-import React from 'react';
-import Markdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
+import React, { Suspense } from 'react';
 
 import styles from './ReplyText.module.css';
+
+// Lazy: the remark/micromark stack is heavyweight and only ever renders AI replies —
+// architecture.md's「笨重的第三方元件」case. While the chunk loads, the raw markdown
+// source shows as plain text: for the fraction of a second involved, unstyled text
+// beats a blank, and a reply is asynchronous to begin with.
+const MarkdownBody = React.lazy(() => import('./MarkdownBody'));
 
 interface ReplyTextProps {
   text: string;
@@ -15,7 +19,9 @@ interface ReplyTextProps {
 const ReplyText: React.FC<ReplyTextProps> = ({ text }) => {
   return (
     <div className={styles.reply}>
-      <Markdown remarkPlugins={[remarkGfm]}>{text}</Markdown>
+      <Suspense fallback={<span>{text}</span>}>
+        <MarkdownBody text={text} />
+      </Suspense>
     </div>
   );
 };

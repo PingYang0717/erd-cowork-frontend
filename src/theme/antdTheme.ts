@@ -22,7 +22,7 @@ const SEED = THEME_TOKENS.light;
  *  token, and anything reading `--erd-color-*` alongside it. This constant is the one
  *  they all point at — NEVER re-type the stack. */
 export const FONT_FAMILY =
-  "'Inter Variable', 'Noto Sans TC', -apple-system, 'PingFang TC', 'Microsoft JhengHei', sans-serif";
+  "'Inter Variable', 'Noto Sans TC Variable', -apple-system, 'PingFang TC', 'Microsoft JhengHei', sans-serif";
 
 /** Overlays open instantly. antd animates them on the three duration tokens (0.1/0.2/0.3s
  *  by default); on a dialog or a menu that reads as lag, not as motion — the user is

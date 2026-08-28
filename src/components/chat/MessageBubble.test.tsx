@@ -31,11 +31,13 @@ describe('MessageBubble', () => {
     expect(screen.queryByText(/eRD AI/)).not.toBeInTheDocument();
   });
 
-  it('labels an agent reply and renders it as Markdown', () => {
+  it('labels an agent reply and renders it as Markdown', async () => {
     render(<MessageBubble sender="AI" text={'Found **two** outliers.'} />);
 
     expect(screen.getByText('eRD AI')).toBeInTheDocument();
-    expect(screen.getByText('two').tagName).toBe('STRONG');
+    // findBy: the markdown renderer is a lazy chunk (ReplyText shows the raw source as
+    // plain text for the instant it loads), so the STRONG arrives one tick later.
+    expect((await screen.findByText('two')).tagName).toBe('STRONG');
   });
 
   it('places a table where its marker sits in the answer', () => {
