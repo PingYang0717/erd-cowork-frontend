@@ -3,7 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { artifactApi } from '@/api/artifactApi';
 
 import { useActionErrorToast } from './useActionErrorToast';
-import { artifactQueryKey, artifactsQueryKey } from './useArtifacts';
+import { artifactsQueryKey } from './useArtifacts';
 
 /** Pinning is a toggle the backend resolves — the caller says which Artifact, not
  *  which direction. */
@@ -55,8 +55,9 @@ export function usePublishArtifact() {
 
   return useMutation({
     mutationFn: (id: string) => artifactApi.publish(id),
-    onSuccess: (_artifact, id) => {
-      queryClient.invalidateQueries({ queryKey: artifactQueryKey(id) });
+    onSuccess: () => {
+      // Only the list: publishedAt is metadata. The rendered HTML does not change on
+      // publish, and its key lives in its own namespace now (artifactContentQueryKey).
       queryClient.invalidateQueries({ queryKey: artifactsQueryKey });
     },
     onError: toastError,

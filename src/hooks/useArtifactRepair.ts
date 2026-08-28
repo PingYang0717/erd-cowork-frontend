@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useCallback } from 'react';
 
 import { apiClient } from '@/api/apiClient';
+import { artifactContentQueryKey } from '@/hooks/useArtifactContent';
 import { useActiveRunStore } from '@/stores/useActiveRunStore';
 import { type BrowserJsError, useRepairOfferStore } from '@/stores/useRepairOfferStore';
 
@@ -39,7 +40,7 @@ export function useArtifactRepair() {
         }
 
         clear();
-        await queryClient.invalidateQueries({ queryKey: ['artifacts', artifactId] });
+        await queryClient.invalidateQueries({ queryKey: artifactContentQueryKey(artifactId) });
         // Refetching is not enough: the wedged document is still mounted, holding
         // whatever state made it throw. A Reload replaces it.
         bumpArtifactReload();
