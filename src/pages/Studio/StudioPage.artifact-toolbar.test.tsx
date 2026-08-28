@@ -6,6 +6,7 @@ import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
 import { useStudioLayoutStore } from '@/stores/useStudioLayoutStore';
 import { useThemeStore } from '@/stores/useThemeStore';
 import { renderStudio } from '@/test/renderStudio';
+import { artifactHref } from '@/utils/artifactUrl';
 
 describe('Artifact panel toolbar', () => {
   beforeEach(() => {
@@ -32,11 +33,14 @@ describe('Artifact panel toolbar', () => {
     await user.click(await screen.findByRole('button', { name: 'SPC — Vt (gate CD)' }));
     await user.click(await screen.findByRole('button', { name: 'Open artifact in new tab' }));
 
+    // Absolute, and carrying the `#` — window.open bypasses the router, so a bare path
+    // here would be a link that silently fails to open (ADR-0011).
     expect(openSpy).toHaveBeenCalledWith(
-      '/cowork/artifact/artifact-1',
+      artifactHref('artifact-1'),
       '_blank',
       'noopener,noreferrer',
     );
+    expect(artifactHref('artifact-1')).toContain('/#/');
 
     openSpy.mockRestore();
   });

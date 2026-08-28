@@ -11,6 +11,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { useArtifacts } from '@/hooks/useArtifacts';
 import type { Artifact } from '@/types/api/index';
+import { artifactRoute } from '@/utils/artifactUrl';
 
 import ArtifactCard from './ArtifactCard';
 import styles from './ArtifactsGallery.module.css';
@@ -171,7 +172,7 @@ const ArtifactsGallery: React.FC = () => {
             <ArtifactCard
               key={artifact.id}
               artifact={artifact}
-              onOpen={(a) => navigate(`/cowork/artifact/${a.id}`, { state: { from: 'gallery' } })}
+              onOpen={(a) => navigate(artifactRoute(a.id), { state: { from: 'gallery' } })}
             />
           ))}
         </div>

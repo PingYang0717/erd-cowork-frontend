@@ -80,7 +80,9 @@ src/
 
 ## 路由
 
-| 路徑                           | 畫面                                              |
+**hash 路由**（`createHashRouter`）：實際網址是 `/#/cowork/...`。
+
+| 路由                           | 畫面                                              |
 | ------------------------------ | ------------------------------------------------- |
 | `/cowork`                      | Studio：Session 列表、對話串、Artifact 面板三欄   |
 | `/cowork/artifacts`            | Artifacts 總覽                                    |
@@ -89,6 +91,14 @@ src/
 
 設計稿本身是純 state 切換的單頁 app（重新整理會遺失所在畫面），改用 React Router 是刻意
 的偏離：真實路由讓重新整理不遺失畫面，也讓單一 Artifact 能以連結直接開啟。
+
+用 hash 而非 history 是為了**不依賴伺服器設定**（[ADR-0011](./docs/adr/0011-hash-router.md)）：
+history 路由要求把所有路徑 fallback 到 `index.html`，否則使用者在
+`/cowork/artifact/xxx` 按重新整理就是 404。這個 app 會掛在
+eRD Workspace 底下、由不一定歸我們管的那層代理服務，hash 讓部署少一個前提。
+
+**離開 app 的連結一律用 `utils/artifactUrl.ts`**（Copy Link、開新分頁）：`navigate()` 會
+自己補上 `#`，但 `window.open` 與剪貼簿不會，漏了就是一個打不開又不報錯的連結。
 
 ---
 
@@ -140,7 +150,7 @@ chat panel**，它的呈現語彙以 cowork 上游為準。
 | [`AGENTS.md`](./AGENTS.md)                   | 動工前必讀的精簡規則                        |
 | [`architecture.md`](./architecture.md)       | 架構、設定檔、狀態分類、主題色票            |
 | [`CONTEXT.md`](./CONTEXT.md)                 | 領域名詞與該避免的說法                      |
-| [`docs/adr/`](./docs/adr/)                   | 架構決策紀錄（十份，皆為現行決策）          |
+| [`docs/adr/`](./docs/adr/)                   | 架構決策紀錄（十一份，皆為現行決策）        |
 | [`docs/api/`](./docs/api/)                   | API 契約、對接核對表、後端回饋、接線指南    |
 | [`docs/agents/`](./docs/agents/)             | domain 文件慣例（CONTEXT.md 與 ADR 怎麼寫） |
 | [`src/test/README.md`](./src/test/README.md) | 測試的兩個 seam 與兩道環境 shim             |

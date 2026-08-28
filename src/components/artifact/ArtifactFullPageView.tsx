@@ -16,6 +16,7 @@ import { useArtifactContent } from '@/hooks/useArtifactContent';
 import { artifactQueryKey, useArtifacts } from '@/hooks/useArtifacts';
 import { useSessionDetail } from '@/hooks/useSessionDetail';
 import type { Artifact, ArtifactVersion } from '@/types/api/index';
+import { artifactHref } from '@/utils/artifactUrl';
 import { deriveArtifactVersions } from '@/utils/deriveArtifactVersions';
 
 import ArtifactFrame from './ArtifactFrame';
@@ -120,11 +121,7 @@ const ArtifactFullPageView: React.FC<ArtifactFullPageViewProps> = ({ artifactId 
             className={styles.iconButton}
             aria-label="Open artifact in new tab"
             onClick={() =>
-              window.open(
-                `/cowork/artifact/${displayedArtifactId}`,
-                '_blank',
-                'noopener,noreferrer',
-              )
+              window.open(artifactHref(displayedArtifactId), '_blank', 'noopener,noreferrer')
             }
           >
             <ExportOutlined aria-hidden />

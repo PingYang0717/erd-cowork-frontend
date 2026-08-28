@@ -1,4 +1,4 @@
-import { createBrowserRouter, Navigate } from 'react-router-dom';
+import { createHashRouter, Navigate } from 'react-router-dom';
 
 import StudioShell from '@/components/layouts/StudioShell';
 import ArtifactPage from '@/pages/Artifact/ArtifactPage';
@@ -6,7 +6,7 @@ import ArtifactsGalleryPage from '@/pages/ArtifactsGallery/ArtifactsGalleryPage'
 import SchedulePage from '@/pages/Schedule/SchedulePage';
 import StudioPage from '@/pages/Studio/StudioPage';
 
-export const router = createBrowserRouter([
+export const router = createHashRouter([
   {
     path: '/',
     element: <Navigate to="/cowork" replace />,
