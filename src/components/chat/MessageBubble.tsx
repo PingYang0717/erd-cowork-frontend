@@ -67,7 +67,7 @@ export interface MessageBubbleProps {
 
 // Steps used to be revealed by a client-side timer, so a step could only ever be
 // pending, running or done. The backend now reports the status itself, which means a
-// step can also fail — hence the fourth state (ADR-0005).
+// step can also fail — hence the fourth state (ADR-0003).
 const STEP_STATUS_LABEL: Record<StepStatus, string> = {
   PENDING: 'Pending',
   RUNNING: 'Running',
@@ -275,7 +275,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
           (onPickArtifact ? (
             /* Clickable, like cowork's: the pane can only be steered from its own
                version menu otherwise, so an earlier reply's chip would claim "shown
-               right" about something that is not on the right at all (ADR-0010). */
+               right" about something that is not on the right at all (ADR-0002). */
             <button
               type="button"
               className={`${styles.artifactChip} ${styles.artifactChipButton} ${

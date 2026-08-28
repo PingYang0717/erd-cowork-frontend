@@ -8,7 +8,7 @@ interface SessionSelectionState {
   draftStartedAt: string | null;
   selectSession: (id: string) => void;
   /** Opens a draft: a session id this client invented, which the backend will not know
-   *  about until the first message upserts it (ADR-0008). */
+   *  about until the first message upserts it (ADR-0005). */
   startDraft: (id: string, startedAt: string) => void;
 }
 

@@ -127,7 +127,7 @@ interface QuestionFormCardProps {
 
 /** One reask from the agent: the fields it needs answered before it can carry on.
  *  Which fields appear is the Scenario's contract; what is in `options` is resolved
- *  when the run happens (ADR-0006). */
+ *  when the run happens (ADR-0004). */
 const QuestionFormCard: React.FC<QuestionFormCardProps> = ({
   form,
   onSubmit,

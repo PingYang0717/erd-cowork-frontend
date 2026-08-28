@@ -10,7 +10,7 @@ export const sessionApi = {
 
   /** Mock-only. The real backend has no POST /sessions — a session is created by the
    *  first message that names it, so "New chat" opens a client-side draft instead
-   *  (ADR-0008). Kept because the mock still answers it. */
+   *  (ADR-0005). Kept because the mock still answers it. */
   createSession: () => apiClient.post<Session>('/sessions', {}).then((res) => res.data),
 
   renameSession: (id: string, title: string) =>

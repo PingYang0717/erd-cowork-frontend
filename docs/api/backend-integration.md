@@ -2,13 +2,13 @@
 
 更新日期:2026-08-27。本文取代先前的「串接真實後端的注意事項」——那份文件記錄的
 契約落差(body 形狀、Message 形狀、上傳模型、Artifact HTML、liveAdapter 死碼)已在
-[ADR-0007](../adr/0007-verbatim-backend-wire-contract.md) 的 verbatim 對齊中全部解決,
+[ADR-0003](../adr/0003-verbatim-backend-wire-contract.md) 的 verbatim 對齊中全部解決,
 線路型別即應用型別,**接真後端不需要改任何程式碼**。仍需後端配合的項目集中在
 [backend-feedback.md](./backend-feedback.md)。
 
 ## 1. 沒有開關了
 
-前端只有一種模式:打真後端([ADR-0009](../adr/0009-no-mock-backend-at-runtime.md))。
+前端只有一種模式:打真後端([ADR-0006](../adr/0006-no-mock-backend-at-runtime.md))。
 `VITE_AGENT_TRANSPORT`、`src/config/transport.ts` 與 `LIVE_BACKED` 清單都已移除,MSW 只在
 測試裡跑。`VITE_API_BASE_URL` 也已移除(2026-08-28,cowork 對齊):API base 寫死
 `/api`,不吃任何環境變數。
@@ -21,7 +21,7 @@
 | **停用**(寫入) | `PATCH`/`DELETE /sessions/{id}`、`PATCH`/`DELETE /artifacts/{id}`、`POST /artifacts/{id}/share`、`POST /artifacts/{id}/generate`、`PATCH`/`POST /connectors` | UI 上 disabled,標「後端尚未支援」 |
 
 後端補上其中一條時:把對應的 stub 換回 `apiClient` 呼叫,或把 UI 上的 `disabled` 拿掉
-(api 函式都還在,`src/api/` 裡標註著)。同時復活 ADR-0009 附的那份測試清單。
+(api 函式都還在,`src/api/` 裡標註著)。同時復活 ADR-0006 附的那份測試清單。
 
 ## 2. 網路層:讓 `/api` 到得了後端
 
@@ -67,7 +67,7 @@ live bubble 永遠看不到逐步進度。Vite 的 http-proxy 預設不 buffer;�
   富表單是 mock-only extension,`utils/liftQuestions.ts` 單向抬升。完整表單需後端改送
   `QuestionForm`(feedback #1)。
 - **New chat 的短暫不一致**:草稿 session 只存在於這個分頁,第一次送訊息時後端以同 id
-  upsert 才會進清單(ADR-0008;feedback #3)。
+  upsert 才會進清單(ADR-0005;feedback #3)。
 - **bubble 附件 chips 消失**:真後端的歷史訊息不帶 `attachments` extension
   (feedback #4)。
 - **深色 Artifact**:已決議不做(2026-08-28)。`?theme=` query 與 iframe 內

@@ -3,7 +3,7 @@
 日期：2026-08-27。這是**前端實際會打的每一條端點**的總表，依 `src/api/*` 與 hooks 逐條
 盤點。給後端對接用：「後端實際 input/output」欄留白，請直接填寫或標「同左」。
 詳細契約（事件流、欄位語意、降級規則）見 [interface.md](./interface.md)；型別定義在
-`src/types/api/`（線路型別即應用型別，ADR-0007）。
+`src/types/api/`（線路型別即應用型別，ADR-0003）。
 
 ## 共通約定
 
@@ -12,7 +12,7 @@
   raw fetch/XHR 共用同一個 helper）
 - 錯誤格式：`{ code: string, message: string }`（`@RestControllerAdvice` 統一）
 - 前端不呼叫 `POST /sessions`：session id 由前端產生，第一次送訊息／上傳時 upsert
-  （ADR-0008）
+  （ADR-0005）
 
 ## 1. Config
 

@@ -512,7 +512,7 @@ export const allHandlers = [
       return new HttpResponse(null, { status: 400 });
     }
     // Uploading upserts the session too — the backend has two write endpoints and both
-    // create the session on first use (ADR-0008). Without this, attaching a file to a
+    // create the session on first use (ADR-0005). Without this, attaching a file to a
     // draft leaves the detail endpoint 404ing.
     upsertSession(sessionId);
     const existingCount = sessionFiles.read().filter((f) => f.sessionId === sessionId).length;
@@ -571,7 +571,7 @@ export const allHandlers = [
     return new HttpResponse(null, { status: 200 });
   }),
 
-  // A run is delivered as an agent-event stream, not a computed reply (ADR-0005).
+  // A run is delivered as an agent-event stream, not a computed reply (ADR-0003).
   // The whole scripted run is written at once and the stream closed: tests that need
   // to observe an intermediate state drive their own stream via `src/test/agentStream.ts`
   // instead of racing this one.
@@ -590,7 +590,7 @@ export const allHandlers = [
     }
 
     // Sending is what creates a session: the id comes from the client and this is an
-    // upsert, not a lookup (ADR-0008 — the backend has no POST /sessions). A draft
+    // upsert, not a lookup (ADR-0005 — the backend has no POST /sessions). A draft
     // becomes real here and nowhere else.
     upsertSession(sessionId);
 
@@ -651,7 +651,7 @@ export const allHandlers = [
       ? 'slides'
       : (baseArtifact?.kind ?? 'dashboard');
 
-    // A Scenario decides what it needs to ask before it can run (ADR-0006) — but an
+    // A Scenario decides what it needs to ask before it can run (ADR-0004) — but an
     // iteration whose scenario was inherited (a regenerate, a "make it tighter")
     // already has its conditions from the base run, so it runs straight away.
     const inherited = matchScenario(question) === null && baseArtifact !== undefined;
@@ -746,5 +746,5 @@ export const allHandlers = [
 ];
 
 /** Every handler, registered for tests. The app itself no longer runs MSW — see
- *  ADR-0009; endpoints the backend has not built are stubbed in `src/api/`. */
+ *  ADR-0006; endpoints the backend has not built are stubbed in `src/api/`. */
 export const handlers = allHandlers;

@@ -1,6 +1,6 @@
 # Testing harness
 
-MSW is **test-only**: the app itself always talks to the real backend (ADR-0009).
+MSW is **test-only**: the app itself always talks to the real backend (ADR-0006).
 Nothing here runs in dev or production.
 
 There are **two** test seams in this project.
@@ -44,7 +44,7 @@ stream.close();
 Nothing is on a timer. The test decides when the next event arrives, so **every**
 intermediate state is observable — which is the whole point of the streaming UI. Do
 not reach for `vi.useFakeTimers()`: the old 500ms step-reveal timer it existed for is
-gone (ADR-0005). `mockAgentStreamRejection()` covers a refusal before the stream
+gone (ADR-0003). `mockAgentStreamRejection()` covers a refusal before the stream
 opens, and `stream.disconnect()` covers a connection dying mid-run.
 
 ## Two environment shims you must not reorder

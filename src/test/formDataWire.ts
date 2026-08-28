@@ -3,7 +3,7 @@ import { apiClient } from '@/api/apiClient';
 /** jsdom 的 File 經 MSW/undici 重組會降級成匿名 blob——檔名消失。真瀏覽器序列化
  *  FormData 時檔名當然都在;這個 test-only interceptor 把 FormData 預先序列化成
  *  與瀏覽器等價的 multipart bytes,讓 mock 後端讀到真實的 wire。app 原始碼
- *  (fileApi 的 FormData 路線)維持 cowork 同形,不為測試環境讓步(ADR-0011)。 */
+ *  (fileApi 的 FormData 路線)維持 cowork 同形,不為測試環境讓步(ADR-0007)。 */
 export function installFormDataWire(): void {
   apiClient.interceptors.request.use(async (config) => {
     if (!(config.data instanceof FormData)) return config;

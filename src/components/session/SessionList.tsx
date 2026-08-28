@@ -36,7 +36,7 @@ function SessionRow({
 }: {
   session: Session;
   isSelected: boolean;
-  /** A draft exists only in this client until its first message (ADR-0008). Rename,
+  /** A draft exists only in this client until its first message (ADR-0005). Rename,
    *  pin and delete have nothing to act on, so the row offers none of them. */
   isDraft: boolean;
   onSelect: (id: string) => void;

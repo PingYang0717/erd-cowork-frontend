@@ -1,10 +1,10 @@
 # 後端回饋清單
 
-前端已依 [ADR-0007](../adr/0007-verbatim-backend-wire-contract.md) 對齊後端契約;
+前端已依 [ADR-0003](../adr/0003-verbatim-backend-wire-contract.md) 對齊後端契約;
 以下是對齊過程中確認**後端缺少、前端刻意不硬湊**的能力,依對使用者體驗的影響排序。
 每一項在前端都有對應的降級行為,後端補上後前端只需小改。
 
-## 高 — 分析條件表單(ADR-0006 的核心)
+## 高 — 分析條件表單(ADR-0004 的核心)
 
 1. **QUESTION 事件改送 `QuestionForm`**:目前扁平的 `Question[]` 表達不了欄位種類
    (六種)、`visibleWhen` 相依、選項附帶資訊(DC item 規格上下限)。前端現以
@@ -15,7 +15,7 @@
 ## 中 — Session 管理
 
 3. **Session CRUD**:建立(`POST /sessions`)、改名、釘選、刪除。目前這四個功能
-   目前在 UI 上停用(ADR-0009);`Session.pinnedAt`(釘選時間戳,未釘選為 `null`)是前端-only 欄位。
+   目前在 UI 上停用(ADR-0006);`Session.pinnedAt`(釘選時間戳,未釘選為 `null`)是前端-only 欄位。
 
 ## 中 — 檔案與訊息
 

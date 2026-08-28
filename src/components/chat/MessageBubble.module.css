@@ -50,7 +50,7 @@
 
 /* The agent's turn is one surface, not a stack of loose cards. The fill is cowork's
    opaque gray-100 (via token, so dark mode keeps its own rung) — a translucent fill
-   read differently against the old gray thread background (ADR-0010). */
+   read differently against the old gray thread background (ADR-0002). */
 .aiBubble {
   max-width: 85%;
   min-width: 0;
@@ -155,7 +155,7 @@
 
 /* The artifact hand-off is the one thing in the bubble the reader is meant to act on,
    so it keeps a raised surface with its own border — cowork's full-width card
-   (ADR-0010). */
+   (ADR-0002). */
 .artifactChip {
   align-self: stretch;
   display: flex;

@@ -26,7 +26,7 @@ interface FetchOutcome {
 /** The artifact's HTML, collapsed by default. Live during a run, fetched on demand
  *  afterwards — the reader does not care which, so both wear the same panel. The row
  *  itself is cowork's: code glyph on the left, chevron on the right, and the label
- *  says whether the source is still being written (ADR-0010). */
+ *  says whether the source is still being written (ADR-0002). */
 const HtmlCodePanel: React.FC<HtmlCodePanelProps> = ({ code, artifactId, autoScroll = false }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [outcome, setOutcome] = useState<FetchOutcome | null>(null);

@@ -15,7 +15,7 @@ export function useSessionDetail(sessionId: string) {
     queryKey: sessionDetailQueryKey(sessionId),
     queryFn: () => sessionApi.getSession(sessionId),
     // A draft session exists only in this cache until its first message upserts it
-    // server-side (ADR-0008). A background refetch would 404 and tear the thread down,
+    // server-side (ADR-0005). A background refetch would 404 and tear the thread down,
     // so nothing here goes stale on its own — every mutation path invalidates the key.
     staleTime: Infinity,
   });

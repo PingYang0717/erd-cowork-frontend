@@ -26,8 +26,8 @@ function ThreadHeader() {
         Cowork · Data studio
       </span>
       {/* The mockup's data-source chip (its demo is wired to the Inline DB /
-          N5 line fixture); sits beside the ThemeToggle per the scope-trim of
-          the Workspace header (ADR-0003). */}
+          N5 line fixture); sits beside the ThemeToggle because the Workspace
+          header itself is out of scope — this app is the eRD Cowork App only. */}
       <span className={styles.dataSourceChip}>
         <DatabaseOutlined aria-hidden />
         Inline DB · N5 line
