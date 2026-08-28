@@ -78,9 +78,11 @@ environment lies about something the browser gets right:
   start/reset/close, and `localStorage` clearing between tests.
 - `src/test/agentStream.ts` / `studioRun.ts` — helpers for driving a run.
 
-Tests run **serially** (`fileParallelism: false`). Every pane suspends before it
-renders, so a `findBy*` waits one more async hop than it used to; running the files
-concurrently starves those waits and fails tests that pass on their own.
+Tests run with a **bounded worker pool** (`maxWorkers: 4`; measured 2026-08-28:
+~110s serial → 30s, five green runs). Every pane suspends before it renders, so a
+`findBy*` waits one more async hop than it used to — _unbounded_ parallelism (a worker
+per core) starves those waits, a bounded pool does not. If the suite flakes under
+load, lower the worker count before disabling parallelism.
 
 ## Running tests
 

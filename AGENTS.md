@@ -108,8 +108,9 @@ Husky + lint-staged 會自動跑 `oxlint --fix` → `eslint --fix` → `prettier
 
 ### 測試
 
-- 預設不平行(`fileParallelism: false`)。每個窗格都會先 suspend,幾十個檔案同時跑會餓死
-  那些等待,讓單獨跑會過的測試在整批跑時失敗
+- 平行上限 4 個 worker(`maxWorkers: 4`,實測 110s → 30s、五輪零 flake)。每個窗格都會
+  先 suspend,「每核一個 worker」的無上限平行才會餓死那些等待——遇到 flake 先降 worker
+  數,不要直接關平行
 - 測試身分與 FormData 有兩個 setup 前提:`test/seedTestIdentity.ts` 在 mocks 模組載入前
   固定匿名 id(`getUserId` 無快取,fixtures 在模組載入時捕捉 ownerId);
   `test/formDataWire.ts` 把 FormData 序列化成瀏覽器等價 multipart(jsdom File 過 MSW
