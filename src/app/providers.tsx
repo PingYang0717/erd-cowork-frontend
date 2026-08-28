@@ -6,7 +6,10 @@ import { useThemeStore } from '@/stores/useThemeStore';
 import { buildAntdTheme } from '@/theme/antdTheme';
 import { THEME_TOKENS, themeCssText, type ThemeTokens } from '@/theme/tokens';
 
-const queryClient = new QueryClient();
+// One retry, not the default three: with suspense queries a failure only reaches the
+// ErrorBoundary after the retries burn down, and three exponential backoffs meant the
+// "無法連線到後端服務" screen took 7-15s to appear. One retry still absorbs a blip.
+const queryClient = new QueryClient({ defaultOptions: { queries: { retry: 1 } } });
 
 // ConfigProvider's theme algorithm only affects antd components themselves;
 // plain HTML (body, <h1>, etc.) has no background/text color of its own, so

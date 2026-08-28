@@ -43,8 +43,6 @@ const StudioShell: React.FC = () => {
   const setSessionRailWidth = useStudioLayoutStore((s) => s.setSessionRailWidth);
   const toggleSessionRailCollapsed = useStudioLayoutStore((s) => s.toggleSessionRailCollapsed);
 
-  const railWidth = isSessionRailCollapsed ? SESSION_RAIL_COLLAPSED_WIDTH : sessionRailWidth;
-
   const readRailWidth = useCallback(() => useStudioLayoutStore.getState().sessionRailWidth, []);
   const { paneRef, onDragStart, onDrag, onDragEnd } = useResizablePane<HTMLElement>({
     min: SESSION_RAIL_MIN_WIDTH,
@@ -52,6 +50,8 @@ const StudioShell: React.FC = () => {
     read: readRailWidth,
     commit: setSessionRailWidth,
   });
+
+  const railWidth = isSessionRailCollapsed ? SESSION_RAIL_COLLAPSED_WIDTH : sessionRailWidth;
 
   return (
     <div className={styles.shell}>

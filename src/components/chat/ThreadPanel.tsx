@@ -13,8 +13,7 @@ import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
 import { composeAnswerText } from '@/utils/composeAnswerText';
 
 import ChatComposer from './ChatComposer';
-import MessageList from './MessageList';
-import { type LiveRun } from './MessageList';
+import MessageList, { type LiveRun } from './MessageList';
 import type { Answers } from './QuestionFormCard';
 import RepairOfferCard from './RepairOfferCard';
 import styles from './ThreadPanel.module.css';
