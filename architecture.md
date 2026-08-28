@@ -141,7 +141,12 @@ export function UserCard({ userId }: UserCardProps) {
 
 ### 元件
 
-一律 `React.FC<Props>` + 具名 props interface,檔案內順序:
+一律 `const X: React.FC<XProps> = (props) => {}` + 具名 props interface,**包含檔案內只給
+自己用的子元件**(`StepRow`、`FilterPill` 這類)。interface 命名 `<元件名>Props`、宣告在
+該元件正上方、不匯出;無 props 的元件寫 `React.FC` 不帶泛型,不造空 interface。理由與
+例外見 [ADR-0010](docs/adr/0010-component-declaration-and-export-conventions.md)。
+
+檔案內順序:
 
 ```tsx
 interface ThinkingPanelProps { thinking: string }      // 1. props interface

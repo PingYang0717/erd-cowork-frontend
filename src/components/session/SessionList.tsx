@@ -28,19 +28,16 @@ import { formatRelativeTime } from '@/utils/formatRelativeTime';
 
 import styles from './SessionList.module.css';
 
-function SessionRow({
-  session,
-  isSelected,
-  isDraft,
-  onSelect,
-}: {
+interface SessionRowProps {
   session: Session;
   isSelected: boolean;
   /** A draft exists only in this client until its first message (ADR-0005). Rename,
    *  pin and delete have nothing to act on, so the row offers none of them. */
   isDraft: boolean;
   onSelect: (id: string) => void;
-}) {
+}
+
+const SessionRow: React.FC<SessionRowProps> = ({ session, isSelected, isDraft, onSelect }) => {
   const toggleSessionPin = useToggleSessionPin();
   const renameSession = useRenameSession();
   const deleteSession = useDeleteSession();
@@ -162,16 +159,9 @@ function SessionRow({
       )}
     </li>
   );
-}
+};
 
-export function SessionGroup({
-  label,
-  sessions,
-  selectedSessionId,
-  draftSessionId,
-  onSelect,
-  emptyFallback,
-}: {
+export interface SessionGroupProps {
   label: string;
   sessions: Session[];
   selectedSessionId: string | null;
@@ -180,7 +170,16 @@ export function SessionGroup({
   onSelect: (id: string) => void;
   /** When set, an empty group keeps its header and shows this line instead of vanishing. */
   emptyFallback?: string;
-}) {
+}
+
+export const SessionGroup: React.FC<SessionGroupProps> = ({
+  label,
+  sessions,
+  selectedSessionId,
+  draftSessionId,
+  onSelect,
+  emptyFallback,
+}) => {
   const [isExpanded, setIsExpanded] = useState(true);
 
   if (sessions.length === 0 && !emptyFallback) {
@@ -221,7 +220,7 @@ export function SessionGroup({
         ))}
     </section>
   );
-}
+};
 
 interface SessionListProps {
   onCollapse?: () => void;

@@ -16,7 +16,11 @@ import styles from './StudioShell.module.css';
 // mockup, where switching cwView never unmounted it.
 // Split out so the shell itself never suspends: the rail is what needs data, and it
 // sits inside its own boundary.
-function ExpandedSessionRail({ onCollapse }: { onCollapse: () => void }) {
+interface ExpandedSessionRailProps {
+  onCollapse: () => void;
+}
+
+const ExpandedSessionRail: React.FC<ExpandedSessionRailProps> = ({ onCollapse }) => {
   const { data: artifacts } = useArtifacts();
 
   return (
@@ -25,7 +29,7 @@ function ExpandedSessionRail({ onCollapse }: { onCollapse: () => void }) {
       artifactsCount={artifacts.filter((artifact) => artifact.publishedAt !== null).length}
     />
   );
-}
+};
 
 const StudioShell: React.FC = () => {
   const sessionRailWidth = useStudioLayoutStore((s) => s.sessionRailWidth);

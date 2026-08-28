@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { App as AntdApp, ConfigProvider, theme } from 'antd';
-import type { CSSProperties, ReactNode } from 'react';
+import React, { type CSSProperties, type ReactNode } from 'react';
 
 import { useThemeStore } from '@/stores/useThemeStore';
 import { THEME_TOKENS, themeCssText, type ThemeTokens } from '@/theme/tokens';
@@ -24,7 +24,12 @@ const FONT_FAMILY =
 // This surface paints the whole page and exposes the mockup's palette as
 // `--erd-color-*` custom properties, which the CSS Modules across the app
 // read instead of hardcoding colors.
-function ThemedSurface({ tokens, children }: { tokens: ThemeTokens; children: ReactNode }) {
+interface ThemedSurfaceProps {
+  tokens: ThemeTokens;
+  children: ReactNode;
+}
+
+const ThemedSurface: React.FC<ThemedSurfaceProps> = ({ tokens, children }) => {
   const surface: CSSProperties = {
     height: '100vh',
     background: tokens.bgLayout,
@@ -37,9 +42,13 @@ function ThemedSurface({ tokens, children }: { tokens: ThemeTokens; children: Re
       <div style={surface}>{children}</div>
     </>
   );
+};
+
+interface AppProvidersProps {
+  children: ReactNode;
 }
 
-function AppProviders({ children }: { children: ReactNode }) {
+const AppProviders: React.FC<AppProvidersProps> = ({ children }) => {
   const isDarkMode = useThemeStore((s) => s.isDarkMode);
   const tokens = THEME_TOKENS[isDarkMode ? 'dark' : 'light'];
 
@@ -121,6 +130,6 @@ function AppProviders({ children }: { children: ReactNode }) {
       </ConfigProvider>
     </QueryClientProvider>
   );
-}
+};
 
 export default AppProviders;

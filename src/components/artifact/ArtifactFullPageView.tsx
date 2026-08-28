@@ -151,17 +151,19 @@ const ArtifactFullPageView: React.FC<ArtifactFullPageViewProps> = ({ artifactId 
 
 /** Loads the artifact's session to derive its version list — its own component so the
  *  session query only runs when there is an owned artifact to derive from. */
-function SessionVersionSwitcher({
-  artifact,
-  artifacts,
-  displayedArtifactId,
-  onSelect,
-}: {
+interface SessionVersionSwitcherProps {
   artifact: Artifact;
   artifacts: Artifact[];
   displayedArtifactId: string | undefined;
   onSelect: (artifactId: string) => void;
-}) {
+}
+
+const SessionVersionSwitcher: React.FC<SessionVersionSwitcherProps> = ({
+  artifact,
+  artifacts,
+  displayedArtifactId,
+  onSelect,
+}) => {
   const { data: detail } = useSessionDetail(artifact.sessionId);
 
   const versions = useMemo<ArtifactVersion[]>(
@@ -181,6 +183,6 @@ function SessionVersionSwitcher({
     versions.find((v) => v.artifactId === displayedArtifactId) ?? versions[versions.length - 1];
 
   return <VersionSwitcher versions={versions} activeVersion={activeVersion} onSelect={onSelect} />;
-}
+};
 
 export default ArtifactFullPageView;
