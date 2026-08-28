@@ -108,5 +108,4 @@ const HtmlCodePanel: React.FC<HtmlCodePanelProps> = ({ code, artifactId, autoScr
   );
 };
 
-export { HtmlCodePanel };
 export default HtmlCodePanel;

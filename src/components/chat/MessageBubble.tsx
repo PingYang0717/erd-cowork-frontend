@@ -11,7 +11,7 @@ import {
 } from '@ant-design/icons';
 import React, { useEffect, useState } from 'react';
 
-import { AttachmentChip } from '@/components/files/AttachmentChip';
+import AttachmentChip from '@/components/files/AttachmentChip';
 import { INTERRUPTED_TEXTS, REPAIR_RECORD_PREFIXES } from '@/constants/messages';
 import type {
   QuestionForm,
@@ -23,12 +23,13 @@ import type {
 import { formatDuration } from '@/utils/formatDuration';
 import { splitAnswerByTableMarkers } from '@/utils/tableMarkers';
 
-import { HtmlCodePanel } from './HtmlCodePanel';
+import HtmlCodePanel from './HtmlCodePanel';
 import styles from './MessageBubble.module.css';
-import { type Answers, QuestionFormCard } from './QuestionFormCard';
-import { ReplyText } from './ReplyText';
-import { ResultTable } from './ResultTable';
-import { ThinkingPanel } from './ThinkingPanel';
+import QuestionFormCard from './QuestionFormCard';
+import { type Answers } from './QuestionFormCard';
+import ReplyText from './ReplyText';
+import ResultTable from './ResultTable';
+import ThinkingPanel from './ThinkingPanel';
 
 export interface MessageBubbleProps {
   sender: 'USER' | 'AI';
@@ -374,5 +375,4 @@ function Elapsed({ ms }: { ms: number }) {
 // message above it never changes.
 const MemoisedMessageBubble = React.memo(MessageBubble);
 
-export { MemoisedMessageBubble as MessageBubble };
 export default MemoisedMessageBubble;

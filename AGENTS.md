@@ -71,6 +71,9 @@ Husky + lint-staged 會自動跑 `oxlint --fix` → `eslint --fix` → `prettier
 
 - 一律 `React.FC<Props>` + 具名 props interface
 - 檔案內順序:**props interface → hooks → handlers(`useCallback`)→ render → `export default`**
+- **匯出只有一種形式:`export default <元件名>`,不併存具名匯出。** 同檔的型別
+  (`MessageBubbleProps`、`LiveRun`、`Answers`)與跨檔使用的子元件(`SessionGroup`)
+  仍具名匯出——那條規則管的是元件本身
 - `React.lazy(() => import('...'))` + `<SuspenseLoader>` 只用於獨立路由或笨重的第三方元件
 - 唯一例外是 `ErrorBoundary`——React 沒有 `componentDidCatch` 的 hook 對等物,它必須是 class
 

@@ -11,7 +11,7 @@ import {
 import { Dropdown } from 'antd';
 import React, { useState } from 'react';
 
-import { ShareArtifactDialog } from '@/components/artifact/ShareArtifactDialog';
+import ShareArtifactDialog from '@/components/artifact/ShareArtifactDialog';
 import { useDeleteArtifact, useToggleArtifactPin } from '@/hooks/useArtifactMutations';
 import type { Artifact } from '@/types/api/index';
 import { dispatchMenuAction } from '@/utils/dispatchMenuAction';
@@ -136,5 +136,4 @@ const ArtifactCard: React.FC<ArtifactCardProps> = ({ artifact, onOpen }) => {
   );
 };
 
-export { ArtifactCard };
 export default ArtifactCard;

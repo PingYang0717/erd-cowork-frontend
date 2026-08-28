@@ -4,14 +4,14 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { StudioShell } from '@/components/layouts/StudioShell';
-import { ArtifactsGalleryPage } from '@/pages/ArtifactsGallery/ArtifactsGalleryPage';
+import StudioShell from '@/components/layouts/StudioShell';
+import ArtifactsGalleryPage from '@/pages/ArtifactsGallery/ArtifactsGalleryPage';
 import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
 import { useStudioLayoutStore } from '@/stores/useStudioLayoutStore';
 import { useThemeStore } from '@/stores/useThemeStore';
 import { answerAnalysisConditions } from '@/test/studioRun';
 
-import { StudioPage } from './StudioPage';
+import StudioPage from './StudioPage';
 
 function renderStudioPage() {
   const queryClient = new QueryClient();

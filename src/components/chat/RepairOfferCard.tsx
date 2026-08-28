@@ -68,5 +68,4 @@ const RepairOfferCard: React.FC<RepairOfferCardProps> = ({ offer, onConfirm, onD
   );
 };
 
-export { RepairOfferCard };
 export default RepairOfferCard;

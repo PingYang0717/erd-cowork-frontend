@@ -266,5 +266,4 @@ const QuestionFormCard: React.FC<QuestionFormCardProps> = ({
   );
 };
 
-export { QuestionFormCard };
 export default QuestionFormCard;

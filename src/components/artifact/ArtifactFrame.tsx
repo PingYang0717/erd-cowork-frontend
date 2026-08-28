@@ -47,5 +47,4 @@ const ArtifactFrame: React.FC<ArtifactFrameProps> = ({ html, artifactId }) => {
   );
 };
 
-export { ArtifactFrame };
 export default ArtifactFrame;

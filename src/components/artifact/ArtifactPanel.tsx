@@ -8,7 +8,7 @@ import {
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { Tooltip } from '@/components/common/Tooltip';
+import Tooltip from '@/components/common/Tooltip';
 import { useArtifactContent } from '@/hooks/useArtifactContent';
 import { usePublishArtifact } from '@/hooks/useArtifactMutations';
 import { useArtifacts } from '@/hooks/useArtifacts';
@@ -19,10 +19,10 @@ import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
 import type { ArtifactVersion } from '@/types/api/index';
 import { deriveArtifactVersions } from '@/utils/deriveArtifactVersions';
 
-import { ArtifactFrame } from './ArtifactFrame';
+import ArtifactFrame from './ArtifactFrame';
 import styles from './ArtifactPanel.module.css';
-import { ShareArtifactDialog } from './ShareArtifactDialog';
-import { VersionSwitcher } from './VersionSwitcher';
+import ShareArtifactDialog from './ShareArtifactDialog';
+import VersionSwitcher from './VersionSwitcher';
 
 function EmptyPanel() {
   return (
@@ -265,5 +265,4 @@ function PublishedToast() {
   );
 }
 
-export { ArtifactPanel };
 export default ArtifactPanel;

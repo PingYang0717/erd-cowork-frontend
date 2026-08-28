@@ -21,7 +21,7 @@ interface State {
  *  A class, unavoidably: React exposes no hook equivalent of `componentDidCatch`. It is
  *  the one component in the codebase that is not a `React.FC`.
  */
-export class ErrorBoundary extends Component<Props, State> {
+class ErrorBoundary extends Component<Props, State> {
   state: State = { error: null };
 
   static getDerivedStateFromError(error: Error): State {

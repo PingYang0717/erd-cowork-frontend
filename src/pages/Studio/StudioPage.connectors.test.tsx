@@ -4,11 +4,11 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { StudioShell } from '@/components/layouts/StudioShell';
+import StudioShell from '@/components/layouts/StudioShell';
 import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
 import { useStudioLayoutStore } from '@/stores/useStudioLayoutStore';
 
-import { StudioPage } from './StudioPage';
+import StudioPage from './StudioPage';
 
 // StudioPage is only the /cowork index route's content now; the session
 // rail lives in StudioShell, the route's shared parent (router.tsx). This

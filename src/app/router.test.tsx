@@ -10,7 +10,7 @@ import { describe, expect, it, vi } from 'vitest';
 async function renderAppAt(path: string) {
   window.history.pushState({}, '', path);
   vi.resetModules();
-  const { App } = await import('./App');
+  const { default: App } = await import('./App');
   return render(<App />);
 }
 

@@ -39,7 +39,7 @@ function ThemedSurface({ tokens, children }: { tokens: ThemeTokens; children: Re
   );
 }
 
-export function AppProviders({ children }: { children: ReactNode }) {
+function AppProviders({ children }: { children: ReactNode }) {
   const isDarkMode = useThemeStore((s) => s.isDarkMode);
   const tokens = THEME_TOKENS[isDarkMode ? 'dark' : 'light'];
 
@@ -122,3 +122,5 @@ export function AppProviders({ children }: { children: ReactNode }) {
     </QueryClientProvider>
   );
 }
+
+export default AppProviders;

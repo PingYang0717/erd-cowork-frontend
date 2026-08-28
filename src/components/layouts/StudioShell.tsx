@@ -2,12 +2,12 @@ import React from 'react';
 import { Outlet } from 'react-router-dom';
 
 import DataBoundary from '@/components/common/DataBoundary';
-import { CollapsedSessionRail } from '@/components/session/CollapsedSessionRail';
-import { SessionList } from '@/components/session/SessionList';
+import CollapsedSessionRail from '@/components/session/CollapsedSessionRail';
+import SessionList from '@/components/session/SessionList';
 import { useArtifacts } from '@/hooks/useArtifacts';
 import { SESSION_RAIL_COLLAPSED_WIDTH, useStudioLayoutStore } from '@/stores/useStudioLayoutStore';
 
-import { ResizeHandle } from './ResizeHandle';
+import ResizeHandle from './ResizeHandle';
 import styles from './StudioShell.module.css';
 
 // The Cowork app shell: the session rail persists across Studio, Artifacts,
@@ -65,5 +65,4 @@ const StudioShell: React.FC = () => {
   );
 };
 
-export { StudioShell };
 export default StudioShell;

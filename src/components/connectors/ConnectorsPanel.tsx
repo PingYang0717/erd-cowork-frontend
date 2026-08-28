@@ -310,5 +310,4 @@ const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ open, onClose }) => {
   );
 };
 
-export { ConnectorsPanel };
 export default ConnectorsPanel;

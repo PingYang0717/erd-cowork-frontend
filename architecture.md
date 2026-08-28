@@ -155,6 +155,11 @@ const ThinkingPanel: React.FC<ThinkingPanelProps> = ({ thinking }) => {
 export default ThinkingPanel;                           // 5.
 ```
 
+**匯出只有一種形式。** 元件一律 `export default`,不再併存 `export { X }`——兩種形式
+並存時,同一個元件在不同呼叫端會以兩種寫法出現,而且沒有任何機制保證兩者同步。同檔的
+型別與跨檔使用的子元件(例如 `SessionList.tsx` 的 `SessionGroup`)仍走具名匯出:那條
+規則管的是元件本身,不是檔案裡的每一個 binding。
+
 `React.lazy(() => import('...'))` + `<SuspenseLoader>` 只用於獨立路由或笨重的第三方
 元件——不是每個元件都要切一份 chunk。
 
