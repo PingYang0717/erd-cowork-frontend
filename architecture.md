@@ -108,7 +108,7 @@ export function UserCard({ userId }: UserCardProps) {
   // 3. useRef
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // 4. 衍生值(能用 React Compiler 自動優化就不手動包 useMemo)
+  // 4. 衍生值(沒有 React Compiler 兜底,昂貴的計算要自己包 useMemo)
   const displayName = user?.nickname ?? user?.email ?? '未命名';
 
   // 5. useEffect / useEffectEvent(放最後,且盡量少用 —— 見下方規則)
@@ -165,7 +165,8 @@ export default ThinkingPanel;                           // 5.
 主要資料抓取一律 `useSuspenseQuery`。呼叫端因此沒有 `isLoading` / `isError` 分支——
 pending 由 `<SuspenseLoader>` 顯示、失敗由 `<ErrorBoundary>` 接,兩者包在 `DataBoundary`
 裡,**放在每個窗格與每個 page 上,而不是整個 app 包一層**:一個壞掉的 Artifact 不該把
-旁邊的對話串一起弄白,而直接 render 單一窗格的測試也拿得到它依賴的邊界。
+旁邊的對話串一起弄白,而直接 render 單一窗格的測試也拿得到它依賴的邊界
+([ADR-0008](docs/adr/0008-data-boundary-per-pane.md))。
 
 Mutation 的錯誤走 `onError` callback——它不是 render 期的例外,ErrorBoundary 接不到。
 
