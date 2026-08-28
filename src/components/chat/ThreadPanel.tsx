@@ -165,23 +165,10 @@ const ThreadView: React.FC<ThreadViewProps> = ({ sessionId }) => {
   // invisible. A run that stopped, failed or is waiting on a reask has something the
   // history does not carry, so it stays.
   const runEndedVisibly = state.stopped || state.error !== null || state.question !== null;
-  const live: LiveRun | null =
-    state.isStreaming || runEndedVisibly
-      ? {
-          isStreaming: state.isStreaming,
-          steps: state.steps,
-          liveText: state.liveText,
-          stopped: state.stopped,
-          networkError: state.networkError,
-          thinking: state.thinking,
-          question: state.question,
-          codeText: state.codeText,
-          tables: state.tables,
-          error: state.error,
-          artifact: state.artifact,
-          startedAt: state.startedAt,
-        }
-      : null;
+  // `AgentStreamState` is structurally a `LiveRun` superset, so the reducer's state
+  // passes as-is — the twelve-field hand-copy this used to be meant every new live
+  // field touched four files.
+  const live: LiveRun | null = state.isStreaming || runEndedVisibly ? state : null;
 
   // Suppress the optimistic bubble once the refetched history already ends with it.
   const lastMessage = messages[messages.length - 1];

@@ -21,7 +21,7 @@ vi.mock('@/components/chat/MessageBubble', async () => {
   // Re-create the memo boundary around a counting wrapper: the count increments only
   // when the props actually changed — exactly what the real memo would let through.
   const Counted = React.memo((props: Props) => {
-    if (props.streaming !== undefined || props.timerStartedAt !== undefined) {
+    if (props.live != null) {
       renderCounts.live += 1;
     } else {
       renderCounts.history += 1;

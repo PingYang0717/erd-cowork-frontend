@@ -5,13 +5,30 @@ import { describe, expect, it, vi } from 'vitest';
 import { INTERRUPTED_TEXTS, REPAIR_RECORD_PREFIXES } from '@/constants/messages';
 import type { StepItem, TableResult } from '@/types/api/index';
 
-import MessageBubble from './MessageBubble';
+import MessageBubble, { type LiveRun } from './MessageBubble';
 
 const step = (overrides: Partial<StepItem> = {}): StepItem => ({
   stepKey: 'scan',
   title: 'Scanning lots',
   description: null,
   status: 'SUCCESS',
+  ...overrides,
+});
+
+/** A run in the shape the reducer would hand over, with quiet defaults. */
+const liveRun = (overrides: Partial<LiveRun> = {}): LiveRun => ({
+  isStreaming: false,
+  stopped: false,
+  networkError: false,
+  steps: [],
+  liveText: '',
+  thinking: '',
+  codeText: '',
+  tables: [],
+  question: null,
+  error: null,
+  artifact: null,
+  startedAt: null,
   ...overrides,
 });
 
@@ -41,21 +58,34 @@ describe('MessageBubble', () => {
   });
 
   it('places a table where its marker sits in the answer', () => {
-    render(<MessageBubble sender="AI" text={'Before [[table:t1]] after'} tables={[table()]} />);
+    render(
+      <MessageBubble
+        sender="AI"
+        live={liveRun({ liveText: 'Before [[table:t1]] after', tables: [table()] })}
+      />,
+    );
 
     expect(screen.getByRole('table', { name: 'Top offending lots' })).toBeInTheDocument();
     expect(screen.queryByText(/\[\[table:/)).not.toBeInTheDocument();
   });
 
   it('still shows a table that no marker placed', () => {
-    render(<MessageBubble sender="AI" text="No markers here." tables={[table()]} />);
+    render(
+      <MessageBubble
+        sender="AI"
+        live={liveRun({ liveText: 'No markers here.', tables: [table()] })}
+      />,
+    );
 
     expect(screen.getByRole('table', { name: 'Top offending lots' })).toBeInTheDocument();
   });
 
   it('shows the steps as they run, and collapses them into a recap once finished', async () => {
     const { rerender } = render(
-      <MessageBubble sender="AI" text="" streaming steps={[step({ status: 'RUNNING' })]} />,
+      <MessageBubble
+        sender="AI"
+        live={liveRun({ isStreaming: true, steps: [step({ status: 'RUNNING' })] })}
+      />,
     );
 
     expect(screen.getByText('Scanning lots')).toBeInTheDocument();
@@ -74,7 +104,7 @@ describe('MessageBubble', () => {
     try {
       const startedAt = Date.now();
       const { rerender } = render(
-        <MessageBubble sender="AI" text="" streaming timerStartedAt={startedAt} />,
+        <MessageBubble sender="AI" live={liveRun({ isStreaming: true, startedAt })} />,
       );
 
       act(() => {
@@ -90,10 +120,14 @@ describe('MessageBubble', () => {
   });
 
   it('distinguishes a user-initiated stop from a dropped connection', () => {
-    const { rerender } = render(<MessageBubble sender="AI" text="Partial" stopped />);
+    const { rerender } = render(
+      <MessageBubble sender="AI" live={liveRun({ liveText: 'Partial', stopped: true })} />,
+    );
     expect(screen.getByText('⏹ 已停止生成')).toBeInTheDocument();
 
-    rerender(<MessageBubble sender="AI" text="Partial" networkError />);
+    rerender(
+      <MessageBubble sender="AI" live={liveRun({ liveText: 'Partial', networkError: true })} />,
+    );
     expect(screen.queryByText('⏹ 已停止生成')).not.toBeInTheDocument();
     expect(screen.getByText('⚠ 連線中斷，請重新送出一次')).toBeInTheDocument();
   });
@@ -127,10 +161,11 @@ describe('MessageBubble', () => {
     render(
       <MessageBubble
         sender="AI"
-        text=""
-        streaming
-        codeText="<html>"
-        artifact={{ artifactId: 'artifact-1', title: 'SPC dashboard' }}
+        live={liveRun({
+          isStreaming: true,
+          codeText: '<html>',
+          artifact: { artifactId: 'artifact-1', title: 'SPC dashboard' },
+        })}
       />,
     );
 

@@ -2,40 +2,16 @@ import type { ReactNode } from 'react';
 import React, { useEffect, useMemo, useRef } from 'react';
 
 import { useActiveRunStore } from '@/stores/useActiveRunStore';
-import type { Message, QuestionForm, StepItem, TableResult } from '@/types/api/index';
+import type { Message, QuestionForm, StepItem } from '@/types/api/index';
 import { liftQuestions } from '@/utils/liftQuestions';
 
-import MessageBubble from './MessageBubble';
+import MessageBubble, { type LiveRun } from './MessageBubble';
+
+export type { LiveRun } from './MessageBubble';
 import styles from './MessageList.module.css';
 import type { Answers } from './QuestionFormCard';
 
 /** What the current run has produced so far. Null once nothing is streaming. */
-export interface LiveRun {
-  /** Still open. Drives the live region — a run that has ended, however it ended, is
-   *  no longer something a screen reader should announce as in progress. */
-  isStreaming: boolean;
-  steps: StepItem[];
-  liveText: string;
-  /** The user ended this run early. What it produced stays, but it is no longer working. */
-  stopped: boolean;
-  /** The connection died rather than closing; distinct from a user stop. */
-  networkError: boolean;
-  /** Reasoning streamed so far. Live-only. */
-  thinking: string;
-  /** The reask the run is waiting on, if any. */
-  question: QuestionForm | null;
-  /** Artifact HTML as it is written, and the query results produced on the way.
-   *  Both live-only. */
-  codeText: string;
-  tables: TableResult[];
-  /** Set when the run ended badly; shown as an alert under whatever it produced. */
-  error: { code: string; message: string } | null;
-  /** The artifact this run produced, before the refetched history carries it. */
-  artifact: { artifactId: string; title: string } | null;
-  /** Epoch ms the run started, which drives the ticking timer. */
-  startedAt: number | null;
-}
-
 /** The wire carries steps as the backend's JSON string; a malformed one renders as no
  *  recap rather than a broken thread. */
 function parseSteps(stepsJson: string | null): StepItem[] {
@@ -197,24 +173,13 @@ const MessageList: React.FC<MessageListProps> = ({
       {live && (
         <MessageBubble
           sender="AI"
-          text={live.liveText}
-          steps={live.steps}
-          artifact={live.artifact}
+          live={live}
           artifactShown={live.artifact !== null && live.artifact.artifactId === displayedArtifactId}
           onPickArtifact={pickArtifact}
-          streaming={live.isStreaming}
-          stopped={live.stopped}
-          networkError={live.networkError}
-          thinking={live.thinking || null}
-          // A reask appears the moment it is asked: the run is blocked on the answer,
-          // so waiting for the stream to close would just be dead time on screen.
-          question={live.question}
+          // A reask appears the moment it is asked (the run is blocked on the answer),
+          // which is why the handler is wired here and not only after the stream closes.
           onAnswer={onAnswer}
-          codeText={live.codeText || null}
-          tables={live.tables}
-          error={live.error}
           durationMs={live.isStreaming ? null : lastRunDurationMs}
-          timerStartedAt={live.isStreaming ? live.startedAt : null}
         />
       )}
       {bottomSlot}
