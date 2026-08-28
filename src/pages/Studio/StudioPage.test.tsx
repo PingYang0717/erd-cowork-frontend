@@ -5,30 +5,10 @@ import { http, HttpResponse } from 'msw';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import StudioShell from '@/components/layouts/StudioShell';
 import { server } from '@/mocks/server';
 import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
 import { useStudioLayoutStore } from '@/stores/useStudioLayoutStore';
-
-import StudioPage from './StudioPage';
-
-// The session rail (StudioShell) is the /cowork route's shared parent, with
-// StudioPage as its index route's content — mirrors router.tsx's nesting so
-// the rendered tree (and the layout state both share) matches production.
-function renderStudioPage() {
-  const queryClient = new QueryClient();
-  return render(
-    <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={['/cowork']}>
-        <Routes>
-          <Route path="/cowork" element={<StudioShell />}>
-            <Route index element={<StudioPage />} />
-          </Route>
-        </Routes>
-      </MemoryRouter>
-    </QueryClientProvider>,
-  );
-}
+import { renderStudio } from '@/test/renderStudio';
 
 // Reload simulation: vi.resetModules() + a fresh import gives a fresh
 // useStudioLayoutStore instance (module-scoped), so both StudioShell (rail
@@ -58,7 +38,7 @@ describe('StudioPage three-pane layout', () => {
   });
 
   it('renders the session rail, thread, and artifact panels', () => {
-    renderStudioPage();
+    renderStudio();
 
     expect(screen.getByRole('navigation', { name: 'Session list' })).toBeInTheDocument();
     expect(screen.getByRole('region', { name: 'Thread' })).toBeInTheDocument();
@@ -66,7 +46,7 @@ describe('StudioPage three-pane layout', () => {
   });
 
   it('resizes the session rail by dragging its handle, clamped to the 200-460px bounds', () => {
-    renderStudioPage();
+    renderStudio();
 
     const rail = screen.getByRole('navigation', { name: 'Session list' });
     const handle = screen.getByRole('separator', { name: 'Resize session rail' });
@@ -86,7 +66,7 @@ describe('StudioPage three-pane layout', () => {
   });
 
   it('resizes the thread panel by dragging its handle, clamped to the 320-720px bounds', () => {
-    renderStudioPage();
+    renderStudio();
 
     const thread = screen.getByRole('region', { name: 'Thread' });
     const handle = screen.getByRole('separator', { name: 'Resize thread panel' });
@@ -107,7 +87,7 @@ describe('StudioPage three-pane layout', () => {
 
   it('collapses the session rail to an icon-only rail and expands it back', async () => {
     const user = userEvent.setup();
-    renderStudioPage();
+    renderStudio();
 
     const rail = screen.getByRole('navigation', { name: 'Session list' });
     expect(await screen.findByRole('button', { name: 'New chat' })).toBeInTheDocument();
@@ -139,7 +119,7 @@ describe('StudioPage three-pane layout', () => {
   });
 
   it('keeps panel widths as session-only state that resets on reload, per architecture.md', async () => {
-    renderStudioPage();
+    renderStudio();
 
     fireEvent.mouseDown(screen.getByRole('separator', { name: 'Resize session rail' }), {
       clientX: 300,
@@ -162,7 +142,7 @@ describe('Session rail', () => {
   });
 
   it('shows seeded sessions grouped into Pinned and Recent sections', async () => {
-    renderStudioPage();
+    renderStudio();
 
     const pinned = await screen.findByRole('region', { name: 'Pinned sessions' });
     expect(within(pinned).getByRole('button', { name: 'SPC — Vt (gate CD)' })).toBeInTheDocument();
@@ -172,7 +152,7 @@ describe('Session rail', () => {
   });
 
   it('keeps the session groups in a scrollable region separate from the fixed New chat and nav rows', async () => {
-    renderStudioPage();
+    renderStudio();
 
     await screen.findByRole('region', { name: 'Pinned sessions' });
     const scroll = screen.getByTestId('session-scroll');
@@ -198,7 +178,7 @@ describe('Session rail', () => {
         ]),
       ),
     );
-    renderStudioPage();
+    renderStudio();
 
     const recents = await screen.findByRole('region', { name: 'Recents sessions' });
     expect(await within(recents).findByText('No recent chats.')).toBeInTheDocument();
@@ -206,7 +186,7 @@ describe('Session rail', () => {
 
   it('creates a new session via "New chat" and selects it', async () => {
     const user = userEvent.setup();
-    renderStudioPage();
+    renderStudio();
 
     await screen.findByRole('region', { name: 'Pinned sessions' });
     const previouslySelected = screen.getByRole('button', { name: 'Defect pareto — W12' });

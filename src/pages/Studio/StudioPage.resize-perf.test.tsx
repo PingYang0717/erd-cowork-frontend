@@ -1,16 +1,12 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import StudioShell from '@/components/layouts/StudioShell';
 import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
 import { useStudioLayoutStore } from '@/stores/useStudioLayoutStore';
+import { renderStudio } from '@/test/renderStudio';
 import { answerAnalysisConditions } from '@/test/studioRun';
-
-import StudioPage from './StudioPage';
 
 /** Counts how many times each pane's subtree re-renders while a divider
  *  is dragged. A drag emits one mousemove per frame; anything that re-renders per
@@ -41,21 +37,6 @@ vi.mock('@/components/chat/MessageList', async () => {
   return { ...actual, default: Counted };
 });
 
-function renderStudioPage() {
-  const queryClient = new QueryClient();
-  return render(
-    <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={['/cowork']}>
-        <Routes>
-          <Route path="/cowork" element={<StudioShell />}>
-            <Route index element={<StudioPage />} />
-          </Route>
-        </Routes>
-      </MemoryRouter>
-    </QueryClientProvider>,
-  );
-}
-
 /** One drag = 20 mousemoves, the number a real ~300ms drag emits at 60fps. */
 function drag(handleName: string, steps = 20) {
   const handle = screen.getByRole('separator', { name: handleName });
@@ -78,7 +59,7 @@ describe('divider drag does not re-render the panes', () => {
    *  an artifact in the right pane. Empty panes have nothing to re-render. */
   async function openAThreadWithAnArtifact() {
     const user = userEvent.setup();
-    renderStudioPage();
+    renderStudio();
     await user.click(await screen.findByRole('button', { name: 'New chat' }));
     await screen.findByRole('button', { name: 'New analysis' });
     await screen.findByRole('textbox', { name: 'Message' });

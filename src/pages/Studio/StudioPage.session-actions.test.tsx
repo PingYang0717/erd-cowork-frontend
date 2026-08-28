@@ -1,29 +1,10 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import StudioShell from '@/components/layouts/StudioShell';
 import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
 import { useStudioLayoutStore } from '@/stores/useStudioLayoutStore';
-
-import StudioPage from './StudioPage';
-
-function renderStudioPage() {
-  const queryClient = new QueryClient();
-  return render(
-    <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={['/cowork']}>
-        <Routes>
-          <Route path="/cowork" element={<StudioShell />}>
-            <Route index element={<StudioPage />} />
-          </Route>
-        </Routes>
-      </MemoryRouter>
-    </QueryClientProvider>,
-  );
-}
+import { renderStudio } from '@/test/renderStudio';
 
 async function openMenuOf(user: ReturnType<typeof userEvent.setup>, title: string) {
   await screen.findByRole('button', { name: title });
@@ -41,7 +22,7 @@ describe('Session row actions', () => {
 
   it('renames a session through the menu, and the row shows the new name', async () => {
     const user = userEvent.setup();
-    renderStudioPage();
+    renderStudio();
 
     await openMenuOf(user, 'Defect pareto — W12');
     await user.click(await screen.findByRole('menuitem', { name: 'Rename' }));
@@ -56,7 +37,7 @@ describe('Session row actions', () => {
 
   it('pins a recent session and finds it under Pinned', async () => {
     const user = userEvent.setup();
-    renderStudioPage();
+    renderStudio();
 
     const recents = await screen.findByRole('region', { name: 'Recents sessions' });
     expect(
@@ -74,7 +55,7 @@ describe('Session row actions', () => {
 
   it('deletes a session and the row is gone', async () => {
     const user = userEvent.setup();
-    renderStudioPage();
+    renderStudio();
 
     await openMenuOf(user, 'Defect pareto — W12');
     await user.click(await screen.findByRole('menuitem', { name: 'Delete' }));

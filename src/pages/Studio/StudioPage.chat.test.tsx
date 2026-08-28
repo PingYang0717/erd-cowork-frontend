@@ -1,16 +1,12 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import StudioShell from '@/components/layouts/StudioShell';
 import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
 import { useStudioLayoutStore } from '@/stores/useStudioLayoutStore';
 import { mockAgentStream } from '@/test/agentStream';
+import { renderStudio, waitForComposer } from '@/test/renderStudio';
 import { answerAnalysisConditions } from '@/test/studioRun';
-
-import StudioPage from './StudioPage';
 
 const SUGGESTED_PROMPTS = [
   'Inline dashboard',
@@ -20,29 +16,10 @@ const SUGGESTED_PROMPTS = [
   'CP Test status',
 ];
 
-// StudioPage is only the /cowork index route's content now; the session
-// rail lives in StudioShell, the route's shared parent (router.tsx). This
-// mirrors that nesting so the rendered tree matches production.
-function renderStudioPage() {
-  const queryClient = new QueryClient();
-  return render(
-    <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={['/cowork']}>
-        <Routes>
-          <Route path="/cowork" element={<StudioShell />}>
-            <Route index element={<StudioPage />} />
-          </Route>
-        </Routes>
-      </MemoryRouter>
-    </QueryClientProvider>,
-  );
-}
-
 async function selectASession(user: ReturnType<typeof userEvent.setup>) {
   await user.click(await screen.findByRole('button', { name: 'New chat' }));
   await screen.findByRole('button', { name: 'New analysis' });
-  // The composer subtree suspends on its queries; wait for it before sync getBy*.
-  await screen.findByRole('textbox', { name: 'Message' });
+  await waitForComposer();
 }
 
 /** Clicks a suggested prompt and waits for the whole scripted run to land in the thread.
@@ -61,7 +38,7 @@ describe('Chat composer', () => {
 
   it('shows a message composer with the five suggested-prompt buttons once a session is selected', async () => {
     const user = userEvent.setup();
-    renderStudioPage();
+    renderStudio();
     await selectASession(user);
 
     expect(screen.getByRole('textbox', { name: 'Message' })).toBeInTheDocument();
@@ -71,7 +48,7 @@ describe('Chat composer', () => {
   });
 
   it('shows no composer before any session is selected', () => {
-    renderStudioPage();
+    renderStudio();
 
     expect(screen.queryByRole('textbox', { name: 'Message' })).not.toBeInTheDocument();
   });
@@ -81,7 +58,7 @@ describe('Chat composer', () => {
   it('commits the input-method candidate instead of sending while the user is composing', async () => {
     const user = userEvent.setup();
     const stream = mockAgentStream();
-    renderStudioPage();
+    renderStudio();
     await selectASession(user);
 
     const textbox = screen.getByRole('textbox', { name: 'Message' });
@@ -96,7 +73,7 @@ describe('Chat composer', () => {
   it('sends once composition has ended and Enter is pressed again', async () => {
     const user = userEvent.setup();
     const stream = mockAgentStream();
-    renderStudioPage();
+    renderStudio();
     await selectASession(user);
 
     const textbox = screen.getByRole('textbox', { name: 'Message' });
@@ -111,7 +88,7 @@ describe('Chat composer', () => {
   });
 
   it('shows the data-source chip alongside the theme toggle in the thread header', () => {
-    renderStudioPage();
+    renderStudio();
 
     const header = screen.getByRole('banner', { name: 'Thread header' });
     expect(within(header).getByText('Inline DB · N5 line')).toBeInTheDocument();
@@ -152,7 +129,7 @@ describe('Scenario matching', () => {
     'leaves a reply referencing an artifact in the thread when clicking "$label"',
     async ({ label, replyMatch, artifactName }) => {
       const user = userEvent.setup();
-      renderStudioPage();
+      renderStudio();
       await selectASession(user);
 
       await runScenario(user, label);
@@ -166,7 +143,7 @@ describe('Scenario matching', () => {
 
   it('keeps a collapsible recap of the run once it has finished', async () => {
     const user = userEvent.setup();
-    renderStudioPage();
+    renderStudio();
     await selectASession(user);
 
     const recap = await runScenario(user, 'SPC analysis');
@@ -185,7 +162,7 @@ describe('Scenario matching', () => {
 
   it('auto-scrolls the thread to the bottom when a new message lands', async () => {
     const user = userEvent.setup();
-    renderStudioPage();
+    renderStudio();
     await selectASession(user);
 
     // The thread only exists once it has something in it: an empty session shows the
@@ -204,7 +181,7 @@ describe('Scenario matching', () => {
 
   it('appends the slides step and names a slides Artifact when clicking "Generate slides"', async () => {
     const user = userEvent.setup();
-    renderStudioPage();
+    renderStudio();
     await selectASession(user);
 
     const recap = await runScenario(user, 'Generate slides');
@@ -242,7 +219,7 @@ describe('Scenario matching', () => {
     'matches free text "$text" to a scenario and replies with its artifact',
     async ({ text, replyMatch, artifactName }) => {
       const user = userEvent.setup();
-      renderStudioPage();
+      renderStudio();
       await selectASession(user);
 
       await user.type(screen.getByRole('textbox', { name: 'Message' }), text);
