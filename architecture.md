@@ -387,8 +387,14 @@ npm install -D oxlint eslint-plugin-oxlint \
 
 這張表同時餵兩個消費端:
 
-1. **antd `ConfigProvider` 的 token**(antd 自己畫的元件)
-2. **`--erd-color-*` CSS 自訂屬性**(CSS Modules 讀的那些)
+1. **antd `ConfigProvider` 的 token**(antd 自己畫的元件)——對照關係在
+   `src/theme/antdTheme.ts` 的 `buildAntdTheme(isDarkMode)`,那是一個純函式,
+   `app/providers.tsx` 只負責把它接上 `ConfigProvider`
+2. **`--erd-color-*` CSS 自訂屬性**(CSS Modules 讀的那些)——`themeCssVars()` /
+   `themeCssText()`
+
+字型堆疊也在 `antdTheme.ts`(`FONT_FAMILY`),`index.css` 的 `body` 規則指向它,
+兩處必須一致——NEVER 重打一次那串 stack。
 
 CSS 或 inline style 用到的變數,必須在這張表裡存在;漏掉的話在 dark mode 會
 安靜地停在 fallback 的亮色值。
