@@ -1,11 +1,17 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { Outlet } from 'react-router-dom';
 
 import DataBoundary from '@/components/common/DataBoundary';
 import CollapsedSessionRail from '@/components/session/CollapsedSessionRail';
 import SessionList from '@/components/session/SessionList';
 import { useArtifacts } from '@/hooks/useArtifacts';
-import { SESSION_RAIL_COLLAPSED_WIDTH, useStudioLayoutStore } from '@/stores/useStudioLayoutStore';
+import { useResizablePane } from '@/hooks/useResizablePane';
+import {
+  SESSION_RAIL_COLLAPSED_WIDTH,
+  SESSION_RAIL_MAX_WIDTH,
+  SESSION_RAIL_MIN_WIDTH,
+  useStudioLayoutStore,
+} from '@/stores/useStudioLayoutStore';
 
 import ResizeHandle from './ResizeHandle';
 import styles from './StudioShell.module.css';
@@ -39,9 +45,22 @@ const StudioShell: React.FC = () => {
 
   const railWidth = isSessionRailCollapsed ? SESSION_RAIL_COLLAPSED_WIDTH : sessionRailWidth;
 
+  const readRailWidth = useCallback(() => useStudioLayoutStore.getState().sessionRailWidth, []);
+  const { paneRef, onDragStart, onDrag, onDragEnd } = useResizablePane<HTMLElement>({
+    min: SESSION_RAIL_MIN_WIDTH,
+    max: SESSION_RAIL_MAX_WIDTH,
+    read: readRailWidth,
+    commit: setSessionRailWidth,
+  });
+
   return (
     <div className={styles.shell}>
-      <nav aria-label="Session list" className={styles.sessionRail} style={{ width: railWidth }}>
+      <nav
+        ref={paneRef}
+        aria-label="Session list"
+        className={styles.sessionRail}
+        style={{ width: railWidth }}
+      >
         {isSessionRailCollapsed ? (
           <CollapsedSessionRail onExpand={toggleSessionRailCollapsed} />
         ) : (
@@ -54,9 +73,9 @@ const StudioShell: React.FC = () => {
       {!isSessionRailCollapsed && (
         <ResizeHandle
           label="Resize session rail"
-          onDrag={(deltaX) =>
-            setSessionRailWidth(useStudioLayoutStore.getState().sessionRailWidth + deltaX)
-          }
+          onDragStart={onDragStart}
+          onDrag={onDrag}
+          onDragEnd={onDragEnd}
         />
       )}
 
