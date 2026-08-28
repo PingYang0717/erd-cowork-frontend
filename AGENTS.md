@@ -1,13 +1,5 @@
 ## Agent skills
 
-### Issue tracker
-
-Issues and specs live as local markdown files under `.scratch/<feature>/`. See `docs/agents/issue-tracker.md`.
-
-### Triage labels
-
-Default five canonical role strings (needs-triage, needs-info, ready-for-agent, ready-for-human, wontfix). See `docs/agents/triage-labels.md`.
-
 ### Domain docs
 
 Single-context layout (root `CONTEXT.md` + `docs/adr/`). See `docs/agents/domain.md`.
@@ -51,7 +43,7 @@ Lint 是 **oxlint + ESLint 並存**(`npm run lint` 依序跑兩個),格式走 Pr
 ```
 src/
   api/          # apiClient(Axios instance + 匿名身分與 auth header provider)+ 各 endpoint module
-  bootstrap/    # internal 環境啟動接縫(import.meta.glob 偵測 internal.impl.ts,ADR-0011)
+  bootstrap/    # internal 環境啟動接縫(import.meta.glob 偵測 internal.impl.ts,ADR-0007)
   components/   # 依 domain 切:artifact / chat / connectors / files /
                 #   gallery / session / common / layouts
   constants/    # 共用常數(storage key 等)
@@ -77,8 +69,13 @@ Husky + lint-staged 會自動跑 `oxlint --fix` → `eslint --fix` → `prettier
 
 ### 元件
 
-- 一律 `React.FC<Props>` + 具名 props interface
+- 一律 `const X: React.FC<XProps> = (props) => {}` + 具名 props interface,**包含檔案內的
+  子元件**。interface 命名 `<元件名>Props`,宣告在該元件正上方;無 props 的寫 `React.FC`
+  不帶泛型,不造空 interface(ADR-0010)
 - 檔案內順序:**props interface → hooks → handlers(`useCallback`)→ render → `export default`**
+- **匯出只有一種形式:`export default <元件名>`,不併存具名匯出。** 同檔的型別
+  (`MessageBubbleProps`、`LiveRun`、`Answers`)與跨檔使用的子元件(`SessionGroup`)
+  仍具名匯出——那條規則管的是元件本身
 - `React.lazy(() => import('...'))` + `<SuspenseLoader>` 只用於獨立路由或笨重的第三方元件
 - 唯一例外是 `ErrorBoundary`——React 沒有 `componentDidCatch` 的 hook 對等物,它必須是 class
 
@@ -104,7 +101,7 @@ Husky + lint-staged 會自動跑 `oxlint --fix` → `eslint --fix` → `prettier
 
 ### 多使用者身分
 
-- 所有 API 請求帶 `X-User-Id`,由 `api/apiClient.ts` 的 `getAuthHeaders()` 供應(cowork 檔案級對齊,ADR-0011)
+- 所有 API 請求帶 `X-User-Id`,由 `api/apiClient.ts` 的 `getAuthHeaders()` 供應(cowork 檔案級對齊,ADR-0007)
 - v1:localStorage 的匿名 UUID(key `erd_user_id`),axios interceptor 附加;`agentApi` 的 raw fetch 共用同一個 helper
 - internal 環境:`setAuthHeaderProvider()` 換 provider,回傳值**完全取代**預設 header(回傳什麼就送什麼;「回傳 `{}` 讓 gateway 蓋」是其合法特例)。provider 每次請求都被呼叫,NEVER 快取回傳值
 - 啟動接縫:`src/bootstrap/internal.ts`(`import.meta.glob` 偵測 `internal.impl.ts`),`main.tsx` 在 mount 前 await,失敗不 mount、不 catch

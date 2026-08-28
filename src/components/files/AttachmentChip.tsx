@@ -39,5 +39,4 @@ const AttachmentChip: React.FC<AttachmentChipProps> = ({ upload, onRemove }) => 
   );
 };
 
-export { AttachmentChip };
 export default AttachmentChip;

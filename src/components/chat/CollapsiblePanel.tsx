@@ -44,5 +44,4 @@ const CollapsiblePanel: React.FC<CollapsiblePanelProps> = ({
   );
 };
 
-export { CollapsiblePanel };
 export default CollapsiblePanel;

@@ -25,7 +25,7 @@ const CP_RANGES = [
 const asOptions = (values: string[]) => values.map((value) => ({ value, label: value }));
 
 /** Data type is the one field whose choices are not fixed by the Scenario: it lists the
- *  connectors that are actually connected right now (ADR-0006). With none connected the
+ *  connectors that are actually connected right now (ADR-0004). With none connected the
  *  mockup still offers Inline, so the form is never a dead end. */
 function dataTypeField(connectors: Connector[]): QuestionField {
   const connected = connectors.filter((connector) => connector.status === 'connected');

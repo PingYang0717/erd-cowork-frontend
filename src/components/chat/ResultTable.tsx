@@ -14,7 +14,7 @@ type ResultTableRecord = Record<string, TableCellValue> & { key: string };
 
 /** Trims float noise via significant digits (toPrecision(12)), not a fixed decimal
  *  position — a fixed position would corrupt large-magnitude values. Re-expands JS's
- *  exponent fallback. (Ported verbatim from cowork upstream, ADR-0010.) */
+ *  exponent fallback. (Ported verbatim from cowork upstream, ADR-0002.) */
 function expandExponentialNotation(exponentialText: string): string {
   const exponentMatch = /^(-?)(\d+)(?:\.(\d+))?e([+-]\d+)$/i.exec(exponentialText);
   if (!exponentMatch) return exponentialText;
@@ -49,9 +49,9 @@ interface ResultTableProps {
 }
 
 /** One query result the run produced on its way to the artifact. Live-only: the data is
- *  large and goes stale, so it is never persisted with the conversation (ADR-0005).
+ *  large and goes stale, so it is never persisted with the conversation (ADR-0003).
  *  Rendering is cowork upstream's: an intent caption over an antd Table that paginates
- *  past 20 rows and scrolls sideways instead of widening the thread (ADR-0010). */
+ *  past 20 rows and scrolls sideways instead of widening the thread (ADR-0002). */
 const ResultTable: React.FC<ResultTableProps> = ({ table }) => {
   // The `?? []` fallbacks are defensive: the wire contract guarantees both fields, but
   // a contract violation (e.g. Jackson nulling a missing field upstream) must not crash
@@ -104,5 +104,4 @@ const ResultTable: React.FC<ResultTableProps> = ({ table }) => {
 
 const MemoisedResultTable = React.memo(ResultTable);
 
-export { MemoisedResultTable as ResultTable };
 export default MemoisedResultTable;

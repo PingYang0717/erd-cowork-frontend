@@ -1,32 +1,13 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { act, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { StudioShell } from '@/components/layouts/StudioShell';
 import { useActiveRunStore } from '@/stores/useActiveRunStore';
 import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
 import { useStudioLayoutStore } from '@/stores/useStudioLayoutStore';
 import { mockAgentStream } from '@/test/agentStream';
+import { renderStudio } from '@/test/renderStudio';
 import { answerAnalysisConditions } from '@/test/studioRun';
-
-import { StudioPage } from './StudioPage';
-
-function renderStudioPage() {
-  const queryClient = new QueryClient();
-  return render(
-    <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={['/cowork']}>
-        <Routes>
-          <Route path="/cowork" element={<StudioShell />}>
-            <Route index element={<StudioPage />} />
-          </Route>
-        </Routes>
-      </MemoryRouter>
-    </QueryClientProvider>,
-  );
-}
 
 /** Starts a run over a driven stream and waits for it to put an artifact on screen,
  *  leaving the stream open so the panel is observable mid-run. */
@@ -63,7 +44,7 @@ describe('Artifact Reload', () => {
 
   it('mounts a fresh document when the user reloads the artifact', async () => {
     const user = userEvent.setup();
-    renderStudioPage();
+    renderStudio();
     const before = await runSpcScenario(user);
 
     await user.click(screen.getByRole('button', { name: 'Reload artifact' }));
@@ -76,7 +57,7 @@ describe('Artifact Reload', () => {
   it('refuses to reload while the agent is still writing the next version', async () => {
     const user = userEvent.setup();
     const stream = mockAgentStream();
-    renderStudioPage();
+    renderStudio();
     await runSpcScenarioWithMockStream(user, stream);
 
     expect(screen.getByRole('button', { name: 'Reload artifact' })).toBeDisabled();
@@ -89,7 +70,7 @@ describe('Artifact Reload', () => {
 
   it('mounts a fresh document once a repair has rebuilt the artifact', async () => {
     const user = userEvent.setup();
-    renderStudioPage();
+    renderStudio();
     const before = await runSpcScenario(user);
 
     act(() => {

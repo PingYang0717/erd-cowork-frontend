@@ -150,5 +150,4 @@ const CollapsedSessionRail: React.FC<CollapsedSessionRailProps> = ({ onExpand })
   );
 };
 
-export { CollapsedSessionRail };
 export default CollapsedSessionRail;

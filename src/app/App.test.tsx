@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useThemeStore } from '@/stores/useThemeStore';
 
-import { App } from './App';
+import App from './App';
 
 describe('App theme shell', () => {
   beforeEach(() => {
@@ -34,7 +34,7 @@ describe('App theme shell', () => {
     // of localStorage. Reset the module registry to reproduce that, rather
     // than reusing the same in-memory store instance across "reloads".
     vi.resetModules();
-    const { App: ReloadedApp } = await import('./App');
+    const { default: ReloadedApp } = await import('./App');
 
     render(<ReloadedApp />);
 

@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { TableResult } from '@/types/api/index';
 
-import { ResultTable } from './ResultTable';
+import ResultTable from './ResultTable';
 
 const table = (overrides: Partial<TableResult> = {}): TableResult => ({
   tableId: 't1',

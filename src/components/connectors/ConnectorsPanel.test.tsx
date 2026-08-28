@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { Suspense } from 'react';
 import { describe, expect, it } from 'vitest';
 
-import { ConnectorsPanel } from './ConnectorsPanel';
+import ConnectorsPanel from './ConnectorsPanel';
 
 function renderPanel() {
   const queryClient = new QueryClient();

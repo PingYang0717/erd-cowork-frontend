@@ -1,4 +1,4 @@
-/* cowork's reply body is text-sm (14px); leading stays ours (ADR-0010). */
+/* cowork's reply body is text-sm (14px); leading stays ours (ADR-0002). */
 .reply {
   font-size: 14px;
   line-height: 1.6;
@@ -45,7 +45,7 @@
 }
 
 /* A wide table scrolls inside its own box rather than widening the thread.
-   Borders, header tint and zebra rows follow cowork's markdown table (ADR-0010). */
+   Borders, header tint and zebra rows follow cowork's markdown table (ADR-0002). */
 .reply table {
   display: block;
   width: max-content;

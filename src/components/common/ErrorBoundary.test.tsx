@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { AxiosError } from 'axios';
 import { describe, expect, it, vi } from 'vitest';
 
-import { ErrorBoundary } from './ErrorBoundary';
+import ErrorBoundary from './ErrorBoundary';
 
 function Explode({ shouldThrow }: { shouldThrow: boolean }) {
   if (shouldThrow) {
@@ -26,7 +26,7 @@ describe('ErrorBoundary', () => {
     expect(screen.getByText('連線中斷')).toBeInTheDocument();
   });
 
-  // The app has no mock backend to fall back on (ADR-0009), so "the backend is not
+  // The app has no mock backend to fall back on (ADR-0006), so "the backend is not
   // running" is the failure a developer meets most often. It must not read as a bug.
   it('names an unreachable backend instead of showing axios’s "Network Error"', () => {
     vi.spyOn(console, 'error').mockImplementation(() => {});

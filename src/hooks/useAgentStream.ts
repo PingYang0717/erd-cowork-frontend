@@ -25,7 +25,7 @@ export interface AgentStreamState {
    *  or a refusal the backend reported with a code. */
   networkError: boolean;
   // Live-only: thinking, code and tables belong to this connection, not to the
-  // thread history (ADR-0005).
+  // thread history (ADR-0003).
   thinking: string;
   codeText: string;
   tables: TableResult[];
@@ -122,7 +122,7 @@ function reducer(state: AgentStreamState, action: Action): AgentStreamState {
         case 'ERROR':
           // Deliberately does NOT end the run: the backend keeps emitting its
           // finalize steps after an ERROR, and the stream closing is what ends
-          // it (ADR-0005). Do not "fix" this into an early exit.
+          // it (ADR-0003). Do not "fix" this into an early exit.
           return {
             ...state,
             error: { code: agentEvent.code, message: agentEvent.message },

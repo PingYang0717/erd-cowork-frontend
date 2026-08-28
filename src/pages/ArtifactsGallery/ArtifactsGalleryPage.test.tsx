@@ -6,10 +6,10 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { server } from '@/mocks/server';
-import { ArtifactPage } from '@/pages/Artifact/ArtifactPage';
+import ArtifactPage from '@/pages/Artifact/ArtifactPage';
 import type { Artifact } from '@/types/api/index';
 
-import { ArtifactsGalleryPage } from './ArtifactsGalleryPage';
+import ArtifactsGalleryPage from './ArtifactsGalleryPage';
 
 /** One Artifact in the fixed contract's shape, for the tests that need to state their
  *  own data rather than take the seeded three. */
@@ -238,7 +238,7 @@ describe('Artifacts gallery', () => {
     expect(within(spcCard).queryByText('Shared to me')).not.toBeInTheDocument();
   });
 
-  // Sharing is still disabled (ADR-0009), so the badge is asserted from the data that
+  // Sharing is still disabled (ADR-0006), so the badge is asserted from the data that
   // arrives once something has been shared, rather than by sharing it here.
   it('shows the primary "Shared" badge in the meta row for an Artifact already shared', async () => {
     server.use(

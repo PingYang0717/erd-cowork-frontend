@@ -43,7 +43,7 @@ export function mockAgentStream(): MockAgentStream {
 
   server.use(
     http.post(`${API_BASE}/sessions/:sessionId/messages`, async ({ params, request }) => {
-      // Sending is what creates the session (ADR-0008); a stub standing in for this
+      // Sending is what creates the session (ADR-0005); a stub standing in for this
       // endpoint has to do that too, or the post-run refetch 404s on a draft.
       upsertSession(params.sessionId as string);
       requests.push(await request.clone().json());

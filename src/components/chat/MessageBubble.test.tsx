@@ -5,7 +5,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { INTERRUPTED_TEXTS, REPAIR_RECORD_PREFIXES } from '@/constants/messages';
 import type { StepItem, TableResult } from '@/types/api/index';
 
-import { MessageBubble } from './MessageBubble';
+import MessageBubble from './MessageBubble';
 
 const step = (overrides: Partial<StepItem> = {}): StepItem => ({
   stepKey: 'scan',
@@ -117,7 +117,7 @@ describe('MessageBubble', () => {
     );
 
     expect(screen.getByText('SPC dashboard')).toBeInTheDocument();
-    // cowork's read-back label; the "</>" glyph prefix is decorative (ADR-0010).
+    // cowork's read-back label; the "</>" glyph prefix is decorative (ADR-0002).
     expect(screen.getByRole('button', { name: '查看 HTML' })).toBeInTheDocument();
   });
 

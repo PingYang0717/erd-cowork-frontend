@@ -10,18 +10,18 @@ import { useQueryClient } from '@tanstack/react-query';
 import React, { useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
-import { ThemeToggle } from '@/components/common/ThemeToggle';
-import { Tooltip } from '@/components/common/Tooltip';
+import ThemeToggle from '@/components/common/ThemeToggle';
+import Tooltip from '@/components/common/Tooltip';
 import { useArtifactContent } from '@/hooks/useArtifactContent';
 import { artifactQueryKey, useArtifacts } from '@/hooks/useArtifacts';
 import { useSessionDetail } from '@/hooks/useSessionDetail';
 import type { Artifact, ArtifactVersion } from '@/types/api/index';
 import { deriveArtifactVersions } from '@/utils/deriveArtifactVersions';
 
-import { ArtifactFrame } from './ArtifactFrame';
+import ArtifactFrame from './ArtifactFrame';
 import styles from './ArtifactFullPageView.module.css';
-import { ShareArtifactDialog } from './ShareArtifactDialog';
-import { VersionSwitcher } from './VersionSwitcher';
+import ShareArtifactDialog from './ShareArtifactDialog';
+import VersionSwitcher from './VersionSwitcher';
 
 // Where the viewer came from, recorded as router state by in-app navigations
 // (the gallery card sets 'gallery'). A direct open — a shared link, or the
@@ -151,17 +151,19 @@ const ArtifactFullPageView: React.FC<ArtifactFullPageViewProps> = ({ artifactId 
 
 /** Loads the artifact's session to derive its version list — its own component so the
  *  session query only runs when there is an owned artifact to derive from. */
-function SessionVersionSwitcher({
-  artifact,
-  artifacts,
-  displayedArtifactId,
-  onSelect,
-}: {
+interface SessionVersionSwitcherProps {
   artifact: Artifact;
   artifacts: Artifact[];
   displayedArtifactId: string | undefined;
   onSelect: (artifactId: string) => void;
-}) {
+}
+
+const SessionVersionSwitcher: React.FC<SessionVersionSwitcherProps> = ({
+  artifact,
+  artifacts,
+  displayedArtifactId,
+  onSelect,
+}) => {
   const { data: detail } = useSessionDetail(artifact.sessionId);
 
   const versions = useMemo<ArtifactVersion[]>(
@@ -181,7 +183,6 @@ function SessionVersionSwitcher({
     versions.find((v) => v.artifactId === displayedArtifactId) ?? versions[versions.length - 1];
 
   return <VersionSwitcher versions={versions} activeVersion={activeVersion} onSelect={onSelect} />;
-}
+};
 
-export { ArtifactFullPageView };
 export default ArtifactFullPageView;
