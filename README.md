@@ -2,7 +2,7 @@
 
 半導體廠務 R&D 平台（eRD Workspace）內的 AI 對話式分析工具。工程師以自然語言提出分析請求，系統回覆一段可視化的分析成果（**Artifact**），呈現在 Studio 右側的 sandboxed iframe 中。
 
-前端打的是**真實後端**。後端尚未實作的端點在 `src/api/` 直接回 stub，而它們背後的操作（釘選、改名、刪除、生成、分享、Connector 連線）在 UI 上明確停用，不假裝有作用——見 [ADR-0009](./docs/adr/0009-no-mock-backend-at-runtime.md)。MSW 只服務測試。名詞定義見 [`CONTEXT.md`](./CONTEXT.md)。
+前端打的是**真實後端**。後端尚未實作的端點在 `src/api/` 直接回 stub，而它們背後的操作（釘選、改名、刪除、生成、分享、Connector 連線）在 UI 上明確停用，不假裝有作用——見 [ADR-0006](./docs/adr/0006-no-mock-backend-at-runtime.md)。MSW 只服務測試。名詞定義見 [`CONTEXT.md`](./CONTEXT.md)。
 
 ---
 
@@ -71,13 +71,13 @@ src/
 | `/cowork/schedule`             | Schedule 排程列表（**尚未實作**，見下方範圍說明） |
 | `/cowork/artifact/:artifactId` | 單一 Artifact 全頁檢視                            |
 
-設計稿本身是純 state 切換的單頁 app，改用 React Router 是刻意的偏離，理由見 [ADR-0002](./docs/adr/0002-react-router-despite-state-driven-mockup.md)。
+設計稿本身是純 state 切換的單頁 app（重新整理會遺失所在畫面），改用 React Router 是刻意的偏離：真實路由讓重新整理不遺失畫面，也讓單一 Artifact 能以連結直接開啟。
 
 ---
 
 ## 後端與 stub
 
-app 打真實後端，沒有 runtime mock（[ADR-0009](./docs/adr/0009-no-mock-backend-at-runtime.md)）。後端還沒建好的端點分成兩類處理：
+app 打真實後端，沒有 runtime mock（[ADR-0006](./docs/adr/0006-no-mock-backend-at-runtime.md)）。後端還沒建好的端點分成兩類處理：
 
 - **讀取**（Connectors、Directory）在 `src/api/` 直接回一份固定 stub，就寫在它假裝的那個函式旁邊。
 - **寫入**（Session 釘選／改名／刪除、Artifact 分享／刪除、Connector 連線與新增）在 UI 上 disabled，標示「後端尚未支援」。api 函式保留但沒有呼叫端，是後端補上那天的接點。
@@ -92,7 +92,7 @@ Artifact 的清單、釘選與發布已接真後端。
 
 ## 主題與視覺對齊
 
-設計稿 `eRDWorkspace20260819.html` 不是「參考」而是**必須符合**的基準（[ADR-0004](./docs/adr/0004-mockup-visual-fidelity-via-ant-design-icons.md)）：版面、間距、圖示（一律用 `@ant-design/icons`，不用文字或 emoji 頂替）都要對齊。
+設計稿 `eRDWorkspace20260819.html` 不是「參考」而是**必須符合**的基準（[ADR-0002](./docs/adr/0002-visual-authority-mockup-except-chat-panel.md)）：版面、間距、圖示（一律用 `@ant-design/icons`，不用文字或 emoji 頂替）都要對齊。
 
 色票唯一來源是 `src/theme/tokens.ts`，逐值抄自設計稿的 light / dark 兩組 CSS 變數，同時餵給 antd `ConfigProvider` 與 `--erd-color-*` 自訂屬性。改色前請先讀 `architecture.md` 第 8 節，其中兩個坑值得先知道：
 
@@ -116,12 +116,12 @@ Artifact 的清單、釘選與發布已接真後端。
 
 ## 目前範圍與未完成項目
 
-實作範圍限定在 eRD Cowork 這個 App 內部，Workspace 外殼與其他 App 入口不在此次範圍（[ADR-0003](./docs/adr/0003-scope-limited-to-erd-cowork-app.md)）。
+實作範圍限定在 eRD Cowork 這個 App 內部。Workspace 外殼（Home 首頁、左側 App 切換 rail 上的其他入口）在設計稿裡本來就只有外殼、沒有互動邏輯，不在此次範圍。
 
 已知未完成，皆有紀錄、非疏漏：
 
 - **Ticket 15 Schedule 排程列表** — 刻意延後，`/cowork/schedule` 目前只有標題。
-- **ADR-0004 視覺缺口三項** — Artifact 全頁 header 未顯示名稱與「Shared to me」、附件未做 `.csv` / `.xlsx` 型別過濾、拖放只在 modal 內而非 composer。詳見 ticket 10 與 17 的 Comments。
+- **ADR-0002 視覺缺口三項** — Artifact 全頁 header 未顯示名稱與「Shared to me」、附件未做 `.csv` / `.xlsx` 型別過濾、拖放只在 modal 內而非 composer。詳見 ticket 10 與 17 的 Comments。
 - **未啟用 React Compiler** — 技術棧對齊 `cowork-master` 後降到 React 18.3.1，而 compiler 以 19 為目標，在 18 上需要額外的 `react-compiler-runtime` polyfill。memoization 現在要自己顧。
 - **`@ant-design/x` 已安裝但尚無使用處** — 隨技術棧對齊加入；`cowork-master` 用它做 `StepChain`，本專案有自己的步驟卡，尚未決定採用點。
 

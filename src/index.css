@@ -6,7 +6,7 @@ body,
 }
 
 /* Global chrome: antialiased type (eRDWorkspace20260819.html) and the 9px custom
-   scrollbar from the cowork mockup (ADR-0010; WebKit/Blink, Firefox keeps its
+   scrollbar from the cowork mockup (ADR-0002; WebKit/Blink, Firefox keeps its
    native bar).
    The stack must stay in step with `FONT_FAMILY` in `app/providers.tsx`, which
    is what antd puts on its own subtree: without a rule here `body` falls back

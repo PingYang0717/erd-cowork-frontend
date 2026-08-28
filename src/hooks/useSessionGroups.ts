@@ -96,7 +96,7 @@ export function useSessionGroups() {
   }
 
   /** Opens a draft session. The backend has no POST /sessions — the id is this client's
-   *  to invent, and the first message upserts it (ADR-0008). Pressing New chat while a
+   *  to invent, and the first message upserts it (ADR-0005). Pressing New chat while a
    *  draft is already open does nothing but bring it into view: seeding a second shell
    *  would leave the first orphaned in the cache. */
   function createAndNavigate() {

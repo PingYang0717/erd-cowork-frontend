@@ -37,7 +37,7 @@ async function openStudio() {
 }
 
 /** The backend has no POST /sessions: a session is created by the first message that
- *  names it (ADR-0008). "New chat" therefore opens a draft that lives only in this
+ *  names it (ADR-0005). "New chat" therefore opens a draft that lives only in this
  *  client until then. */
 describe('New chat opens a client-side draft', () => {
   beforeEach(() => {

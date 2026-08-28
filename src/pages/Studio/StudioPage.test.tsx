@@ -185,7 +185,7 @@ describe('Session rail', () => {
 
   it('keeps the Recents header visible when there are no recent sessions, with an empty-state line', async () => {
     // Every session pinned, so Recents is empty. Deleting one used to be how this test
-    // got here; delete is disabled until the backend has the endpoint (ADR-0009).
+    // got here; delete is disabled until the backend has the endpoint (ADR-0006).
     server.use(
       http.get('/api/sessions', () =>
         HttpResponse.json([

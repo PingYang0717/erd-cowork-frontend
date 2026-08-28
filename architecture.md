@@ -14,7 +14,7 @@
 | 路由              | React Router                                   | v6+ 寫法(`createBrowserRouter` / `<Routes>`)                          |
 | Client 端全域狀態 | Zustand                                        | 只放 UI 狀態(sidebar 開關、theme、跨頁草稿等)                         |
 | Server 端資料狀態 | TanStack Query                                 | API 資料一律走這裡,不放進 Zustand                                     |
-| API 呼叫層        | Axios(與 cowork 檔案級同形,ADR-0011)           | 見第 5 節                                                             |
+| API 呼叫層        | Axios(與 cowork 檔案級同形,ADR-0007)           | 見第 5 節                                                             |
 | 表單              | 目前以 `useState` 手刻(未安裝 React Hook Form) | 表單只有分享對話框、connector 新增、session 改名三處;複雜度上來再引入 |
 | Lint / Format     | oxlint 1.71 + ESLint 9 + Prettier 3.9          | 兩個 linter 並存,分工見第 7 節;強制在 commit 前執行                   |
 | Git hook          | Husky + lint-staged                            |                                                                       |
@@ -35,7 +35,7 @@
 ```
 src/
   api/          apiClient(Axios instance + 匿名身分與 auth header provider,
-                與 cowork 檔案級同形——ADR-0011)、各 endpoint module
+                與 cowork 檔案級同形——ADR-0007)、各 endpoint module
                 (agentApi / sessionApi / artifactApi / configApi /
                  connectorApi / fileApi)
   bootstrap/    internal 環境啟動接縫:import.meta.glob 偵測 internal.impl.ts
@@ -53,7 +53,7 @@ src/
   hooks/        資料 hook(useSessions…)與跨元件 UI hook(useDebouncedValue…)
   stores/       Zustand store
   theme/        design token
-  types/        共用型別(types/api/ 與後端 DTO 逐字一致——ADR-0007)
+  types/        共用型別(types/api/ 與後端 DTO 逐字一致——ADR-0003)
   utils/        純函式
   app/          Router、Providers(進入點是 src/main.tsx)
   pages/        路由頁面——只組裝、只放 DataBoundary
@@ -186,7 +186,7 @@ suspend 會把面板閃成 fallback;keepPreviousData 讓舊文件撐到新 HTML 
 ### 多使用者身分
 
 所有請求帶 `X-User-Id`,唯一來源是 `api/apiClient.ts` 的 `getAuthHeaders()`(cowork
-檔案級同形,ADR-0011):axios interceptor 與 `agentApi` 的 raw fetch 共用它——串流那條
+檔案級同形,ADR-0007):axios interceptor 與 `agentApi` 的 raw fetch 共用它——串流那條
 路不經過 axios,漏掉 header 會被後端當成另一個使用者。v1 是 localStorage 的匿名 UUID
 (key `erd_user_id`,`getUserId` 每次直讀、不快取)。
 
@@ -251,7 +251,7 @@ export const useThemeStore = create<ThemeState>()(
 
 ---
 
-## 5. API 呼叫層(Axios,與 cowork 檔案級同形——ADR-0011)
+## 5. API 呼叫層(Axios,與 cowork 檔案級同形——ADR-0007)
 
 `src/api/apiClient.ts` 與 cowork 上游逐行同形,**不要為本專案便利改它**(改了就失去
 diff-zero 的對齊價值)。它做兩件事:raw axios instance(baseURL 寫死 `/api`、無
@@ -369,7 +369,7 @@ npm install -D oxlint eslint-plugin-oxlint \
 ## 8. 主題色票(light / dark)
 
 色票唯一來源是 `src/theme/tokens.ts`,整份逐值抄自設計稿
-`eRDWorkspace20260819.html` 的 `:root` / `:root[data-theme="dark"]`(ADR-0004)。
+`eRDWorkspace20260819.html` 的 `:root` / `:root[data-theme="dark"]`(ADR-0002)。
 不要在元件裡寫死顏色,也不要依賴 antd 演算法的預設值 —— 它的 dark 表面色
 (`#000000` / `#141414` / `#1f1f1f`)與設計稿(`#17181c` / `#1f1f22` /
 `#262629`)並不相同。

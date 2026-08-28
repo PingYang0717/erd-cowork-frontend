@@ -4,7 +4,7 @@
   height: 100%;
   min-height: 0;
   /* cowork's chat column is a white surface, not the layout gray the mockup used;
-     the 1px border to the Artifact pane stays the boundary (ADR-0010). */
+     the 1px border to the Artifact pane stays the boundary (ADR-0002). */
   background: var(--erd-color-bg-container, #fff);
 }
 

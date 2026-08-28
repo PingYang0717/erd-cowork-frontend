@@ -11,7 +11,7 @@ corresponding TypeScript DTOs live in `src/types/api/`.
 | **stub**   | 後端還沒有,但畫面需要資料 | `src/api/` 直接回固定假資料                                |
 | **停用**   | 後端還沒有,是一個寫入操作 | UI 上 disabled,標「後端尚未支援」;api 函式保留但沒有呼叫端 |
 
-後兩者的理由與取捨見 [ADR-0009](../adr/0009-no-mock-backend-at-runtime.md)。**照著實作
+後兩者的理由與取捨見 [ADR-0006](../adr/0006-no-mock-backend-at-runtime.md)。**照著實作
 一條標為 stub 或停用的端點之前先確認需求**——它們是前端先行定義的形狀,不是後端已承諾的
 契約。
 
@@ -47,7 +47,7 @@ it implements them.
 **沒有**獨立的 messages 端點。
 
 `POST /sessions` 標為「不會實作」：session 由 client 指定 id、第一次送訊息時 upsert
-（[ADR-0008](../adr/0008-new-chat-is-a-client-side-draft.md)），沒有建立端點這件事是決策
+（[ADR-0005](../adr/0005-new-chat-is-a-client-side-draft.md)），沒有建立端點這件事是決策
 不是缺口。改名／釘選／刪除與 `Session.pinnedAt` 則是前端先定義的形狀，UI 上停用中。
 
 ## Message / Chat
@@ -57,12 +57,12 @@ it implements them.
 | POST   | `/sessions/:sessionId/messages` | `{ question: string; baseArtifactId? }` | `text/event-stream`（Agent event） |
 
 送出訊息不再一次回傳算好的結果，而是開啟一條 SSE 串流，逐筆推送 Agent event
-（[ADR-0005](../adr/0005-sse-streaming-replaces-batch-reply.md)）。mock 與 live 兩條軌道
+（[ADR-0003](../adr/0003-verbatim-backend-wire-contract.md)）。mock 與 live 兩條軌道
 都走串流，差別只在 SSE 由 MSW 還是由後端產生。
 
 ### 請求 body
 
-Body 與後端的 `SendMessageRequest` 逐字一致（[ADR-0007](../adr/0007-verbatim-backend-wire-contract.md)）：
+Body 與後端的 `SendMessageRequest` 逐字一致（[ADR-0003](../adr/0003-verbatim-backend-wire-contract.md)）：
 
 ```
 { question: string; baseArtifactId?: string }
@@ -146,7 +146,7 @@ QuestionOption { value: string; label: string; hint?: string; unit?: string; lo?
 
 ### 後端還沒有的端點怎麼辦（2026-08-27 改策）
 
-app 執行時不再有 mock 後端（[ADR-0009](../adr/0009-no-mock-backend-at-runtime.md)），
+app 執行時不再有 mock 後端（[ADR-0006](../adr/0006-no-mock-backend-at-runtime.md)），
 而且 **UI 不再有任何 disabled 的入口**：所有動作直接打 API，端點還沒落地就把後端的
 `{ code, message }` 以 toast 呈現（`describeActionError`）——錯誤訊息就是「還沒 ready」
 的告知方式。例外兩類：
@@ -162,14 +162,14 @@ app 執行時不再有 mock 後端（[ADR-0009](../adr/0009-no-mock-backend-at-r
 MSW 只在**測試**裡跑，服務後端真的有的那幾條，加上 SSE 劇本與 share 的未就緒錯誤。
 
 **沒有建立 session 的端點。** session id 由前端產生，第一次送訊息或上傳檔案時由後端
-upsert（[ADR-0008](../adr/0008-new-chat-is-a-client-side-draft.md)）。
+upsert（[ADR-0005](../adr/0005-new-chat-is-a-client-side-draft.md)）。
 
-**線路型別即應用型別**（[ADR-0007](../adr/0007-verbatim-backend-wire-contract.md)）：
+**線路型別即應用型別**（[ADR-0003](../adr/0003-verbatim-backend-wire-contract.md)）：
 `types/api/` 的形狀與後端 DTO 逐字一致（`sender: 'USER' | 'AI'`、`stepsJson` /
 `questionsJson` JSON 字串、`artifactTitle`……），UI 在使用點解析，沒有轉換層。
 前端-only 的欄位（`Session.pinnedAt`、`Message.scenario` / `attachments`、QUESTION 的
 `form`）在型別上明確標註。真後端不回它們時 UI 各自降級；依賴它們的操作目前停用
-（ADR-0009）。`Artifact` 已是後端定版，不再有前端-only 欄位。
+（ADR-0006）。`Artifact` 已是後端定版，不再有前端-only 欄位。
 
 ### QUESTION 事件與反問表單的降級
 
@@ -258,7 +258,7 @@ itself is gone.
 
 `POST /artifacts/:id/share` marks the Artifact as shared (`Artifact.shared` flips to
 `true`, persisted) and returns a shareable URL pointing at its full-page view
-(`/cowork/artifact/:id`, [ADR-0002](../adr/0002-react-router-despite-state-driven-mockup.md)).
+(`/cowork/artifact/:id`).
 `targetIds` reference `DirectoryEntry.id` values (department code, section code, or
 NT account) from `GET /directory`; the mock backend does not model per-recipient
 delivery, it only flips the sender's own Artifact to shared. A recipient's "Shared to
@@ -280,7 +280,7 @@ departments/sections, `"<NT account> · <中文名>"` for people).
 
 `Connector.status` is one of `connected` / `available` / `expired` / `no_access`.
 `PATCH /connectors/:id` connects or disconnects a data source from the Studio
-composer's Connectors panel. 停用中（ADR-0009）：面板是唯讀的狀態呈現，每個 toggle 都
+composer's Connectors panel. 停用中（ADR-0006）：面板是唯讀的狀態呈現，每個 toggle 都
 disabled 並標「後端尚未支援」。
 
 `POST /connectors` backs the panel's "Add a custom data source" input. The id is

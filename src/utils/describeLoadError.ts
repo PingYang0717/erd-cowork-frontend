@@ -6,7 +6,7 @@ import axios from 'axios';
  * Axios reports an unreachable backend as a bare `Network Error`, and a request that
  * ran past `apiClient`'s timeout as `timeout of 10000ms exceeded`. Both read like a
  * bug in the app rather than what they are — a backend that is not answering. Since
- * the app has no mock to fall back on (ADR-0009), that is the most common failure
+ * the app has no mock to fall back on (ADR-0006), that is the most common failure
  * there is in development, and the one worth naming.
  */
 export function describeLoadError(error: Error): { heading: string; detail: string } {

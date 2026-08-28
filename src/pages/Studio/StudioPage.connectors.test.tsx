@@ -35,7 +35,7 @@ async function openConnectorsPanel(user: ReturnType<typeof userEvent.setup>) {
 
 // A session the backend already knows about, not a draft: connector state is what
 // these cases are about, and a draft would not survive the simulated reload below
-// (ADR-0008).
+// (ADR-0005).
 async function selectASessionAndOpenConnectors(user: ReturnType<typeof userEvent.setup>) {
   await user.click(await screen.findByRole('button', { name: 'Defect pareto — W12' }));
   // The composer subtree suspends on its queries; wait for it before sync getBy*.

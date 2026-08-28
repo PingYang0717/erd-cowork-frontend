@@ -1,5 +1,5 @@
 /* cowork's source row: a quiet full-width toggle, content in a code-gray box that
-   caps at 320px and scrolls (ADR-0010). */
+   caps at 320px and scrolls (ADR-0002). */
 .toggle {
   display: flex;
   align-items: center;

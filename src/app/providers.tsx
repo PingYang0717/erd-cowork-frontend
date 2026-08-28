@@ -11,7 +11,7 @@ const queryClient = new QueryClient();
 // AppProviders for why these stay on the light values in both themes.
 const SEED = THEME_TOKENS.light;
 
-// cowork upstream's stack (its theme/fonts.ts, ADR-0010): self-hosted Inter Variable +
+// cowork upstream's stack (its theme/fonts.ts, ADR-0002): self-hosted Inter Variable +
 // Noto Sans TC, imported in main.tsx, with the platform CJK faces as fallback. Must
 // stay in step with the body rule in index.css.
 const FONT_FAMILY =

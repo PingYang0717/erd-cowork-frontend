@@ -8,7 +8,7 @@ interface ThinkingPanelProps {
 }
 
 /** The agent's reasoning as it arrives. Collapsed by default and never persisted:
- *  it belongs to this connection, not to the conversation (ADR-0005). */
+ *  it belongs to this connection, not to the conversation (ADR-0003). */
 const ThinkingPanel: React.FC<ThinkingPanelProps> = ({ thinking }) => {
   return (
     <CollapsiblePanel label="Thinking">

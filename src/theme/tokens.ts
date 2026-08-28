@@ -1,7 +1,7 @@
 // The mockup's own palette, copied verbatim from the `:root` and
 // `:root[data-theme="dark"]` blocks of `eRDWorkspace20260819.html`.
 //
-// ADR-0004 requires the app's colors to match the mockup rather than merely
+// ADR-0002 requires the app's colors to match the mockup rather than merely
 // resemble it, and antd's algorithms do not land on the same values: its dark
 // algorithm paints layout/container/elevated surfaces `#000000` / `#141414` /
 // `#1f1f1f` where the mockup uses `#17181c` / `#1f1f22` / `#262629`, and its
@@ -37,7 +37,7 @@ export interface ThemeTokens {
   borderSecondary: string;
   fillTertiary: string;
   fillQuaternary: string;
-  /** The chat surfaces, aligned to cowork's Tailwind gray ladder (ADR-0010): the AI
+  /** The chat surfaces, aligned to cowork's Tailwind gray ladder (ADR-0002): the AI
    *  bubble, the code/pre fill one step deeper, the table stripe/header tint, and the
    *  hairline border tables and chips draw on a white card. cowork has no dark theme,
    *  so the dark values are ours, chosen to sit on the same rungs of the existing
@@ -158,7 +158,7 @@ export function themeCssVars(tokens: ThemeTokens): Record<string, string> {
     '--erd-color-fill-tertiary': tokens.fillTertiary,
     '--erd-color-fill-quaternary': tokens.fillQuaternary,
     // Not mockup names: the chat-* group and the scrollbar thumb come from the
-    // cowork alignment (ADR-0010).
+    // cowork alignment (ADR-0002).
     '--erd-color-chat-bubble-bg': tokens.chatBubbleBg,
     '--erd-color-chat-code-bg': tokens.chatCodeBg,
     '--erd-color-chat-stripe-bg': tokens.chatStripeBg,
