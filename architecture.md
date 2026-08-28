@@ -14,7 +14,7 @@
 | 路由              | React Router                                   | v6+ 寫法(`createBrowserRouter` / `<Routes>`)                          |
 | Client 端全域狀態 | Zustand                                        | 只放 UI 狀態(sidebar 開關、theme、跨頁草稿等)                         |
 | Server 端資料狀態 | TanStack Query                                 | API 資料一律走這裡,不放進 Zustand                                     |
-| API 呼叫層        | Axios(與 cowork 檔案級同形,ADR-0007)           | 見第 5 節                                                             |
+| API 呼叫層        | Axios(request 端與 cowork 同形,ADR-0007)       | 見第 5 節                                                             |
 | 表單              | 目前以 `useState` 手刻(未安裝 React Hook Form) | 表單只有分享對話框、connector 新增、session 改名三處;複雜度上來再引入 |
 | Lint / Format     | oxlint 1.71 + ESLint 9 + Prettier 3.9          | 兩個 linter 並存,分工見第 7 節;強制在 commit 前執行                   |
 | Git hook          | Husky + lint-staged                            |                                                                       |
@@ -270,9 +270,13 @@ timeout、無環境變數),加上身分——`getUserId`(localStorage 匿名 UUI
 `getAuthHeaders`、`setAuthHeaderProvider`(internal SSO 接縫,語意見 3.5 節)。
 request interceptor 把 `getAuthHeaders()` 的回傳逐一放上 header。
 
-**沒有 response unwrap interceptor**:axios 回傳 `AxiosResponse<T>`,每個 endpoint
-module 在呼叫點自己 `.then((res) => res.data)`。這層重複是 cowork 同形的代價,刻意
-不包回去。
+**response interceptor 拆掉 `res.data`**,`apiClient` 是一層有型別的包裝,所以
+`apiClient.get<Session[]>('/sessions')` 直接回 `Promise<Session[]>`。需要操作 axios
+本身時(註冊 interceptor、測試換 adapter)用同檔匯出的 `httpClient`。
+
+**錯誤原樣往外拋**:interceptor 不吞錯,`describeLoadError`(讀取,走 ErrorBoundary)
+與 `describeActionError`(寫入,走 `onError`)要讀 AxiosError 才能分辨「後端沒開」和
+「後端回了 400」。
 
 **規則:每個 endpoint module 放在 `src/api/`,不要直接在元件內寫 `apiClient.get(...)`。**
 
@@ -282,9 +286,9 @@ import { apiClient } from '@/api/apiClient';
 import type { UserDTO } from '@/types/api/user';
 
 export const userApi = {
-  getUser: (id: string) => apiClient.get<UserDTO>(`/users/${id}`).then((res) => res.data),
+  getUser: (id: string) => apiClient.get<UserDTO>(`/users/${id}`),
   updateUser: (id: string, payload: Partial<UserDTO>) =>
-    apiClient.patch<UserDTO>(`/users/${id}`, payload).then((res) => res.data),
+    apiClient.patch<UserDTO>(`/users/${id}`, payload),
 };
 ```
 

@@ -17,8 +17,10 @@ describe('describeLoadError', () => {
     });
   });
 
-  it('distinguishes a timeout from a refused connection', () => {
-    expect(describeLoadError(axiosError('ECONNABORTED')).heading).toBe('後端服務沒有回應');
+  /** `apiClient` sets no timeout (ADR-0007), so ECONNABORTED is an aborted request rather
+   *  than a slow one. Either way nothing came back, so it reads the same to the user. */
+  it('treats an aborted request the same as an unreachable backend', () => {
+    expect(describeLoadError(axiosError('ECONNABORTED')).heading).toBe('無法連線到後端服務');
   });
 
   it('leaves an answered request to its own message — the backend replied, so the error is real', () => {

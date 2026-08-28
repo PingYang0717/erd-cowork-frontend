@@ -25,8 +25,10 @@ cowork 上游**檔案級同形**(不只是行為等價),連帶採納其契約。
    送什麼,「回傳 `{}` 讓 gateway 蓋 header」是其合法特例。**provider 每次請求都被
    呼叫,NEVER 快取回傳值**:internal 的 token 會背景刷新,快取住會在過期後開始 401,
    而且只在 internal 環境發生,本機測不出來。
-2. **沒有 response unwrap interceptor**:axios 回傳 `AxiosResponse<T>`,各 api 模組在
-   呼叫點自己 `.then((res) => res.data)`。
+2. **~~沒有 response unwrap interceptor~~**(2026-08-28 修訂,見下方「同形的範圍」):
+   response interceptor 拆掉 `res.data`,`apiClient` 是一層有型別的包裝,呼叫端直接
+   拿到資料本身。原始的 axios instance 以 `httpClient` 匯出,只給操作 axios 本身的
+   接線用(註冊 interceptor、測試換 adapter)。
 3. **base URL 寫死 `/api`**,沒有環境變數,也沒有 timeout(上傳走 axios 後,固定
    timeout 會誤殺大檔)。dev/preview 由 `vite.config.ts` proxy 到 `localhost:8080`。
 4. **上傳走 axios + `FormData` + `onUploadProgress`**,具名匯出。瀏覽器自行從磁碟
@@ -40,11 +42,26 @@ cowork 上游**檔案級同形**(不只是行為等價),連帶採納其契約。
 
 不走 axios 的路(`agentApi` 的 raw fetch)MUST 自行帶 `...getAuthHeaders()`。
 
+## 同形的範圍(2026-08-28 修訂)
+
+原本的決策是三支檔案**逐行**與 cowork 相同。實作後回頭看,那個範圍畫得太寬:這份
+ADR 要保護的是 **internal 部署能不能只寫一份 `internal.impl.ts`**,而那件事完全落在
+**request 端**——身分、auth header provider、base URL、bootstrap 時序。response 怎麼
+拆封跟 internal 接入沒有任何關係。
+
+所以同形的範圍收窄為:**身分與 auth header provider(第 1 點)、base URL 與無 timeout
+(第 3 點)、上傳的 FormData 路線(第 4 點)、bootstrap 接縫(第 5 點)**。這幾項
+NEVER 為了本專案的便利更動。
+
+response unwrap 不在範圍內。原本的寫法讓 16 個呼叫點各自重複
+`.then((res) => res.data)`,換到的只是 `apiClient.ts` 這一支的 diff 數字好看;真正
+要 diff 的東西(provider 語意、glob 接縫)並不因為多一個 response interceptor 而
+變得難比對。
+
 ## 後果
 
-- internal 接入只需寫一份 `internal.impl.ts`,兩份前端通用;三支檔案與 cowork 的 diff
-  應為零,上游演進時直接比對。
-- 呼叫端多了一層 `.then((res) => res.data)` 的重複——這是同形的代價,刻意不包回去。
+- internal 接入只需寫一份 `internal.impl.ts`,兩份前端通用;上游演進時,比對的是上面
+  列出的那幾項語意,而不是整支檔案的字面。
 - 本專案其餘 api 模組維持物件風格(`artifactApi.getContent`),與 cowork 的具名函式
   風格並存。對齊範圍只含上列三支檔案,不擴。
 - 測試環境需要兩道 shim 才能跑,見 [ADR-0009](0009-two-test-environment-shims.md)。
