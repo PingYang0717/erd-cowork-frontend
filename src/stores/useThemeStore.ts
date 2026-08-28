@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { devtools, persist } from 'zustand/middleware';
 
 interface ThemeState {
   isDarkMode: boolean;
@@ -7,11 +7,17 @@ interface ThemeState {
 }
 
 export const useThemeStore = create<ThemeState>()(
-  persist(
-    (set) => ({
-      isDarkMode: false,
-      toggleTheme: () => set((state) => ({ isDarkMode: !state.isDarkMode })),
-    }),
-    { name: 'theme-storage' },
+  // devtools outermost so the DevTools log shows the state persist has already applied,
+  // not the pre-rehydration value.
+  devtools(
+    persist(
+      (set) => ({
+        isDarkMode: false,
+        toggleTheme: () =>
+          set((state) => ({ isDarkMode: !state.isDarkMode }), false, 'toggleTheme'),
+      }),
+      { name: 'theme-storage' },
+    ),
+    { name: 'Theme' },
   ),
 );

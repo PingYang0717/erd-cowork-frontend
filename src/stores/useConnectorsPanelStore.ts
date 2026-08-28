@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { devtools } from 'zustand/middleware';
 
 /** Whether the Connectors panel is open.
  *
@@ -13,8 +14,13 @@ interface ConnectorsPanelState {
   close: () => void;
 }
 
-export const useConnectorsPanelStore = create<ConnectorsPanelState>((set) => ({
-  isOpen: false,
-  open: () => set({ isOpen: true }),
-  close: () => set({ isOpen: false }),
-}));
+export const useConnectorsPanelStore = create<ConnectorsPanelState>()(
+  devtools(
+    (set) => ({
+      isOpen: false,
+      open: () => set({ isOpen: true }, false, 'open'),
+      close: () => set({ isOpen: false }, false, 'close'),
+    }),
+    { name: 'ConnectorsPanel' },
+  ),
+);

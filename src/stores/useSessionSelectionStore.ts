@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { devtools } from 'zustand/middleware';
 
 interface SessionSelectionState {
   selectedSessionId: string | null;
@@ -12,10 +13,17 @@ interface SessionSelectionState {
   startDraft: (id: string, startedAt: string) => void;
 }
 
-export const useSessionSelectionStore = create<SessionSelectionState>((set) => ({
-  selectedSessionId: null,
-  draftStartedAt: null,
-  //選走別的 session 就等於放棄這個草稿——它沒有任何東西需要保存。
-  selectSession: (id) => set({ selectedSessionId: id, draftStartedAt: null }),
-  startDraft: (id, startedAt) => set({ selectedSessionId: id, draftStartedAt: startedAt }),
-}));
+export const useSessionSelectionStore = create<SessionSelectionState>()(
+  devtools(
+    (set) => ({
+      selectedSessionId: null,
+      draftStartedAt: null,
+      // 選走別的 session 就等於放棄這個草稿——它沒有任何東西需要保存。
+      selectSession: (id) =>
+        set({ selectedSessionId: id, draftStartedAt: null }, false, 'selectSession'),
+      startDraft: (id, startedAt) =>
+        set({ selectedSessionId: id, draftStartedAt: startedAt }, false, 'startDraft'),
+    }),
+    { name: 'SessionSelection' },
+  ),
+);
