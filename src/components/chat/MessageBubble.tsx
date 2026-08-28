@@ -20,8 +20,7 @@ import { splitAnswerByTableMarkers } from '@/utils/tableMarkers';
 
 import HtmlCodePanel from './HtmlCodePanel';
 import styles from './MessageBubble.module.css';
-import QuestionFormCard from './QuestionFormCard';
-import { type Answers } from './QuestionFormCard';
+import QuestionFormCard, { type Answers } from './QuestionFormCard';
 
 /** The slice of a run's state this bubble renders. A `Pick` rather than its own shape:
  *  the reducer's state is the single source of truth for what a run carries, so a new

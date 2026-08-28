@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 
+import { clamp } from '@/utils/clamp';
+
 export const SESSION_RAIL_MIN_WIDTH = 200;
 export const SESSION_RAIL_MAX_WIDTH = 460;
 export const SESSION_RAIL_DEFAULT_WIDTH = 270;
@@ -17,10 +19,6 @@ interface StudioLayoutState {
   setSessionRailWidth: (width: number) => void;
   setThreadWidth: (width: number) => void;
   toggleSessionRailCollapsed: () => void;
-}
-
-function clamp(value: number, min: number, max: number) {
-  return Math.min(Math.max(value, min), max);
 }
 
 export const useStudioLayoutStore = create<StudioLayoutState>()(

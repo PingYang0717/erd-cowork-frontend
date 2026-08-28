@@ -9,11 +9,12 @@ import styles from './ResizeHandle.module.css';
 // hover or while dragging, so the boundary between two panes stays findable.
 interface ResizeHandleProps {
   label: string;
-  /** From `useResizablePane`: the width is written to the DOM
-   *  during the drag and only reaches React on release. */
-  onDragStart?: () => void;
+  /** From `useResizablePane`: the width is written to the DOM during the drag and only
+   *  reaches React on release. All three are required — every divider resizes a pane,
+   *  and an optional start/end here would just let a call site forget the commit. */
+  onDragStart: () => void;
   onDrag: (deltaX: number) => void;
-  onDragEnd?: () => void;
+  onDragEnd: () => void;
 }
 
 const ResizeHandle: React.FC<ResizeHandleProps> = ({ label, onDragStart, onDrag, onDragEnd }) => {

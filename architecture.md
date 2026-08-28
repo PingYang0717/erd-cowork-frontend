@@ -10,7 +10,7 @@
 | ----------------- | ---------------------------------------------- | --------------------------------------------------------------------- |
 | 框架              | React 18.3.1 + Vite 8.1.x                      | 與 `cowork-master` 對齊,共用同一個後端與同一套技術棧                  |
 | 語言              | TypeScript(strict 已開啟)                      | 見第 6 節                                                             |
-| UI 元件庫         | Ant Design 6.x(+ Ant Design X 2.x)             | 優先使用 antd 現成元件,避免重造輪子                                   |
+| UI 元件庫         | Ant Design 6.x                                 | 優先使用 antd 現成元件,避免重造輪子                                   |
 | 路由              | React Router                                   | `createHashRouter`;離開 app 的連結走 `utils/artifactUrl.ts`           |
 | Client 端全域狀態 | Zustand                                        | 只放 UI 狀態(sidebar 開關、theme、跨頁草稿等)                         |
 | Server 端資料狀態 | TanStack Query                                 | API 資料一律走這裡,不放進 Zustand                                     |

@@ -4,7 +4,8 @@
  *  `window.open`, the clipboard, an `href` — needs the `#` that `navigate()` adds for
  *  free. Getting that wrong produces a link that simply does not open, with no error
  *  anywhere. Both forms come from here so the routing strategy is known in one place;
- *  switching back to a history router means changing `artifactHref` and nothing else. */
+ *  switching back to a history router means changing `artifactHref` here plus the
+ *  factory in `app/router.tsx` — and the `/#/` assertions in `artifactUrl.test.ts`. */
 
 /** The in-app route, for `navigate()` and `<Route path>` — no `#`, React Router owns it. */
 export function artifactRoute(artifactId: string): string {

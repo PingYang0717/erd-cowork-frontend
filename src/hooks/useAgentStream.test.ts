@@ -342,11 +342,11 @@ describe('useAgentStream', () => {
     act(() => stream.close());
 
     // Stream fully read, but DONE waits on the invalidation so the live bubble
-    // never hands over to a stale history (no flicker).
-    await waitFor(() =>
-      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['sessions', 'sess-42'] }),
-    );
-    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['sessions'] });
+    // never hands over to a stale history (no flicker). One prefix invalidate covers
+    // the list AND the detail (['sessions', id] sits under ['sessions']) — invalidating
+    // them separately made the detail refetch get cancelled and reissued every run.
+    await waitFor(() => expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['sessions'] }));
+    expect(invalidateSpy).toHaveBeenCalledTimes(1);
     expect(result.current.state.isStreaming).toBe(true);
 
     await act(async () => {
@@ -396,14 +396,14 @@ describe('useAgentStream', () => {
       await act(async () => {
         vi.advanceTimersByTime(800);
       });
-      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['sessions', 'sess-stop'] });
+      // One prefix invalidate per stage — the detail key sits under ['sessions'].
       expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['sessions'] });
-      expect(invalidateSpy).toHaveBeenCalledTimes(2);
+      expect(invalidateSpy).toHaveBeenCalledTimes(1);
 
       await act(async () => {
         vi.advanceTimersByTime(800);
       });
-      expect(invalidateSpy).toHaveBeenCalledTimes(4);
+      expect(invalidateSpy).toHaveBeenCalledTimes(2);
     } finally {
       vi.useRealTimers();
       vi.unstubAllGlobals();

@@ -11,7 +11,7 @@ MSW 只服務測試。名詞定義見 [`CONTEXT.md`](./CONTEXT.md)。
 
 ## 技術棧
 
-React 18.3.1 + Vite 8 + TypeScript 6（strict）+ Ant Design 6（含 Ant Design X）+
+React 18.3.1 + Vite 8 + TypeScript 6（strict）+ Ant Design 6 +
 React Router 7 + Zustand + TanStack Query + Axios。測試是 Vitest + Testing Library，
 MSW 在測試裡當後端。
 
@@ -169,8 +169,6 @@ chat panel**，它的呈現語彙以 cowork 上游為準。
   之前 Gallery 不顯示縮圖與 Dash/Deck 標籤，而不是讓每張卡都預設成同一個錯答案。
 - **視覺缺口三項** — Artifact 全頁 header 未顯示名稱與「Shared to me」、附件未做
   `.csv` / `.xlsx` 型別過濾、拖放只在 modal 內而非 composer。
-- **`@ant-design/x` 已安裝但尚無使用處** — 隨技術棧對齊加入；cowork 用它做 `StepChain`，
-  本專案有自己的步驟卡，尚未決定採用點。
 
 ## 已知環境需求
 

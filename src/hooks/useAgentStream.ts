@@ -5,7 +5,6 @@ import { AgentStreamHttpError, type SendMessageArgs, streamAgentMessage } from '
 import type { AgentEvent, QuestionForm, StepItem, TableResult } from '@/types/api/agentEvent';
 import { liftQuestions } from '@/utils/liftQuestions';
 
-import { sessionDetailQueryKey } from './useSessionDetail';
 import { sessionsQueryKey } from './useSessions';
 
 /** Everything about a run except which session it belongs to and how it is cancelled. */
@@ -187,15 +186,13 @@ export function useAgentStream(sessionId: string): {
   const queryClient = useQueryClient();
   const controllerRef = useRef<AbortController | null>(null);
 
-  // Both messages a run produced live server-side; the sessions list also moves
-  // (last-activity ordering), so both refetch together.
+  // Both messages a run produced live server-side, and the sessions list moves too
+  // (last-activity ordering). One invalidate covers both: the detail key is
+  // ['sessions', id], which sits under the list's ['sessions'] prefix — invalidating
+  // them separately made the detail refetch get cancelled and reissued every time.
   const invalidateSessionData = useCallback(
-    () =>
-      Promise.all([
-        queryClient.invalidateQueries({ queryKey: sessionDetailQueryKey(sessionId) }),
-        queryClient.invalidateQueries({ queryKey: sessionsQueryKey }),
-      ]),
-    [queryClient, sessionId],
+    () => queryClient.invalidateQueries({ queryKey: sessionsQueryKey }),
+    [queryClient],
   );
 
   // Syncing with an external system (an open HTTP connection) is the one thing
