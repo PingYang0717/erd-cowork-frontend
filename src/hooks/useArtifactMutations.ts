@@ -1,18 +1,9 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { App } from 'antd';
 
 import { artifactApi } from '@/api/artifactApi';
-import { describeActionError } from '@/utils/describeLoadError';
 
+import { useActionErrorToast } from './useActionErrorToast';
 import { artifactQueryKey, artifactsQueryKey } from './useArtifacts';
-
-/** Failures surface to the user — nothing is disabled up front, so the error is how
- *  a not-yet-landed endpoint says so. Optional call: outside AppProviders (component
- *  tests) useApp returns an empty object, and a missing toast beats a crash. */
-function useActionErrorToast() {
-  const { message } = App.useApp();
-  return (error: unknown) => message.error?.(describeActionError(error));
-}
 
 /** Pinning is a toggle the backend resolves — the caller says which Artifact, not
  *  which direction. */

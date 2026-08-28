@@ -3,17 +3,18 @@ import axios from 'axios';
 /**
  * What to tell the user about a failed load.
  *
- * Axios reports an unreachable backend as a bare `Network Error`, and a request that
- * ran past `apiClient`'s timeout as `timeout of 10000ms exceeded`. Both read like a
- * bug in the app rather than what they are — a backend that is not answering. Since
- * the app has no mock to fall back on (ADR-0006), that is the most common failure
- * there is in development, and the one worth naming.
+ * Axios reports an unreachable backend as a bare `Network Error`, which reads like a bug
+ * in the app rather than what it is — a backend that is not answering. Since the app has
+ * no mock to fall back on (ADR-0006), that is the most common failure there is in
+ * development, and the one worth naming.
+ *
+ * `apiClient` sets no timeout (ADR-0007), so `ECONNABORTED` no longer means "took too
+ * long" — it is an aborted request. Both land here as a response-less AxiosError and both
+ * are, from the user's side, the same thing: nothing came back.
  */
 export function describeLoadError(error: Error): { heading: string; detail: string } {
   if (axios.isAxiosError(error) && error.response === undefined) {
-    return error.code === 'ECONNABORTED'
-      ? { heading: '後端服務沒有回應', detail: '請求已逾時。請確認服務狀態後重試。' }
-      : { heading: '無法連線到後端服務', detail: '請確認服務已啟動後重試。' };
+    return { heading: '無法連線到後端服務', detail: '請確認服務已啟動後重試。' };
   }
   return { heading: '這個區塊載入失敗', detail: error.message };
 }

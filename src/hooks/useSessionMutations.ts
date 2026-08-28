@@ -1,19 +1,9 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { App } from 'antd';
 
 import { sessionApi } from '@/api/sessionApi';
-import { describeActionError } from '@/utils/describeLoadError';
 
+import { useActionErrorToast } from './useActionErrorToast';
 import { sessionsQueryKey } from './useSessions';
-
-/** All three writes surface their failure to the user: nothing here is disabled up
- *  front, so the error message is how a not-yet-landed endpoint says so.
- *  `message.error?.` — outside AppProviders (component tests) useApp returns an
- *  empty object, and a missing toast is better than a crashed test. */
-function useActionErrorToast() {
-  const { message } = App.useApp();
-  return (error: unknown) => message.error?.(describeActionError(error));
-}
 
 export function useRenameSession() {
   const queryClient = useQueryClient();

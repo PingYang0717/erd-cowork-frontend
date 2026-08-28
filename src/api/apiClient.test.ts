@@ -2,12 +2,12 @@ import type { InternalAxiosRequestConfig } from 'axios';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { streamAgentMessage } from './agentApi';
-import { apiClient, getUserId, setAuthHeaderProvider } from './apiClient';
+import { getUserId, httpClient, setAuthHeaderProvider } from './apiClient';
 
 /** 用 adapter 攔截:走完整的 interceptor 鏈,但不發出真實請求。 */
 function captureRequests(): InternalAxiosRequestConfig[] {
   const captured: InternalAxiosRequestConfig[] = [];
-  apiClient.defaults.adapter = async (config) => {
+  httpClient.defaults.adapter = async (config) => {
     captured.push(config);
     return { data: {}, status: 200, statusText: 'OK', headers: {}, config };
   };
@@ -42,7 +42,7 @@ describe('auth header provider', () => {
   it('defaultProvider_axiosRequest_carriesXUserIdHeader', async () => {
     const captured = captureRequests();
 
-    await apiClient.get('/config');
+    await httpClient.get('/config');
 
     expect(captured[0]?.headers['X-User-Id']).toBe(getUserId());
   });
@@ -54,7 +54,7 @@ describe('auth header provider', () => {
     }));
     const captured = captureRequests();
 
-    await apiClient.get('/config');
+    await httpClient.get('/config');
 
     expect(captured[0]?.headers['Internal-Header-One']).toBe('token-a');
     expect(captured[0]?.headers['Internal-Header-Two']).toBe('token-b');
@@ -64,7 +64,7 @@ describe('auth header provider', () => {
     setAuthHeaderProvider(() => ({ 'Internal-Header-One': 'token-a' }));
     const captured = captureRequests();
 
-    await apiClient.get('/config');
+    await httpClient.get('/config');
 
     expect(captured[0]?.headers['X-User-Id']).toBeUndefined();
   });
@@ -77,8 +77,8 @@ describe('auth header provider', () => {
     setAuthHeaderProvider(provider);
     const captured = captureRequests();
 
-    await apiClient.get('/config');
-    await apiClient.get('/config');
+    await httpClient.get('/config');
+    await httpClient.get('/config');
 
     expect(provider).toHaveBeenCalledTimes(2);
     expect(captured[0]?.headers['Internal-Header-One']).toBe('token-1');

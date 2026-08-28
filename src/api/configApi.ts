@@ -12,5 +12,5 @@ export interface AppConfig {
 }
 
 export const configApi = {
-  getConfig: () => apiClient.get<AppConfig>('/config').then((res) => res.data),
+  getConfig: () => apiClient.get<AppConfig>('/config'),
 };

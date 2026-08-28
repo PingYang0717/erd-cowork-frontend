@@ -9,17 +9,15 @@ export function uploadFiles(
 ): Promise<UploadedFileInfo[]> {
   const formData = new FormData();
   files.forEach((file) => formData.append('files', file));
-  return apiClient
-    .post<UploadedFileInfo[]>(`/sessions/${sessionId}/files`, formData, {
-      onUploadProgress: (event) => {
-        if (onProgress && event.total) {
-          onProgress(Math.round((event.loaded / event.total) * 100));
-        }
-      },
-    })
-    .then((res) => res.data);
+  return apiClient.post<UploadedFileInfo[]>(`/sessions/${sessionId}/files`, formData, {
+    onUploadProgress: (event) => {
+      if (onProgress && event.total) {
+        onProgress(Math.round((event.loaded / event.total) * 100));
+      }
+    },
+  });
 }
 
 export function deleteFile(sessionId: string, fileId: string): Promise<void> {
-  return apiClient.delete(`/sessions/${sessionId}/files/${fileId}`).then(() => undefined);
+  return apiClient.delete(`/sessions/${sessionId}/files/${fileId}`);
 }
