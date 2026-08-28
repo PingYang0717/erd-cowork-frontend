@@ -103,15 +103,14 @@ Artifact 的清單、釘選與發布已接真後端。
 
 ## 文件地圖
 
-| 文件                                                               | 內容                                                    |
-| ------------------------------------------------------------------ | ------------------------------------------------------- |
-| [`AGENTS.md`](./AGENTS.md)                                         | 動工前必讀的精簡規則                                    |
-| [`architecture.md`](./architecture.md)                             | 架構、設定檔、狀態分類、主題色票                        |
-| [`CONTEXT.md`](./CONTEXT.md)                                       | 領域名詞與該避免的說法                                  |
-| [`docs/adr/`](./docs/adr/)                                         | 架構決策紀錄（iframe 渲染、Router、範圍界定、視覺對齊） |
-| [`docs/api/interface.md`](./docs/api/interface.md)                 | API 契約                                                |
-| [`docs/agents/`](./docs/agents/)                                   | issue tracker、triage 標籤、domain 文件慣例             |
-| [`.scratch/erd-cowork-frontend/`](./.scratch/erd-cowork-frontend/) | spec 與逐張 ticket（含 review 後的 Comments）           |
+| 文件                                               | 內容                                                    |
+| -------------------------------------------------- | ------------------------------------------------------- |
+| [`AGENTS.md`](./AGENTS.md)                         | 動工前必讀的精簡規則                                    |
+| [`architecture.md`](./architecture.md)             | 架構、設定檔、狀態分類、主題色票                        |
+| [`CONTEXT.md`](./CONTEXT.md)                       | 領域名詞與該避免的說法                                  |
+| [`docs/adr/`](./docs/adr/)                         | 架構決策紀錄（iframe 渲染、Router、範圍界定、視覺對齊） |
+| [`docs/api/interface.md`](./docs/api/interface.md) | API 契約                                                |
+| [`docs/agents/`](./docs/agents/)                   | domain 文件慣例（CONTEXT.md 與 ADR 怎麼寫）             |
 
 ---
 
