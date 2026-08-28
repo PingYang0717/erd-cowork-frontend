@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { devtools } from 'zustand/middleware';
 
 export interface StreamedArtifact {
   artifactId: string;
@@ -42,25 +43,37 @@ interface ActiveRunState {
   bumpArtifactReload: () => void;
 }
 
-export const useActiveRunStore = create<ActiveRunState>((set) => ({
-  streamedArtifact: null,
-  // A newly produced artifact takes over ONCE (the user asked for it), so producing one
-  // drops the pick; after that a pick wins again. Clearing on null instead would wipe
-  // the pick every time a run merely starts or the thread unmounts.
-  setStreamedArtifact: (streamedArtifact) =>
-    set(
-      streamedArtifact === null
-        ? { streamedArtifact }
-        : { streamedArtifact, pickedArtifactId: null },
-    ),
-  pickedArtifactId: null,
-  pickArtifact: (pickedArtifactId) => set({ pickedArtifactId }),
-  clearPickedArtifact: () => set({ pickedArtifactId: null }),
-  isRunStreaming: false,
-  setRunStreaming: (isRunStreaming) => set({ isRunStreaming }),
-  displayedArtifactId: null,
-  setDisplayedArtifactId: (displayedArtifactId) => set({ displayedArtifactId }),
-  artifactReloadNonce: 0,
-  bumpArtifactReload: () =>
-    set((state) => ({ artifactReloadNonce: state.artifactReloadNonce + 1 })),
-}));
+export const useActiveRunStore = create<ActiveRunState>()(
+  devtools(
+    (set) => ({
+      streamedArtifact: null,
+      // A newly produced artifact takes over ONCE (the user asked for it), so producing
+      // one drops the pick; after that a pick wins again. Clearing on null instead would
+      // wipe the pick every time a run merely starts or the thread unmounts.
+      setStreamedArtifact: (streamedArtifact) =>
+        set(
+          streamedArtifact === null
+            ? { streamedArtifact }
+            : { streamedArtifact, pickedArtifactId: null },
+          false,
+          'setStreamedArtifact',
+        ),
+      pickedArtifactId: null,
+      pickArtifact: (pickedArtifactId) => set({ pickedArtifactId }, false, 'pickArtifact'),
+      clearPickedArtifact: () => set({ pickedArtifactId: null }, false, 'clearPickedArtifact'),
+      isRunStreaming: false,
+      setRunStreaming: (isRunStreaming) => set({ isRunStreaming }, false, 'setRunStreaming'),
+      displayedArtifactId: null,
+      setDisplayedArtifactId: (displayedArtifactId) =>
+        set({ displayedArtifactId }, false, 'setDisplayedArtifactId'),
+      artifactReloadNonce: 0,
+      bumpArtifactReload: () =>
+        set(
+          (state) => ({ artifactReloadNonce: state.artifactReloadNonce + 1 }),
+          false,
+          'bumpArtifactReload',
+        ),
+    }),
+    { name: 'ActiveRun' },
+  ),
+);

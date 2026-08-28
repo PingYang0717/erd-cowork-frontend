@@ -52,15 +52,15 @@ describe('StudioPage three-pane layout', () => {
     const handle = screen.getByRole('separator', { name: 'Resize session rail' });
     expect(rail.style.width).toBe('270px');
 
-    fireEvent.mouseDown(handle, { clientX: 300 });
-    fireEvent.mouseMove(window, { clientX: 360 });
-    fireEvent.mouseUp(window);
+    fireEvent.pointerDown(handle, { clientX: 300 });
+    fireEvent.pointerMove(window, { clientX: 360, buttons: 1 });
+    fireEvent.pointerUp(window);
 
     expect(rail.style.width).toBe('330px');
 
-    fireEvent.mouseDown(handle, { clientX: 360 });
-    fireEvent.mouseMove(window, { clientX: 2000 });
-    fireEvent.mouseUp(window);
+    fireEvent.pointerDown(handle, { clientX: 360 });
+    fireEvent.pointerMove(window, { clientX: 2000, buttons: 1 });
+    fireEvent.pointerUp(window);
 
     expect(rail.style.width).toBe('460px');
   });
@@ -72,15 +72,15 @@ describe('StudioPage three-pane layout', () => {
     const handle = screen.getByRole('separator', { name: 'Resize thread panel' });
     expect(thread.style.width).toBe('430px');
 
-    fireEvent.mouseDown(handle, { clientX: 300 });
-    fireEvent.mouseMove(window, { clientX: 200 });
-    fireEvent.mouseUp(window);
+    fireEvent.pointerDown(handle, { clientX: 300 });
+    fireEvent.pointerMove(window, { clientX: 200, buttons: 1 });
+    fireEvent.pointerUp(window);
 
     expect(thread.style.width).toBe('330px');
 
-    fireEvent.mouseDown(handle, { clientX: 200 });
-    fireEvent.mouseMove(window, { clientX: -1000 });
-    fireEvent.mouseUp(window);
+    fireEvent.pointerDown(handle, { clientX: 200 });
+    fireEvent.pointerMove(window, { clientX: -1000, buttons: 1 });
+    fireEvent.pointerUp(window);
 
     expect(thread.style.width).toBe('320px');
   });
@@ -121,11 +121,11 @@ describe('StudioPage three-pane layout', () => {
   it('keeps panel widths as session-only state that resets on reload, per architecture.md', async () => {
     renderStudio();
 
-    fireEvent.mouseDown(screen.getByRole('separator', { name: 'Resize session rail' }), {
+    fireEvent.pointerDown(screen.getByRole('separator', { name: 'Resize session rail' }), {
       clientX: 300,
     });
-    fireEvent.mouseMove(window, { clientX: 360 });
-    fireEvent.mouseUp(window);
+    fireEvent.pointerMove(window, { clientX: 360, buttons: 1 });
+    fireEvent.pointerUp(window);
     expect(screen.getByRole('navigation', { name: 'Session list' }).style.width).toBe('330px');
 
     await renderReloadedStudioPage();

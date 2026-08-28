@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios, { type AxiosRequestConfig } from 'axios';
 
 const USER_KEY = 'erd_user_id';
 
@@ -31,12 +31,40 @@ export function getAuthHeaders(): Record<string, string> {
   return authHeaderProvider();
 }
 
-export const apiClient = axios.create({ baseURL: '/api' });
+/** The axios instance itself.
+ *
+ *  Exported only for wiring that operates on axios rather than on an endpoint —
+ *  registering interceptors, swapping the adapter in tests. Endpoint modules use
+ *  `apiClient` below, which is typed for what the response interceptor actually
+ *  returns. */
+export const httpClient = axios.create({ baseURL: '/api' });
 
-apiClient.interceptors.request.use((config) => {
+httpClient.interceptors.request.use((config) => {
   const headers = getAuthHeaders();
   for (const [headerName, headerValue] of Object.entries(headers)) {
     config.headers[headerName] = headerValue;
   }
   return config;
 });
+
+// One place unwraps the envelope, so no endpoint module repeats `.then((res) => res.data)`.
+// Errors pass through untouched: `describeLoadError` / `describeActionError` read the
+// AxiosError, and swallowing it here would leave them nothing to read.
+httpClient.interceptors.response.use(
+  (response) => response.data,
+  (error) => Promise.reject(error),
+);
+
+/** The interceptor above unwraps `response.data`, so axios's own return types
+ *  (`AxiosResponse<T>`) no longer describe what callers receive. This wrapper corrects
+ *  the type once, here, rather than having every endpoint module cast. */
+export const apiClient = {
+  get: <T>(url: string, config?: AxiosRequestConfig) =>
+    httpClient.get(url, config) as unknown as Promise<T>,
+  post: <T>(url: string, data?: unknown, config?: AxiosRequestConfig) =>
+    httpClient.post(url, data, config) as unknown as Promise<T>,
+  patch: <T>(url: string, data?: unknown, config?: AxiosRequestConfig) =>
+    httpClient.patch(url, data, config) as unknown as Promise<T>,
+  delete: <T>(url: string, config?: AxiosRequestConfig) =>
+    httpClient.delete(url, config) as unknown as Promise<T>,
+};
