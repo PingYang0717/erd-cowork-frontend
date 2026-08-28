@@ -11,7 +11,7 @@ interface ResizablePaneOptions {
 
 interface ResizablePane<T extends HTMLElement> {
   /** Put this on the pane element whose width the handle drags. */
-  paneRef: RefObject<T | null>;
+  paneRef: RefObject<T>;
   onDragStart: () => void;
   onDrag: (deltaX: number) => void;
   onDragEnd: () => void;

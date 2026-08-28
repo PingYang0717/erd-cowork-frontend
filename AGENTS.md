@@ -13,7 +13,7 @@ Single-context layout (root `CONTEXT.md` + `docs/adr/`). See `docs/agents/domain
 
 ## 技術棧
 
-React 18.3.1 + Vite 8 + TypeScript 6(先不開 strict)+ Ant Design 6(含 Ant Design X)+ React Router 7 + Zustand + TanStack Query + Axios。
+React 18.3.1 + Vite 8 + TypeScript 6(**strict 已開啟**)+ Ant Design 6(含 Ant Design X)+ React Router 7 + Zustand + TanStack Query + Axios。
 
 Lint 是 **oxlint + ESLint 並存**(`npm run lint` 依序跑兩個),格式走 Prettier。
 技術棧與 `cowork-master` 對齊——兩邊接同一個後端。

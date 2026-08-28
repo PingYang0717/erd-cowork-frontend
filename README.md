@@ -11,7 +11,7 @@ MSW 只服務測試。名詞定義見 [`CONTEXT.md`](./CONTEXT.md)。
 
 ## 技術棧
 
-React 18.3.1 + Vite 8 + TypeScript 6（先不開 strict）+ Ant Design 6（含 Ant Design X）+
+React 18.3.1 + Vite 8 + TypeScript 6（strict）+ Ant Design 6（含 Ant Design X）+
 React Router 7 + Zustand + TanStack Query + Axios。測試是 Vitest + Testing Library，
 MSW 在測試裡當後端。
 
