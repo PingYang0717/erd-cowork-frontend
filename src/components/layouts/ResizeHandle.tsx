@@ -17,7 +17,7 @@ interface ResizeHandleProps {
 }
 
 const ResizeHandle: React.FC<ResizeHandleProps> = ({ label, onDragStart, onDrag, onDragEnd }) => {
-  const { onMouseDown, isDragging } = useHorizontalDrag({ onDragStart, onDrag, onDragEnd });
+  const { onPointerDown, isDragging } = useHorizontalDrag({ onDragStart, onDrag, onDragEnd });
 
   return (
     <div
@@ -26,7 +26,7 @@ const ResizeHandle: React.FC<ResizeHandleProps> = ({ label, onDragStart, onDrag,
       aria-label={label}
       title="Drag to resize"
       className={`${styles.handle} ${isDragging ? styles.dragging : ''}`}
-      onMouseDown={onMouseDown}
+      onPointerDown={onPointerDown}
     >
       <i aria-hidden className={styles.line} />
     </div>
