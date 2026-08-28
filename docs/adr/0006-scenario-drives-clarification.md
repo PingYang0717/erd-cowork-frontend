@@ -1,3 +1,8 @@
+> **狀態註記(2026-08-28)**:「答案以結構化形式回傳」的**線路**部分已被
+> [ADR-0007](0007-verbatim-backend-wire-contract.md) 修訂——答案組成自然語言
+> (`utils/composeAnswerText.ts`)當新訊息送出。反問表單的結構契約、Scenario 驅動
+> 反問、Connector 決定選項這些決策本身不變。
+
 # Scenario 決定要反問哪些分析條件，而不只是一段預寫的提問
 
 Composer 上那五顆情境按鈕（Inline dashboard / SPC analysis / Generate slides / Daily monitor (A14) / CP Test status）目前的行為是：按下去直接送出一段預寫好的文字，後端（mock）比對關鍵字決定跑哪套劇本，然後整段跑完。

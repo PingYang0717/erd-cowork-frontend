@@ -63,14 +63,51 @@ body {
 }
 
 /* The mockup's compact dropdown menus (session ⋮ and Artifact card kebab):
-   w150, br10, item pad 9 12 at fs12.5. antd portals the overlay, so this
-   lives outside CSS Modules. */
+   w150, br10 on an elevated card with a hairline border and the medium shadow;
+   items pad 9 12 at fs12.5 with 14px secondary-tinted icons; the Delete row is
+   error-red end to end. antd portals the overlay, so this lives outside CSS
+   Modules. */
 .erd-menu .ant-dropdown-menu {
   width: 150px;
   border-radius: 10px;
+  background: var(--erd-color-bg-elevated, #fff);
+  border: 1px solid var(--erd-color-border-secondary, #f0f0f0);
+  box-shadow: var(--shadow-md, 0 6px 16px rgba(0, 0, 0, 0.08));
 }
 
 .erd-menu .ant-dropdown-menu-item {
   padding: 9px 12px;
   font-size: 12.5px;
+}
+
+.erd-menu .ant-dropdown-menu-item .anticon {
+  font-size: 14px;
+  color: var(--erd-color-text-secondary, rgba(0, 0, 0, 0.65));
+}
+
+.erd-menu .ant-dropdown-menu-item-divider {
+  background: var(--erd-color-fill-quaternary, rgba(0, 0, 0, 0.02));
+}
+
+/* antd v6 adds the -danger class but ships no styling for it (v5 did), and its own
+   item rule is `.ant-dropdown .ant-dropdown-menu .ant-dropdown-menu-item` — three
+   classes deep. These selectors chain off .ant-dropdown to outrank it, or the red
+   loses the cascade and Delete stays black. */
+.ant-dropdown.erd-menu .ant-dropdown-menu .ant-dropdown-menu-item-danger,
+.ant-dropdown.erd-menu .ant-dropdown-menu .ant-dropdown-menu-item-danger .anticon {
+  color: var(--erd-color-error, #ff4d4f);
+}
+
+/* The mockup paints Delete red, full stop. A gated-off Delete keeps the red so the
+   row still reads as the destructive act — the inline 後端未支援 hint and the
+   not-allowed cursor are what say it is unavailable, not a grey wash. */
+.ant-dropdown.erd-menu
+  .ant-dropdown-menu
+  .ant-dropdown-menu-item-danger.ant-dropdown-menu-item-disabled,
+.ant-dropdown.erd-menu
+  .ant-dropdown-menu
+  .ant-dropdown-menu-item-danger.ant-dropdown-menu-item-disabled
+  .anticon {
+  color: var(--erd-color-error, #ff4d4f);
+  opacity: 0.75;
 }

@@ -53,9 +53,11 @@ describe('Artifact version switcher', () => {
     await screen.findByTitle('Artifact preview');
     await expect.poll(artifactSrcdoc).toContain('· v1');
 
-    // Regenerate sends a chat turn (mockup's cwRegen) that lands as v2 and takes
-    // over the panel.
-    await user.click(await screen.findByRole('button', { name: 'Regenerate artifact' }));
+    // An iteration typed into the composer lands as v2 and takes over the panel.
+    await user.type(
+      await screen.findByRole('textbox', { name: 'Message' }),
+      'Regenerate the dashboard.{Enter}',
+    );
     await expect.poll(artifactSrcdoc, { timeout: 5000 }).toContain('· v2');
 
     // Switching back to v1 re-renders the iframe with v1's HTML.
@@ -71,8 +73,11 @@ describe('Artifact version switcher', () => {
     await user.click(await screen.findByRole('button', { name: 'SPC — Vt (gate CD)' }));
     await screen.findByTitle('Artifact preview');
 
-    // Regenerate so the menu holds mixed published states (v1 published, v2 not).
-    await user.click(await screen.findByRole('button', { name: 'Regenerate artifact' }));
+    // Iterate so the menu holds mixed published states (v1 published, v2 not).
+    await user.type(
+      await screen.findByRole('textbox', { name: 'Message' }),
+      'Regenerate the dashboard.{Enter}',
+    );
     await screen.findByRole('button', { name: '發布 Artifact' });
 
     await user.click(screen.getByRole('button', { name: '切換版本' }));

@@ -128,15 +128,12 @@ Artifact 的清單、釘選與發布已接真後端。
 
 ## 執行
 
-先建立 `.env`（`.gitignore` 排除，可從 `.env.example` 複製）：
-
-```
-VITE_API_BASE_URL=/api
-```
-
 ```
 npm run dev
 ```
+
+不需要任何環境變數：API base 寫死 `/api`（cowork 對齊），dev/preview 由
+`vite.config.ts` 的 proxy 轉到 `http://localhost:8080`。
 
 `/api` 保持相對路徑，在 `vite.config.ts` 加 proxy 指到後端；直連絕對 URL 需要後端開 CORS
 並允許 `X-User-Id`，見 [`docs/api/backend-integration.md`](docs/api/backend-integration.md)。

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL ?? '';
+const API_BASE = '/api';
 
 /** The limits the backend enforces, published so the UI can say them out loud instead
  *  of hard-coding a second copy that drifts. */

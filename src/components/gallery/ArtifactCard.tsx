@@ -12,7 +12,6 @@ import { Dropdown } from 'antd';
 import React, { useState } from 'react';
 
 import { ShareArtifactDialog } from '@/components/artifact/ShareArtifactDialog';
-import { UnsupportedLabel } from '@/components/common/UnsupportedLabel';
 import { useDeleteArtifact, useToggleArtifactPin } from '@/hooks/useArtifactMutations';
 import type { Artifact } from '@/types/api/index';
 import { dispatchMenuAction } from '@/utils/dispatchMenuAction';
@@ -34,9 +33,9 @@ const ArtifactCard: React.FC<ArtifactCardProps> = ({ artifact, onOpen }) => {
   // whether this Artifact has been shared out, which the meta row badges below.
   const isSharedToMe = !artifact.isOwn;
 
-  // Pin is live — the backend has the endpoint, and `canPin` says whether this user
-  // may use it. Share and Delete have no endpoint yet (ADR-0009); Copy link never
-  // needed one, it reads the current URL.
+  // Everything goes straight to the backend; an endpoint that has not landed answers
+  // with an error the mutation toasts. `canPin` is the one permission the backend
+  // states up front.
   const menuItems = [
     {
       key: 'pin',
@@ -48,18 +47,16 @@ const ArtifactCard: React.FC<ArtifactCardProps> = ({ artifact, onOpen }) => {
     artifact.canShare
       ? {
           key: 'share',
-          label: <UnsupportedLabel label="Share" />,
+          label: 'Share',
           icon: <ShareAltOutlined aria-hidden />,
-          disabled: true,
         }
       : null,
     { type: 'divider' as const },
     {
       key: 'delete',
-      label: <UnsupportedLabel label="Delete" />,
+      label: 'Delete',
       danger: true,
       icon: <DeleteOutlined aria-hidden />,
-      disabled: true,
     },
   ].filter((item): item is NonNullable<typeof item> => item !== null);
 
@@ -117,6 +114,8 @@ const ArtifactCard: React.FC<ArtifactCardProps> = ({ artifact, onOpen }) => {
       <Dropdown
         trigger={['click']}
         classNames={{ root: 'erd-menu' }}
+        transitionName=""
+
         menu={{ items: menuItems, onClick: ({ key }) => handleMenuClick(key) }}
       >
         <button

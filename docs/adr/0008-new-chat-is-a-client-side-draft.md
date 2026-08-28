@@ -4,7 +4,13 @@
 
 ## 狀態
 
-Accepted。延伸 [ADR-0007](0007-verbatim-backend-wire-contract.md) 的 hybrid 傳輸決策。
+Accepted。延伸 [ADR-0007](0007-verbatim-backend-wire-contract.md) 的 hybrid 傳輸決策
+(hybrid 本身其後被 [ADR-0009](0009-no-mock-backend-at-runtime.md) 終結;本決策不依賴它,
+draft 語意不變)。
+
+> **狀態註記(2026-08-28)**:後果最後一條已過時——Session 的改名、釘選、刪除自
+> `01c40a0` 起皆接真後端(`sessionApi.renameSession` / `togglePin` / `deleteSession`),
+> 「草稿列不提供 rename / pin / delete」維持不變(草稿在後端仍不存在)。
 
 ## 背景
 

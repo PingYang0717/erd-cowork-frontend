@@ -50,17 +50,17 @@ Lint 是 **oxlint + ESLint 並存**(`npm run lint` 依序跑兩個),格式走 Pr
 
 ```
 src/
-  api/          # apiClient(Axios instance)+ 各 endpoint module + identity
+  api/          # apiClient(Axios instance + 匿名身分與 auth header provider)+ 各 endpoint module
+  bootstrap/    # internal 環境啟動接縫(import.meta.glob 偵測 internal.impl.ts,ADR-0011)
   components/   # 依 domain 切:artifact / chat / connectors / files /
                 #   gallery / session / common / layouts
-  config/       # 執行期設定(transport、currentUser)
   constants/    # 共用常數(storage key 等)
   hooks/        # 資料 hook 與跨元件的 UI hook
   stores/       # Zustand store
   theme/        # design token
   types/        # 共用型別
   utils/        # 純函式工具
-  app/          # 進入點、Router、Providers
+  app/          # Router、Providers(進入點是 src/main.tsx,mount 前先跑 bootstrap)
   pages/        # 路由頁面(只組裝、只放邊界)
   mocks/ test/  # MSW 與測試工具（test-only，app 不跑 MSW）
 ```
@@ -104,11 +104,16 @@ Husky + lint-staged 會自動跑 `oxlint --fix` → `eslint --fix` → `prettier
 
 ### 多使用者身分
 
-- 所有 API 請求帶 `X-User-Id`,由 `api/identity.ts` 的 `getAuthHeaders()` 供應
-- v1:localStorage 的匿名 UUID,axios interceptor 附加;`agentApi` 的 raw fetch 共用同一個 helper
-- internal 環境:SSO / gateway 注入,前端安裝回傳 `{}` 的 provider,不覆蓋它
+- 所有 API 請求帶 `X-User-Id`,由 `api/apiClient.ts` 的 `getAuthHeaders()` 供應(cowork 檔案級對齊,ADR-0011)
+- v1:localStorage 的匿名 UUID(key `erd_user_id`),axios interceptor 附加;`agentApi` 的 raw fetch 共用同一個 helper
+- internal 環境:`setAuthHeaderProvider()` 換 provider,回傳值**完全取代**預設 header(回傳什麼就送什麼;「回傳 `{}` 讓 gateway 蓋」是其合法特例)。provider 每次請求都被呼叫,NEVER 快取回傳值
+- 啟動接縫:`src/bootstrap/internal.ts`(`import.meta.glob` 偵測 `internal.impl.ts`),`main.tsx` 在 mount 前 await,失敗不 mount、不 catch
 
 ### 測試
 
-- 預設不平行(`fileParallelism: false`)。每個窗格都會先 suspend,24 個檔案同時跑會餓死
+- 預設不平行(`fileParallelism: false`)。每個窗格都會先 suspend,幾十個檔案同時跑會餓死
   那些等待,讓單獨跑會過的測試在整批跑時失敗
+- 測試身分與 FormData 有兩個 setup 前提:`test/seedTestIdentity.ts` 在 mocks 模組載入前
+  固定匿名 id(`getUserId` 無快取,fixtures 在模組載入時捕捉 ownerId);
+  `test/formDataWire.ts` 把 FormData 序列化成瀏覽器等價 multipart(jsdom File 過 MSW
+  會降級成匿名 blob)。動 setup.ts 的 import 順序前先讀這兩檔的註解

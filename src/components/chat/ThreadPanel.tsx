@@ -8,7 +8,6 @@ import { type SendInput, useAgentStream } from '@/hooks/useAgentStream';
 import { useArtifactRepair } from '@/hooks/useArtifactRepair';
 import { useSessionDetail } from '@/hooks/useSessionDetail';
 import { useActiveRunStore } from '@/stores/useActiveRunStore';
-import { usePendingPromptStore } from '@/stores/usePendingPromptStore';
 import { useRepairOfferStore } from '@/stores/useRepairOfferStore';
 import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
 import { composeAnswerText } from '@/utils/composeAnswerText';
@@ -150,19 +149,6 @@ function ThreadView({ sessionId }: { sessionId: string }) {
     },
     [handleSend, question],
   );
-
-  // Prompts pushed from other panels (the Artifact panel's regenerate button) enter
-  // the same send pipeline: the thread registers its sender with the store, so the
-  // panel's click is a plain event-handler call into it.
-  const registerPromptSender = usePendingPromptStore((s) => s.register);
-  const unregisterPromptSender = usePendingPromptStore((s) => s.unregister);
-  useEffect(() => {
-    const sender = (prompt: { question: string; baseArtifactId?: string }) => {
-      void handleSend(prompt);
-    };
-    registerPromptSender(sender);
-    return () => unregisterPromptSender(sender);
-  }, [handleSend, registerPromptSender, unregisterPromptSender]);
 
   // A run that ended cleanly hands over to the refetched history — the bubble it left
   // behind and the one history renders are now the same component, so the swap is

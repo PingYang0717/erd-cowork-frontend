@@ -4,20 +4,16 @@ import {
   ExportOutlined,
   ReloadOutlined,
   ShareAltOutlined,
-  SyncOutlined,
 } from '@ant-design/icons';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { Tooltip } from '@/components/common/Tooltip';
-import { BACKEND_UNSUPPORTED } from '@/constants/messages';
 import { useArtifactContent } from '@/hooks/useArtifactContent';
 import { usePublishArtifact } from '@/hooks/useArtifactMutations';
 import { useArtifacts } from '@/hooks/useArtifacts';
-import { useArtifactTheme } from '@/hooks/useArtifactTheme';
 import { useSessionDetail } from '@/hooks/useSessionDetail';
 import { useActiveRunStore } from '@/stores/useActiveRunStore';
-import { usePendingPromptStore } from '@/stores/usePendingPromptStore';
 import { usePublishCoachStore } from '@/stores/usePublishCoachStore';
 import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
 import type { ArtifactVersion } from '@/types/api/index';
@@ -128,17 +124,14 @@ function ArtifactPanelContent({
   activeVersion: ArtifactVersion;
   onSelectVersion: (artifactId: string) => void;
 }) {
-  const theme = useArtifactTheme();
-
   const [isShareOpen, setIsShareOpen] = useState(false);
   const reloadNonce = useActiveRunStore((s) => s.artifactReloadNonce);
   const bumpArtifactReload = useActiveRunStore((s) => s.bumpArtifactReload);
   const isRunStreaming = useActiveRunStore((s) => s.isRunStreaming);
-  const { data } = useArtifactContent(artifactId, theme, reloadNonce);
+  const { data } = useArtifactContent(artifactId, reloadNonce);
   const { data: artifacts } = useArtifacts();
   const artifact = artifacts?.find((a) => a.id === artifactId);
   const publishArtifact = usePublishArtifact();
-  const sendPrompt = usePendingPromptStore((s) => s.sendPrompt);
   const startCoach = usePublishCoachStore((s) => s.start);
 
   // Enrich the derived versions with each artifact's published state for the menu's
@@ -189,15 +182,11 @@ function ArtifactPanelContent({
             發布 Artifact
           </button>
         )}
-        {/* Share is disabled at its entry point, so the dialog never opens onto a
-            recipient search that could not submit anything — no backend share
-            endpoint yet (ADR-0009). */}
-        <Tooltip content={BACKEND_UNSUPPORTED} wrapperClassName={styles.shareButtonSlot}>
+        <Tooltip content="分享" wrapperClassName={styles.shareButtonSlot}>
           <button
             type="button"
             className={styles.shareButton}
             aria-label="Share artifact"
-            disabled
             onClick={() => setIsShareOpen(true)}
           >
             <ShareAltOutlined aria-hidden />
@@ -216,20 +205,6 @@ function ArtifactPanelContent({
             <ReloadOutlined aria-hidden />
           </button>
         </Tooltip>
-        <Tooltip content="重新生成">
-          <button
-            type="button"
-            className={styles.iconButton}
-            aria-label="Regenerate artifact"
-            onClick={() =>
-              // The mockup's regenerate sends a chat message (cwRegen); the run
-              // iterates on this artifact and lands as the next version.
-              sendPrompt?.({ question: 'Regenerate the dashboard.', baseArtifactId: artifactId })
-            }
-          >
-            <SyncOutlined aria-hidden />
-          </button>
-        </Tooltip>
         <Tooltip content="在新分頁開啟預覽">
           <button
             type="button"
@@ -244,12 +219,7 @@ function ArtifactPanelContent({
         </Tooltip>
       </div>
       <div className={styles.frameWrapper}>
-        <ArtifactFrame
-          key={`${artifactId}-${reloadNonce}`}
-          html={data}
-          theme={theme}
-          artifactId={artifactId}
-        />
+        <ArtifactFrame key={`${artifactId}-${reloadNonce}`} html={data} artifactId={artifactId} />
       </div>
       {artifact && (
         <ShareArtifactDialog

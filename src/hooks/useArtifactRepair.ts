@@ -28,10 +28,11 @@ export function useArtifactRepair() {
       setStatus('repairing');
 
       try {
-        const { repaired } = await apiClient.post<{ repaired: boolean }>(
-          `/artifacts/${artifactId}/repair`,
-          { errors },
-        );
+        const {
+          data: { repaired },
+        } = await apiClient.post<{ repaired: boolean }>(`/artifacts/${artifactId}/repair`, {
+          errors,
+        });
 
         if (!repaired) {
           setStatus('failed');

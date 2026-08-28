@@ -1,20 +1,17 @@
 import React, { useEffect, useMemo, useRef } from 'react';
 
 import { type BrowserJsError, useRepairOfferStore } from '@/stores/useRepairOfferStore';
-import type { ArtifactTheme } from '@/types/api/index';
 import { injectCspMeta } from '@/utils/artifactCsp';
 
 interface ArtifactFrameProps {
   html: string;
-  theme: ArtifactTheme;
   artifactId: string;
 }
 
 /** Keying the iframe on the artifact and the reload nonce is what makes a Reload a
  *  Reload: React drops the element and mounts a new one, so the document restarts from
- *  scratch. A theme change deliberately does NOT touch this key — the srcDoc swaps
- *  under the same document (ADR-0001). */
-const ArtifactFrame: React.FC<ArtifactFrameProps> = ({ html, theme, artifactId }) => {
+ *  scratch (ADR-0001). */
+const ArtifactFrame: React.FC<ArtifactFrameProps> = ({ html, artifactId }) => {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const report = useRepairOfferStore((store) => store.report);
 
@@ -38,14 +35,6 @@ const ArtifactFrame: React.FC<ArtifactFrameProps> = ({ html, theme, artifactId }
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
   }, [artifactId, report]);
-
-  useEffect(() => {
-    // Themed HTML is delivered via the `?theme=` query and re-rendered as a
-    // fresh iframe document (see the srcDoc below); this postMessage keeps
-    // that in sync for artifacts whose own script wants to react instantly
-    // without waiting on a refetch (ADR-0001).
-    iframeRef.current?.contentWindow?.postMessage({ type: 'theme', theme }, '*');
-  }, [theme, html]);
 
   return (
     <iframe

@@ -2,6 +2,13 @@
 > srcdoc 呈現前注入 `<meta http-equiv="Content-Security-Policy">`(`default-src 'none';
 connect-src 'none'`,host 來源用父頁 origin 明寫)。sandbox 擋同源存取,CSP 擋
 > Artifact HTML 對外發網路請求;兩層互補,本文的 iframe 決策不變。
+>
+> **狀態註記(2026-08-28)**:Artifact HTML 的 theme 變體決議不做。下文「Dark mode
+> 需求下…依主題回傳對應配色的 HTML」一段作廢:`?theme=` query 與 iframe 內
+> `postMessage` 換色通道皆已移除,Artifact 文件只有單一配色;App 本身的深色模式
+> (antd algorithm)不受影響。重掛表格中「切換主題」一列隨之失效,`useArtifactContent`
+> 的 query key 只剩 `artifactId` 與 `reloadNonce`,Reload 並以 `?r={nonce}` 作
+> cache-buster。iframe 渲染與重掛決策本身不變。
 
 # Artifact 內容以 sandboxed iframe 渲染
 

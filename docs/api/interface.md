@@ -144,17 +144,22 @@ QuestionOption { value: string; label: string; hint?: string; unit?: string; lo?
 **一次執行可以反問多次。** SPC 開場問一次分析條件，執行途中發現 DC Item 過多時再問一次。
 執行結束後「補齊全部 N 項」的提議不是反問，不走 QUESTION。
 
-### 目前以 stub 供應或停用的端點
+### 後端還沒有的端點怎麼辦（2026-08-27 改策）
 
-app 執行時不再有 mock 後端（[ADR-0009](../adr/0009-no-mock-backend-at-runtime.md)）。後端
-還沒建好的端點分兩類：
+app 執行時不再有 mock 後端（[ADR-0009](../adr/0009-no-mock-backend-at-runtime.md)），
+而且 **UI 不再有任何 disabled 的入口**：所有動作直接打 API，端點還沒落地就把後端的
+`{ code, message }` 以 toast 呈現（`describeActionError`）——錯誤訊息就是「還沒 ready」
+的告知方式。例外兩類：
 
-| 類別             | 端點                                                                                                             | 前端行為                            |
-| ---------------- | ---------------------------------------------------------------------------------------------------------------- | ----------------------------------- |
-| **stub**（讀取） | `GET /connectors`、`GET /directory`                                                                              | `src/api/` 直接回固定資料，不發請求 |
-| **停用**（寫入） | `PATCH`/`DELETE /sessions/:id`、`DELETE /artifacts/:id`、`POST /artifacts/:id/share`、`PATCH`/`POST /connectors` | UI 上 disabled，標「後端尚未支援」  |
+| 類別                  | 端點/功能                                   | 前端行為                                                            |
+| --------------------- | ------------------------------------------- | ------------------------------------------------------------------- |
+| **stub**（讀取）      | `GET /connectors`（目錄）、`GET /directory` | `src/api/` 直接回固定資料，不發請求                                 |
+| **localStorage 偏好** | Connector 的連線/自訂來源選取               | 使用者偏好存 localStorage（`erd-cowork:connector-prefs`），不打後端 |
 
-MSW 只在**測試**裡跑，服務的是上表以外、後端真的有的那幾條，加上 SSE 劇本。
+**Regenerate 已移除**：後端沒有 regenerate 概念；迭代＝對話裡再送一句話（自動帶
+`baseArtifactId`），產物是下一個版本。
+
+MSW 只在**測試**裡跑，服務後端真的有的那幾條，加上 SSE 劇本與 share 的未就緒錯誤。
 
 **沒有建立 session 的端點。** session id 由前端產生，第一次送訊息或上傳檔案時由後端
 upsert（[ADR-0008](../adr/0008-new-chat-is-a-client-side-draft.md)）。
@@ -178,18 +183,18 @@ QUESTION 的線路承載是後端的扁平 `Question[]`（純字串選項、`mul
 
 ## Artifact
 
-| Method | Path                     | Request                                                       | Response                              | 後端狀態 |
-| ------ | ------------------------ | ------------------------------------------------------------- | ------------------------------------- | -------- |
-| GET    | `/artifacts`             | —                                                             | `Artifact[]`                          | 已實作   |
-| GET    | `/artifacts/:id`         | `?theme=light\|dark`（前端-only query extension，真後端忽略） | `text/html`（HTML 字串）              | 已實作   |
-| GET    | `/artifacts/:id/raw`     | —                                                             | `text/plain`                          | 已實作   |
-| POST   | `/artifacts/:id/repair`  | —                                                             | `Artifact`                            | 已實作   |
-| POST   | `/artifacts/:id/pin`     | —                                                             | `Artifact`                            | 已實作   |
-| POST   | `/artifacts/:id/publish` | —                                                             | `Artifact`                            | 已實作   |
-| DELETE | `/artifacts/:id/publish` | —                                                             | `Artifact`                            | 已實作   |
-| DELETE | `/artifacts/:id`         | —                                                             | 204 No Content                        | 停用     |
-| POST   | `/artifacts/:id/share`   | `{ targetIds: string[] }`                                     | `{ url: string; artifact: Artifact }` | 停用     |
-| GET    | `/directory`             | —                                                             | `DirectoryEntry[]`                    | stub     |
+| Method | Path                     | Request                                                      | Response                              | 後端狀態 |
+| ------ | ------------------------ | ------------------------------------------------------------ | ------------------------------------- | -------- |
+| GET    | `/artifacts`             | —                                                            | `Artifact[]`                          | 已實作   |
+| GET    | `/artifacts/:id`         | （選）`?r={nonce}`（Reload 的 cache-buster，nonce > 0 才送） | `text/html`（HTML 字串）              | 已實作   |
+| GET    | `/artifacts/:id/raw`     | —                                                            | `text/plain`                          | 已實作   |
+| POST   | `/artifacts/:id/repair`  | —                                                            | `Artifact`                            | 已實作   |
+| POST   | `/artifacts/:id/pin`     | —                                                            | `Artifact`                            | 已實作   |
+| POST   | `/artifacts/:id/publish` | —                                                            | `Artifact`                            | 已實作   |
+| DELETE | `/artifacts/:id/publish` | —                                                            | `Artifact`                            | 已實作   |
+| DELETE | `/artifacts/:id`         | —                                                            | 204 No Content                        | 停用     |
+| POST   | `/artifacts/:id/share`   | `{ targetIds: string[] }`                                    | `{ url: string; artifact: Artifact }` | 停用     |
+| GET    | `/directory`             | —                                                            | `DirectoryEntry[]`                    | stub     |
 
 **`Artifact` 定版（2026-08-27）**：
 
@@ -239,11 +244,10 @@ own record (`ownerId`, plus the `kind` and `scenario` it needs to choose fixture
 which is no longer a slice of the wire type at all; its localStorage key is
 `erd-cowork:artifacts:v4`.
 
-Returns the sandboxed-iframe-ready HTML for the Artifact's current content, colored
-for the requested theme ([ADR-0001](../adr/0001-artifact-rendered-via-sandboxed-iframe.md)).
-The Studio panel additionally `postMessage`s `{ type: 'theme', theme }` into the
-already-mounted iframe on every theme change, so an artifact's own script can react
-instantly without waiting on a refetch.
+Returns the sandboxed-iframe-ready HTML for the Artifact's current content
+([ADR-0001](../adr/0001-artifact-rendered-via-sandboxed-iframe.md)). Artifact HTML
+has no theme variants — the 2026-08-28 decision dropped the `?theme=` query and the
+in-frame theme `postMessage`; a Reload carries `?r={nonce}` as a cache-buster instead.
 
 `POST /artifacts/:id/pin` toggles the pin from the Gallery card, enabled per `canPin`.
 

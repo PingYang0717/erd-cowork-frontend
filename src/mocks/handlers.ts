@@ -1,6 +1,5 @@
 import { http, HttpResponse } from 'msw';
 
-import { currentUser } from '@/config/currentUser';
 import { DRAFT_SESSION_TITLE } from '@/constants/messages';
 import type { AgentEvent, QuestionForm, StepItem } from '@/types/api/agentEvent';
 import type { Artifact } from '@/types/api/artifact';
@@ -13,20 +12,11 @@ import type { UploadedFileInfo } from '@/types/api/upload';
 
 import type { ArtifactKind } from './artifactFixtures';
 import { buildArtifactFixture } from './artifactFixtures';
+import { currentUser } from './currentUser';
 import { DC_ITEM_FIXTURES, ROWS_PER_DC_ITEM } from './dcItemFixtures';
 import { createPersistedResource } from './persistedResource';
 import { dcItemQuestion, flattenQuestionForm, openingQuestion } from './questionFixtures';
 import { matchScenario, SCENARIO_FIXTURES, SLIDES_STEP } from './scenarioFixtures';
-
-interface ExampleWidget {
-  id: string;
-  name: string;
-}
-
-const exampleWidgets = createPersistedResource<ExampleWidget>('erd-cowork:example-widgets', [
-  { id: 'w1', name: 'Inline Dashboard' },
-  { id: 'w2', name: 'SPC Analysis' },
-]);
 
 // Messages persist in the backend wire shape; sessionId is the mock store's own
 // bookkeeping (the real backend nests messages inside SessionDetail) and is
@@ -487,10 +477,6 @@ export const allHandlers = [
     }),
   ),
 
-  http.get('/api/example-widgets', () => {
-    return HttpResponse.json(exampleWidgets.read());
-  }),
-
   http.get('/api/sessions', () => {
     return HttpResponse.json(sessions.read());
   }),
@@ -548,6 +534,41 @@ export const allHandlers = [
     const all = sessionFiles.read();
     sessionFiles.write(all.filter((file) => file.id !== params.fileId));
     return new HttpResponse(null, { status: 204 });
+  }),
+
+  // The three session writes, as agreed with the backend (api-checklist.md):
+  // rename is a PATCH, pin is an artifact-family toggle that stamps its own time
+  // and answers { id, pinnedAt }, delete answers a bare 200.
+  http.patch('/api/sessions/:sessionId', async ({ params, request }) => {
+    const body = (await request.json()) as { title?: string };
+    const all = sessions.read();
+    const session = all.find((stored) => stored.id === params.sessionId);
+    if (!session) {
+      return new HttpResponse(null, { status: 404 });
+    }
+    const updated = { ...session, ...(body.title !== undefined ? { title: body.title } : {}) };
+    sessions.write(all.map((stored) => (stored.id === updated.id ? updated : stored)));
+    return HttpResponse.json(updated);
+  }),
+
+  http.post('/api/sessions/:sessionId/pin', ({ params }) => {
+    const all = sessions.read();
+    const session = all.find((stored) => stored.id === params.sessionId);
+    if (!session) {
+      return new HttpResponse(null, { status: 404 });
+    }
+    const pinnedAt = session.pinnedAt === null ? new Date().toISOString() : null;
+    sessions.write(
+      all.map((stored) => (stored.id === session.id ? { ...stored, pinnedAt } : stored)),
+    );
+    return HttpResponse.json({ id: session.id, pinnedAt });
+  }),
+
+  http.delete('/api/sessions/:sessionId', ({ params }) => {
+    sessions.write(sessions.read().filter((stored) => stored.id !== params.sessionId));
+    messages.write(messages.read().filter((message) => message.sessionId !== params.sessionId));
+    sessionFiles.write(sessionFiles.read().filter((file) => file.sessionId !== params.sessionId));
+    return new HttpResponse(null, { status: 200 });
   }),
 
   // A run is delivered as an agent-event stream, not a computed reply (ADR-0005).
@@ -668,25 +689,23 @@ export const allHandlers = [
 
   http.delete('/api/artifacts/:id/publish', ({ params }) => setPublished(params.id, false)),
 
-  http.get('/api/artifacts/:id', ({ params, request }) => {
+  http.get('/api/artifacts/:id', ({ params }) => {
     const artifact = artifacts.read().find((a) => a.id === params.id);
     if (!artifact) {
       return new HttpResponse(null, { status: 404 });
     }
-    const searchParams = new URL(request.url).searchParams;
-    const theme = searchParams.get('theme') === 'dark' ? 'dark' : 'light';
     const fixture = buildArtifactFixture(
       artifact.scenario,
       artifact.kind,
       artifactVersionNumber(artifact),
     );
-    // The backend serves text/html directly, not { html } JSON; theme is a query
-    // extension only the mock reads (a real backend ignores it).
-    return new HttpResponse(fixture[theme], { headers: { 'Content-Type': 'text/html' } });
+    // The backend serves text/html directly, not { html } JSON. The `r` cache-buster
+    // (reload nonce) needs no reading — the same document simply goes out again.
+    return new HttpResponse(fixture, { headers: { 'Content-Type': 'text/html' } });
   }),
 
   // The artifact's source before assembly. The chat bubble lazy-fetches it when the
-  // reader expands "view HTML"; the light fixture stands in for the un-themed source.
+  // reader expands "view HTML"; the rendered fixture stands in for the source.
   http.get('/api/artifacts/:id/raw', ({ params }) => {
     const artifact = artifacts.read().find((a) => a.id === params.id);
     if (!artifact) {
@@ -697,12 +716,26 @@ export const allHandlers = [
       artifact.kind,
       artifactVersionNumber(artifact),
     );
-    return new HttpResponse(fixture.light, { headers: { 'Content-Type': 'text/plain' } });
+    return new HttpResponse(fixture, { headers: { 'Content-Type': 'text/plain' } });
   }),
 
   // Rebuilding an artifact whose HTML threw. Every repair here succeeds — a real
   // backend can also come back empty-handed, which the UI already handles; tests
   // exercise that path by stubbing this endpoint.
+  http.delete('/api/artifacts/:id', ({ params }) => {
+    artifacts.write(artifacts.read().filter((stored) => stored.id !== params.id));
+    return new HttpResponse(null, { status: 200 });
+  }),
+
+  // Share has no backend this round: the mock answers the agreed error shape so the
+  // UI exercises the same path the real backend produces.
+  http.post('/api/artifacts/:id/share', () =>
+    HttpResponse.json(
+      { code: 'NOT_IMPLEMENTED', message: '分享功能後端尚未就緒' },
+      { status: 501 },
+    ),
+  ),
+
   http.post('/api/artifacts/:id/repair', ({ params }) => {
     const artifact = artifacts.read().find((a) => a.id === params.id);
     if (!artifact) {
