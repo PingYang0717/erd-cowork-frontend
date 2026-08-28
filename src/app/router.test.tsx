@@ -2,13 +2,16 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
-// createBrowserRouter reads window.location once at module-evaluation time,
-// so each test pushes its URL first and then re-imports the module tree
-// fresh — this doubles as the "reload lands on the same screen" check for
-// every route, since a fresh import at a URL is exactly what a real reload
-// does.
+// The router reads window.location once at module-evaluation time, so each test puts
+// its URL there first and then re-imports the module tree fresh — this doubles as the
+// "reload lands on the same screen" check for every route, since a fresh import at a
+// URL is exactly what a real reload does.
+//
+// It is a hash router (ADR-0011), so the route goes in the fragment: pushing the bare
+// path would leave the router at `/` and every assertion below would fail on the wrong
+// screen rather than on the thing it is testing.
 async function renderAppAt(path: string) {
-  window.history.pushState({}, '', path);
+  window.history.pushState({}, '', `#${path}`);
   vi.resetModules();
   const { default: App } = await import('./App');
   return render(<App />);
@@ -37,7 +40,7 @@ describe('Routing shell', () => {
       await renderAppAt('/');
 
       expect(await screen.findByRole('button', { name: 'New chat' })).toBeInTheDocument();
-      expect(window.location.pathname).toBe('/cowork');
+      expect(window.location.hash).toBe('#/cowork');
     },
     RESET_MODULES_TIMEOUT,
   );
@@ -106,7 +109,7 @@ describe('Routing shell', () => {
 
       expect(await screen.findByRole('heading', { name: 'Artifacts' })).toBeInTheDocument();
       expect(await screen.findByRole('button', { name: 'New chat' })).toBeInTheDocument();
-      expect(window.location.pathname).toBe('/cowork/artifacts');
+      expect(window.location.hash).toBe('#/cowork/artifacts');
     },
     RESET_MODULES_TIMEOUT,
   );

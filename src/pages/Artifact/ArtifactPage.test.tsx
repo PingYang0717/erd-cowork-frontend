@@ -7,6 +7,7 @@ import { describe, expect, it, vi } from 'vitest';
 import StudioShell from '@/components/layouts/StudioShell';
 import ArtifactsGalleryPage from '@/pages/ArtifactsGallery/ArtifactsGalleryPage';
 import StudioPage from '@/pages/Studio/StudioPage';
+import { artifactHref } from '@/utils/artifactUrl';
 
 import ArtifactPage from './ArtifactPage';
 
@@ -114,11 +115,14 @@ describe('Artifact full-page view', () => {
     await user.unhover(openInNewTab);
 
     await user.click(openInNewTab);
+    // Absolute, and carrying the `#` — window.open bypasses the router, so a bare path
+    // here would be a link that silently fails to open (ADR-0011).
     expect(openSpy).toHaveBeenCalledWith(
-      '/cowork/artifact/artifact-1',
+      artifactHref('artifact-1'),
       '_blank',
       'noopener,noreferrer',
     );
+    expect(artifactHref('artifact-1')).toContain('/#/');
 
     openSpy.mockRestore();
   });
