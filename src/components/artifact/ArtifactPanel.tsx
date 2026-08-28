@@ -17,6 +17,7 @@ import { useActiveRunStore } from '@/stores/useActiveRunStore';
 import { usePublishCoachStore } from '@/stores/usePublishCoachStore';
 import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
 import type { ArtifactVersion } from '@/types/api/index';
+import { artifactHref } from '@/utils/artifactUrl';
 import { deriveArtifactVersions } from '@/utils/deriveArtifactVersions';
 
 import ArtifactFrame from './ArtifactFrame';
@@ -216,9 +217,7 @@ const ArtifactPanelContent: React.FC<ArtifactPanelContentProps> = ({
             type="button"
             className={styles.iconButton}
             aria-label="Open artifact in new tab"
-            onClick={() =>
-              window.open(`/cowork/artifact/${artifactId}`, '_blank', 'noopener,noreferrer')
-            }
+            onClick={() => window.open(artifactHref(artifactId), '_blank', 'noopener,noreferrer')}
           >
             <ExportOutlined aria-hidden />
           </button>
