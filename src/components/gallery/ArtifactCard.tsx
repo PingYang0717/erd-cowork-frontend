@@ -14,6 +14,7 @@ import React, { useState } from 'react';
 import ShareArtifactDialog from '@/components/artifact/ShareArtifactDialog';
 import { useDeleteArtifact, useToggleArtifactPin } from '@/hooks/useArtifactMutations';
 import type { Artifact } from '@/types/api/index';
+import { artifactHref } from '@/utils/artifactUrl';
 import { dispatchMenuAction } from '@/utils/dispatchMenuAction';
 import { formatRelativeTime } from '@/utils/formatRelativeTime';
 
@@ -63,8 +64,7 @@ const ArtifactCard: React.FC<ArtifactCardProps> = ({ artifact, onOpen }) => {
   function handleMenuClick(key: string) {
     dispatchMenuAction(key, {
       pin: () => toggleArtifactPin.mutate(artifact.id),
-      copyLink: () =>
-        navigator.clipboard.writeText(`${window.location.origin}/cowork/artifact/${artifact.id}`),
+      copyLink: () => navigator.clipboard.writeText(artifactHref(artifact.id)),
       share: () => setIsShareOpen(true),
       delete: () => deleteArtifact.mutate(artifact.id),
     });

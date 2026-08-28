@@ -11,7 +11,7 @@
 | 框架              | React 18.3.1 + Vite 8.1.x                      | 與 `cowork-master` 對齊,共用同一個後端與同一套技術棧                  |
 | 語言              | TypeScript(先關閉 strict,後續逐步開啟)         | 見第 6 節                                                             |
 | UI 元件庫         | Ant Design 6.x(+ Ant Design X 2.x)             | 優先使用 antd 現成元件,避免重造輪子                                   |
-| 路由              | React Router                                   | v6+ 寫法(`createBrowserRouter` / `<Routes>`)                          |
+| 路由              | React Router                                   | `createHashRouter`;離開 app 的連結走 `utils/artifactUrl.ts`           |
 | Client 端全域狀態 | Zustand                                        | 只放 UI 狀態(sidebar 開關、theme、跨頁草稿等)                         |
 | Server 端資料狀態 | TanStack Query                                 | API 資料一律走這裡,不放進 Zustand                                     |
 | API 呼叫層        | Axios(request 端與 cowork 同形,ADR-0007)       | 見第 5 節                                                             |
