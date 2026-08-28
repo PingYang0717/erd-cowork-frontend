@@ -2,7 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
-import { Tooltip } from './Tooltip';
+import Tooltip from './Tooltip';
 import styles from './Tooltip.module.css';
 
 /** jsdom gives every element a zero rect, so the trigger's distance from the top of the

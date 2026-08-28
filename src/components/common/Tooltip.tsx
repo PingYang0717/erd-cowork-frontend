@@ -69,5 +69,4 @@ const Tooltip: React.FC<TooltipProps> = ({ content, children, wrapperClassName }
   );
 };
 
-export { Tooltip };
 export default Tooltip;

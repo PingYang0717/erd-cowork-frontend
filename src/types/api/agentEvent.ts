@@ -1,7 +1,7 @@
 // Wire contract for the agent stream. Event names are SCREAMING_CASE and are
 // deliberately NOT renamed to this project's TypeScript conventions — they are
 // the line protocol shared with the backend, so live mode needs no translation
-// layer (ADR-0005).
+// layer (ADR-0003).
 
 export type StepStatus = 'PENDING' | 'RUNNING' | 'SUCCESS' | 'ERROR';
 

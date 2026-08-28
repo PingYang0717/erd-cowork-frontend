@@ -1,39 +1,19 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { act, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { StudioShell } from '@/components/layouts/StudioShell';
 import { server } from '@/mocks/server';
 import { useRepairOfferStore } from '@/stores/useRepairOfferStore';
 import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
 import { useStudioLayoutStore } from '@/stores/useStudioLayoutStore';
+import { renderStudio, waitForComposer } from '@/test/renderStudio';
 import { answerAnalysisConditions } from '@/test/studioRun';
-
-import { StudioPage } from './StudioPage';
-
-function renderStudioPage() {
-  const queryClient = new QueryClient();
-  return render(
-    <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={['/cowork']}>
-        <Routes>
-          <Route path="/cowork" element={<StudioShell />}>
-            <Route index element={<StudioPage />} />
-          </Route>
-        </Routes>
-      </MemoryRouter>
-    </QueryClientProvider>,
-  );
-}
 
 async function runAnalysis(user: ReturnType<typeof userEvent.setup>) {
   await user.click(await screen.findByRole('button', { name: 'New chat' }));
   await screen.findByRole('button', { name: 'New analysis' });
-  // The composer subtree suspends on its queries; wait for it before sync getBy*.
-  await screen.findByRole('textbox', { name: 'Message' });
+  await waitForComposer();
   await user.click(screen.getByRole('button', { name: 'SPC analysis' }));
   await answerAnalysisConditions(user);
   return (await screen.findByTitle('Artifact preview')) as HTMLIFrameElement;
@@ -61,7 +41,7 @@ describe('Artifact repair', () => {
 
   it('ships an error collector inside every artifact', async () => {
     const user = userEvent.setup();
-    renderStudioPage();
+    renderStudio();
 
     const iframe = await runAnalysis(user);
 
@@ -72,7 +52,7 @@ describe('Artifact repair', () => {
 
   it('offers to repair an artifact that threw, and reloads it once repaired', async () => {
     const user = userEvent.setup();
-    renderStudioPage();
+    renderStudio();
 
     const iframe = await runAnalysis(user);
     expect(screen.queryByText(/偵測到儀表板執行錯誤/)).not.toBeInTheDocument();
@@ -93,7 +73,7 @@ describe('Artifact repair', () => {
 
   it('stops offering once the user has dismissed it for that artifact', async () => {
     const user = userEvent.setup();
-    renderStudioPage();
+    renderStudio();
 
     const iframe = await runAnalysis(user);
 
@@ -116,7 +96,7 @@ describe('Artifact repair', () => {
         return HttpResponse.json({ repaired: false });
       }),
     );
-    renderStudioPage();
+    renderStudio();
 
     const iframe = await runAnalysis(user);
     reportRuntimeError(iframe, 'boom');
@@ -140,7 +120,7 @@ describe('Artifact repair', () => {
         HttpResponse.json({ code: 'FILES_EXPIRED', message: '檔案已過期' }, { status: 409 }),
       ),
     );
-    renderStudioPage();
+    renderStudio();
 
     const iframe = await runAnalysis(user);
     reportRuntimeError(iframe, 'boom');
@@ -154,7 +134,7 @@ describe('Artifact repair', () => {
 
   it('drops the offer when the user moves to another session', async () => {
     const user = userEvent.setup();
-    renderStudioPage();
+    renderStudio();
 
     const iframe = await runAnalysis(user);
     reportRuntimeError(iframe, 'boom');

@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { App as AntdApp, ConfigProvider, theme } from 'antd';
-import type { CSSProperties, ReactNode } from 'react';
+import React, { type CSSProperties, type ReactNode } from 'react';
 
 import { useThemeStore } from '@/stores/useThemeStore';
 import { THEME_TOKENS, themeCssText, type ThemeTokens } from '@/theme/tokens';
@@ -11,11 +11,22 @@ const queryClient = new QueryClient();
 // AppProviders for why these stay on the light values in both themes.
 const SEED = THEME_TOKENS.light;
 
-// cowork upstream's stack (its theme/fonts.ts, ADR-0010): self-hosted Inter Variable +
+// cowork upstream's stack (its theme/fonts.ts, ADR-0002): self-hosted Inter Variable +
 // Noto Sans TC, imported in main.tsx, with the platform CJK faces as fallback. Must
 // stay in step with the body rule in index.css.
 const FONT_FAMILY =
   "'Inter Variable', 'Noto Sans TC', -apple-system, 'PingFang TC', 'Microsoft JhengHei', sans-serif";
+
+// Overlays open instantly. antd animates them on the three duration tokens (0.1/0.2/0.3s
+// by default); on a dialog or a menu that reads as lag, not as motion — the user is
+// already looking at where the panel will appear. Applied per component rather than via
+// the global `motion: false` seed, which would also flatten button waves, collapse and
+// toasts — those animate things the eye is not yet fixed on, and there the motion helps.
+const INSTANT = {
+  motionDurationFast: '0s',
+  motionDurationMid: '0s',
+  motionDurationSlow: '0s',
+} as const;
 
 // ConfigProvider's theme algorithm only affects antd components themselves;
 // plain HTML (body, <h1>, etc.) has no background/text color of its own, so
@@ -24,7 +35,12 @@ const FONT_FAMILY =
 // This surface paints the whole page and exposes the mockup's palette as
 // `--erd-color-*` custom properties, which the CSS Modules across the app
 // read instead of hardcoding colors.
-function ThemedSurface({ tokens, children }: { tokens: ThemeTokens; children: ReactNode }) {
+interface ThemedSurfaceProps {
+  tokens: ThemeTokens;
+  children: ReactNode;
+}
+
+const ThemedSurface: React.FC<ThemedSurfaceProps> = ({ tokens, children }) => {
   const surface: CSSProperties = {
     height: '100vh',
     background: tokens.bgLayout,
@@ -37,9 +53,13 @@ function ThemedSurface({ tokens, children }: { tokens: ThemeTokens; children: Re
       <div style={surface}>{children}</div>
     </>
   );
+};
+
+interface AppProvidersProps {
+  children: ReactNode;
 }
 
-export function AppProviders({ children }: { children: ReactNode }) {
+const AppProviders: React.FC<AppProvidersProps> = ({ children }) => {
   const isDarkMode = useThemeStore((s) => s.isDarkMode);
   const tokens = THEME_TOKENS[isDarkMode ? 'dark' : 'light'];
 
@@ -50,9 +70,6 @@ export function AppProviders({ children }: { children: ReactNode }) {
           algorithm: isDarkMode ? theme.darkAlgorithm : theme.defaultAlgorithm,
           token: {
             fontFamily: FONT_FAMILY,
-            // antd's 0.3s default makes every dialog read as lag rather than motion;
-            // modal/mask enter-leave animate on this token.
-            motionDurationSlow: '0.15s',
             // The mockup's body text runs 12-13.5px throughout; antd's
             // default (14) reads noticeably larger/heavier across every
             // control that doesn't have its own font-size override.
@@ -104,6 +121,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
             // The mockup's dialog: an elevated card with a hairline border
             // and a bg-container footer band.
             Modal: {
+              ...INSTANT,
               borderRadiusLG: 16,
               contentBg: tokens.bgElevated,
               headerBg: tokens.bgElevated,
@@ -111,7 +129,8 @@ export function AppProviders({ children }: { children: ReactNode }) {
               titleFontSize: 16,
             },
             // Mockup's composer "+" menu panel uses border-radius:11px.
-            Dropdown: { borderRadiusLG: 11 },
+            Dropdown: { ...INSTANT, borderRadiusLG: 11 },
+            Select: INSTANT,
           },
         }}
       >
@@ -121,4 +140,6 @@ export function AppProviders({ children }: { children: ReactNode }) {
       </ConfigProvider>
     </QueryClientProvider>
   );
-}
+};
+
+export default AppProviders;

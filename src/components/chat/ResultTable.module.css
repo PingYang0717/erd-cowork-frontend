@@ -1,6 +1,6 @@
 /* cowork's result card: a raised white surface with its own hairline border — the one
    shape inside the bubble that keeps an outline, because the data has to read against
-   white, not against the bubble fill (ADR-0010). */
+   white, not against the bubble fill (ADR-0002). */
 .wrapper {
   padding: 12px;
   border-radius: 8px;

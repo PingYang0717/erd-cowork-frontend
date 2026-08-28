@@ -5,15 +5,15 @@ corresponding TypeScript DTOs live in `src/types/api/`.
 
 每張表都有 **後端狀態** 欄,三種值:
 
-| 狀態       | 意思                      | 前端怎麼處理                                               |
-| ---------- | ------------------------- | ---------------------------------------------------------- |
-| **已實作** | 後端真的有這條            | 正常呼叫                                                   |
-| **stub**   | 後端還沒有,但畫面需要資料 | `src/api/` 直接回固定假資料                                |
-| **停用**   | 後端還沒有,是一個寫入操作 | UI 上 disabled,標「後端尚未支援」;api 函式保留但沒有呼叫端 |
+| 狀態       | 意思                        | 前端怎麼處理                       |
+| ---------- | --------------------------- | ---------------------------------- |
+| **已實作** | 後端真的有這條              | 正常呼叫                           |
+| **stub**   | 後端還沒有,但畫面需要資料   | `src/api/` 直接回固定資料,不發請求 |
+| **無入口** | 契約已定,但 UI 上沒有觸發點 | api 函式保留,沒有呼叫端            |
 
-後兩者的理由與取捨見 [ADR-0009](../adr/0009-no-mock-backend-at-runtime.md)。**照著實作
-一條標為 stub 或停用的端點之前先確認需求**——它們是前端先行定義的形狀,不是後端已承諾的
-契約。
+後兩者的理由與取捨見 [ADR-0006](../adr/0006-no-mock-backend-at-runtime.md)。**照著實作
+一條標為 stub 或無入口的端點之前先確認需求**——它們是前端先行定義的形狀,不是後端已
+承諾的契約。
 
 Each feature ticket appends its own endpoints to the relevant section below as
 it implements them.
@@ -22,33 +22,38 @@ it implements them.
 
 每一個請求都帶 `X-User-Id`。後端依它過濾 session,存取他人資源一律 404。
 
-| 環境     | 誰決定這個值                                                              |
-| -------- | ------------------------------------------------------------------------- |
-| v1(預設) | 瀏覽器:localStorage 的匿名 UUID(`erd-cowork:user-id`),首次使用時產生      |
-| internal | SSO / gateway 在請求經過時注入;前端安裝一個回傳 `{}` 的 provider,不覆蓋它 |
+| 環境     | 誰決定這個值                                                  |
+| -------- | ------------------------------------------------------------- |
+| v1(預設) | 瀏覽器:localStorage 的匿名 UUID(`erd_user_id`),首次使用時產生 |
+| internal | SSO / gateway;前端裝一個 provider 決定要送什麼 header         |
 
-附加的位置只有一處:`api/identity.ts` 的 `getAuthHeaders()`。axios interceptor 與
+附加的位置只有一處:`api/apiClient.ts` 的 `getAuthHeaders()`。axios interceptor 與
 `agentApi` 的 raw fetch 共用它——串流那條路不經過 axios,漏掉 header 會被當成另一個
 使用者(或無效使用者)來回應。
 
-`setAuthHeaderProvider()` 是 internal 環境的接縫;傳 `null` 回到匿名 id。
+`setAuthHeaderProvider()` 是 internal 環境的接縫,回傳值**完全取代**預設 header:回傳
+什麼就送什麼,不回傳 `X-User-Id` 就不會送(「回傳 `{}` 讓 gateway 蓋」是其合法特例)。
+provider 每次請求都會被呼叫,NEVER 快取它的回傳值——見
+[ADR-0007](../adr/0007-cowork-file-parity-for-api-seams.md)。
 
 ## Session
 
-| Method | Path            | Request                                         | Response        | 後端狀態 |
-| ------ | --------------- | ----------------------------------------------- | --------------- | -------- |
-| GET    | `/sessions`     | —                                               | `Session[]`     | 已實作   |
-| GET    | `/sessions/:id` | —                                               | `SessionDetail` | 已實作   |
-| POST   | `/sessions`     | `{}` (title defaults to `"New analysis"`)       | `Session` (201) | 不會實作 |
-| PATCH  | `/sessions/:id` | `Partial<Pick<Session, 'title' \| 'pinnedAt'>>` | `Session`       | 停用     |
-| DELETE | `/sessions/:id` | —                                               | 204 No Content  | 停用     |
+| Method | Path                | Request                                   | Response           | 後端狀態 |
+| ------ | ------------------- | ----------------------------------------- | ------------------ | -------- |
+| GET    | `/sessions`         | —                                         | `Session[]`        | 已實作   |
+| GET    | `/sessions/:id`     | —                                         | `SessionDetail`    | 已實作   |
+| POST   | `/sessions`         | `{}` (title defaults to `"New analysis"`) | `Session` (201)    | 不會實作 |
+| PATCH  | `/sessions/:id`     | `{ title: string }`                       | `Session`          | 已實作   |
+| POST   | `/sessions/:id/pin` | —(toggle)                                 | `{ id, pinnedAt }` | 已實作   |
+| DELETE | `/sessions/:id`     | —                                         | 200                | 已實作   |
 
 `GET /sessions/:id` 回 `SessionDetail`：session 的 messages 與 files 內嵌其中——後端
 **沒有**獨立的 messages 端點。
 
 `POST /sessions` 標為「不會實作」：session 由 client 指定 id、第一次送訊息時 upsert
-（[ADR-0008](../adr/0008-new-chat-is-a-client-side-draft.md)），沒有建立端點這件事是決策
-不是缺口。改名／釘選／刪除與 `Session.pinnedAt` 則是前端先定義的形狀，UI 上停用中。
+（[ADR-0005](../adr/0005-new-chat-is-a-client-side-draft.md)），沒有建立端點這件事是決策
+不是缺口。改名／釘選／刪除都已接真後端；釘選是切換式的 `POST /sessions/:id/pin`，方向由後端決定
+並蓋時間戳。草稿列不提供這三個操作——草稿在後端還不存在。
 
 ## Message / Chat
 
@@ -57,12 +62,12 @@ it implements them.
 | POST   | `/sessions/:sessionId/messages` | `{ question: string; baseArtifactId? }` | `text/event-stream`（Agent event） |
 
 送出訊息不再一次回傳算好的結果，而是開啟一條 SSE 串流，逐筆推送 Agent event
-（[ADR-0005](../adr/0005-sse-streaming-replaces-batch-reply.md)）。mock 與 live 兩條軌道
-都走串流，差別只在 SSE 由 MSW 還是由後端產生。
+（[ADR-0003](../adr/0003-verbatim-backend-wire-contract.md)）。測試裡的 SSE 由 MSW 產生，
+形狀與後端一致，因此狀態機兩邊共用。
 
 ### 請求 body
 
-Body 與後端的 `SendMessageRequest` 逐字一致（[ADR-0007](../adr/0007-verbatim-backend-wire-contract.md)）：
+Body 與後端的 `SendMessageRequest` 逐字一致（[ADR-0003](../adr/0003-verbatim-backend-wire-contract.md)）：
 
 ```
 { question: string; baseArtifactId?: string }
@@ -144,9 +149,9 @@ QuestionOption { value: string; label: string; hint?: string; unit?: string; lo?
 **一次執行可以反問多次。** SPC 開場問一次分析條件，執行途中發現 DC Item 過多時再問一次。
 執行結束後「補齊全部 N 項」的提議不是反問，不走 QUESTION。
 
-### 後端還沒有的端點怎麼辦（2026-08-27 改策）
+### 後端還沒有的端點怎麼辦
 
-app 執行時不再有 mock 後端（[ADR-0009](../adr/0009-no-mock-backend-at-runtime.md)），
+app 執行時不再有 mock 後端（[ADR-0006](../adr/0006-no-mock-backend-at-runtime.md)），
 而且 **UI 不再有任何 disabled 的入口**：所有動作直接打 API，端點還沒落地就把後端的
 `{ code, message }` 以 toast 呈現（`describeActionError`）——錯誤訊息就是「還沒 ready」
 的告知方式。例外兩類：
@@ -162,14 +167,14 @@ app 執行時不再有 mock 後端（[ADR-0009](../adr/0009-no-mock-backend-at-r
 MSW 只在**測試**裡跑，服務後端真的有的那幾條，加上 SSE 劇本與 share 的未就緒錯誤。
 
 **沒有建立 session 的端點。** session id 由前端產生，第一次送訊息或上傳檔案時由後端
-upsert（[ADR-0008](../adr/0008-new-chat-is-a-client-side-draft.md)）。
+upsert（[ADR-0005](../adr/0005-new-chat-is-a-client-side-draft.md)）。
 
-**線路型別即應用型別**（[ADR-0007](../adr/0007-verbatim-backend-wire-contract.md)）：
+**線路型別即應用型別**（[ADR-0003](../adr/0003-verbatim-backend-wire-contract.md)）：
 `types/api/` 的形狀與後端 DTO 逐字一致（`sender: 'USER' | 'AI'`、`stepsJson` /
 `questionsJson` JSON 字串、`artifactTitle`……），UI 在使用點解析，沒有轉換層。
 前端-only 的欄位（`Session.pinnedAt`、`Message.scenario` / `attachments`、QUESTION 的
-`form`）在型別上明確標註。真後端不回它們時 UI 各自降級；依賴它們的操作目前停用
-（ADR-0009）。`Artifact` 已是後端定版，不再有前端-only 欄位。
+`form`）在型別上明確標註，真後端不回它們時 UI 各自降級。`Artifact` 已是後端定版，
+不再有前端-only 欄位。
 
 ### QUESTION 事件與反問表單的降級
 
@@ -192,8 +197,8 @@ QUESTION 的線路承載是後端的扁平 `Question[]`（純字串選項、`mul
 | POST   | `/artifacts/:id/pin`     | —                                                            | `Artifact`                            | 已實作   |
 | POST   | `/artifacts/:id/publish` | —                                                            | `Artifact`                            | 已實作   |
 | DELETE | `/artifacts/:id/publish` | —                                                            | `Artifact`                            | 已實作   |
-| DELETE | `/artifacts/:id`         | —                                                            | 204 No Content                        | 停用     |
-| POST   | `/artifacts/:id/share`   | `{ targetIds: string[] }`                                    | `{ url: string; artifact: Artifact }` | 停用     |
+| DELETE | `/artifacts/:id`         | —                                                            | 200                                   | 已實作   |
+| POST   | `/artifacts/:id/share`   | `{ targetIds: string[] }`                                    | `{ url: string; artifact: Artifact }` | 已實作   |
 | GET    | `/directory`             | —                                                            | `DirectoryEntry[]`                    | stub     |
 
 **`Artifact` 定版（2026-08-27）**：
@@ -242,7 +247,7 @@ Scenario 產生的是**只有自己看得到的**一版，發布是把它開放�
 "Yours" filter reflects who is signed in rather than a fixture flag. The mock keeps its
 own record (`ownerId`, plus the `kind` and `scenario` it needs to choose fixture HTML)
 which is no longer a slice of the wire type at all; its localStorage key is
-`erd-cowork:artifacts:v4`.
+`erd-cowork:artifacts:v5`.
 
 Returns the sandboxed-iframe-ready HTML for the Artifact's current content
 ([ADR-0001](../adr/0001-artifact-rendered-via-sandboxed-iframe.md)). Artifact HTML
@@ -256,14 +261,14 @@ more-actions menu); the mock backend does not cascade-delete its versions or
 messages that reference it, since none of those are read once the Artifact
 itself is gone.
 
-`POST /artifacts/:id/share` marks the Artifact as shared (`Artifact.shared` flips to
-`true`, persisted) and returns a shareable URL pointing at its full-page view
-(`/cowork/artifact/:id`, [ADR-0002](../adr/0002-react-router-despite-state-driven-mockup.md)).
+`POST /artifacts/:id/share` marks the Artifact as shared (`Artifact.isShared` flips to
+`true`) and returns a shareable URL pointing at its full-page view
+(`/cowork/artifact/:id`).
 `targetIds` reference `DirectoryEntry.id` values (department code, section code, or
 NT account) from `GET /directory`; the mock backend does not model per-recipient
 delivery, it only flips the sender's own Artifact to shared. A recipient's "Shared to
-me" view is simulated directly via seed data (`Artifact.sharedBy`), not by this
-endpoint.
+me" view is seeded directly (an Artifact whose `ownerId` is someone else, so `isOwn`
+comes back false), not produced by this endpoint.
 
 `GET /directory` returns the searchable department / section / person dataset backing
 the share dialog's recipient picker (`DirectoryEntry.kind` is `'department'`,
@@ -275,13 +280,14 @@ departments/sections, `"<NT account> · <中文名>"` for people).
 | Method | Path              | Request                       | Response          | 後端狀態 |
 | ------ | ----------------- | ----------------------------- | ----------------- | -------- |
 | GET    | `/connectors`     | —                             | `Connector[]`     | stub     |
-| PATCH  | `/connectors/:id` | `{ status: ConnectorStatus }` | `Connector`       | 停用     |
-| POST   | `/connectors`     | `{ name: string }`            | `Connector` (201) | 停用     |
+| PATCH  | `/connectors/:id` | `{ status: ConnectorStatus }` | `Connector`       | stub     |
+| POST   | `/connectors`     | `{ name: string }`            | `Connector` (201) | stub     |
 
 `Connector.status` is one of `connected` / `available` / `expired` / `no_access`.
 `PATCH /connectors/:id` connects or disconnects a data source from the Studio
-composer's Connectors panel. 停用中（ADR-0009）：面板是唯讀的狀態呈現，每個 toggle 都
-disabled 並標「後端尚未支援」。
+composer's Connectors panel. 這三條目前都不發請求：目錄是 `connectorApi` 裡的常數，
+使用者的選擇疊在上面並存 localStorage（`erd-cowork:connector-prefs`）。面板是**可以
+操作的**——「選了哪些資料來源」是真的使用者偏好，只是還沒有帳號層級的歸屬。
 
 `POST /connectors` backs the panel's "Add a custom data source" input. The id is
 slugified from the name (`c_<slug>`); posting a name that slugifies to an existing id
@@ -309,7 +315,8 @@ are `custom: true`, category `Custom`, and start `connected`.
 
 檔案掛在 session 上（後端契約），清單內嵌於 `SessionDetail.files`。Composer 的
 attach-files 流程先過 client-side 驗證（副檔名白名單、最多 5 檔、總計 5 GB，
-`utils/uploadValidation.ts`），通過才上傳；multipart body 由 `api/fileApi.ts` 自組。
+`utils/uploadValidation.ts`），通過才上傳；body 是 `FormData`，由瀏覽器自行從磁碟串流，
+上傳進度來自 axios 的 `onUploadProgress`。
 送出訊息時 mock 把當下的 session 檔案**快照**到該則 user message 的
 `attachments`（前端-only extension，支撐 mockup 的 bubble chips）並清空 session 檔案，
 所以 composer 的 chips 列在送出後清空。`UploadedFileInfo.expired`（保留期）已入型別，

@@ -1,33 +1,11 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { StudioShell } from '@/components/layouts/StudioShell';
 import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
 import { useStudioLayoutStore } from '@/stores/useStudioLayoutStore';
 import { useThemeStore } from '@/stores/useThemeStore';
-
-import { StudioPage } from './StudioPage';
-
-// StudioPage is only the /cowork index route's content now; the session
-// rail lives in StudioShell, the route's shared parent (router.tsx). This
-// mirrors that nesting so the rendered tree matches production.
-function renderStudioPage() {
-  const queryClient = new QueryClient();
-  return render(
-    <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={['/cowork']}>
-        <Routes>
-          <Route path="/cowork" element={<StudioShell />}>
-            <Route index element={<StudioPage />} />
-          </Route>
-        </Routes>
-      </MemoryRouter>
-    </QueryClientProvider>,
-  );
-}
+import { renderStudio } from '@/test/renderStudio';
 
 describe('Artifact panel toolbar', () => {
   beforeEach(() => {
@@ -38,7 +16,7 @@ describe('Artifact panel toolbar', () => {
 
   it('shows a "已發布" badge for a rendered Artifact, with Share live beside it', async () => {
     const user = userEvent.setup();
-    renderStudioPage();
+    renderStudio();
 
     await user.click(await screen.findByRole('button', { name: 'SPC — Vt (gate CD)' }));
 
@@ -49,7 +27,7 @@ describe('Artifact panel toolbar', () => {
   it('opens the Artifact’s full-page view in a new tab', async () => {
     const user = userEvent.setup();
     const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
-    renderStudioPage();
+    renderStudio();
 
     await user.click(await screen.findByRole('button', { name: 'SPC — Vt (gate CD)' }));
     await user.click(await screen.findByRole('button', { name: 'Open artifact in new tab' }));
@@ -65,7 +43,7 @@ describe('Artifact panel toolbar', () => {
 
   it('shows the custom delayed tooltip on the Reload button instead of a native title', async () => {
     const user = userEvent.setup();
-    renderStudioPage();
+    renderStudio();
 
     await user.click(await screen.findByRole('button', { name: 'SPC — Vt (gate CD)' }));
 
@@ -82,7 +60,7 @@ describe('Artifact panel toolbar', () => {
 
   it('iterates the Artifact via a chat turn, adding and switching to a new version', async () => {
     const user = userEvent.setup();
-    renderStudioPage();
+    renderStudio();
 
     await user.click(await screen.findByRole('button', { name: 'SPC — Vt (gate CD)' }));
 

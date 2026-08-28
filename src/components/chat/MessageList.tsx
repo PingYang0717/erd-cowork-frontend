@@ -5,7 +5,7 @@ import { useActiveRunStore } from '@/stores/useActiveRunStore';
 import type { Message, QuestionForm, StepItem, TableResult } from '@/types/api/index';
 import { liftQuestions } from '@/utils/liftQuestions';
 
-import { MessageBubble } from './MessageBubble';
+import MessageBubble from './MessageBubble';
 import styles from './MessageList.module.css';
 import type { Answers } from './QuestionFormCard';
 
@@ -206,5 +206,4 @@ const MessageList: React.FC<MessageListProps> = ({
   );
 };
 
-export { MessageList };
 export default MessageList;

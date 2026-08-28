@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import DataBoundary from '@/components/common/DataBoundary';
-import { ThemeToggle } from '@/components/common/ThemeToggle';
+import ThemeToggle from '@/components/common/ThemeToggle';
 import { type SendInput, useAgentStream } from '@/hooks/useAgentStream';
 import { useArtifactRepair } from '@/hooks/useArtifactRepair';
 import { useSessionDetail } from '@/hooks/useSessionDetail';
@@ -12,13 +12,14 @@ import { useRepairOfferStore } from '@/stores/useRepairOfferStore';
 import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
 import { composeAnswerText } from '@/utils/composeAnswerText';
 
-import { ChatComposer } from './ChatComposer';
-import { type LiveRun, MessageList } from './MessageList';
+import ChatComposer from './ChatComposer';
+import MessageList from './MessageList';
+import { type LiveRun } from './MessageList';
 import type { Answers } from './QuestionFormCard';
-import { RepairOfferCard } from './RepairOfferCard';
+import RepairOfferCard from './RepairOfferCard';
 import styles from './ThreadPanel.module.css';
 
-function ThreadHeader() {
+const ThreadHeader: React.FC = () => {
   return (
     <header className={styles.header} aria-label="Thread header">
       <span className={styles.headerTitle}>
@@ -26,8 +27,8 @@ function ThreadHeader() {
         Cowork · Data studio
       </span>
       {/* The mockup's data-source chip (its demo is wired to the Inline DB /
-          N5 line fixture); sits beside the ThemeToggle per the scope-trim of
-          the Workspace header (ADR-0003). */}
+          N5 line fixture); sits beside the ThemeToggle because the Workspace
+          header itself is out of scope — this app is the eRD Cowork App only. */}
       <span className={styles.dataSourceChip}>
         <DatabaseOutlined aria-hidden />
         Inline DB · N5 line
@@ -35,9 +36,14 @@ function ThreadHeader() {
       <ThemeToggle />
     </header>
   );
+};
+
+interface EmptyStateProps {
+  heading: string;
+  subtitle: ReactNode;
 }
 
-function EmptyState({ heading, subtitle }: { heading: string; subtitle: ReactNode }) {
+const EmptyState: React.FC<EmptyStateProps> = ({ heading, subtitle }) => {
   return (
     <div className={styles.emptyState}>
       <div className={styles.emptyStateIcon}>
@@ -47,7 +53,7 @@ function EmptyState({ heading, subtitle }: { heading: string; subtitle: ReactNod
       <p className={styles.emptyStateSubtitle}>{subtitle}</p>
     </div>
   );
-}
+};
 
 /** The thread pane. The header is deliberately outside the boundary below: it carries
  *  the theme toggle and the data-source chip, which have nothing to do with which
@@ -78,7 +84,11 @@ const ThreadPanel: React.FC = () => {
   );
 };
 
-function ThreadView({ sessionId }: { sessionId: string }) {
+interface ThreadViewProps {
+  sessionId: string;
+}
+
+const ThreadView: React.FC<ThreadViewProps> = ({ sessionId }) => {
   const { data: detail } = useSessionDetail(sessionId);
   const messages = detail.messages;
   const { state, send, stop } = useAgentStream(sessionId);
@@ -221,7 +231,6 @@ function ThreadView({ sessionId }: { sessionId: string }) {
       </div>
     </>
   );
-}
+};
 
-export { ThreadPanel };
 export default ThreadPanel;

@@ -21,7 +21,12 @@ function fileExtension(fileName: string) {
 
 // The mockup's file rows color the icon by type: csv = primary,
 // xlsx/xls = success.
-function FileRow({ upload, onRemove }: { upload: UploadedFileInfo; onRemove: () => void }) {
+interface FileRowProps {
+  upload: UploadedFileInfo;
+  onRemove: () => void;
+}
+
+const FileRow: React.FC<FileRowProps> = ({ upload, onRemove }) => {
   const ext = fileExtension(upload.name);
   return (
     <span className={styles.fileRow}>
@@ -49,7 +54,7 @@ function FileRow({ upload, onRemove }: { upload: UploadedFileInfo; onRemove: () 
       </button>
     </span>
   );
-}
+};
 
 interface FileAttachmentModalProps {
   open: boolean;
@@ -168,5 +173,4 @@ const FileAttachmentModal: React.FC<FileAttachmentModalProps> = ({
   );
 };
 
-export { FileAttachmentModal };
 export default FileAttachmentModal;

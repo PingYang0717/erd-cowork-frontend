@@ -1,37 +1,17 @@
-﻿import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { act, render, screen, waitFor, within } from '@testing-library/react';
+import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { StudioShell } from '@/components/layouts/StudioShell';
 import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
 import { useStudioLayoutStore } from '@/stores/useStudioLayoutStore';
 import { mockAgentStream } from '@/test/agentStream';
+import { renderStudio, waitForComposer } from '@/test/renderStudio';
 import { answerAnalysisConditions } from '@/test/studioRun';
-
-import { StudioPage } from './StudioPage';
-
-function renderStudioPage() {
-  const queryClient = new QueryClient();
-  return render(
-    <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={['/cowork']}>
-        <Routes>
-          <Route path="/cowork" element={<StudioShell />}>
-            <Route index element={<StudioPage />} />
-          </Route>
-        </Routes>
-      </MemoryRouter>
-    </QueryClientProvider>,
-  );
-}
 
 async function selectASession(user: ReturnType<typeof userEvent.setup>) {
   await user.click(await screen.findByRole('button', { name: 'New chat' }));
   await screen.findByRole('button', { name: 'New analysis' });
-  // The composer subtree suspends on its queries; wait for it before sync getBy*.
-  await screen.findByRole('textbox', { name: 'Message' });
+  await waitForComposer();
 }
 
 async function startAnalysis(user: ReturnType<typeof userEvent.setup>) {
@@ -48,7 +28,7 @@ describe('Streaming a run in the Studio', () => {
   it('reveals each step only when the stream reports it, not on a timer', async () => {
     const user = userEvent.setup();
     const stream = mockAgentStream();
-    renderStudioPage();
+    renderStudio();
 
     await startAnalysis(user);
 
@@ -72,7 +52,7 @@ describe('Streaming a run in the Studio', () => {
   it('shows the reply building up token by token while the run is still going', async () => {
     const user = userEvent.setup();
     const stream = mockAgentStream();
-    renderStudioPage();
+    renderStudio();
 
     await startAnalysis(user);
     const working = await screen.findByRole('status', { name: 'eRD AI is working' });
@@ -91,7 +71,7 @@ describe('Streaming a run in the Studio', () => {
   it('shows the question as a user bubble immediately, before the run finishes', async () => {
     const user = userEvent.setup();
     const stream = mockAgentStream();
-    renderStudioPage();
+    renderStudio();
 
     await selectASession(user);
     await user.type(screen.getByRole('textbox', { name: 'Message' }), 'Check the Vt drift');
@@ -108,7 +88,7 @@ describe('Streaming a run in the Studio', () => {
   it('iterates on the artifact on display: the next send carries baseArtifactId', async () => {
     const user = userEvent.setup();
     const stream = mockAgentStream();
-    renderStudioPage();
+    renderStudio();
 
     await startAnalysis(user);
     act(() =>
@@ -136,7 +116,7 @@ describe('Streaming a run in the Studio', () => {
   it('swaps send for stop while a run is going, and keeps what was produced', async () => {
     const user = userEvent.setup();
     const stream = mockAgentStream();
-    renderStudioPage();
+    renderStudio();
 
     await selectASession(user);
     expect(screen.getByRole('button', { name: 'Send message' })).toBeInTheDocument();
@@ -161,7 +141,7 @@ describe('Streaming a run in the Studio', () => {
   it('tells the user the connection dropped, and offers the composer back', async () => {
     const user = userEvent.setup();
     const stream = mockAgentStream();
-    renderStudioPage();
+    renderStudio();
 
     await startAnalysis(user);
     act(() => stream.push({ type: 'TOKEN', delta: 'Recomputed control limits.' }));
@@ -177,7 +157,7 @@ describe('Streaming a run in the Studio', () => {
   it('collapses the artifact HTML being written behind a toggle, and keeps it out of the history', async () => {
     const user = userEvent.setup();
     const stream = mockAgentStream();
-    renderStudioPage();
+    renderStudio();
 
     await startAnalysis(user);
     expect(screen.queryByRole('button', { name: /HTML/ })).not.toBeInTheDocument();
@@ -196,7 +176,7 @@ describe('Streaming a run in the Studio', () => {
   it('shows the query results the run produced along the way', async () => {
     const user = userEvent.setup();
     const stream = mockAgentStream();
-    renderStudioPage();
+    renderStudio();
 
     await startAnalysis(user);
 
@@ -229,7 +209,7 @@ describe('Streaming a run in the Studio', () => {
   // rather than sitting at the bottom of the thread where scrolling up leaves it behind.
   it('reports how long the finished run took, on the bubble that took it', async () => {
     const user = userEvent.setup();
-    renderStudioPage();
+    renderStudio();
 
     await startAnalysis(user);
     await answerAnalysisConditions(user);
@@ -242,7 +222,7 @@ describe('Streaming a run in the Studio', () => {
   it('shows the artifact in the right pane the moment the run reports it', async () => {
     const user = userEvent.setup();
     const stream = mockAgentStream();
-    renderStudioPage();
+    renderStudio();
 
     await startAnalysis(user);
     expect(screen.queryByTitle('Artifact preview')).not.toBeInTheDocument();
@@ -261,7 +241,7 @@ describe('Streaming a run in the Studio', () => {
   it("collapses the agent's thinking behind a toggle, and keeps it out of the history", async () => {
     const user = userEvent.setup();
     const stream = mockAgentStream();
-    renderStudioPage();
+    renderStudio();
 
     await startAnalysis(user);
     expect(screen.queryByRole('button', { name: /thinking/i })).not.toBeInTheDocument();
@@ -280,7 +260,7 @@ describe('Streaming a run in the Studio', () => {
   it('renders a streamed reply as Markdown, and survives half-arrived syntax', async () => {
     const user = userEvent.setup();
     const stream = mockAgentStream();
-    renderStudioPage();
+    renderStudio();
 
     await startAnalysis(user);
 
@@ -300,7 +280,7 @@ describe('Streaming a run in the Studio', () => {
   it('renders the form the run asks for, holding submit back until required fields are filled', async () => {
     const user = userEvent.setup();
     const stream = mockAgentStream();
-    renderStudioPage();
+    renderStudio();
 
     await startAnalysis(user);
 
@@ -344,7 +324,7 @@ describe('Streaming a run in the Studio', () => {
   it('shows a dependent field only for its trigger, and clears its answer when the trigger changes', async () => {
     const user = userEvent.setup();
     const stream = mockAgentStream();
-    renderStudioPage();
+    renderStudio();
 
     await startAnalysis(user);
 
@@ -414,7 +394,7 @@ describe('Streaming a run in the Studio', () => {
   it('sends the answers back composed as a prose question (backend body is question-only)', async () => {
     const user = userEvent.setup();
     const stream = mockAgentStream();
-    renderStudioPage();
+    renderStudio();
 
     await startAnalysis(user);
 
@@ -471,7 +451,7 @@ describe('Streaming a run in the Studio', () => {
   describe('the analysis conditions a Scenario asks for', () => {
     it('asks before running anything, with Data type drawn from the connected connectors', async () => {
       const user = userEvent.setup();
-      renderStudioPage();
+      renderStudio();
 
       await startAnalysis(user);
 
@@ -493,7 +473,7 @@ describe('Streaming a run in the Studio', () => {
 
     it('offers a way back to the connectors from the Data type field', async () => {
       const user = userEvent.setup();
-      renderStudioPage();
+      renderStudio();
 
       await startAnalysis(user);
       await screen.findByText('分析條件');
@@ -506,7 +486,7 @@ describe('Streaming a run in the Studio', () => {
 
     it('lets the user type a Time range the chips do not offer', async () => {
       const user = userEvent.setup();
-      renderStudioPage();
+      renderStudio();
 
       await startAnalysis(user);
       await screen.findByText('分析條件');
@@ -534,7 +514,7 @@ describe('Streaming a run in the Studio', () => {
 
     it('narrows a long option list with a search box', async () => {
       const user = userEvent.setup();
-      renderStudioPage();
+      renderStudio();
 
       await startAnalysis(user);
       await screen.findByText('分析條件');
@@ -553,7 +533,7 @@ describe('Streaming a run in the Studio', () => {
 
     it('asks CP Test for its own conditions, swapping the field that depends on the role', async () => {
       const user = userEvent.setup();
-      renderStudioPage();
+      renderStudio();
 
       await selectASession(user);
       await user.click(screen.getByRole('button', { name: 'CP Test status' }));
@@ -590,7 +570,7 @@ describe('Streaming a run in the Studio', () => {
     it('sends a true boolean as its option label in the prose answer, and lets it be switched back off', async () => {
       const user = userEvent.setup();
       const stream = mockAgentStream();
-      renderStudioPage();
+      renderStudio();
 
       await selectASession(user);
       await user.click(screen.getByRole('button', { name: 'CP Test status' }));
@@ -641,7 +621,7 @@ describe('Streaming a run in the Studio', () => {
 
     it('stops mid-run to ask which DC items to chart first', async () => {
       const user = userEvent.setup();
-      renderStudioPage();
+      renderStudio();
 
       await startAnalysis(user);
 
@@ -693,7 +673,7 @@ describe('Streaming a run in the Studio', () => {
 
     it('leaves the answered conditions in the thread as a prose user message', async () => {
       const user = userEvent.setup();
-      renderStudioPage();
+      renderStudio();
 
       await startAnalysis(user);
       await answerAnalysisConditions(user);

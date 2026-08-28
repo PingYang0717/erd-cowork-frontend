@@ -2,7 +2,7 @@ import type { Artifact, DirectoryEntry } from '@/types/api/index';
 
 import { apiClient } from './apiClient';
 
-/** Stub for the one read the backend has not built yet (ADR-0009): the directory the
+/** Stub for the one read the backend has not built yet (ADR-0006): the directory the
  *  share dialog searches. Sharing itself is live (10e61cc); recipients are picked from
  *  this fixed list until the real directory endpoint lands. */
 const DEPARTMENT_CODES = [
@@ -89,7 +89,7 @@ export const artifactApi = {
     apiClient.delete<Artifact>(`/artifacts/${id}/publish`).then((res) => res.data),
 
   // Live since 10e61cc: the Gallery card's delete and the share dialog both reach the
-  // backend for real (ADR-0009 status note).
+  // backend for real (ADR-0006 status note).
   deleteArtifact: (id: string) => apiClient.delete<void>(`/artifacts/${id}`).then(() => undefined),
 
   share: (id: string, targetIds: string[]) =>
@@ -99,7 +99,7 @@ export const artifactApi = {
       })
       .then((res) => res.data),
 
-  /** Stubbed: no backend directory endpoint (ADR-0009). The share dialog searches this
+  /** Stubbed: no backend directory endpoint (ADR-0006). The share dialog searches this
    *  fixed list until the real directory lands. */
   listDirectory: () => Promise.resolve(STUB_DIRECTORY),
 };
