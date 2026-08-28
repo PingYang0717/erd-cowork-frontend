@@ -114,12 +114,25 @@ const MessageList: React.FC<MessageListProps> = ({
     }
   };
 
+  // Deps are the pieces of content that can change the log's height — not the `live`
+  // object itself, whose identity is fresh on every parent render and would force a
+  // scrollHeight read (a synchronous reflow) on renders where nothing grew.
   useEffect(() => {
     const container = containerRef.current;
     if (container && isNearBottomRef.current) {
       container.scrollTop = container.scrollHeight;
     }
-  }, [messages, live, optimisticUserText, bottomSlot]);
+  }, [
+    messages,
+    live?.liveText,
+    live?.thinking,
+    live?.codeText,
+    live?.steps,
+    live?.tables,
+    live?.question,
+    optimisticUserText,
+    bottomSlot,
+  ]);
 
   // The reader's own send is the exception: they just spoke, so the reply belongs on
   // screen no matter how far up they had scrolled.

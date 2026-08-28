@@ -9,7 +9,7 @@ import {
   ToolOutlined,
   UpOutlined,
 } from '@ant-design/icons';
-import React, { useEffect, useState } from 'react';
+import React, { useDeferredValue, useEffect, useMemo, useState } from 'react';
 
 import AttachmentChip from '@/components/files/AttachmentChip';
 import { INTERRUPTED_TEXTS, REPAIR_RECORD_PREFIXES } from '@/constants/messages';
@@ -198,6 +198,22 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
   durationMs,
   timerStartedAt,
 }) => {
+  // Streaming appends 10-40 tokens a second, and each one re-renders this bubble with a
+  // longer `text`. The expensive part is below: splitting and markdown-parsing the FULL
+  // accumulated text — n tokens cost O(n²) total. So the parse follows a *deferred* copy:
+  // React keeps the cheap parts (label, timer, steps) on every token and re-parses only
+  // when the main thread has room, skipping intermediate values under load. Zero timers,
+  // so the test doctrine (src/test/README.md: the test decides when events arrive, every
+  // state observable) is untouched — act() flushes deferred renders synchronously.
+  const deferredText = useDeferredValue(text);
+  const recordKind = systemRecordKind(text);
+  // Markers say where a table belongs in the answer. A table nobody placed still has to
+  // appear somewhere, so it goes after the text rather than vanishing.
+  const segments = useMemo(
+    () => (recordKind ? [] : splitAnswerByTableMarkers(deferredText, tables)),
+    [recordKind, deferredText, tables],
+  );
+
   if (sender === 'USER') {
     return (
       <div className={styles.userRow}>
@@ -223,10 +239,6 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
   // is a claim about a turn that finished. A disabled reask is a past one, so a history
   // bubble carrying it is settled.
   const turnInPlay = streaming || stopped || (question != null && !questionDisabled);
-  const recordKind = systemRecordKind(text);
-  // Markers say where a table belongs in the answer. A table nobody placed still has to
-  // appear somewhere, so it goes after the text rather than vanishing.
-  const segments = recordKind ? [] : splitAnswerByTableMarkers(text, tables);
   const placedTableIds = new Set(
     segments.flatMap((segment) => (segment.type === 'table' ? [segment.table.tableId] : [])),
   );

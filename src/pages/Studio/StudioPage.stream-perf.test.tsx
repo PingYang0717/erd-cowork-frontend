@@ -83,4 +83,16 @@ describe('streaming does not re-render settled bubbles', () => {
     );
     expect((RealComposer as { $$typeof?: symbol }).$$typeof).toBe(Symbol.for('react.memo'));
   });
+
+  /** Same reasoning, and here the memo is load-bearing for the deferred markdown parse:
+   *  MessageBubble hands ReplyText a *deferred* copy of the streaming text, so on the
+   *  per-token urgent render the text prop is unchanged — the memo is what turns that
+   *  into "no Markdown parse at all". Remove it and the deferral silently buys nothing
+   *  (jsdom cannot observe the difference; act() flushes deferred renders synchronously). */
+  it('ReplyText stays memoised — the deferred parse depends on it', async () => {
+    const { default: RealReplyText } = await vi.importActual<{ default: object }>(
+      '@/components/chat/ReplyText',
+    );
+    expect((RealReplyText as { $$typeof?: symbol }).$$typeof).toBe(Symbol.for('react.memo'));
+  });
 });
