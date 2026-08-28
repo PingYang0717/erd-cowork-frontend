@@ -1,12 +1,21 @@
 import { useRef, useState } from 'react';
 
-export function useHorizontalDrag(onDrag: (deltaX: number) => void) {
+interface HorizontalDragHandlers {
+  /** Called on mousedown, before the first move. */
+  onDragStart?: () => void;
+  onDrag: (deltaX: number) => void;
+  /** Called once on release. */
+  onDragEnd?: () => void;
+}
+
+export function useHorizontalDrag({ onDragStart, onDrag, onDragEnd }: HorizontalDragHandlers) {
   const lastClientXRef = useRef(0);
   const [isDragging, setIsDragging] = useState(false);
 
   function onMouseDown(event: React.MouseEvent) {
     lastClientXRef.current = event.clientX;
     setIsDragging(true);
+    onDragStart?.();
     // The pointer regularly leaves the narrow handle mid-drag, so the cursor
     // and selection are pinned on <body> for the duration — same as the
     // mockup's own resize handler.
@@ -25,6 +34,7 @@ export function useHorizontalDrag(onDrag: (deltaX: number) => void) {
       document.body.style.cursor = '';
       document.body.style.userSelect = '';
       setIsDragging(false);
+      onDragEnd?.();
     };
 
     window.addEventListener('mousemove', handleMouseMove);

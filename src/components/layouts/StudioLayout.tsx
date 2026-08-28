@@ -1,9 +1,14 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 
 import ArtifactPanel from '@/components/artifact/ArtifactPanel';
 import ThreadPanel from '@/components/chat/ThreadPanel';
 import DataBoundary from '@/components/common/DataBoundary';
-import { useStudioLayoutStore } from '@/stores/useStudioLayoutStore';
+import { useResizablePane } from '@/hooks/useResizablePane';
+import {
+  THREAD_MAX_WIDTH,
+  THREAD_MIN_WIDTH,
+  useStudioLayoutStore,
+} from '@/stores/useStudioLayoutStore';
 
 import ResizeHandle from './ResizeHandle';
 import styles from './StudioLayout.module.css';
@@ -14,9 +19,22 @@ const StudioLayout: React.FC = () => {
   const threadWidth = useStudioLayoutStore((s) => s.threadWidth);
   const setThreadWidth = useStudioLayoutStore((s) => s.setThreadWidth);
 
+  const readThreadWidth = useCallback(() => useStudioLayoutStore.getState().threadWidth, []);
+  const { paneRef, onDragStart, onDrag, onDragEnd } = useResizablePane<HTMLElement>({
+    min: THREAD_MIN_WIDTH,
+    max: THREAD_MAX_WIDTH,
+    read: readThreadWidth,
+    commit: setThreadWidth,
+  });
+
   return (
     <div className={styles.studio}>
-      <section aria-label="Thread" className={styles.thread} style={{ width: threadWidth }}>
+      <section
+        ref={paneRef}
+        aria-label="Thread"
+        className={styles.thread}
+        style={{ width: threadWidth }}
+      >
         <DataBoundary label="Thread">
           <ThreadPanel />
         </DataBoundary>
@@ -24,7 +42,9 @@ const StudioLayout: React.FC = () => {
 
       <ResizeHandle
         label="Resize thread panel"
-        onDrag={(deltaX) => setThreadWidth(useStudioLayoutStore.getState().threadWidth + deltaX)}
+        onDragStart={onDragStart}
+        onDrag={onDrag}
+        onDragEnd={onDragEnd}
       />
 
       <section aria-label="Artifact panel" className={styles.artifactPanel}>
