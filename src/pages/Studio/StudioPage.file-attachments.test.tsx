@@ -1,44 +1,15 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import {
-  fireEvent,
-  render,
-  screen,
-  waitForElementToBeRemoved,
-  within,
-} from '@testing-library/react';
+import { fireEvent, screen, waitForElementToBeRemoved, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import StudioShell from '@/components/layouts/StudioShell';
 import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
 import { useStudioLayoutStore } from '@/stores/useStudioLayoutStore';
-
-import StudioPage from './StudioPage';
-
-// StudioPage is only the /cowork index route's content now; the session
-// rail lives in StudioShell, the route's shared parent (router.tsx). This
-// mirrors that nesting so the rendered tree matches production.
-function renderStudioPage() {
-  const queryClient = new QueryClient();
-  return render(
-    <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={['/cowork']}>
-        <Routes>
-          <Route path="/cowork" element={<StudioShell />}>
-            <Route index element={<StudioPage />} />
-          </Route>
-        </Routes>
-      </MemoryRouter>
-    </QueryClientProvider>,
-  );
-}
+import { renderStudio, waitForComposer } from '@/test/renderStudio';
 
 async function selectASessionAndOpenFileModal(user: ReturnType<typeof userEvent.setup>) {
   await user.click(await screen.findByRole('button', { name: 'New chat' }));
   await screen.findByRole('button', { name: 'New analysis' });
-  // The composer subtree suspends on its queries; wait for it before sync getBy*.
-  await screen.findByRole('textbox', { name: 'Message' });
+  await waitForComposer();
   await user.click(screen.getByRole('button', { name: 'Attach files or connect a data source' }));
   await user.click(screen.getByRole('menuitem', { name: 'Attach files' }));
   return screen.findByRole('dialog', { name: 'Attach files' });
@@ -66,7 +37,7 @@ describe('File attachments', () => {
   // A CSV here runs to gigabytes; without this the modal is a frozen screen for minutes.
   it('shows upload progress while the bytes are going out, and clears it when they land', async () => {
     const user = userEvent.setup();
-    renderStudioPage();
+    renderStudio();
     await selectASessionAndOpenFileModal(user);
 
     // Fired rather than awaited: the point is what the screen shows *during* the
@@ -83,7 +54,7 @@ describe('File attachments', () => {
 
   it('attaches a file via click-to-browse and shows it as a chip in the composer', async () => {
     const user = userEvent.setup();
-    renderStudioPage();
+    renderStudio();
     const dialog = await selectASessionAndOpenFileModal(user);
 
     // The dropzone speaks the mockup's Chinese copy.
@@ -100,7 +71,7 @@ describe('File attachments', () => {
   it('rejects unsupported file types with the Chinese error and an accept attribute on the input', async () => {
     // applyAccept off simulates a file arriving past the picker (drag & drop).
     const user = userEvent.setup({ applyAccept: false });
-    renderStudioPage();
+    renderStudio();
     const dialog = await selectASessionAndOpenFileModal(user);
 
     const input = screen.getByLabelText('Choose files');
@@ -118,7 +89,7 @@ describe('File attachments', () => {
 
   it('caps attachments at 5 files and warns when more are dropped at once', async () => {
     const user = userEvent.setup();
-    renderStudioPage();
+    renderStudio();
     const dialog = await selectASessionAndOpenFileModal(user);
 
     const input = screen.getByLabelText('Choose files');
@@ -136,7 +107,7 @@ describe('File attachments', () => {
 
   it('renders modal file rows with a type-colored icon, a type/size line, and a remove button', async () => {
     const user = userEvent.setup();
-    renderStudioPage();
+    renderStudio();
     const dialog = await selectASessionAndOpenFileModal(user);
 
     const input = screen.getByLabelText('Choose files');
@@ -161,7 +132,7 @@ describe('File attachments', () => {
 
   it('sends attachments with the message, rendering the chips inside the bubble above the text', async () => {
     const user = userEvent.setup();
-    renderStudioPage();
+    renderStudio();
     const dialog = await selectASessionAndOpenFileModal(user);
 
     const input = screen.getByLabelText('Choose files');
@@ -185,7 +156,7 @@ describe('File attachments', () => {
 
   it('removes an attached file from the composer', async () => {
     const user = userEvent.setup();
-    renderStudioPage();
+    renderStudio();
     const dialog = await selectASessionAndOpenFileModal(user);
 
     const input = screen.getByLabelText('Choose files');

@@ -1,32 +1,10 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import StudioShell from '@/components/layouts/StudioShell';
 import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
 import { useStudioLayoutStore } from '@/stores/useStudioLayoutStore';
-
-import StudioPage from './StudioPage';
-
-// StudioPage is only the /cowork index route's content now; the session
-// rail lives in StudioShell, the route's shared parent (router.tsx). This
-// mirrors that nesting so the rendered tree matches production.
-function renderStudioPage() {
-  const queryClient = new QueryClient();
-  return render(
-    <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={['/cowork']}>
-        <Routes>
-          <Route path="/cowork" element={<StudioShell />}>
-            <Route index element={<StudioPage />} />
-          </Route>
-        </Routes>
-      </MemoryRouter>
-    </QueryClientProvider>,
-  );
-}
+import { renderStudio, waitForComposer } from '@/test/renderStudio';
 
 async function openConnectorsPanel(user: ReturnType<typeof userEvent.setup>) {
   await user.click(screen.getByRole('button', { name: 'Attach files or connect a data source' }));
@@ -38,8 +16,7 @@ async function openConnectorsPanel(user: ReturnType<typeof userEvent.setup>) {
 // (ADR-0005).
 async function selectASessionAndOpenConnectors(user: ReturnType<typeof userEvent.setup>) {
   await user.click(await screen.findByRole('button', { name: 'Defect pareto — W12' }));
-  // The composer subtree suspends on its queries; wait for it before sync getBy*.
-  await screen.findByRole('textbox', { name: 'Message' });
+  await waitForComposer();
   await openConnectorsPanel(user);
 }
 
@@ -51,7 +28,7 @@ describe('Connectors panel', () => {
 
   it('exposes each connector state on its toggle button for the per-state styling', async () => {
     const user = userEvent.setup();
-    renderStudioPage();
+    renderStudio();
     await selectASessionAndOpenConnectors(user);
 
     expect(await screen.findByRole('button', { name: 'Disconnect Inline' })).toHaveAttribute(
@@ -74,7 +51,7 @@ describe('Connectors panel', () => {
 
   it('lists every connector type with its current status', async () => {
     const user = userEvent.setup();
-    renderStudioPage();
+    renderStudio();
     await selectASessionAndOpenConnectors(user);
 
     expect(await screen.findByRole('dialog', { name: 'Connectors' })).toBeInTheDocument();
@@ -96,7 +73,7 @@ describe('Connectors panel', () => {
   // ConnectorsPanel.test.tsx for the persistence itself); only no_access stays off.
   it('lets the user connect and disconnect; only no_access stays off', async () => {
     const user = userEvent.setup();
-    renderStudioPage();
+    renderStudio();
     await selectASessionAndOpenConnectors(user);
 
     expect(await screen.findByRole('button', { name: 'Connect Lot Info' })).toBeEnabled();

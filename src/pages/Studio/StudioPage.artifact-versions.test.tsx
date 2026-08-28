@@ -1,33 +1,11 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, within } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import StudioShell from '@/components/layouts/StudioShell';
 import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
 import { useStudioLayoutStore } from '@/stores/useStudioLayoutStore';
 import { useThemeStore } from '@/stores/useThemeStore';
-
-import StudioPage from './StudioPage';
-
-// StudioPage is only the /cowork index route's content now; the session
-// rail lives in StudioShell, the route's shared parent (router.tsx). This
-// mirrors that nesting so the rendered tree matches production.
-function renderStudioPage() {
-  const queryClient = new QueryClient();
-  return render(
-    <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={['/cowork']}>
-        <Routes>
-          <Route path="/cowork" element={<StudioShell />}>
-            <Route index element={<StudioPage />} />
-          </Route>
-        </Routes>
-      </MemoryRouter>
-    </QueryClientProvider>,
-  );
-}
+import { renderStudio } from '@/test/renderStudio';
 
 function artifactSrcdoc() {
   return (screen.getByTitle('Artifact preview') as HTMLIFrameElement).getAttribute('srcdoc');
@@ -45,7 +23,7 @@ describe('Artifact version switcher', () => {
 
   it('derives versions from the history; regenerating appends v2 and switching back re-renders v1', async () => {
     const user = userEvent.setup();
-    renderStudioPage();
+    renderStudio();
 
     await user.click(await screen.findByRole('button', { name: 'SPC — Vt (gate CD)' }));
 
@@ -68,7 +46,7 @@ describe('Artifact version switcher', () => {
 
   it('shows the custom menu: header row, current-version highlight, per-row time, and published checks', async () => {
     const user = userEvent.setup();
-    renderStudioPage();
+    renderStudio();
 
     await user.click(await screen.findByRole('button', { name: 'SPC — Vt (gate CD)' }));
     await screen.findByTitle('Artifact preview');

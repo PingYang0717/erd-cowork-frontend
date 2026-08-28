@@ -1,31 +1,12 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import StudioShell from '@/components/layouts/StudioShell';
 import { useActiveRunStore } from '@/stores/useActiveRunStore';
 import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
 import { useStudioLayoutStore } from '@/stores/useStudioLayoutStore';
 import { useThemeStore } from '@/stores/useThemeStore';
-
-import StudioPage from './StudioPage';
-
-function renderStudioPage() {
-  const queryClient = new QueryClient();
-  return render(
-    <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={['/cowork']}>
-        <Routes>
-          <Route path="/cowork" element={<StudioShell />}>
-            <Route index element={<StudioPage />} />
-          </Route>
-        </Routes>
-      </MemoryRouter>
-    </QueryClientProvider>,
-  );
-}
+import { renderStudio } from '@/test/renderStudio';
 
 function artifactSrcdoc() {
   return (screen.getByTitle('Artifact preview') as HTMLIFrameElement).getAttribute('srcdoc');
@@ -53,7 +34,7 @@ describe("A past reply's Artifact chip", () => {
 
   it('puts that reply’s Artifact back on the pane when clicked', async () => {
     const user = userEvent.setup();
-    renderStudioPage();
+    renderStudio();
     await threadWithTwoArtifacts(user);
 
     // v2 owns the pane, so v1's chip offers to take it over rather than claiming — as
@@ -68,7 +49,7 @@ describe("A past reply's Artifact chip", () => {
 
   it('labels exactly one chip as the one on the pane, and moves that label on a pick', async () => {
     const user = userEvent.setup();
-    renderStudioPage();
+    renderStudio();
     await threadWithTwoArtifacts(user);
 
     expect(screen.getAllByRole('button', { name: /shown in the Artifact panel$/ })).toHaveLength(1);
@@ -85,7 +66,7 @@ describe("A past reply's Artifact chip", () => {
 
   it('hands the pane back to a new run, so a stale pick cannot outlive it', async () => {
     const user = userEvent.setup();
-    renderStudioPage();
+    renderStudio();
     await threadWithTwoArtifacts(user);
 
     await user.click(screen.getByRole('button', { name: /^Show .* in the Artifact panel$/ }));

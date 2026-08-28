@@ -1,30 +1,11 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, within } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import StudioShell from '@/components/layouts/StudioShell';
 import { server } from '@/mocks/server';
 import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
-
-import StudioPage from './StudioPage';
-
-function renderStudioPage() {
-  const queryClient = new QueryClient();
-  return render(
-    <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={['/cowork']}>
-        <Routes>
-          <Route path="/cowork" element={<StudioShell />}>
-            <Route index element={<StudioPage />} />
-          </Route>
-        </Routes>
-      </MemoryRouter>
-    </QueryClientProvider>,
-  );
-}
+import { renderStudio } from '@/test/renderStudio';
 
 function recentGroup() {
   return within(screen.getByRole('region', { name: 'Recents sessions' }));
@@ -32,7 +13,7 @@ function recentGroup() {
 
 /** The rail suspends on the session list; every case starts from a settled one. */
 async function openStudio() {
-  renderStudioPage();
+  renderStudio();
   await screen.findByRole('region', { name: 'Recents sessions' });
 }
 
@@ -45,7 +26,7 @@ describe('New chat opens a client-side draft', () => {
   });
 
   it('lands with the most recent session open, ready to type', async () => {
-    renderStudioPage();
+    renderStudio();
 
     // No click needed: the composer is there because a session already is.
     expect(await screen.findByRole('textbox', { name: 'Message' })).toBeInTheDocument();
@@ -59,7 +40,7 @@ describe('New chat opens a client-side draft', () => {
 
   it('opens a draft by itself when there is no session to land on', async () => {
     server.use(http.get('/api/sessions', () => HttpResponse.json([])));
-    renderStudioPage();
+    renderStudio();
 
     expect(await screen.findByRole('textbox', { name: 'Message' })).toBeInTheDocument();
     expect(await recentGroup().findByText('New analysis')).toBeInTheDocument();

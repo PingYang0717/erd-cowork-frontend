@@ -1,30 +1,11 @@
-﻿import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import StudioShell from '@/components/layouts/StudioShell';
 import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
 import { useStudioLayoutStore } from '@/stores/useStudioLayoutStore';
 import { useThemeStore } from '@/stores/useThemeStore';
-
-import StudioPage from './StudioPage';
-
-function renderStudioPage() {
-  const queryClient = new QueryClient();
-  return render(
-    <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={['/cowork']}>
-        <Routes>
-          <Route path="/cowork" element={<StudioShell />}>
-            <Route index element={<StudioPage />} />
-          </Route>
-        </Routes>
-      </MemoryRouter>
-    </QueryClientProvider>,
-  );
-}
+import { renderStudio } from '@/test/renderStudio';
 
 describe('Per-version Artifact publishing', () => {
   beforeEach(() => {
@@ -38,7 +19,7 @@ describe('Per-version Artifact publishing', () => {
   // Agent for a whole new version.
   it('offers 發布 Artifact for a fresh (regenerated) version, and publishing flips it to 已發布', async () => {
     const user = userEvent.setup();
-    renderStudioPage();
+    renderStudio();
 
     // The seeded session's latest version is already published.
     await user.click(await screen.findByRole('button', { name: 'SPC — Vt (gate CD)' }));
@@ -61,7 +42,7 @@ describe('Per-version Artifact publishing', () => {
 
   it('opens the share dialog from the toolbar', async () => {
     const user = userEvent.setup();
-    renderStudioPage();
+    renderStudio();
 
     await user.click(await screen.findByRole('button', { name: 'SPC — Vt (gate CD)' }));
     await screen.findByText('已發布');
@@ -72,7 +53,7 @@ describe('Per-version Artifact publishing', () => {
 
   it('keeps each version’s published state independent when switching versions', async () => {
     const user = userEvent.setup();
-    renderStudioPage();
+    renderStudio();
 
     await user.click(await screen.findByRole('button', { name: 'SPC — Vt (gate CD)' }));
     await screen.findByText('已發布');

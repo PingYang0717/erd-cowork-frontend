@@ -1,30 +1,11 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, within } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import StudioShell from '@/components/layouts/StudioShell';
 import { server } from '@/mocks/server';
 import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
 import { useStudioLayoutStore } from '@/stores/useStudioLayoutStore';
-
-import StudioPage from './StudioPage';
-
-function renderStudioPage() {
-  const queryClient = new QueryClient();
-  return render(
-    <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={['/cowork']}>
-        <Routes>
-          <Route path="/cowork" element={<StudioShell />}>
-            <Route index element={<StudioPage />} />
-          </Route>
-        </Routes>
-      </MemoryRouter>
-    </QueryClientProvider>,
-  );
-}
+import { renderStudio } from '@/test/renderStudio';
 
 /** The backend deletes a session's files once they go untouched for the retention
  *  period. The row survives, flagged expired, and nothing the agent does can succeed
@@ -61,7 +42,7 @@ describe('File retention', () => {
 
   it('marks an expired file rather than quietly dropping it', async () => {
     sessionWithAnExpiredFile();
-    renderStudioPage();
+    renderStudio();
 
     const chips = await screen.findByRole('list', { name: 'Attached files' });
     expect(within(chips).getByText(/lot-genealogy\.csv/)).toBeInTheDocument();
@@ -70,7 +51,7 @@ describe('File retention', () => {
 
   it('says how long files are kept, and why this one is gone', async () => {
     sessionWithAnExpiredFile();
-    renderStudioPage();
+    renderStudio();
 
     const notice = await screen.findByRole('alert');
     expect(notice).toHaveTextContent(/30 天/);
@@ -79,7 +60,7 @@ describe('File retention', () => {
 
   it('blocks sending until the expired file is cleared', async () => {
     sessionWithAnExpiredFile();
-    renderStudioPage();
+    renderStudio();
 
     await screen.findByRole('alert');
     expect(screen.getByRole('textbox', { name: 'Message' })).toBeDisabled();
@@ -88,7 +69,7 @@ describe('File retention', () => {
   });
 
   it('says nothing when every file is still there', async () => {
-    renderStudioPage();
+    renderStudio();
 
     await screen.findByRole('textbox', { name: 'Message' });
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
