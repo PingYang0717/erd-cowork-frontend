@@ -255,4 +255,8 @@ const ChatComposer: React.FC<ChatComposerProps> = ({
   );
 };
 
-export default ChatComposer;
+// Memoised because ThreadView re-renders once per streamed TOKEN (10-40/s): without
+// this, every token re-rendered the antd TextArea (autoSize measurement included), the
+// "+"-menu Dropdown and both modals. All props are primitives or useCallback-stable —
+// ThreadPanel's handleSend comment has claimed this memo for a while; now it exists.
+export default React.memo(ChatComposer);

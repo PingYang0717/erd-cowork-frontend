@@ -133,11 +133,18 @@ const MessageList: React.FC<MessageListProps> = ({
 
   // Parsed per settled message and memoised together: a streaming run re-renders this
   // list on every token, and re-parsing the whole history each time is O(history × tokens).
+  // The artifact object lives here for the same reason — built inline in the JSX it
+  // would be a fresh object every token, and a fresh object prop is all it takes to
+  // defeat MessageBubble's memo (probe-measured: bubbles with an artifact re-rendered
+  // once per token; text-only bubbles not at all).
   const parsedHistory = useMemo(
     () =>
       messages.map((message) => ({
         steps: message.sender === 'AI' ? parseSteps(message.stepsJson) : [],
         question: message.sender === 'AI' ? parseQuestion(message.questionsJson) : null,
+        artifact: message.artifactId
+          ? { artifactId: message.artifactId, title: message.artifactTitle ?? message.text }
+          : null,
       })),
     [messages],
   );
@@ -159,11 +166,7 @@ const MessageList: React.FC<MessageListProps> = ({
           text={message.text}
           attachments={message.attachments}
           steps={parsedHistory[index].steps}
-          artifact={
-            message.artifactId
-              ? { artifactId: message.artifactId, title: message.artifactTitle ?? message.text }
-              : null
-          }
+          artifact={parsedHistory[index].artifact}
           question={parsedHistory[index].question}
           artifactShown={message.artifactId !== null && message.artifactId === displayedArtifactId}
           onPickArtifact={pickArtifact}
