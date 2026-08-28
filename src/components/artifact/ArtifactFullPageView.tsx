@@ -120,9 +120,13 @@ const ArtifactFullPageView: React.FC<ArtifactFullPageViewProps> = ({ artifactId 
             type="button"
             className={styles.iconButton}
             aria-label="Open artifact in new tab"
-            onClick={() =>
-              window.open(artifactHref(displayedArtifactId), '_blank', 'noopener,noreferrer')
-            }
+            onClick={() => {
+              // The toolbar only renders alongside a displayed artifact, but the type
+              // cannot see that — and opening a tab at /undefined would be silent.
+              if (displayedArtifactId !== undefined) {
+                window.open(artifactHref(displayedArtifactId), '_blank', 'noopener,noreferrer');
+              }
+            }}
           >
             <ExportOutlined aria-hidden />
           </button>

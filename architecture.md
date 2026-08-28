@@ -9,7 +9,7 @@
 | 類別              | 選擇                                           | 備註                                                                  |
 | ----------------- | ---------------------------------------------- | --------------------------------------------------------------------- |
 | 框架              | React 18.3.1 + Vite 8.1.x                      | 與 `cowork-master` 對齊,共用同一個後端與同一套技術棧                  |
-| 語言              | TypeScript(先關閉 strict,後續逐步開啟)         | 見第 6 節                                                             |
+| 語言              | TypeScript(strict 已開啟)                      | 見第 6 節                                                             |
 | UI 元件庫         | Ant Design 6.x(+ Ant Design X 2.x)             | 優先使用 antd 現成元件,避免重造輪子                                   |
 | 路由              | React Router                                   | `createHashRouter`;離開 app 的連結走 `utils/artifactUrl.ts`           |
 | Client 端全域狀態 | Zustand                                        | 只放 UI 狀態(sidebar 開關、theme、跨頁草稿等)                         |
@@ -313,11 +313,11 @@ proxy 到 `localhost:8080`;部署走反向代理,與 vite 無關。
 
 ## 6. TypeScript 規則
 
-- 目前**不開 strict mode**,但以下幾條先強制:
+- **strict mode 已開啟**(2026-08-28:實測全庫僅 3 個錯誤,修完即翻開)。此外:
   - 禁止 `any`(`typescript/no-explicit-any: error`),真的需要時用 `unknown` 再收斂型別
   - 函式的參數與回傳值型別盡量明確標註,不依賴推斷
   - API 回應一律定義 DTO 型別(放 `src/types/api/`)
-- 待專案穩定、型別覆蓋率提高後,再逐步開啟 `strict: true`(建議下一個里程碑就排入)。
+- NEVER 關回去:strict 下每個新檔案的 null 安全是免費的,關掉才要重新還債。
 
 ---
 
