@@ -19,7 +19,7 @@ import type { Answers } from './QuestionFormCard';
 import RepairOfferCard from './RepairOfferCard';
 import styles from './ThreadPanel.module.css';
 
-function ThreadHeader() {
+const ThreadHeader: React.FC = () => {
   return (
     <header className={styles.header} aria-label="Thread header">
       <span className={styles.headerTitle}>
@@ -36,9 +36,14 @@ function ThreadHeader() {
       <ThemeToggle />
     </header>
   );
+};
+
+interface EmptyStateProps {
+  heading: string;
+  subtitle: ReactNode;
 }
 
-function EmptyState({ heading, subtitle }: { heading: string; subtitle: ReactNode }) {
+const EmptyState: React.FC<EmptyStateProps> = ({ heading, subtitle }) => {
   return (
     <div className={styles.emptyState}>
       <div className={styles.emptyStateIcon}>
@@ -48,7 +53,7 @@ function EmptyState({ heading, subtitle }: { heading: string; subtitle: ReactNod
       <p className={styles.emptyStateSubtitle}>{subtitle}</p>
     </div>
   );
-}
+};
 
 /** The thread pane. The header is deliberately outside the boundary below: it carries
  *  the theme toggle and the data-source chip, which have nothing to do with which
@@ -79,7 +84,11 @@ const ThreadPanel: React.FC = () => {
   );
 };
 
-function ThreadView({ sessionId }: { sessionId: string }) {
+interface ThreadViewProps {
+  sessionId: string;
+}
+
+const ThreadView: React.FC<ThreadViewProps> = ({ sessionId }) => {
   const { data: detail } = useSessionDetail(sessionId);
   const messages = detail.messages;
   const { state, send, stop } = useAgentStream(sessionId);
@@ -222,6 +231,6 @@ function ThreadView({ sessionId }: { sessionId: string }) {
       </div>
     </>
   );
-}
+};
 
 export default ThreadPanel;

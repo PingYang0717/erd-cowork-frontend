@@ -54,17 +54,14 @@ function isAnswered(field: QuestionField, answers: Answers): boolean {
   return answer === true;
 }
 
-function ChipGroup({
-  field,
-  answers,
-  search,
-  onToggle,
-}: {
+interface ChipGroupProps {
   field: QuestionField;
   answers: Answers;
   search: string;
   onToggle: (value: string) => void;
-}) {
+}
+
+const ChipGroup: React.FC<ChipGroupProps> = ({ field, answers, search, onToggle }) => {
   const selected = answers[field.key];
   const isSelected = (value: string) => {
     if (Array.isArray(selected)) {
@@ -98,11 +95,15 @@ function ChipGroup({
       ))}
     </div>
   );
-}
+};
 
 /** The Data type field is the one place the form points back at the Connectors panel:
  *  its options ARE the connected connectors, so "none of these" is fixed there. */
-function DataTypeHint({ hint }: { hint: string }) {
+interface DataTypeHintProps {
+  hint: string;
+}
+
+const DataTypeHint: React.FC<DataTypeHintProps> = ({ hint }) => {
   const openConnectors = useConnectorsPanelStore((store) => store.open);
 
   return (
@@ -114,7 +115,7 @@ function DataTypeHint({ hint }: { hint: string }) {
       </button>
     </p>
   );
-}
+};
 
 interface QuestionFormCardProps {
   form: QuestionForm;

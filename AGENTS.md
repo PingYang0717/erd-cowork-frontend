@@ -69,7 +69,9 @@ Husky + lint-staged 會自動跑 `oxlint --fix` → `eslint --fix` → `prettier
 
 ### 元件
 
-- 一律 `React.FC<Props>` + 具名 props interface
+- 一律 `const X: React.FC<XProps> = (props) => {}` + 具名 props interface,**包含檔案內的
+  子元件**。interface 命名 `<元件名>Props`,宣告在該元件正上方;無 props 的寫 `React.FC`
+  不帶泛型,不造空 interface(ADR-0010)
 - 檔案內順序:**props interface → hooks → handlers(`useCallback`)→ render → `export default`**
 - **匯出只有一種形式:`export default <元件名>`,不併存具名匯出。** 同檔的型別
   (`MessageBubbleProps`、`LiveRun`、`Answers`)與跨檔使用的子元件(`SessionGroup`)

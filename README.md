@@ -140,7 +140,7 @@ chat panel**，它的呈現語彙以 cowork 上游為準。
 | [`AGENTS.md`](./AGENTS.md)                   | 動工前必讀的精簡規則                        |
 | [`architecture.md`](./architecture.md)       | 架構、設定檔、狀態分類、主題色票            |
 | [`CONTEXT.md`](./CONTEXT.md)                 | 領域名詞與該避免的說法                      |
-| [`docs/adr/`](./docs/adr/)                   | 架構決策紀錄（九份，皆為現行決策）          |
+| [`docs/adr/`](./docs/adr/)                   | 架構決策紀錄（十份，皆為現行決策）          |
 | [`docs/api/`](./docs/api/)                   | API 契約、對接核對表、後端回饋、接線指南    |
 | [`docs/agents/`](./docs/agents/)             | domain 文件慣例（CONTEXT.md 與 ADR 怎麼寫） |
 | [`src/test/README.md`](./src/test/README.md) | 測試的兩個 seam 與兩道環境 shim             |

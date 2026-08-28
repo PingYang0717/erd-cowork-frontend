@@ -182,17 +182,14 @@ const ArtifactsGallery: React.FC = () => {
   );
 };
 
-function FilterPill({
-  label,
-  count,
-  active,
-  onClick,
-}: {
+interface FilterPillProps {
   label: string;
   count: number;
   active: boolean;
   onClick: () => void;
-}) {
+}
+
+const FilterPill: React.FC<FilterPillProps> = ({ label, count, active, onClick }) => {
   return (
     <button
       type="button"
@@ -204,6 +201,6 @@ function FilterPill({
       <span className={styles.pillCount}>{count}</span>
     </button>
   );
-}
+};
 
 export default ArtifactsGallery;

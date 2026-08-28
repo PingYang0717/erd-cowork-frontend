@@ -76,7 +76,11 @@ const STEP_STATUS_LABEL: Record<StepStatus, string> = {
   ERROR: 'Failed',
 };
 
-function StepStatusIcon({ status }: { status: StepStatus }) {
+interface StepStatusIconProps {
+  status: StepStatus;
+}
+
+const StepStatusIcon: React.FC<StepStatusIconProps> = ({ status }) => {
   const label = STEP_STATUS_LABEL[status];
 
   if (status === 'SUCCESS') {
@@ -89,9 +93,13 @@ function StepStatusIcon({ status }: { status: StepStatus }) {
     return <CloseCircleFilled aria-label={label} className={styles.stepIconError} />;
   }
   return <span aria-label={label} role="img" className={styles.stepIconPending} />;
+};
+
+interface StepRowProps {
+  step: StepItem;
 }
 
-function StepRow({ step }: { step: StepItem }) {
+const StepRow: React.FC<StepRowProps> = ({ step }) => {
   return (
     <div className={styles.workingStep}>
       <StepStatusIcon status={step.status} />
@@ -103,11 +111,15 @@ function StepRow({ step }: { step: StepItem }) {
       </span>
     </div>
   );
-}
+};
 
 // After a run completes, its steps stay behind as the mockup's collapsed
 // "Worked through N steps" card, expandable to each step's title and description.
-function StepsRecap({ steps }: { steps: StepItem[] }) {
+interface StepsRecapProps {
+  steps: StepItem[];
+}
+
+const StepsRecap: React.FC<StepsRecapProps> = ({ steps }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   // The mockup leads the row with the run's outcome. A recap is only ever rendered for
   // a finished run, so the only question left is whether any step failed.
@@ -151,7 +163,7 @@ function StepsRecap({ steps }: { steps: StepItem[] }) {
       )}
     </div>
   );
-}
+};
 
 /** Messages the backend persists on its own behalf — an interrupted response, a repair
  *  outcome. They are records, not agent prose, so they never reach the Markdown renderer. */
@@ -351,7 +363,11 @@ function agentLabel(streaming: boolean, stopped: boolean): string {
 
 /** The open turn's timer. The clock is read in the interval rather than during render —
  *  a render has to be able to run twice and say the same thing. */
-function LiveElapsed({ startedAt }: { startedAt: number }) {
+interface LiveElapsedProps {
+  startedAt: number;
+}
+
+const LiveElapsed: React.FC<LiveElapsedProps> = ({ startedAt }) => {
   const [elapsedMs, setElapsedMs] = useState(0);
 
   useEffect(() => {
@@ -360,16 +376,20 @@ function LiveElapsed({ startedAt }: { startedAt: number }) {
   }, [startedAt]);
 
   return <Elapsed ms={elapsedMs} />;
+};
+
+interface ElapsedProps {
+  ms: number;
 }
 
-function Elapsed({ ms }: { ms: number }) {
+const Elapsed: React.FC<ElapsedProps> = ({ ms }) => {
   return (
     <p className={styles.elapsed}>
       <ClockCircleOutlined aria-hidden className={styles.elapsedIcon} />
       {formatDuration(ms)}
     </p>
   );
-}
+};
 
 // Memoised: a streaming run re-renders the whole list on every token, while a settled
 // message above it never changes.

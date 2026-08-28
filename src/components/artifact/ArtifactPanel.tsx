@@ -24,7 +24,7 @@ import styles from './ArtifactPanel.module.css';
 import ShareArtifactDialog from './ShareArtifactDialog';
 import VersionSwitcher from './VersionSwitcher';
 
-function EmptyPanel() {
+const EmptyPanel: React.FC = () => {
   return (
     <div className={styles.empty}>
       <div className={styles.emptyIcon}>
@@ -36,7 +36,7 @@ function EmptyPanel() {
       </p>
     </div>
   );
-}
+};
 
 const ArtifactPanel: React.FC = () => {
   const selectedSessionId = useSessionSelectionStore((s) => s.selectedSessionId);
@@ -48,7 +48,11 @@ const ArtifactPanel: React.FC = () => {
   return <ArtifactPanelView key={selectedSessionId} sessionId={selectedSessionId} />;
 };
 
-function ArtifactPanelView({ sessionId }: { sessionId: string }) {
+interface ArtifactPanelViewProps {
+  sessionId: string;
+}
+
+const ArtifactPanelView: React.FC<ArtifactPanelViewProps> = ({ sessionId }) => {
   const { data: detail } = useSessionDetail(sessionId);
   const streamedArtifact = useActiveRunStore((s) => s.streamedArtifact);
   const setDisplayedArtifactId = useActiveRunStore((s) => s.setDisplayedArtifactId);
@@ -111,19 +115,21 @@ function ArtifactPanelView({ sessionId }: { sessionId: string }) {
       onSelectVersion={pickArtifact}
     />
   );
-}
+};
 
-function ArtifactPanelContent({
-  artifactId,
-  versions,
-  activeVersion,
-  onSelectVersion,
-}: {
+interface ArtifactPanelContentProps {
   artifactId: string;
   versions: ArtifactVersion[];
   activeVersion: ArtifactVersion;
   onSelectVersion: (artifactId: string) => void;
-}) {
+}
+
+const ArtifactPanelContent: React.FC<ArtifactPanelContentProps> = ({
+  artifactId,
+  versions,
+  activeVersion,
+  onSelectVersion,
+}) => {
   const [isShareOpen, setIsShareOpen] = useState(false);
   const reloadNonce = useActiveRunStore((s) => s.artifactReloadNonce);
   const bumpArtifactReload = useActiveRunStore((s) => s.bumpArtifactReload);
@@ -231,12 +237,12 @@ function ArtifactPanelContent({
       <PublishedToast />
     </div>
   );
-}
+};
 
 // The mockup's post-publish toast: confirms where the Artifact landed and
 // offers a jump to the gallery. The rail's coach highlight shares its state
 // and both clear together on dismiss.
-function PublishedToast() {
+const PublishedToast: React.FC = () => {
   const navigate = useNavigate();
   const isActive = usePublishCoachStore((s) => s.isActive);
   const dismiss = usePublishCoachStore((s) => s.dismiss);
@@ -263,6 +269,6 @@ function PublishedToast() {
       </button>
     </div>
   );
-}
+};
 
 export default ArtifactPanel;
