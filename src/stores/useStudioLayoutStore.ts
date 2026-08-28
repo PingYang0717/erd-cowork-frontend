@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { devtools } from 'zustand/middleware';
 
 export const SESSION_RAIL_MIN_WIDTH = 200;
 export const SESSION_RAIL_MAX_WIDTH = 460;
@@ -22,13 +23,31 @@ function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
 }
 
-export const useStudioLayoutStore = create<StudioLayoutState>((set) => ({
-  sessionRailWidth: SESSION_RAIL_DEFAULT_WIDTH,
-  threadWidth: THREAD_DEFAULT_WIDTH,
-  isSessionRailCollapsed: false,
-  setSessionRailWidth: (width) =>
-    set({ sessionRailWidth: clamp(width, SESSION_RAIL_MIN_WIDTH, SESSION_RAIL_MAX_WIDTH) }),
-  setThreadWidth: (width) => set({ threadWidth: clamp(width, THREAD_MIN_WIDTH, THREAD_MAX_WIDTH) }),
-  toggleSessionRailCollapsed: () =>
-    set((state) => ({ isSessionRailCollapsed: !state.isSessionRailCollapsed })),
-}));
+export const useStudioLayoutStore = create<StudioLayoutState>()(
+  devtools(
+    (set) => ({
+      sessionRailWidth: SESSION_RAIL_DEFAULT_WIDTH,
+      threadWidth: THREAD_DEFAULT_WIDTH,
+      isSessionRailCollapsed: false,
+      setSessionRailWidth: (width) =>
+        set(
+          { sessionRailWidth: clamp(width, SESSION_RAIL_MIN_WIDTH, SESSION_RAIL_MAX_WIDTH) },
+          false,
+          'setSessionRailWidth',
+        ),
+      setThreadWidth: (width) =>
+        set(
+          { threadWidth: clamp(width, THREAD_MIN_WIDTH, THREAD_MAX_WIDTH) },
+          false,
+          'setThreadWidth',
+        ),
+      toggleSessionRailCollapsed: () =>
+        set(
+          (state) => ({ isSessionRailCollapsed: !state.isSessionRailCollapsed }),
+          false,
+          'toggleSessionRailCollapsed',
+        ),
+    }),
+    { name: 'StudioLayout' },
+  ),
+);

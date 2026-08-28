@@ -40,11 +40,11 @@ vi.mock('@/components/chat/MessageList', async () => {
 /** One drag = 20 mousemoves, the number a real ~300ms drag emits at 60fps. */
 function drag(handleName: string, steps = 20) {
   const handle = screen.getByRole('separator', { name: handleName });
-  fireEvent.mouseDown(handle, { clientX: 500 });
+  fireEvent.pointerDown(handle, { clientX: 500 });
   for (let step = 0; step < steps; step += 1) {
-    fireEvent.mouseMove(window, { clientX: 500 + step });
+    fireEvent.pointerMove(window, { clientX: 500 + step, buttons: 1 });
   }
-  fireEvent.mouseUp(window);
+  fireEvent.pointerUp(window);
 }
 
 describe('divider drag does not re-render the panes', () => {

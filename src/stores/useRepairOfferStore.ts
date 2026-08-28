@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { devtools } from 'zustand/middleware';
 
 export interface BrowserJsError {
   message: string;
@@ -31,27 +32,40 @@ interface RepairOfferState {
   dismiss: () => void;
 }
 
-export const useRepairOfferStore = create<RepairOfferState>((set, get) => ({
-  offer: null,
-  dismissed: [],
-
-  report: (artifactId, errors) => {
-    const { offer, dismissed } = get();
-    // One offer at a time, and never for something already waved off.
-    if (offer !== null || dismissed.includes(artifactId) || errors.length === 0) {
-      return;
-    }
-    set({ offer: { artifactId, errors, status: 'pending' } });
-  },
-
-  setStatus: (status) =>
-    set((state) => ({ offer: state.offer ? { ...state.offer, status } : null })),
-
-  clear: () => set({ offer: null }),
-
-  dismiss: () =>
-    set((state) => ({
+export const useRepairOfferStore = create<RepairOfferState>()(
+  devtools(
+    (set, get) => ({
       offer: null,
-      dismissed: state.offer ? [...state.dismissed, state.offer.artifactId] : state.dismissed,
-    })),
-}));
+      dismissed: [],
+
+      report: (artifactId, errors) => {
+        const { offer, dismissed } = get();
+        // One offer at a time, and never for something already waved off.
+        if (offer !== null || dismissed.includes(artifactId) || errors.length === 0) {
+          return;
+        }
+        set({ offer: { artifactId, errors, status: 'pending' } }, false, 'report');
+      },
+
+      setStatus: (status) =>
+        set(
+          (state) => ({ offer: state.offer ? { ...state.offer, status } : null }),
+          false,
+          'setStatus',
+        ),
+
+      clear: () => set({ offer: null }, false, 'clear'),
+
+      dismiss: () =>
+        set(
+          (state) => ({
+            offer: null,
+            dismissed: state.offer ? [...state.dismissed, state.offer.artifactId] : state.dismissed,
+          }),
+          false,
+          'dismiss',
+        ),
+    }),
+    { name: 'RepairOffer' },
+  ),
+);
