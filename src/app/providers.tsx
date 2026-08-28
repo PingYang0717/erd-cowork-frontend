@@ -17,6 +17,17 @@ const SEED = THEME_TOKENS.light;
 const FONT_FAMILY =
   "'Inter Variable', 'Noto Sans TC', -apple-system, 'PingFang TC', 'Microsoft JhengHei', sans-serif";
 
+// Overlays open instantly. antd animates them on the three duration tokens (0.1/0.2/0.3s
+// by default); on a dialog or a menu that reads as lag, not as motion — the user is
+// already looking at where the panel will appear. Applied per component rather than via
+// the global `motion: false` seed, which would also flatten button waves, collapse and
+// toasts — those animate things the eye is not yet fixed on, and there the motion helps.
+const INSTANT = {
+  motionDurationFast: '0s',
+  motionDurationMid: '0s',
+  motionDurationSlow: '0s',
+} as const;
+
 // ConfigProvider's theme algorithm only affects antd components themselves;
 // plain HTML (body, <h1>, etc.) has no background/text color of its own, so
 // in dark mode its text (colored for a dark surface by antd's global CSS
@@ -59,9 +70,6 @@ const AppProviders: React.FC<AppProvidersProps> = ({ children }) => {
           algorithm: isDarkMode ? theme.darkAlgorithm : theme.defaultAlgorithm,
           token: {
             fontFamily: FONT_FAMILY,
-            // antd's 0.3s default makes every dialog read as lag rather than motion;
-            // modal/mask enter-leave animate on this token.
-            motionDurationSlow: '0.15s',
             // The mockup's body text runs 12-13.5px throughout; antd's
             // default (14) reads noticeably larger/heavier across every
             // control that doesn't have its own font-size override.
@@ -113,6 +121,7 @@ const AppProviders: React.FC<AppProvidersProps> = ({ children }) => {
             // The mockup's dialog: an elevated card with a hairline border
             // and a bg-container footer band.
             Modal: {
+              ...INSTANT,
               borderRadiusLG: 16,
               contentBg: tokens.bgElevated,
               headerBg: tokens.bgElevated,
@@ -120,7 +129,8 @@ const AppProviders: React.FC<AppProvidersProps> = ({ children }) => {
               titleFontSize: 16,
             },
             // Mockup's composer "+" menu panel uses border-radius:11px.
-            Dropdown: { borderRadiusLG: 11 },
+            Dropdown: { ...INSTANT, borderRadiusLG: 11 },
+            Select: INSTANT,
           },
         }}
       >
