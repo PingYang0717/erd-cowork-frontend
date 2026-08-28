@@ -1,7 +1,9 @@
-import { screen } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { http } from 'msw';
 import { beforeEach, describe, expect, it } from 'vitest';
 
+import { server } from '@/mocks/server';
 import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
 import { useStudioLayoutStore } from '@/stores/useStudioLayoutStore';
 import { useThemeStore } from '@/stores/useThemeStore';
@@ -38,6 +40,41 @@ describe('Per-version Artifact publishing', () => {
 
     expect(await screen.findByText('已發布')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: '發布 Artifact' })).not.toBeInTheDocument();
+  });
+
+  /** The regression this pins down: the content HTML's query key once lived under the
+   *  `['artifacts', …]` prefix, so publish (which invalidates the artifact list) dragged
+   *  a full re-download of the rendered document with it — for a mutation that only
+   *  changes metadata. The content key lives in its own namespace now
+   *  (artifactContentQueryKey), and this counts the wire to keep it that way. */
+  it('publishing does not re-download the artifact HTML', async () => {
+    let contentFetches = 0;
+    server.use(
+      // Counting tap: returning undefined falls through to the real handler, so the
+      // response is untouched — only the wire is observed.
+      http.get('/api/artifacts/:id', () => {
+        contentFetches += 1;
+        return undefined;
+      }),
+    );
+
+    const user = userEvent.setup();
+    renderStudio();
+    await user.click(await screen.findByRole('button', { name: 'SPC — Vt (gate CD)' }));
+    await user.type(
+      await screen.findByRole('textbox', { name: 'Message' }),
+      'Regenerate the dashboard.{Enter}',
+    );
+    const publishButton = await screen.findByRole('button', { name: '發布 Artifact' });
+    const fetchesBeforePublish = contentFetches;
+
+    await user.click(publishButton);
+    await screen.findByText('已發布');
+    // The list refetch (publishedAt badge) has landed by now; give any stray content
+    // refetch the same window before counting.
+    await waitFor(() => expect(screen.queryByRole('button', { name: '發布 Artifact' })).toBeNull());
+
+    expect(contentFetches).toBe(fetchesBeforePublish);
   });
 
   it('opens the share dialog from the toolbar', async () => {
