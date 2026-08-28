@@ -5,12 +5,12 @@ import { http, HttpResponse } from 'msw';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { StudioShell } from '@/components/layouts/StudioShell';
+import StudioShell from '@/components/layouts/StudioShell';
 import { server } from '@/mocks/server';
 import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
 import { useStudioLayoutStore } from '@/stores/useStudioLayoutStore';
 
-import { StudioPage } from './StudioPage';
+import StudioPage from './StudioPage';
 
 // The session rail (StudioShell) is the /cowork route's shared parent, with
 // StudioPage as its index route's content — mirrors router.tsx's nesting so
@@ -36,8 +36,8 @@ function renderStudioPage() {
 // "resets on reload" tests to exercise a genuinely fresh store.
 async function renderReloadedStudioPage() {
   vi.resetModules();
-  const { StudioShell: ReloadedStudioShell } = await import('@/components/layouts/StudioShell');
-  const { StudioPage: ReloadedStudioPage } = await import('./StudioPage');
+  const { default: ReloadedStudioShell } = await import('@/components/layouts/StudioShell');
+  const { default: ReloadedStudioPage } = await import('./StudioPage');
   const queryClient = new QueryClient();
   return render(
     <QueryClientProvider client={queryClient}>

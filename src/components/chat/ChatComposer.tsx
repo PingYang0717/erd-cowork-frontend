@@ -14,9 +14,9 @@ import { Dropdown, Input } from 'antd';
 import type { ReactNode } from 'react';
 import React, { useRef, useState } from 'react';
 
-import { ConnectorsPanel } from '@/components/connectors/ConnectorsPanel';
-import { AttachmentChip } from '@/components/files/AttachmentChip';
-import { FileAttachmentModal } from '@/components/files/FileAttachmentModal';
+import ConnectorsPanel from '@/components/connectors/ConnectorsPanel';
+import AttachmentChip from '@/components/files/AttachmentChip';
+import FileAttachmentModal from '@/components/files/FileAttachmentModal';
 import { type SendInput } from '@/hooks/useAgentStream';
 import { useAppConfig } from '@/hooks/useAppConfig';
 import { useConnectors } from '@/hooks/useConnectors';
@@ -255,5 +255,4 @@ const ChatComposer: React.FC<ChatComposerProps> = ({
   );
 };
 
-export { ChatComposer };
 export default ChatComposer;

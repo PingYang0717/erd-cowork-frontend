@@ -1,6 +1,6 @@
 import React, { type ReactNode } from 'react';
 
-import { ErrorBoundary } from './ErrorBoundary';
+import ErrorBoundary from './ErrorBoundary';
 import SuspenseLoader from './SuspenseLoader';
 
 interface DataBoundaryProps {

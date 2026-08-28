@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { AxiosError } from 'axios';
 import { describe, expect, it, vi } from 'vitest';
 
-import { ErrorBoundary } from './ErrorBoundary';
+import ErrorBoundary from './ErrorBoundary';
 
 function Explode({ shouldThrow }: { shouldThrow: boolean }) {
   if (shouldThrow) {

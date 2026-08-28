@@ -4,7 +4,8 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { useActiveRunStore } from '@/stores/useActiveRunStore';
 import type { Message } from '@/types/api/index';
 
-import { type LiveRun, MessageList } from './MessageList';
+import MessageList from './MessageList';
+import { type LiveRun } from './MessageList';
 
 const message = (id: string, sender: 'USER' | 'AI', text: string): Message => ({
   id,

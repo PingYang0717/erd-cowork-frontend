@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import DataBoundary from '@/components/common/DataBoundary';
-import { ThemeToggle } from '@/components/common/ThemeToggle';
+import ThemeToggle from '@/components/common/ThemeToggle';
 import { type SendInput, useAgentStream } from '@/hooks/useAgentStream';
 import { useArtifactRepair } from '@/hooks/useArtifactRepair';
 import { useSessionDetail } from '@/hooks/useSessionDetail';
@@ -12,10 +12,11 @@ import { useRepairOfferStore } from '@/stores/useRepairOfferStore';
 import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
 import { composeAnswerText } from '@/utils/composeAnswerText';
 
-import { ChatComposer } from './ChatComposer';
-import { type LiveRun, MessageList } from './MessageList';
+import ChatComposer from './ChatComposer';
+import MessageList from './MessageList';
+import { type LiveRun } from './MessageList';
 import type { Answers } from './QuestionFormCard';
-import { RepairOfferCard } from './RepairOfferCard';
+import RepairOfferCard from './RepairOfferCard';
 import styles from './ThreadPanel.module.css';
 
 function ThreadHeader() {
@@ -223,5 +224,4 @@ function ThreadView({ sessionId }: { sessionId: string }) {
   );
 }
 
-export { ThreadPanel };
 export default ThreadPanel;

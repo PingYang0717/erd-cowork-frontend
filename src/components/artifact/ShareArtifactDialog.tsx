@@ -131,5 +131,4 @@ const ShareArtifactDialog: React.FC<ShareArtifactDialogProps> = ({ open, onClose
   );
 };
 
-export { ShareArtifactDialog };
 export default ShareArtifactDialog;

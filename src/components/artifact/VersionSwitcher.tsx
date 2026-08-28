@@ -1,7 +1,7 @@
 import { CheckOutlined, DownOutlined, HistoryOutlined } from '@ant-design/icons';
 import React, { useEffect, useRef, useState } from 'react';
 
-import { Tooltip } from '@/components/common/Tooltip';
+import Tooltip from '@/components/common/Tooltip';
 import type { ArtifactVersion } from '@/types/api/index';
 import { formatRelativeTime } from '@/utils/formatRelativeTime';
 
@@ -102,5 +102,4 @@ const VersionSwitcher: React.FC<VersionSwitcherProps> = ({ versions, activeVersi
   );
 };
 
-export { VersionSwitcher };
 export default VersionSwitcher;

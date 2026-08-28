@@ -12,7 +12,7 @@ import { useNavigate } from 'react-router-dom';
 import { useArtifacts } from '@/hooks/useArtifacts';
 import type { Artifact } from '@/types/api/index';
 
-import { ArtifactCard } from './ArtifactCard';
+import ArtifactCard from './ArtifactCard';
 import styles from './ArtifactsGallery.module.css';
 
 type FilterCategory = 'all' | 'yours' | 'shared' | 'pinned';
@@ -206,5 +206,4 @@ function FilterPill({
   );
 }
 
-export { ArtifactsGallery };
 export default ArtifactsGallery;

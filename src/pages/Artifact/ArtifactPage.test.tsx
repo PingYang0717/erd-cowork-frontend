@@ -4,11 +4,11 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 
-import { StudioShell } from '@/components/layouts/StudioShell';
-import { ArtifactsGalleryPage } from '@/pages/ArtifactsGallery/ArtifactsGalleryPage';
-import { StudioPage } from '@/pages/Studio/StudioPage';
+import StudioShell from '@/components/layouts/StudioShell';
+import ArtifactsGalleryPage from '@/pages/ArtifactsGallery/ArtifactsGalleryPage';
+import StudioPage from '@/pages/Studio/StudioPage';
 
-import { ArtifactPage } from './ArtifactPage';
+import ArtifactPage from './ArtifactPage';
 
 function renderArtifactPageAt(path: string) {
   // Retries would hide the "not found" case behind exponential backoff, so

@@ -304,5 +304,4 @@ const SessionList: React.FC<SessionListProps> = ({ onCollapse, artifactsCount })
   );
 };
 
-export { SessionList };
 export default SessionList;

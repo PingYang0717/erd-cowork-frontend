@@ -20,5 +20,4 @@ const ReplyText: React.FC<ReplyTextProps> = ({ text }) => {
   );
 };
 
-export { ReplyText };
 export default ReplyText;

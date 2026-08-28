@@ -1,11 +1,11 @@
 import React from 'react';
 
-import { ArtifactPanel } from '@/components/artifact/ArtifactPanel';
-import { ThreadPanel } from '@/components/chat/ThreadPanel';
+import ArtifactPanel from '@/components/artifact/ArtifactPanel';
+import ThreadPanel from '@/components/chat/ThreadPanel';
 import DataBoundary from '@/components/common/DataBoundary';
 import { useStudioLayoutStore } from '@/stores/useStudioLayoutStore';
 
-import { ResizeHandle } from './ResizeHandle';
+import ResizeHandle from './ResizeHandle';
 import styles from './StudioLayout.module.css';
 
 // The thread + Artifact panel two-pane layout — mounted as the /cowork
@@ -36,5 +36,4 @@ const StudioLayout: React.FC = () => {
   );
 };
 
-export { StudioLayout };
 export default StudioLayout;

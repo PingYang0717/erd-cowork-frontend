@@ -168,5 +168,4 @@ const FileAttachmentModal: React.FC<FileAttachmentModalProps> = ({
   );
 };
 
-export { FileAttachmentModal };
 export default FileAttachmentModal;

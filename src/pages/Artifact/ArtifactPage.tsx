@@ -1,7 +1,7 @@
 import React from 'react';
 import { useParams } from 'react-router-dom';
 
-import { ArtifactFullPageView } from '@/components/artifact/ArtifactFullPageView';
+import ArtifactFullPageView from '@/components/artifact/ArtifactFullPageView';
 import DataBoundary from '@/components/common/DataBoundary';
 
 const ArtifactPage: React.FC = () => {
@@ -14,5 +14,4 @@ const ArtifactPage: React.FC = () => {
   );
 };
 
-export { ArtifactPage };
 export default ArtifactPage;

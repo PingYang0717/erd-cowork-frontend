@@ -29,5 +29,4 @@ const ResizeHandle: React.FC<ResizeHandleProps> = ({ label, onDrag }) => {
   );
 };
 
-export { ResizeHandle };
 export default ResizeHandle;

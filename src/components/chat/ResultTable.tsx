@@ -104,5 +104,4 @@ const ResultTable: React.FC<ResultTableProps> = ({ table }) => {
 
 const MemoisedResultTable = React.memo(ResultTable);
 
-export { MemoisedResultTable as ResultTable };
 export default MemoisedResultTable;

@@ -6,10 +6,10 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { server } from '@/mocks/server';
-import { ArtifactPage } from '@/pages/Artifact/ArtifactPage';
+import ArtifactPage from '@/pages/Artifact/ArtifactPage';
 import type { Artifact } from '@/types/api/index';
 
-import { ArtifactsGalleryPage } from './ArtifactsGalleryPage';
+import ArtifactsGalleryPage from './ArtifactsGalleryPage';
 
 /** One Artifact in the fixed contract's shape, for the tests that need to state their
  *  own data rather than take the seeded three. */

@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { CollapsiblePanel } from './CollapsiblePanel';
+import CollapsiblePanel from './CollapsiblePanel';
 import styles from './ThinkingPanel.module.css';
 
 interface ThinkingPanelProps {
@@ -17,5 +17,4 @@ const ThinkingPanel: React.FC<ThinkingPanelProps> = ({ thinking }) => {
   );
 };
 
-export { ThinkingPanel };
 export default ThinkingPanel;
