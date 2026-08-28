@@ -20,4 +20,7 @@ const ReplyText: React.FC<ReplyTextProps> = ({ text }) => {
   );
 };
 
-export default ReplyText;
+// Memoised so the urgent (per-token) render of a streaming bubble, whose deferred text
+// has not moved yet, skips the Markdown parse entirely — the deferral above only helps
+// if the unchanged-text render is actually free.
+export default React.memo(ReplyText);
