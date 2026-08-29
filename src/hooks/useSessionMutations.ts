@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { sessionApi } from '@/api/sessionApi';
+import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
 
 import { useActionErrorToast } from './useActionErrorToast';
 import { sessionsQueryKey } from './useSessions';
@@ -37,10 +38,17 @@ export function useToggleSessionPin() {
 export function useDeleteSession() {
   const queryClient = useQueryClient();
   const toastError = useActionErrorToast();
+  const clearSelection = useSessionSelectionStore((store) => store.clearSelection);
 
   return useMutation({
     mutationFn: sessionApi.deleteSession,
-    onSuccess: () => {
+    onSuccess: (_result, deletedId) => {
+      // Deleting the session you are in has to close it too. Left selected, the thread
+      // keeps pointing at an id the backend no longer has, and the next message
+      // re-creates it (ADR-0005 upserts on send) — the delete would undo itself.
+      if (useSessionSelectionStore.getState().selectedSessionId === deletedId) {
+        clearSelection();
+      }
       queryClient.invalidateQueries({ queryKey: sessionsQueryKey });
     },
     onError: toastError,

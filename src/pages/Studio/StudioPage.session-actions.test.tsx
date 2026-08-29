@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 
 import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
 import { useStudioLayoutStore } from '@/stores/useStudioLayoutStore';
-import { renderStudio } from '@/test/renderStudio';
+import { renderStudio, waitForComposer } from '@/test/renderStudio';
 
 async function openMenuOf(user: ReturnType<typeof userEvent.setup>, title: string) {
   await screen.findByRole('button', { name: title });
@@ -51,6 +51,34 @@ describe('Session row actions', () => {
     expect(
       await within(pinned).findByRole('button', { name: 'Defect pareto — W12' }),
     ).toBeInTheDocument();
+  });
+
+  /** Deleting the session you are *in* used to leave the selection pointing at it: the
+   *  row vanished but the thread stayed, and the next message re-created the session
+   *  server-side (ADR-0005 upserts on send) under the default title. The user deleted
+   *  something and it came back. */
+  it('clears the selection when the open session is deleted, so it cannot be resurrected', async () => {
+    const user = userEvent.setup();
+    renderStudio();
+
+    await user.click(await screen.findByRole('button', { name: 'Defect pareto — W12' }));
+    await waitForComposer();
+    const deletedId = useSessionSelectionStore.getState().selectedSessionId;
+    expect(deletedId).toBe('session-2');
+
+    await openMenuOf(user, 'Defect pareto — W12');
+    await user.click(await screen.findByRole('menuitem', { name: 'Delete' }));
+
+    await waitFor(() =>
+      expect(screen.queryByRole('button', { name: 'Defect pareto — W12' })).not.toBeInTheDocument(),
+    );
+    // The selection must no longer be the deleted id. It does not go empty: the landing
+    // effect in useSessionGroups opens the most recent remaining conversation, which is
+    // the behaviour we want — what matters is that nothing still points at the deleted
+    // session, because that is what the next message would resurrect.
+    const { selectedSessionId } = useSessionSelectionStore.getState();
+    expect(selectedSessionId).not.toBe(deletedId);
+    expect(selectedSessionId).toBe('session-1');
   });
 
   it('deletes a session and the row is gone', async () => {
