@@ -2,6 +2,7 @@ import { CheckOutlined, CopyOutlined, FundOutlined, LinkOutlined } from '@ant-de
 import { Button, Input, Modal, Select } from 'antd';
 import React, { useState } from 'react';
 
+import DataBoundary from '@/components/common/DataBoundary';
 import { useShareArtifact } from '@/hooks/useArtifactMutations';
 import { useDirectory } from '@/hooks/useDirectory';
 import type { Artifact } from '@/types/api/index';
@@ -15,7 +16,6 @@ interface ShareArtifactDialogProps {
 }
 
 const ShareArtifactDialog: React.FC<ShareArtifactDialogProps> = ({ open, onClose, artifact }) => {
-  const { data: directory } = useDirectory();
   const shareArtifact = useShareArtifact();
   const [targetIds, setTargetIds] = useState<string[]>([]);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
@@ -75,17 +75,14 @@ const ShareArtifactDialog: React.FC<ShareArtifactDialogProps> = ({ open, onClose
 
       <div className={styles.section}>
         <div className={styles.sectionLabel}>分享對象</div>
-        <Select
-          mode="multiple"
-          virtual={false}
-          showSearch
-          optionFilterProp="label"
-          value={targetIds}
-          onChange={setTargetIds}
-          options={(directory ?? []).map((entry) => ({ value: entry.id, label: entry.label }))}
-          placeholder="搜尋部門碼 / 課別碼 或 NT account · 中文名,可多選…"
-          style={{ width: '100%' }}
-        />
+        {/* The recipient directory is a suspense query. It sits behind its own boundary
+            here, not at the top of the dialog: this is an antd Modal, and a suspend at
+            the top would propagate up the React tree to the Artifact pane's boundary and
+            blank the whole pane. Contained here, only the picker shows a loader. With
+            `destroyOnHidden`, the query does not even run until the dialog opens. */}
+        <DataBoundary label="收件者名單">
+          <RecipientSelect value={targetIds} onChange={setTargetIds} />
+        </DataBoundary>
         <div className={styles.hint}>
           可混選部門(A10INTD1-1)、課別(INTD-1)與人員(CHXXGHYC · 鄭凱宇)
         </div>
@@ -128,6 +125,28 @@ const ShareArtifactDialog: React.FC<ShareArtifactDialogProps> = ({ open, onClose
         )}
       </div>
     </Modal>
+  );
+};
+
+interface RecipientSelectProps {
+  value: string[];
+  onChange: (ids: string[]) => void;
+}
+
+const RecipientSelect: React.FC<RecipientSelectProps> = ({ value, onChange }) => {
+  const { data: directory } = useDirectory();
+  return (
+    <Select
+      mode="multiple"
+      virtual={false}
+      showSearch
+      optionFilterProp="label"
+      value={value}
+      onChange={onChange}
+      options={directory.map((entry) => ({ value: entry.id, label: entry.label }))}
+      placeholder="搜尋部門碼 / 課別碼 或 NT account · 中文名,可多選…"
+      style={{ width: '100%' }}
+    />
   );
 };
 
