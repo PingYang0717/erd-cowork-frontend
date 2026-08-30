@@ -11,6 +11,7 @@ import { useActiveRunStore } from '@/stores/useActiveRunStore';
 import { useRepairOfferStore } from '@/stores/useRepairOfferStore';
 import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
 import { composeAnswerText } from '@/utils/composeAnswerText';
+import { showOptimisticBubble } from '@/utils/optimisticBubble';
 
 import ChatComposer from './ChatComposer';
 import MessageList, { type LiveRun } from './MessageList';
@@ -96,22 +97,26 @@ const ThreadView: React.FC<ThreadViewProps> = ({ sessionId }) => {
   const displayedArtifactId = useActiveRunStore((s) => s.displayedArtifactId);
   // The user's words go on screen the moment they send; cleared once the refetched
   // history carries them (streaming flips false after the hook's await-then-DONE).
-  const [pendingQuestion, setPendingQuestion] = useState<string | null>(null);
+  // The optimistically-shown message plus the history length at the moment it was sent:
+  // the bubble is suppressed once the refetched history has grown past `atLength` — i.e.
+  // now carries it. Comparing lengths, not text, is what makes sending the same words
+  // twice in a row show two bubbles (an equal last-history text would falsely suppress).
+  const [pending, setPending] = useState<{ text: string; atLength: number } | null>(null);
   const prevStreamingRef = useRef(false);
   useEffect(() => {
     if (prevStreamingRef.current && !state.isStreaming) {
-      setPendingQuestion(null);
+      setPending(null);
     }
     prevStreamingRef.current = state.isStreaming;
   }, [state.isStreaming]);
   const repairOffer = useRepairOfferStore((store) => store.offer);
   const dismissRepair = useRepairOfferStore((store) => store.dismiss);
-  const clearRepair = useRepairOfferStore((store) => store.clear);
+  const resetRepair = useRepairOfferStore((store) => store.reset);
   const repair = useArtifactRepair();
 
   // An offer belongs to one artifact in one session. Moving away from that session
   // leaves it pointing at something the user is no longer looking at.
-  useEffect(() => clearRepair, [sessionId, clearRepair]);
+  useEffect(() => resetRepair, [sessionId, resetRepair]);
 
   // The Artifact pane refuses a Reload while a run is open; like the artifact itself
   // this is state another tree needs, so it goes through the store.
@@ -140,10 +145,13 @@ const ThreadView: React.FC<ThreadViewProps> = ({ sessionId }) => {
       if (isStreaming) {
         return;
       }
-      setPendingQuestion(input.question);
+      // `messages.length` is constant across a run's tokens (history refetches only at
+      // the end), so it does not defeat ChatComposer's memo mid-stream — handleSend's
+      // identity changes once per completed turn, outside the token loop.
+      setPending({ text: input.question, atLength: messages.length });
       await send({ baseArtifactId: displayedArtifactId ?? undefined, ...input });
     },
-    [send, displayedArtifactId, isStreaming],
+    [send, displayedArtifactId, isStreaming, messages.length],
   );
 
   // The backend body is question-only, so a reask's answers travel as one prose
@@ -169,11 +177,12 @@ const ThreadView: React.FC<ThreadViewProps> = ({ sessionId }) => {
   // field touched four files.
   const live: LiveRun | null = state.isStreaming || runEndedVisibly ? state : null;
 
-  // Suppress the optimistic bubble once the refetched history already ends with it.
-  const lastMessage = messages[messages.length - 1];
-  const lastHistoryQuestion = lastMessage?.sender === 'USER' ? lastMessage.text : null;
+  // Suppress the optimistic bubble once the refetched history has grown past the point
+  // it was sent from — that growth is the refetch carrying the message home (C-3).
   const optimisticUserText =
-    pendingQuestion !== null && pendingQuestion !== lastHistoryQuestion ? pendingQuestion : null;
+    pending !== null && showOptimisticBubble(messages.length, pending.atLength)
+      ? pending.text
+      : null;
 
   const hasContent = messages.length > 0 || live !== null || optimisticUserText !== null;
 

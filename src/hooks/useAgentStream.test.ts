@@ -120,6 +120,36 @@ describe('useAgentStream', () => {
     expect(result.current.state.liveText).toBe('Vt is dri');
   });
 
+  /** C-2: stop() only acts while the stream is being read. On an idle hook there is
+   *  nothing to stop — a click that flagged `stopped` here would render a 「已停止」
+   *  ghost bubble next to a run that never happened (the real bug fired in the finishing
+   *  window, where the button still says Stop after the last event). */
+  it('does nothing when stop() is called with no run in flight', () => {
+    const { result } = renderAgentStream();
+
+    act(() => result.current.stop());
+
+    expect(result.current.state.stopped).toBe(false);
+    expect(result.current.state.isStreaming).toBe(false);
+  });
+
+  it('does nothing when stop() is called after the stream has already closed', async () => {
+    const stream = mockAgentStream();
+    const { result } = renderAgentStream();
+
+    act(() => {
+      void result.current.send({ question: 'Run an SPC analysis.' });
+    });
+    stream.push({ type: 'TOKEN', delta: 'done' });
+    await waitFor(() => expect(result.current.state.liveText).toBe('done'));
+    act(() => stream.close());
+    await waitFor(() => expect(result.current.state.isStreaming).toBe(false));
+
+    // The run finished on its own; a late Stop must not retroactively mark it stopped.
+    act(() => result.current.stop());
+    expect(result.current.state.stopped).toBe(false);
+  });
+
   it('lands each streamed event in its own part of the state', async () => {
     const stream = mockAgentStream();
     const { result } = renderAgentStream();
