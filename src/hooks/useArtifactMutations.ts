@@ -7,8 +7,11 @@ import {
   toggleArtifactPin,
   unpublishArtifact,
 } from '@/api/artifactApi';
+import { useActiveRunStore } from '@/stores/useActiveRunStore';
+import type { Artifact } from '@/types/api/index';
 
 import { useActionErrorToast } from './useActionErrorToast';
+import { artifactContentQueryKey } from './useArtifactContent';
 import { artifactsQueryKey } from './useArtifacts';
 
 /** Pinning is a toggle the backend resolves — the caller says which Artifact, not
@@ -29,10 +32,34 @@ export function useToggleArtifactPin() {
 export function useDeleteArtifact() {
   const queryClient = useQueryClient();
   const toastError = useActionErrorToast();
+  const clearPickedArtifact = useActiveRunStore((store) => store.clearPickedArtifact);
+  const setDisplayedArtifactId = useActiveRunStore((store) => store.setDisplayedArtifactId);
 
   return useMutation({
     mutationFn: (id: string) => deleteArtifact(id),
-    onSuccess: () => {
+    onSuccess: (_result, deletedId) => {
+      // Same order as useDeleteSession, for the same reason: drop it from the list
+      // first, move anything pointing at it off, then discard what is cached about it.
+      queryClient.setQueryData<Artifact[]>(artifactsQueryKey, (previous) =>
+        previous?.filter((artifact) => artifact.id !== deletedId),
+      );
+
+      // The Studio panel and the thread both remember an artifact by id. Left pointing
+      // at a deleted one, the panel keeps rendering the document from cache — and the
+      // next message rides it out as `baseArtifactId`, asking the backend to iterate on
+      // something it no longer has.
+      const run = useActiveRunStore.getState();
+      if (run.pickedArtifactId === deletedId) {
+        clearPickedArtifact();
+      }
+      if (run.displayedArtifactId === deletedId) {
+        setDisplayedArtifactId(null);
+      }
+
+      // The rendered HTML lives outside the `['artifacts']` prefix on purpose (so pin
+      // and publish do not drag a re-download with them), which also means invalidating
+      // the list never reaches it. Deleting has to say so explicitly.
+      queryClient.removeQueries({ queryKey: artifactContentQueryKey(deletedId) });
       queryClient.invalidateQueries({ queryKey: artifactsQueryKey });
     },
     onError: toastError,

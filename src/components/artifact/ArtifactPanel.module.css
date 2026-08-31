@@ -185,3 +185,14 @@
   background: var(--erd-color-bg-container, #fff);
   color: var(--erd-color-text-secondary, rgba(0, 0, 0, 0.65));
 }
+
+/* Shown in place of the frame when an Artifact's HTML cannot be fetched — most often
+   because it was deleted while still listed as a version. */
+.frameNotice {
+  margin: 0;
+  padding: 24px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--erd-color-text-secondary, #595959);
+  text-align: center;
+}

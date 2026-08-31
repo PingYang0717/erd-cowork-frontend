@@ -274,7 +274,13 @@ describe('Artifacts gallery', () => {
     );
     await user.click(screen.getByRole('menuitem', { name: 'Copy link' }));
 
-    expect(writeText).toHaveBeenCalledWith(expect.stringContaining('/cowork/artifact/artifact-1'));
+    // The `#` is the whole point: the router is a hash router, so a link without it is
+    // one that silently does not open when pasted anywhere outside the app. Asserted as
+    // a literal rather than through `artifactHref`, which would agree with the
+    // implementation by construction.
+    expect(writeText).toHaveBeenCalledWith(
+      expect.stringContaining('/#/cowork/artifact/artifact-1'),
+    );
   });
 
   it('names the producing session and badges sharing states', async () => {
