@@ -10,7 +10,7 @@ import type { Connector } from '@/types/api/index';
  *
  *  This moved out of `src/api/connectorApi.ts`, which had 73 lines of fixture and not
  *  one HTTP call — a fake backend living in the runtime layer (ADR-0006). */
-const CATALOGUE: Connector[] = [
+export const CATALOGUE: Connector[] = [
   {
     id: 'inline',
     name: 'Inline',

@@ -6,8 +6,21 @@ import { describe, expect, it } from 'vitest';
 
 import ConnectorsPanel from './ConnectorsPanel';
 
-function renderPanel(sessionId = 'session-1') {
+function renderPanel(sessionId = 'session-1', seedDraft = false) {
   const queryClient = new QueryClient();
+  if (seedDraft) {
+    // What openDraft() does: a draft's thread reads this shell until a write persists
+    // the session (ADR-0005). Without it the panel's suspense query 404s on mount and
+    // the test would be exercising something the app never does.
+    queryClient.setQueryData(['sessions', sessionId], {
+      id: sessionId,
+      title: 'New analysis',
+      createdAt: '2026-08-31T00:00:00.000Z',
+      messages: [],
+      files: [],
+      dataSourceIds: [],
+    });
+  }
   return render(
     <QueryClientProvider client={queryClient}>
       <Suspense fallback={null}>
@@ -54,6 +67,20 @@ describe('ConnectorsPanel', () => {
     // session-2 was never given Lot Info, and must not have picked it up.
     renderPanel('session-2');
     expect(await screen.findByRole('button', { name: 'Connect Lot Info' })).toBeInTheDocument();
+  });
+
+  /** A draft session exists only in this client until a write lands (ADR-0005).
+   *  Attaching a source IS such a write, so it has to bring the session into being —
+   *  otherwise the refetch that follows 404s, the panel keeps the old (empty) list, and
+   *  the click looks like it did nothing at all. */
+  it('attaches a source from a draft session, which has never been written yet', async () => {
+    const user = userEvent.setup();
+    renderPanel('draft-never-written', true);
+
+    await user.click(await screen.findByRole('button', { name: 'Connect Lot Info' }));
+
+    expect(await screen.findByRole('button', { name: 'Disconnect Lot Info' })).toBeInTheDocument();
+    expect(within(selectedSources()).getByText('Lot Info')).toBeInTheDocument();
   });
 
   it('disconnects a connected source', async () => {
