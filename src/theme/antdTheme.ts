@@ -1,5 +1,4 @@
-import type { ThemeConfig } from 'antd';
-import { theme } from 'antd';
+import { theme, type ThemeConfig } from 'antd';
 
 import { THEME_TOKENS } from './tokens';
 

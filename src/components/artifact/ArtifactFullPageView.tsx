@@ -12,8 +12,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 
 import ThemeToggle from '@/components/common/ThemeToggle';
 import Tooltip from '@/components/common/Tooltip';
-import { useArtifactContent } from '@/hooks/useArtifactContent';
-import { artifactContentQueryKey } from '@/hooks/useArtifactContent';
+import { artifactContentQueryKey, useArtifactContent } from '@/hooks/useArtifactContent';
 import { useArtifacts } from '@/hooks/useArtifacts';
 import { useSessionDetail } from '@/hooks/useSessionDetail';
 import type { Artifact, ArtifactVersion } from '@/types/api/index';

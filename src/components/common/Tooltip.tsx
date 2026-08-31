@@ -1,5 +1,4 @@
-import type { ReactNode } from 'react';
-import React, { useEffect, useId, useRef, useState } from 'react';
+import React, { type ReactNode, useEffect, useId, useRef, useState } from 'react';
 
 import styles from './Tooltip.module.css';
 

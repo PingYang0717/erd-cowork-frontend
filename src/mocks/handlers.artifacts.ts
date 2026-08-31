@@ -3,8 +3,7 @@ import { http, HttpResponse } from 'msw';
 import type { Artifact } from '@/types/api/artifact';
 import type { ScenarioKey } from '@/types/api/scenario';
 
-import type { ArtifactKind } from './artifactFixtures';
-import { buildArtifactFixture } from './artifactFixtures';
+import { type ArtifactKind, buildArtifactFixture } from './artifactFixtures';
 import { currentUser } from './currentUser';
 import { messages } from './handlers.messages';
 import { sessions } from './handlers.sessions';

@@ -1,6 +1,5 @@
 import { DatabaseOutlined, ThunderboltFilled } from '@ant-design/icons';
-import type { ReactNode } from 'react';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 
 import DataBoundary from '@/components/common/DataBoundary';
 import ThemeToggle from '@/components/common/ThemeToggle';
