@@ -19,7 +19,7 @@ function message(overrides: Partial<Message>): Message {
 }
 
 describe('deriveArtifactVersions', () => {
-  it('numbers artifact-bearing messages sequentially, skipping messages without artifacts', () => {
+  it('lists artifact-bearing messages in arrival order, skipping messages without artifacts', () => {
     const versions = deriveArtifactVersions([
       message({ sender: 'USER', text: 'question 1' }),
       message({
@@ -36,16 +36,16 @@ describe('deriveArtifactVersions', () => {
     ]);
 
     expect(versions).toEqual([
+      // No version number: these are independent Artifacts, listed in the order the
+      // conversation produced them.
       {
         artifactId: 'a1',
         title: 'SPC analysis',
-        version: 1,
         createdAt: '2026-08-20T09:01:00.000Z',
       },
       {
         artifactId: 'a2',
         title: 'SPC analysis v2',
-        version: 2,
         createdAt: '2026-08-20T09:05:00.000Z',
       },
     ]);

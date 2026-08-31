@@ -69,7 +69,7 @@ describe('Artifact panel toolbar', () => {
     await user.click(await screen.findByRole('button', { name: 'SPC — Vt (gate CD)' }));
 
     // The seeded session derives a single version from its one artifact message.
-    await user.click(await screen.findByRole('button', { name: '切換版本' }));
+    await user.click(await screen.findByRole('button', { name: '切換產出' }));
     expect(screen.getAllByRole('menuitem')).toHaveLength(1);
     await user.keyboard('{Escape}');
 
@@ -81,7 +81,7 @@ describe('Artifact panel toolbar', () => {
     );
     await screen.findByRole('button', { name: '發布 Artifact' });
 
-    await user.click(await screen.findByRole('button', { name: '切換版本' }));
+    await user.click(await screen.findByRole('button', { name: '切換產出' }));
     await expect.poll(() => screen.getAllByRole('menuitem')).toHaveLength(2);
   });
 });
