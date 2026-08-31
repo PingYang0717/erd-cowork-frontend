@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useCallback } from 'react';
 
 import { apiClient } from '@/api/apiClient';
+import { artifactContentQueryKey } from '@/hooks/useArtifactContent';
 import { useActiveRunStore } from '@/stores/useActiveRunStore';
 import { type BrowserJsError, useRepairOfferStore } from '@/stores/useRepairOfferStore';
 
@@ -20,12 +21,12 @@ function isFilesExpired(error: unknown): boolean {
 export function useArtifactRepair() {
   const queryClient = useQueryClient();
   const setStatus = useRepairOfferStore((store) => store.setStatus);
-  const clear = useRepairOfferStore((store) => store.clear);
+  const resolve = useRepairOfferStore((store) => store.resolve);
   const bumpArtifactReload = useActiveRunStore((store) => store.bumpArtifactReload);
 
   return useCallback(
     async (artifactId: string, errors: BrowserJsError[]) => {
-      setStatus('repairing');
+      setStatus(artifactId, 'repairing');
 
       try {
         const { repaired } = await apiClient.post<{ repaired: boolean }>(
@@ -34,12 +35,14 @@ export function useArtifactRepair() {
         );
 
         if (!repaired) {
-          setStatus('failed');
+          setStatus(artifactId, 'failed');
           return;
         }
 
-        clear();
-        await queryClient.invalidateQueries({ queryKey: ['artifacts', artifactId] });
+        // resolve() no-ops if the offer is no longer this artifact's (the user switched
+        // away mid-repair), so the reload below is only reached for the offer we own.
+        resolve(artifactId);
+        await queryClient.invalidateQueries({ queryKey: artifactContentQueryKey(artifactId) });
         // Refetching is not enough: the wedged document is still mounted, holding
         // whatever state made it throw. A Reload replaces it.
         bumpArtifactReload();
@@ -47,9 +50,9 @@ export function useArtifactRepair() {
         // Retention deleted the source data. Another attempt runs against the same
         // absence, so the card stops offering one — the composer's retention notice is
         // where the user finds out what to do instead.
-        setStatus(isFilesExpired(error) ? 'files-expired' : 'failed');
+        setStatus(artifactId, isFilesExpired(error) ? 'files-expired' : 'failed');
       }
     },
-    [queryClient, setStatus, clear, bumpArtifactReload],
+    [queryClient, setStatus, resolve, bumpArtifactReload],
   );
 }

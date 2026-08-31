@@ -9,7 +9,7 @@ import type { Session, SessionDetail } from '@/types/api/session';
 import { sessionDetailQueryKey } from './useSessionDetail';
 import { useSessions } from './useSessions';
 
-export function sortByRecency(sessions: Session[]) {
+function sortByRecency(sessions: Session[]) {
   return [...sessions].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
 }
 

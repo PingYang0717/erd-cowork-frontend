@@ -2,6 +2,16 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query';
 
 import { artifactApi } from '@/api/artifactApi';
 
+/** Prefix for one Artifact's rendered HTML, all reload nonces included.
+ *
+ *  Deliberately NOT under `['artifacts', …]`: the list mutations (pin / publish /
+ *  share) invalidate that prefix, and with the content underneath it every one of
+ *  them re-downloaded the full document for nothing — the HTML does not change when
+ *  its metadata does. Content refetch has exactly two owners: the full-page Refresh
+ *  button and a successful repair, both through this key. */
+export const artifactContentQueryKey = (artifactId: string) =>
+  ['artifactContent', artifactId] as const;
+
 /** The rendered Artifact HTML.
  *
  *  Deliberately NOT a suspense query, unlike every other data hook here: both key
@@ -16,7 +26,7 @@ import { artifactApi } from '@/api/artifactApi';
  */
 export function useArtifactContent(artifactId: string | undefined, reloadNonce = 0) {
   return useQuery({
-    queryKey: ['artifacts', artifactId, reloadNonce] as const,
+    queryKey: [...artifactContentQueryKey(artifactId as string), reloadNonce] as const,
     queryFn: () => artifactApi.getContent(artifactId as string, reloadNonce),
     enabled: artifactId !== undefined,
     placeholderData: keepPreviousData,

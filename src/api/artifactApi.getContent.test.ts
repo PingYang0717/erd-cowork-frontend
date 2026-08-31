@@ -26,8 +26,7 @@ function captureContentRequest(): { url: () => URL } {
   };
 }
 
-/** The theme decision is out (artifact HTML has no theme variants — ADR-0001 status
- *  note): the request carries no `theme`. What it may carry is `r`, the reload
+/** Artifact HTML has no theme variants (ADR-0001): the request carries no `theme`. What it may carry is `r`, the reload
  *  cache-buster, and only when a reload actually happened (nonce > 0). */
 describe('artifactApi.getContent', () => {
   it('requests the artifact without a theme parameter', async () => {

@@ -2,40 +2,16 @@ import type { ReactNode } from 'react';
 import React, { useEffect, useMemo, useRef } from 'react';
 
 import { useActiveRunStore } from '@/stores/useActiveRunStore';
-import type { Message, QuestionForm, StepItem, TableResult } from '@/types/api/index';
+import type { Message, QuestionForm, StepItem } from '@/types/api/index';
 import { liftQuestions } from '@/utils/liftQuestions';
 
-import MessageBubble from './MessageBubble';
+import MessageBubble, { type LiveRun } from './MessageBubble';
+
+export type { LiveRun } from './MessageBubble';
 import styles from './MessageList.module.css';
 import type { Answers } from './QuestionFormCard';
 
 /** What the current run has produced so far. Null once nothing is streaming. */
-export interface LiveRun {
-  /** Still open. Drives the live region — a run that has ended, however it ended, is
-   *  no longer something a screen reader should announce as in progress. */
-  isStreaming: boolean;
-  steps: StepItem[];
-  liveText: string;
-  /** The user ended this run early. What it produced stays, but it is no longer working. */
-  stopped: boolean;
-  /** The connection died rather than closing; distinct from a user stop. */
-  networkError: boolean;
-  /** Reasoning streamed so far. Live-only. */
-  thinking: string;
-  /** The reask the run is waiting on, if any. */
-  question: QuestionForm | null;
-  /** Artifact HTML as it is written, and the query results produced on the way.
-   *  Both live-only. */
-  codeText: string;
-  tables: TableResult[];
-  /** Set when the run ended badly; shown as an alert under whatever it produced. */
-  error: { code: string; message: string } | null;
-  /** The artifact this run produced, before the refetched history carries it. */
-  artifact: { artifactId: string; title: string } | null;
-  /** Epoch ms the run started, which drives the ticking timer. */
-  startedAt: number | null;
-}
-
 /** The wire carries steps as the backend's JSON string; a malformed one renders as no
  *  recap rather than a broken thread. */
 function parseSteps(stepsJson: string | null): StepItem[] {
@@ -114,12 +90,25 @@ const MessageList: React.FC<MessageListProps> = ({
     }
   };
 
+  // Deps are the pieces of content that can change the log's height — not the `live`
+  // object itself, whose identity is fresh on every parent render and would force a
+  // scrollHeight read (a synchronous reflow) on renders where nothing grew.
   useEffect(() => {
     const container = containerRef.current;
     if (container && isNearBottomRef.current) {
       container.scrollTop = container.scrollHeight;
     }
-  }, [messages, live, optimisticUserText, bottomSlot]);
+  }, [
+    messages,
+    live?.liveText,
+    live?.thinking,
+    live?.codeText,
+    live?.steps,
+    live?.tables,
+    live?.question,
+    optimisticUserText,
+    bottomSlot,
+  ]);
 
   // The reader's own send is the exception: they just spoke, so the reply belongs on
   // screen no matter how far up they had scrolled.
@@ -133,11 +122,18 @@ const MessageList: React.FC<MessageListProps> = ({
 
   // Parsed per settled message and memoised together: a streaming run re-renders this
   // list on every token, and re-parsing the whole history each time is O(history × tokens).
+  // The artifact object lives here for the same reason — built inline in the JSX it
+  // would be a fresh object every token, and a fresh object prop is all it takes to
+  // defeat MessageBubble's memo (probe-measured: bubbles with an artifact re-rendered
+  // once per token; text-only bubbles not at all).
   const parsedHistory = useMemo(
     () =>
       messages.map((message) => ({
         steps: message.sender === 'AI' ? parseSteps(message.stepsJson) : [],
         question: message.sender === 'AI' ? parseQuestion(message.questionsJson) : null,
+        artifact: message.artifactId
+          ? { artifactId: message.artifactId, title: message.artifactTitle ?? message.text }
+          : null,
       })),
     [messages],
   );
@@ -159,11 +155,7 @@ const MessageList: React.FC<MessageListProps> = ({
           text={message.text}
           attachments={message.attachments}
           steps={parsedHistory[index].steps}
-          artifact={
-            message.artifactId
-              ? { artifactId: message.artifactId, title: message.artifactTitle ?? message.text }
-              : null
-          }
+          artifact={parsedHistory[index].artifact}
           question={parsedHistory[index].question}
           artifactShown={message.artifactId !== null && message.artifactId === displayedArtifactId}
           onPickArtifact={pickArtifact}
@@ -181,24 +173,13 @@ const MessageList: React.FC<MessageListProps> = ({
       {live && (
         <MessageBubble
           sender="AI"
-          text={live.liveText}
-          steps={live.steps}
-          artifact={live.artifact}
+          live={live}
           artifactShown={live.artifact !== null && live.artifact.artifactId === displayedArtifactId}
           onPickArtifact={pickArtifact}
-          streaming={live.isStreaming}
-          stopped={live.stopped}
-          networkError={live.networkError}
-          thinking={live.thinking || null}
-          // A reask appears the moment it is asked: the run is blocked on the answer,
-          // so waiting for the stream to close would just be dead time on screen.
-          question={live.question}
+          // A reask appears the moment it is asked (the run is blocked on the answer),
+          // which is why the handler is wired here and not only after the stream closes.
           onAnswer={onAnswer}
-          codeText={live.codeText || null}
-          tables={live.tables}
-          error={live.error}
           durationMs={live.isStreaming ? null : lastRunDurationMs}
-          timerStartedAt={live.isStreaming ? live.startedAt : null}
         />
       )}
       {bottomSlot}

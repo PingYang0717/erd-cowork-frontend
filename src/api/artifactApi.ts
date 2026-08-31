@@ -82,7 +82,7 @@ export const artifactApi = {
   unpublish: (id: string) => apiClient.delete<Artifact>(`/artifacts/${id}/publish`),
 
   // Live since 10e61cc: the Gallery card's delete and the share dialog both reach the
-  // backend for real (ADR-0006 status note).
+  // backend for real (ADR-0006).
   deleteArtifact: (id: string) => apiClient.delete<void>(`/artifacts/${id}`),
 
   share: (id: string, targetIds: string[]) =>

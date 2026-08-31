@@ -238,8 +238,9 @@ describe('Artifacts gallery', () => {
     expect(within(spcCard).queryByText('Shared to me')).not.toBeInTheDocument();
   });
 
-  // Sharing is still disabled (ADR-0006), so the badge is asserted from the data that
-  // arrives once something has been shared, rather than by sharing it here.
+  // The badge is asserted from seeded data rather than by sharing here: the recipient
+  // directory is still a stub (ADR-0006), so a full share round-trip adds setup without
+  // adding coverage — the badge only reads `isShared`.
   it('shows the primary "Shared" badge in the meta row for an Artifact already shared', async () => {
     server.use(
       http.get('/api/artifacts', () =>

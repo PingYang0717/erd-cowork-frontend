@@ -9,8 +9,8 @@
 | 類別              | 選擇                                           | 備註                                                                  |
 | ----------------- | ---------------------------------------------- | --------------------------------------------------------------------- |
 | 框架              | React 18.3.1 + Vite 8.1.x                      | 與 `cowork-master` 對齊,共用同一個後端與同一套技術棧                  |
-| 語言              | TypeScript(先關閉 strict,後續逐步開啟)         | 見第 6 節                                                             |
-| UI 元件庫         | Ant Design 6.x(+ Ant Design X 2.x)             | 優先使用 antd 現成元件,避免重造輪子                                   |
+| 語言              | TypeScript(strict 已開啟)                      | 見第 6 節                                                             |
+| UI 元件庫         | Ant Design 6.x                                 | 優先使用 antd 現成元件,避免重造輪子                                   |
 | 路由              | React Router                                   | `createHashRouter`;離開 app 的連結走 `utils/artifactUrl.ts`           |
 | Client 端全域狀態 | Zustand                                        | 只放 UI 狀態(sidebar 開關、theme、跨頁草稿等)                         |
 | Server 端資料狀態 | TanStack Query                                 | API 資料一律走這裡,不放進 Zustand                                     |
@@ -35,7 +35,7 @@
 ```
 src/
   api/          apiClient(Axios instance + 匿名身分與 auth header provider,
-                與 cowork 檔案級同形——ADR-0007)、各 endpoint module
+                request 端與 cowork 同形——ADR-0007)、各 endpoint module
                 (agentApi / sessionApi / artifactApi / configApi /
                  connectorApi / fileApi)
   bootstrap/    internal 環境啟動接縫:import.meta.glob 偵測 internal.impl.ts
@@ -96,7 +96,7 @@ import './App.css';
 ## 3. 元件內部結構順序(手動慣例,linter 無法強制,靠 review 把關)
 
 ```tsx
-export function UserCard({ userId }: UserCardProps) {
+const UserCard: React.FC<UserCardProps> = ({ userId }) => {
   // 1. 外部/自訂 hooks(路由、query、store)
   const navigate = useNavigate();
   const { data: user } = useUser(userId);
@@ -126,7 +126,7 @@ export function UserCard({ userId }: UserCardProps) {
 
   // 8. JSX return
   return <div>...</div>;
-}
+};
 ```
 
 ### useEffect 使用原則
@@ -196,8 +196,8 @@ suspend 會把面板閃成 fallback;keepPreviousData 讓舊文件撐到新 HTML 
 
 ### 多使用者身分
 
-所有請求帶 `X-User-Id`,唯一來源是 `api/apiClient.ts` 的 `getAuthHeaders()`(cowork
-檔案級同形,ADR-0007):axios interceptor 與 `agentApi` 的 raw fetch 共用它——串流那條
+所有請求帶 `X-User-Id`,唯一來源是 `api/apiClient.ts` 的 `getAuthHeaders()`(request 端
+與 cowork 同形,ADR-0007):axios interceptor 與 `agentApi` 的 raw fetch 共用它——串流那條
 路不經過 axios,漏掉 header 會被後端當成另一個使用者。v1 是 localStorage 的匿名 UUID
 (key `erd_user_id`,`getUserId` 每次直讀、不快取)。
 
@@ -262,13 +262,15 @@ export const useThemeStore = create<ThemeState>()(
 
 ---
 
-## 5. API 呼叫層(Axios,與 cowork 檔案級同形——ADR-0007)
+## 5. API 呼叫層(Axios,request 端與 cowork 同形——ADR-0007)
 
-`src/api/apiClient.ts` 與 cowork 上游逐行同形,**不要為本專案便利改它**(改了就失去
-diff-zero 的對齊價值)。它做兩件事:raw axios instance(baseURL 寫死 `/api`、無
-timeout、無環境變數),加上身分——`getUserId`(localStorage 匿名 UUID)、
-`getAuthHeaders`、`setAuthHeaderProvider`(internal SSO 接縫,語意見 3.5 節)。
-request interceptor 把 `getAuthHeaders()` 的回傳逐一放上 header。
+`src/api/apiClient.ts` 的 **request 端**與 cowork 上游同形(同形的精確範圍見
+ADR-0007「同形的範圍」:身分與 provider、base URL 與無 timeout、上傳的 FormData
+路線、bootstrap 接縫——這幾項 NEVER 為本專案便利更動)。它做兩件事:raw axios
+instance(baseURL 寫死 `/api`、無 timeout、無環境變數),加上身分——`getUserId`
+(localStorage 匿名 UUID)、`getAuthHeaders`、`setAuthHeaderProvider`(internal SSO
+接縫,語意見 3.5 節)。request interceptor 把 `getAuthHeaders()` 的回傳逐一放上
+header。
 
 **response interceptor 拆掉 `res.data`**,`apiClient` 是一層有型別的包裝,所以
 `apiClient.get<Session[]>('/sessions')` 直接回 `Promise<Session[]>`。需要操作 axios
@@ -313,11 +315,11 @@ proxy 到 `localhost:8080`;部署走反向代理,與 vite 無關。
 
 ## 6. TypeScript 規則
 
-- 目前**不開 strict mode**,但以下幾條先強制:
+- **strict mode 已開啟**(2026-08-28:實測全庫僅 3 個錯誤,修完即翻開)。此外:
   - 禁止 `any`(`typescript/no-explicit-any: error`),真的需要時用 `unknown` 再收斂型別
   - 函式的參數與回傳值型別盡量明確標註,不依賴推斷
   - API 回應一律定義 DTO 型別(放 `src/types/api/`)
-- 待專案穩定、型別覆蓋率提高後,再逐步開啟 `strict: true`(建議下一個里程碑就排入)。
+- NEVER 關回去:strict 下每個新檔案的 null 安全是免費的,關掉才要重新還債。
 
 ---
 
