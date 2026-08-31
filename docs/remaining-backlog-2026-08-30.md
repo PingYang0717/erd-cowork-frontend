@@ -1,4 +1,4 @@
-# 待修事項總表(2026-08-30)
+# 待修事項總表(2026-08-30,2026-08-31 更新)
 
 七軸審查(Standards / Spec / Runtime / Load / Maintainability / Security / Correctness /
 A11y)後,**尚未修復**的全部項目,逐項驗證過在 `perf/deep-review` 的當前 HEAD 仍然
@@ -6,6 +6,15 @@ A11y)後,**尚未修復**的全部項目,逐項驗證過在 `perf/deep-review` �
 需要決策(前端無法單方面決定的用 ⚖ 標記)。
 
 已修復的不列在這裡(見 `deep-review-2026-08-28-fixes.md` 與各 commit)。
+
+## 2026-08-31 更新
+
+- **正確性 C-2〜C-5 與 G-1 已全部修復**(批次 A,commit `ba1254a`),下方段落保留為
+  紀錄,標題加註「已修復」。
+- **G-1 之後又自然消失**:分享的收件者改為搜尋式查詢(`GET /hr/employeesAndOrgs`),
+  底下已經不是 suspense query,portal 無邊界的問題不復存在。
+- **新增一項 A-8**(見無障礙段落):`ArtifactCard` 的 unpublish 確認框。
+- 安全性 S-3 / S-4 與無障礙 A-1〜A-7 **仍未處理**,是這份文件現在唯一的內容。
 
 ---
 
@@ -40,7 +49,7 @@ A11y)後,**尚未修復**的全部項目,逐項驗證過在 `perf/deep-review` �
 
 ## 正確性(全部 VERIFIED,多數已用 probe 重現)
 
-### C-2 跑完才按 Stop → 答案顯示兩次
+### C-2 跑完才按 Stop → 答案顯示兩次 — ✅ 已修復(2026-08-30)
 
 `useAgentStream.ts:253` 的 `await invalidateSessionData()` 在 `DONE` 之前,這段網路來回
 期間 `isStreaming` 仍為 true、按鈕還是 Stop。此時按下去只 dispatch `STOPPED`,而
@@ -50,7 +59,7 @@ A11y)後,**尚未修復**的全部項目,逐項驗證過在 `perf/deep-review` �
 **修法**:`stop()` 加守衛 `if (!isStreaming) return;`,或 `STOPPED` case 改為
 `state.isStreaming ? {...state, stopped: true} : state`。無測試覆蓋。
 
-### C-3 連續送出相同文字,第二顆使用者泡泡不出現
+### C-3 連續送出相同文字,第二顆使用者泡泡不出現 — ✅ 已修復(2026-08-30)
 
 `ThreadPanel.tsx:176` 用 `pendingQuestion !== lastHistoryQuestion`(文字比對)抑制樂觀
 泡泡。歷史結尾是 USER 訊息時(reask 或 stop 後)再送同一句 → 整段串流期間畫面只有一顆
@@ -58,14 +67,14 @@ A11y)後,**尚未修復**的全部項目,逐項驗證過在 `perf/deep-review` �
 **修法**:改用送出序號/時間戳而非文字比對(例如記 `pendingSentAt`,在 `messages.length`
 變化時清除)。無測試覆蓋。
 
-### C-4 repair 的 `setStatus` 會蓋到別的 artifact
+### C-4 repair 的 `setStatus` 會蓋到別的 artifact — ✅ 已修復(2026-08-30)
 
 `useRepairOfferStore.ts:50` 的 `setStatus` 不檢查 artifactId。修 A 的 request 在飛時切
 session、C 拋錯建立新 offer → A 的結果(`repaired:false`→`setStatus('failed')`)打在 C
 上;若 `repaired:true` 則 `clear()` 吃掉 C 的 offer 並 `bumpArtifactReload()` 重載 C。
 **修法**:`setStatus(artifactId, status)`,artifactId 不符即忽略。
 
-### C-5 第二個壞掉的 artifact 永遠不會被提修復
+### C-5 第二個壞掉的 artifact 永遠不會被提修復 — ✅ 已修復(2026-08-30)
 
 `useRepairOfferStore.ts:44`:`offer !== null` 時 `report` 直接 return,錯誤被丟棄且不
 重播。切版本時 A、B 都拋錯 → 只留 A 的 offer;使用者忽略 A 後,壞掉的 B 沒有任何修復
@@ -123,6 +132,12 @@ Escape 後焦點掉回 `<body>`,三欄版面裡等於位置全失;`:67` 標題 d
 是 `div onClick`(鍵盤無法關)。**啟用 jsx-a11y 會抓到這一條**
 （`no-static-element-interactions` / `click-events-have-key-events`）。
 
+### A-8 unpublish 確認框(2026-08-31 新增)
+
+`ArtifactCard` 用 antd `Modal.confirm` 說明「會收回所有收件者的存取權」。antd 的
+confirm 有自己的焦點處理,但**這是一個破壞性動作的確認**,值得檢查焦點是否落在較安全
+的「保留」而非 danger 的「取消發布」上。
+
 ### A-7 次要
 
 iframe title 未帶 artifact 名稱;中英混雜的 aria-label(`VersionSwitcher` 用中文「切換
@@ -133,7 +148,10 @@ iframe title 未帶 artifact 名稱;中英混雜的 aria-label(`VersionSwitcher`
 
 ## 縫隙掃描(2026-08-30 新增)
 
-### G-1 ShareArtifactDialog 的 suspense query 無邊界 — INFERRED
+### G-1 ShareArtifactDialog 的 suspense query 無邊界 — ✅ 已解決(2026-08-31)
+
+先以內層 `DataBoundary` 修復,隨後收件者改為搜尋式的一般查詢,底下不再有 suspense
+query,問題整個消失。以下為原始紀錄。
 
 `ShareArtifactDialog.tsx:18` 用 suspense query `useDirectory`,而它是 antd Modal(portal
 到 `document.body`,在所有 `DataBoundary` 之外)。目前 `useDirectory` 是同步 resolve 的
