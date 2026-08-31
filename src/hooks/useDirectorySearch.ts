@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 
-import { DIRECTORY_SEARCH_MIN_LENGTH, directoryApi } from '@/api/directoryApi';
+import { DIRECTORY_SEARCH_MIN_LENGTH, searchDirectory } from '@/api/directoryApi';
 
 export function directorySearchQueryKey(key: string) {
   return ['directory', key] as const;
@@ -17,7 +17,7 @@ export function useDirectorySearch(key: string) {
 
   const { data, isFetching } = useQuery({
     queryKey: directorySearchQueryKey(trimmed),
-    queryFn: ({ signal }) => directoryApi.search(trimmed, signal),
+    queryFn: ({ signal }) => searchDirectory(trimmed, signal),
     enabled,
     // The org directory does not change while a dialog is open.
     staleTime: 5 * 60 * 1000,

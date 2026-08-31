@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
-import { connectorApi } from '@/api/connectorApi';
-import { sessionApi } from '@/api/sessionApi';
+import { addConnector as addConnectorRequest } from '@/api/connectorApi';
+import { attachDataSource, detachDataSource } from '@/api/sessionApi';
 
 import { useActionErrorToast } from './useActionErrorToast';
 import { connectorsQueryKey } from './useConnectors';
@@ -19,9 +19,7 @@ export function useSetSessionDataSource(sessionId: string) {
 
   return useMutation({
     mutationFn: ({ id, attached }: { id: string; attached: boolean }) =>
-      attached
-        ? sessionApi.attachDataSource(sessionId, id)
-        : sessionApi.detachDataSource(sessionId, id),
+      attached ? attachDataSource(sessionId, id) : detachDataSource(sessionId, id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: sessionDetailQueryKey(sessionId) });
     },
@@ -38,8 +36,8 @@ export function useAddConnector(sessionId: string) {
 
   return useMutation({
     mutationFn: async (name: string) => {
-      const id = await connectorApi.addConnector(name);
-      await sessionApi.attachDataSource(sessionId, id);
+      const id = await addConnectorRequest(name);
+      await attachDataSource(sessionId, id);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: connectorsQueryKey });

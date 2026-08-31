@@ -7,13 +7,11 @@ import { apiClient } from './apiClient';
  *  request would be large, slow, and useless to read. */
 export const DIRECTORY_SEARCH_MIN_LENGTH = 3;
 
-export const directoryApi = {
-  /** Searches people and org units by a free-text key (department code, section code,
-   *  NT account or name). A search rather than a full listing: the directory is the
-   *  whole organisation, which is far too large to send and filter client-side. */
-  search: (key: string, signal?: AbortSignal) =>
-    apiClient.get<DirectoryEntry[]>('/hr/employeesAndOrgs', {
-      params: { key },
-      signal,
-    }),
-};
+/** Searches people and org units by a free-text key (department code, section code, NT
+ *  account or name). A search rather than a full listing: the directory is the whole
+ *  organisation, which is far too large to send and filter client-side. */
+export const searchDirectory = (key: string, signal?: AbortSignal) =>
+  apiClient.get<DirectoryEntry[]>('/hr/employeesAndOrgs', {
+    params: { key },
+    signal,
+  });
