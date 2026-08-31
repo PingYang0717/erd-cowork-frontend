@@ -75,7 +75,6 @@ const ArtifactPanelView: React.FC<ArtifactPanelViewProps> = ({ sessionId }) => {
       {
         artifactId: streamedArtifact.artifactId,
         title: streamedArtifact.title,
-        version: derived.length + 1,
       },
     ];
   }, [detail.messages, streamedArtifact]);

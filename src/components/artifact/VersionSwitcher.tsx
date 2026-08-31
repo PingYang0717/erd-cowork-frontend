@@ -47,17 +47,16 @@ const VersionSwitcher: React.FC<VersionSwitcherProps> = ({ versions, activeVersi
 
   return (
     <div ref={rootRef} className={styles.versionSwitcher}>
-      <Tooltip content="切換版本">
+      <Tooltip content="切換產出">
         <button
           type="button"
           className={styles.versionTrigger}
-          aria-label="切換版本"
+          aria-label="切換產出"
           aria-haspopup="menu"
           aria-expanded={isOpen}
           onClick={() => setIsOpen((v) => !v)}
         >
           <HistoryOutlined aria-hidden />
-          <span className={styles.versionTriggerN}>v{activeVersion?.version ?? 1}</span>
           <span className={styles.versionTriggerLabel}>{activeVersion?.title ?? ''}</span>
           <DownOutlined aria-hidden className={styles.versionTriggerChevron} />
         </button>
@@ -65,7 +64,7 @@ const VersionSwitcher: React.FC<VersionSwitcherProps> = ({ versions, activeVersi
       {isOpen && (
         <div role="menu" className={styles.versionMenu}>
           <div className={styles.versionMenuHeader}>
-            版本 · 共 {versions.length} 個，可切換後再發布
+            此對話的產出 · 共 {versions.length} 個，可切換後再發布
           </div>
           {newestFirst.map((v) => {
             const isCurrent = v.artifactId === activeVersion?.artifactId;
@@ -85,7 +84,6 @@ const VersionSwitcher: React.FC<VersionSwitcherProps> = ({ versions, activeVersi
                   setIsOpen(false);
                 }}
               >
-                <span className={styles.versionMenuItemN}>v{v.version}</span>
                 <span className={styles.versionMenuItemLabel}>{v.title}</span>
                 <span className={styles.versionMenuItemTime}>
                   {v.createdAt ? formatRelativeTime(v.createdAt) : ''}
