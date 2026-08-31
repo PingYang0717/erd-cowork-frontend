@@ -1,5 +1,7 @@
 import { type RefObject, useCallback, useRef } from 'react';
 
+import { clamp } from '@/utils/clamp';
+
 interface ResizablePaneOptions {
   min: number;
   max: number;
@@ -11,14 +13,10 @@ interface ResizablePaneOptions {
 
 interface ResizablePane<T extends HTMLElement> {
   /** Put this on the pane element whose width the handle drags. */
-  paneRef: RefObject<T | null>;
+  paneRef: RefObject<T>;
   onDragStart: () => void;
   onDrag: (deltaX: number) => void;
   onDragEnd: () => void;
-}
-
-function clamp(value: number, min: number, max: number) {
-  return Math.min(Math.max(value, min), max);
 }
 
 /** A pane whose width is dragged directly on the DOM, and only reaches React on release.

@@ -13,7 +13,8 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import ThemeToggle from '@/components/common/ThemeToggle';
 import Tooltip from '@/components/common/Tooltip';
 import { useArtifactContent } from '@/hooks/useArtifactContent';
-import { artifactQueryKey, useArtifacts } from '@/hooks/useArtifacts';
+import { artifactContentQueryKey } from '@/hooks/useArtifactContent';
+import { useArtifacts } from '@/hooks/useArtifacts';
 import { useSessionDetail } from '@/hooks/useSessionDetail';
 import type { Artifact, ArtifactVersion } from '@/types/api/index';
 import { artifactHref } from '@/utils/artifactUrl';
@@ -106,11 +107,13 @@ const ArtifactFullPageView: React.FC<ArtifactFullPageViewProps> = ({ artifactId 
             type="button"
             className={styles.iconButton}
             aria-label="Refresh artifact"
-            onClick={() =>
-              queryClient.invalidateQueries({
-                queryKey: artifactQueryKey(displayedArtifactId as string),
-              })
-            }
+            onClick={() => {
+              if (displayedArtifactId !== undefined) {
+                queryClient.invalidateQueries({
+                  queryKey: artifactContentQueryKey(displayedArtifactId),
+                });
+              }
+            }}
           >
             <ReloadOutlined aria-hidden />
           </button>
@@ -120,9 +123,13 @@ const ArtifactFullPageView: React.FC<ArtifactFullPageViewProps> = ({ artifactId 
             type="button"
             className={styles.iconButton}
             aria-label="Open artifact in new tab"
-            onClick={() =>
-              window.open(artifactHref(displayedArtifactId), '_blank', 'noopener,noreferrer')
-            }
+            onClick={() => {
+              // The toolbar only renders alongside a displayed artifact, but the type
+              // cannot see that — and opening a tab at /undefined would be silent.
+              if (displayedArtifactId !== undefined) {
+                window.open(artifactHref(displayedArtifactId), '_blank', 'noopener,noreferrer');
+              }
+            }}
           >
             <ExportOutlined aria-hidden />
           </button>

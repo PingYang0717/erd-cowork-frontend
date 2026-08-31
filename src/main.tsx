@@ -1,9 +1,10 @@
 // Self-hosted (@fontsource) like cowork upstream: the internal network blocks font
 // CDNs, so the files ship in the bundle (ADR-0002).
 import '@fontsource-variable/inter/wght.css';
-import '@fontsource/noto-sans-tc/400.css';
-import '@fontsource/noto-sans-tc/500.css';
-import '@fontsource/noto-sans-tc/700.css';
+// Variable font: one face covers 100-900, replacing the 400/500/700 static trio — the
+// @font-face CSS was 88.7% of the render-blocking stylesheet, and this cuts those
+// declarations to a third. Weight rendering needs a visual once-over after any swap.
+import '@fontsource-variable/noto-sans-tc/wght.css';
 import './index.css';
 
 import { StrictMode } from 'react';

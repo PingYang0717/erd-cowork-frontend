@@ -6,7 +6,6 @@
  *
  *  `'self'` is useless here — a sandboxed document has an opaque origin that matches no
  *  source — so the host has to be the parent's origin, written out. */
-const HEAD_OPEN_TAG = /<head\b[^>]*>/i;
 
 function buildPolicy(origin: string): string {
   return [
@@ -22,17 +21,31 @@ function buildPolicy(origin: string): string {
   ].join('; ');
 }
 
-/** Returns `html` with the policy as the first thing inside `<head>`, so it is in force
- *  before the document loads anything. A document with no head gets it at the very
- *  front, which parsers hoist into the head they synthesise. */
+/** Returns `html` with the policy as the first element in `<head>`, so it is in force
+ *  before the document loads anything.
+ *
+ *  The insertion goes through `DOMParser` rather than a regex, because "where is the
+ *  head" is a question only a parser can answer, and two ways of getting it wrong were
+ *  both silent:
+ *
+ *  - **A `<head>` inside a comment or a string literal.** Matching the first literal
+ *    occurrence put the `<meta>` inside that comment. The document then carried NO
+ *    policy at all, rendered perfectly, and reported nothing — and an agent writing a
+ *    dashboard that generates HTML mentions `<head>` in a string routinely.
+ *  - **A script written before `<head>`.** The parser hoists it into the head, ahead of
+ *    a policy inserted after the literal tag. A meta CSP only binds requests made after
+ *    it is parsed, so that script ran unpoliced.
+ *
+ *  Parsing here is the same parse the iframe will do, so the head we find is the head
+ *  the browser will build — including any element it hoisted into it. */
 export function injectCspMeta(html: string, origin: string): string {
-  const metaTag = `<meta http-equiv="Content-Security-Policy" content="${buildPolicy(origin)}">`;
-  const headMatch = HEAD_OPEN_TAG.exec(html);
+  const doc = new DOMParser().parseFromString(html, 'text/html');
 
-  if (!headMatch) {
-    return metaTag + html;
-  }
+  const meta = doc.createElement('meta');
+  meta.setAttribute('http-equiv', 'Content-Security-Policy');
+  meta.setAttribute('content', buildPolicy(origin));
+  doc.head.insertBefore(meta, doc.head.firstChild);
 
-  const insertAt = headMatch.index + headMatch[0].length;
-  return html.slice(0, insertAt) + metaTag + html.slice(insertAt);
+  const doctype = doc.doctype ? `<!DOCTYPE ${doc.doctype.name}>` : '';
+  return doctype + doc.documentElement.outerHTML;
 }

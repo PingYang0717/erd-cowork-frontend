@@ -9,61 +9,70 @@ import {
   ToolOutlined,
   UpOutlined,
 } from '@ant-design/icons';
-import React, { useEffect, useState } from 'react';
+import React, { useDeferredValue, useEffect, useMemo, useState } from 'react';
 
 import AttachmentChip from '@/components/files/AttachmentChip';
 import { INTERRUPTED_TEXTS, REPAIR_RECORD_PREFIXES } from '@/constants/messages';
-import type {
-  QuestionForm,
-  StepItem,
-  StepStatus,
-  TableResult,
-  UploadedFileInfo,
-} from '@/types/api/index';
+import type { AgentStreamState } from '@/hooks/useAgentStream';
+import type { QuestionForm, StepItem, StepStatus, UploadedFileInfo } from '@/types/api/index';
 import { formatDuration } from '@/utils/formatDuration';
 import { splitAnswerByTableMarkers } from '@/utils/tableMarkers';
 
 import HtmlCodePanel from './HtmlCodePanel';
 import styles from './MessageBubble.module.css';
-import QuestionFormCard from './QuestionFormCard';
-import { type Answers } from './QuestionFormCard';
+import QuestionFormCard, { type Answers } from './QuestionFormCard';
+
+/** The slice of a run's state this bubble renders. A `Pick` rather than its own shape:
+ *  the reducer's state is the single source of truth for what a run carries, so a new
+ *  live field is added exactly once (per-field docs live on `AgentStreamState`). */
+export type LiveRun = Pick<
+  AgentStreamState,
+  | 'isStreaming'
+  | 'stopped'
+  | 'networkError'
+  | 'steps'
+  | 'liveText'
+  | 'thinking'
+  | 'codeText'
+  | 'tables'
+  | 'question'
+  | 'error'
+  | 'artifact'
+  | 'startedAt'
+>;
 import ReplyText from './ReplyText';
 import ResultTable from './ResultTable';
 import ThinkingPanel from './ThinkingPanel';
 
 export interface MessageBubbleProps {
   sender: 'USER' | 'AI';
-  text: string;
+  /** A settled message's text. The live bubble's text comes from `live.liveText`. */
+  text?: string;
   /** Attachments sent with this message. Ours hang off the message, not the session. */
   attachments?: UploadedFileInfo[];
   steps?: StepItem[] | null;
   artifact?: { artifactId: string; title: string } | null;
-  /** The run behind this bubble is still open. Everything below is live-only. */
-  streaming?: boolean;
-  /** The user ended the run early. What it produced stays; it is just no longer working. */
-  stopped?: boolean;
-  /** The connection died under us — not a user stop, and not something the backend
-   *  got to report. Shown instead of the generic error line. */
-  networkError?: boolean;
-  thinking?: string | null;
   question?: QuestionForm | null;
   /** History reasks render read-only: the answers were never persisted, so there is
    *  nothing to re-submit. */
   questionDisabled?: boolean;
   onAnswer?: (answers: Answers) => void;
-  codeText?: string | null;
-  tables?: TableResult[];
   /** True when this reply's artifact is the one the Artifact pane is showing; the
    *  chip then states the fact instead of offering the hand-off. */
   artifactShown?: boolean;
   /** Puts this reply's artifact on the Artifact pane. Without it the chip is a plain
    *  label (full-page artifact view has no pane to hand to). */
   onPickArtifact?: (artifactId: string) => void;
-  error?: { code: string; message: string } | null;
   /** How long the turn behind this bubble took; shown once it is over. */
   durationMs?: number | null;
-  /** Epoch ms the live turn started, which drives the ticking timer. */
-  timerStartedAt?: number | null;
+  /** The open (or visibly-ended) run this bubble fronts. One object instead of the
+   *  nine per-field props it used to be: the fields only ever travel together — the
+   *  reducer's own state IS this shape (`LiveRun` is a `Pick` of it) — and hand-copying
+   *  them across ThreadPanel → MessageList → here meant a new live field touched four
+   *  files. History bubbles simply omit it, so their memoised props stay flat and
+   *  stable. When set, `liveText` / `steps` / `artifact` / `question` / `tables` win
+   *  over the flat props. */
+  live?: LiveRun | null;
 }
 
 // Steps used to be revealed by a client-side timer, so a step could only ever be
@@ -179,25 +188,48 @@ function systemRecordKind(text: string): 'interrupted' | 'repair' | null {
  *  back tomorrow, or the hand-off from live to history flickers. */
 const MessageBubble: React.FC<MessageBubbleProps> = ({
   sender,
-  text,
+  text: settledText,
   attachments = [],
-  steps,
-  artifact,
-  streaming = false,
-  stopped = false,
-  networkError = false,
-  thinking,
-  question,
+  steps: settledSteps,
+  artifact: settledArtifact,
+  question: settledQuestion,
   questionDisabled = false,
   onAnswer,
-  codeText,
-  tables,
   artifactShown = false,
   onPickArtifact,
-  error,
   durationMs,
-  timerStartedAt,
+  live,
 }) => {
+  // One source per field: a live run's own state, else the settled message's.
+  const text = live ? live.liveText : (settledText ?? '');
+  const steps = live ? live.steps : settledSteps;
+  const artifact = live ? live.artifact : settledArtifact;
+  const question = live ? live.question : settledQuestion;
+  const streaming = live?.isStreaming ?? false;
+  const stopped = live?.stopped ?? false;
+  const networkError = live?.networkError ?? false;
+  const thinking = live?.thinking || null;
+  const codeText = live?.codeText || null;
+  const tables = live?.tables;
+  const error = live?.error ?? null;
+  const timerStartedAt = live?.isStreaming ? live.startedAt : null;
+
+  // Streaming appends 10-40 tokens a second, and each one re-renders this bubble with a
+  // longer `text`. The expensive part is below: splitting and markdown-parsing the FULL
+  // accumulated text — n tokens cost O(n²) total. So the parse follows a *deferred* copy:
+  // React keeps the cheap parts (label, timer, steps) on every token and re-parses only
+  // when the main thread has room, skipping intermediate values under load. Zero timers,
+  // so the test doctrine (src/test/README.md: the test decides when events arrive, every
+  // state observable) is untouched — act() flushes deferred renders synchronously.
+  const deferredText = useDeferredValue(text);
+  const recordKind = systemRecordKind(text);
+  // Markers say where a table belongs in the answer. A table nobody placed still has to
+  // appear somewhere, so it goes after the text rather than vanishing.
+  const segments = useMemo(
+    () => (recordKind ? [] : splitAnswerByTableMarkers(deferredText, tables)),
+    [recordKind, deferredText, tables],
+  );
+
   if (sender === 'USER') {
     return (
       <div className={styles.userRow}>
@@ -223,10 +255,6 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
   // is a claim about a turn that finished. A disabled reask is a past one, so a history
   // bubble carrying it is settled.
   const turnInPlay = streaming || stopped || (question != null && !questionDisabled);
-  const recordKind = systemRecordKind(text);
-  // Markers say where a table belongs in the answer. A table nobody placed still has to
-  // appear somewhere, so it goes after the text rather than vanishing.
-  const segments = recordKind ? [] : splitAnswerByTableMarkers(text, tables);
   const placedTableIds = new Set(
     segments.flatMap((segment) => (segment.type === 'table' ? [segment.table.tableId] : [])),
   );

@@ -120,6 +120,36 @@ describe('useAgentStream', () => {
     expect(result.current.state.liveText).toBe('Vt is dri');
   });
 
+  /** C-2: stop() only acts while the stream is being read. On an idle hook there is
+   *  nothing to stop — a click that flagged `stopped` here would render a 「已停止」
+   *  ghost bubble next to a run that never happened (the real bug fired in the finishing
+   *  window, where the button still says Stop after the last event). */
+  it('does nothing when stop() is called with no run in flight', () => {
+    const { result } = renderAgentStream();
+
+    act(() => result.current.stop());
+
+    expect(result.current.state.stopped).toBe(false);
+    expect(result.current.state.isStreaming).toBe(false);
+  });
+
+  it('does nothing when stop() is called after the stream has already closed', async () => {
+    const stream = mockAgentStream();
+    const { result } = renderAgentStream();
+
+    act(() => {
+      void result.current.send({ question: 'Run an SPC analysis.' });
+    });
+    stream.push({ type: 'TOKEN', delta: 'done' });
+    await waitFor(() => expect(result.current.state.liveText).toBe('done'));
+    act(() => stream.close());
+    await waitFor(() => expect(result.current.state.isStreaming).toBe(false));
+
+    // The run finished on its own; a late Stop must not retroactively mark it stopped.
+    act(() => result.current.stop());
+    expect(result.current.state.stopped).toBe(false);
+  });
+
   it('lands each streamed event in its own part of the state', async () => {
     const stream = mockAgentStream();
     const { result } = renderAgentStream();
@@ -342,11 +372,11 @@ describe('useAgentStream', () => {
     act(() => stream.close());
 
     // Stream fully read, but DONE waits on the invalidation so the live bubble
-    // never hands over to a stale history (no flicker).
-    await waitFor(() =>
-      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['sessions', 'sess-42'] }),
-    );
-    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['sessions'] });
+    // never hands over to a stale history (no flicker). One prefix invalidate covers
+    // the list AND the detail (['sessions', id] sits under ['sessions']) — invalidating
+    // them separately made the detail refetch get cancelled and reissued every run.
+    await waitFor(() => expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['sessions'] }));
+    expect(invalidateSpy).toHaveBeenCalledTimes(1);
     expect(result.current.state.isStreaming).toBe(true);
 
     await act(async () => {
@@ -396,14 +426,14 @@ describe('useAgentStream', () => {
       await act(async () => {
         vi.advanceTimersByTime(800);
       });
-      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['sessions', 'sess-stop'] });
+      // One prefix invalidate per stage — the detail key sits under ['sessions'].
       expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['sessions'] });
-      expect(invalidateSpy).toHaveBeenCalledTimes(2);
+      expect(invalidateSpy).toHaveBeenCalledTimes(1);
 
       await act(async () => {
         vi.advanceTimersByTime(800);
       });
-      expect(invalidateSpy).toHaveBeenCalledTimes(4);
+      expect(invalidateSpy).toHaveBeenCalledTimes(2);
     } finally {
       vi.useRealTimers();
       vi.unstubAllGlobals();

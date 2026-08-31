@@ -8,7 +8,7 @@ export type ArtifactKind = 'dashboard' | 'slides';
 // The same surfaces the app itself uses (theme/tokens.ts, copied from the mockup):
 // the Artifact renders inside an iframe and so cannot read the app's custom
 // properties, but it has to look like it belongs to the page it sits in. Artifact
-// HTML has no theme variants (ADR-0001 status note) — one light palette only.
+// HTML has no theme variants (ADR-0001) — one light palette only.
 const PALETTE = {
   bg: '#f5f6f8',
   fg: 'rgba(0, 0, 0, 0.88)',

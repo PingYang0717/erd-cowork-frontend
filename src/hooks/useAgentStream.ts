@@ -5,7 +5,6 @@ import { AgentStreamHttpError, type SendMessageArgs, streamAgentMessage } from '
 import type { AgentEvent, QuestionForm, StepItem, TableResult } from '@/types/api/agentEvent';
 import { liftQuestions } from '@/utils/liftQuestions';
 
-import { sessionDetailQueryKey } from './useSessionDetail';
 import { sessionsQueryKey } from './useSessions';
 
 /** Everything about a run except which session it belongs to and how it is cancelled. */
@@ -186,16 +185,19 @@ export function useAgentStream(sessionId: string): {
   const [state, dispatch] = useReducer(reducer, initialState);
   const queryClient = useQueryClient();
   const controllerRef = useRef<AbortController | null>(null);
+  // True only while the async generator is still delivering events. `stop` reads it to
+  // tell a real mid-stream interruption from a click that lands in the finishing window
+  // (after the last event, while the history refetch runs before DONE) — where the
+  // button still says Stop but the run has actually completed.
+  const receivingRef = useRef(false);
 
-  // Both messages a run produced live server-side; the sessions list also moves
-  // (last-activity ordering), so both refetch together.
+  // Both messages a run produced live server-side, and the sessions list moves too
+  // (last-activity ordering). One invalidate covers both: the detail key is
+  // ['sessions', id], which sits under the list's ['sessions'] prefix — invalidating
+  // them separately made the detail refetch get cancelled and reissued every time.
   const invalidateSessionData = useCallback(
-    () =>
-      Promise.all([
-        queryClient.invalidateQueries({ queryKey: sessionDetailQueryKey(sessionId) }),
-        queryClient.invalidateQueries({ queryKey: sessionsQueryKey }),
-      ]),
-    [queryClient, sessionId],
+    () => queryClient.invalidateQueries({ queryKey: sessionsQueryKey }),
+    [queryClient],
   );
 
   // Syncing with an external system (an open HTTP connection) is the one thing
@@ -215,6 +217,7 @@ export function useAgentStream(sessionId: string): {
 
       const controller = new AbortController();
       controllerRef.current = controller;
+      receivingRef.current = true;
 
       try {
         for await (const event of streamAgentMessage({
@@ -225,6 +228,7 @@ export function useAgentStream(sessionId: string): {
           dispatch({ type: 'EVENT', event });
         }
       } catch (error) {
+        receivingRef.current = false;
         // A user-initiated stop is not a failure: the run simply ends where it is,
         // and everything already streamed stays on screen. The backend persists an
         // aborted run asynchronously (doOnCancel), so refetch in two delayed stages
@@ -251,6 +255,7 @@ export function useAgentStream(sessionId: string): {
         return;
       }
 
+      receivingRef.current = false;
       // Await before DONE: dispatching first would clear the live bubble while the
       // history is still stale, flashing the previous thread state.
       await invalidateSessionData();
@@ -260,6 +265,12 @@ export function useAgentStream(sessionId: string): {
   );
 
   const stop = useCallback((): void => {
+    // Only a stream still being read can be stopped. A click after the last event —
+    // in the finishing window, or on an idle hook — would flag `stopped` on a run that
+    // completed, leaving a 「已停止」 ghost bubble beside the real reply.
+    if (!receivingRef.current) {
+      return;
+    }
     // Flag it before aborting so the UI shows the stop immediately, rather than
     // waiting for AbortError to propagate out of the async generator.
     dispatch({ type: 'STOPPED' });
