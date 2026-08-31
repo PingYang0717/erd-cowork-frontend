@@ -11,8 +11,7 @@ import {
   PlusOutlined,
 } from '@ant-design/icons';
 import { Dropdown, Input } from 'antd';
-import type { ReactNode } from 'react';
-import React, { useRef, useState } from 'react';
+import React, { type ReactNode, useRef, useState } from 'react';
 
 import ConnectorsPanel from '@/components/connectors/ConnectorsPanel';
 import AttachmentChip from '@/components/files/AttachmentChip';

@@ -19,8 +19,7 @@ import {
   WarningOutlined,
 } from '@ant-design/icons';
 import { Button, Input, Modal } from 'antd';
-import type { ReactNode } from 'react';
-import React, { useState } from 'react';
+import React, { type ReactNode, useState } from 'react';
 
 import { useAddConnector, useSetSessionDataSource } from '@/hooks/useConnectorMutations';
 import { useConnectors } from '@/hooks/useConnectors';

@@ -8,6 +8,10 @@ import { useSessionDetail } from './useSessionDetail';
 
 export const connectorsQueryKey = ['connectors'] as const;
 
+/** One shared empty array: `?? []` inline would hand useMemo a new identity every render
+ *  and the memo would never hold. */
+const NONE: string[] = [];
+
 /** The catalogue of known data sources, with this session's attachments applied.
  *
  *  Two sources of truth, deliberately: the catalogue says what exists and whether the
@@ -21,7 +25,7 @@ export function useConnectors(sessionId: string) {
     queryFn: connectorApi.listCatalogue,
   });
   const { data: detail } = useSessionDetail(sessionId);
-  const attached = detail.dataSourceIds ?? [];
+  const attached = detail.dataSourceIds ?? NONE;
 
   return useMemo<Connector[]>(
     () =>

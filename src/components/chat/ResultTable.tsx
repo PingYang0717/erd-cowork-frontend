@@ -1,5 +1,4 @@
-import type { TableColumnsType } from 'antd';
-import { Table } from 'antd';
+import { Table, type TableColumnsType } from 'antd';
 import React, { useMemo } from 'react';
 
 import type { TableCellValue, TableResult } from '@/types/api/index';
