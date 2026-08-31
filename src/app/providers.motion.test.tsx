@@ -4,22 +4,37 @@ import { describe, expect, it } from 'vitest';
 
 import AppProviders from './providers';
 
-/** The selectors antd emits `--ant-motion-duration-*: 0s` under. A component token that
- *  silently fails to apply looks exactly like one that was never set, so these tests
- *  check the token actually reaches the generated CSS.
+/** The selectors antd emits the shortened `--ant-motion-duration-*` under. A component
+ *  token that silently fails to apply looks exactly like one that was never set, so these
+ *  tests check the token actually reaches the generated CSS.
+ *
+ *  The duration is 10ms rather than 0s deliberately, and the assertion says so: a
+ *  zero-duration CSS transition fires no `transitionend`, and rc-motion waits for that
+ *  event before unmounting a closed overlay. Under `0s` a dismissed Modal left its mask
+ *  in the DOM — invisible, but still swallowing clicks and holding the focus lock.
  *
  *  This does couple to antd's CSS-variable emission (the `<component>-css-var` scope
  *  class). If a future antd changes that format these break — which is the point: the
  *  alternative is losing the setting without noticing. */
-function zeroDurationScopes(): string[] {
+const INSTANT_DURATION = '0.01s';
+
+function instantDurationScopes(): string[] {
   return Array.from(document.querySelectorAll('style'))
     .flatMap((tag) => (tag.textContent ?? '').split('}'))
-    .filter((rule) => rule.includes('--ant-motion-duration-mid:0s'))
+    .filter((rule) => rule.includes(`--ant-motion-duration-mid:${INSTANT_DURATION}`))
     .map((rule) => rule.split('{')[0].trim());
 }
 
-describe('overlays open without an enter animation', () => {
-  it('the modal and its mask sit in a zero-duration scope', async () => {
+/** No overlay duration may be `0s`, whatever else changes: that is the value that broke
+ *  mask cleanup, and it is the one a future "make it instant" edit would reach for. */
+function hasZeroDuration(): boolean {
+  return Array.from(document.querySelectorAll('style')).some((tag) =>
+    (tag.textContent ?? '').includes('--ant-motion-duration-mid:0s'),
+  );
+}
+
+describe('overlays open without a perceptible enter animation', () => {
+  it('the modal and its mask sit in an instant-duration scope', async () => {
     render(
       <AppProviders>
         <Modal open title="Attach files">
@@ -35,12 +50,14 @@ describe('overlays open without an enter animation', () => {
     expect(scope).not.toBeNull();
     expect(scope?.contains(document.querySelector('.ant-modal-mask'))).toBe(true);
     expect(scope?.contains(document.querySelector('.ant-modal-wrap'))).toBe(true);
-    expect(zeroDurationScopes().some((selector) => selector.includes('ant-modal-css-var'))).toBe(
+    expect(instantDurationScopes().some((selector) => selector.includes('ant-modal-css-var'))).toBe(
       true,
     );
+    // The regression that made this file worth having: `0s` leaves the mask behind.
+    expect(hasZeroDuration()).toBe(false);
   });
 
-  it('the dropdown menu sits in a zero-duration scope', async () => {
+  it('the dropdown menu sits in an instant-duration scope', async () => {
     render(
       <AppProviders>
         <Dropdown open menu={{ items: [{ key: 'rename', label: 'Rename' }] }}>
@@ -54,8 +71,9 @@ describe('overlays open without an enter animation', () => {
     // carries the slide-up animation classes.
     const menu = document.querySelector('.ant-dropdown');
     expect(menu?.className).toContain('ant-dropdown-css-var');
-    expect(zeroDurationScopes().some((selector) => selector.includes('ant-dropdown-css-var'))).toBe(
-      true,
-    );
+    expect(
+      instantDurationScopes().some((selector) => selector.includes('ant-dropdown-css-var')),
+    ).toBe(true);
+    expect(hasZeroDuration()).toBe(false);
   });
 });
