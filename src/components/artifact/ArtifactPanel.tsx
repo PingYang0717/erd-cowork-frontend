@@ -189,11 +189,18 @@ const ArtifactPanelContent: React.FC<ArtifactPanelContentProps> = ({
             發布 Artifact
           </button>
         )}
-        <Tooltip content="分享" wrapperClassName={styles.shareButtonSlot}>
+        {/* Sharing rests on publication — a recipient's access is access to a published
+            Artifact, and unpublishing revokes it. Kept visible rather than hidden so the
+            relationship is something the user can see, not something they discover. */}
+        <Tooltip
+          content={isPublished ? '分享' : '發布後才能分享'}
+          wrapperClassName={styles.shareButtonSlot}
+        >
           <button
             type="button"
             className={styles.shareButton}
             aria-label="Share artifact"
+            disabled={!isPublished}
             onClick={() => setIsShareOpen(true)}
           >
             <ShareAltOutlined aria-hidden />

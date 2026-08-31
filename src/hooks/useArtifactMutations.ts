@@ -49,6 +49,22 @@ export function useShareArtifact() {
 
 /** 發布：把這個 Artifact 開放給別人使用。The mockup calls its button 生成 Artifact;
  *  what it does is publish (see `Artifact.publishedAt`). */
+/** Takes an Artifact back off the shelf. Unpublishing revokes access for everyone it
+ *  was shared with — publication is what sharing rests on — so the caller is expected to
+ *  have said so before reaching here. */
+export function useUnpublishArtifact() {
+  const queryClient = useQueryClient();
+  const toastError = useActionErrorToast();
+
+  return useMutation({
+    mutationFn: (id: string) => artifactApi.unpublish(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: artifactsQueryKey });
+    },
+    onError: toastError,
+  });
+}
+
 export function usePublishArtifact() {
   const queryClient = useQueryClient();
   const toastError = useActionErrorToast();

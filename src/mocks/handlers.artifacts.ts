@@ -36,7 +36,7 @@ export interface StoredArtifact {
   isShared: boolean;
 }
 
-export const artifacts = createPersistedResource<StoredArtifact>('erd-cowork:artifacts:v5', [
+export const artifacts = createPersistedResource<StoredArtifact>('erd-cowork:artifacts:v6', [
   {
     id: 'artifact-1',
     sessionId: 'session-1',
@@ -72,6 +72,20 @@ export const artifacts = createPersistedResource<StoredArtifact>('erd-cowork:art
     pinnedAt: null,
     publishedAt: '2026-08-19T08:35:00.000Z',
     isShared: true,
+  },
+  // Never published. The Gallery is a shelf of published work, so this one exists only
+  // in its session's thread — it is here so that boundary is exercised, not assumed.
+  {
+    id: 'artifact-4',
+    sessionId: 'session-1',
+    title: 'Scratch — CPK by lot',
+    kind: 'dashboard',
+    scenario: 'spc',
+    ownerId: currentUser.id,
+    createdAt: '2026-08-22T14:00:00.000Z',
+    pinnedAt: null,
+    publishedAt: null,
+    isShared: false,
   },
 ]);
 

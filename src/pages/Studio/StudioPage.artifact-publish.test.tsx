@@ -88,6 +88,27 @@ describe('Per-version Artifact publishing', () => {
     expect(await screen.findByRole('dialog', { name: /分享/ })).toBeInTheDocument();
   });
 
+  /** Publication is what sharing rests on: a recipient's access is access to a published
+   *  Artifact, and unpublishing revokes it. So there is nothing to share until the owner
+   *  publishes — the entry stays visible (it teaches the relationship) but does nothing. */
+  it('will not share a version that has not been published yet', async () => {
+    const user = userEvent.setup();
+    renderStudio();
+
+    await user.click(await screen.findByRole('button', { name: 'SPC — Vt (gate CD)' }));
+    await screen.findByText('已發布');
+
+    await user.type(
+      await screen.findByRole('textbox', { name: 'Message' }),
+      'Regenerate the dashboard.{Enter}',
+    );
+    await screen.findByRole('button', { name: '發布 Artifact' });
+
+    expect(screen.getByRole('button', { name: 'Share artifact' })).toBeDisabled();
+    await user.click(screen.getByRole('button', { name: 'Share artifact' }));
+    expect(screen.queryByRole('dialog', { name: /分享/ })).not.toBeInTheDocument();
+  });
+
   it('keeps each version’s published state independent when switching versions', async () => {
     const user = userEvent.setup();
     renderStudio();
