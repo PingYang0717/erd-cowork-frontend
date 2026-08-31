@@ -1,9 +1,10 @@
 import { CheckOutlined, CopyOutlined, FundOutlined, LinkOutlined } from '@ant-design/icons';
 import { Button, Input, Modal, Select } from 'antd';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 
 import { DIRECTORY_SEARCH_MIN_LENGTH } from '@/api/directoryApi';
 import { useShareArtifact } from '@/hooks/useArtifactMutations';
+import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { useDirectorySearch } from '@/hooks/useDirectorySearch';
 import type { Artifact, DirectoryEntry } from '@/types/api/index';
 
@@ -121,17 +122,6 @@ const ShareArtifactDialog: React.FC<ShareArtifactDialogProps> = ({ open, onClose
   );
 };
 
-/** Holds a value back until it has stopped changing for `delayMs` — one request per
- *  pause in typing, not one per keystroke. */
-function useDebounced<T>(value: T, delayMs: number): T {
-  const [settled, setSettled] = useState(value);
-  useEffect(() => {
-    const timer = setTimeout(() => setSettled(value), delayMs);
-    return () => clearTimeout(timer);
-  }, [value, delayMs]);
-  return settled;
-}
-
 interface RecipientSelectProps {
   value: string[];
   onChange: (ids: string[]) => void;
@@ -144,7 +134,7 @@ interface RecipientSelectProps {
  *  it — so chosen entries are remembered here and merged back into the options. */
 const RecipientSelect: React.FC<RecipientSelectProps> = ({ value, onChange }) => {
   const [key, setKey] = useState('');
-  const debouncedKey = useDebounced(key, 250);
+  const debouncedKey = useDebouncedValue(key);
   const { entries, isSearching, enabled } = useDirectorySearch(debouncedKey);
   const [picked, setPicked] = useState<DirectoryEntry[]>([]);
 
