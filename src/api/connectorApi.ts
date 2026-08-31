@@ -3,10 +3,20 @@ import type { Connector } from '@/types/api/index';
 
 import { apiClient } from './apiClient';
 
-/** Custom sources the user added. Still localStorage: adding a source to the catalogue
- *  is a different act from attaching one to a conversation, and only the latter has an
- *  endpoint (PATCH /sessions/{id}/data-source). */
+/** What this browser remembers about the user's own preferences.
+ *
+ *  `lastSelected` is the combination they last worked with. A connector is a capability
+ *  the user may grant the agent, and in practice the same person grants roughly the same
+ *  ones every time — so a new conversation starts pre-selected on what they chose last
+ *  rather than making them pick the same set again. It is a convenience, never a
+ *  requirement: a conversation with nothing selected runs perfectly well.
+ *
+ *  `custom` holds sources they added themselves. Both are localStorage rather than
+ *  backend state because both are about this person's habits, not about any one
+ *  conversation — which of them a given conversation actually draws on is the session's
+ *  business (PATCH /sessions/{id}/data-source). */
 interface ConnectorPrefs {
+  lastSelected: string[];
   custom: Connector[];
 }
 
@@ -15,13 +25,21 @@ function readPrefs(): ConnectorPrefs {
     const raw = localStorage.getItem(CONNECTOR_PREFS_STORAGE_KEY);
     if (raw !== null) {
       const parsed = JSON.parse(raw) as Partial<ConnectorPrefs>;
-      return { custom: parsed.custom ?? [] };
+      return { lastSelected: parsed.lastSelected ?? [], custom: parsed.custom ?? [] };
     }
   } catch {
     // A corrupt entry reads as "no preferences" and gets overwritten on the next write.
   }
-  return { custom: [] };
+  return { lastSelected: [], custom: [] };
 }
+
+/** The combination to start a fresh conversation on. */
+export const readRememberedSelection = (): string[] => readPrefs().lastSelected;
+
+/** Remembers what the user is working with now, so the next conversation opens on it. */
+export const rememberSelection = (connectorIds: string[]): void => {
+  writePrefs({ ...readPrefs(), lastSelected: connectorIds });
+};
 
 function writePrefs(prefs: ConnectorPrefs): void {
   localStorage.setItem(CONNECTOR_PREFS_STORAGE_KEY, JSON.stringify(prefs));
