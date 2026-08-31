@@ -83,7 +83,10 @@ const ArtifactsGallery: React.FC = () => {
   const [category, setCategory] = useState<FilterCategory>('all');
   const [sort, setSort] = useState<SortKey>('pinned');
 
-  const artifacts = data;
+  // The Gallery is a shelf of published work, not an index of everything ever made.
+  // An unpublished Artifact lives in its session's thread; publishing is the deliberate
+  // act that puts it here, and unpublishing takes it back out.
+  const artifacts = useMemo(() => data.filter((artifact) => artifact.publishedAt !== null), [data]);
 
   // Four passes over the list plus a dedupe and a sort — recomputed on every keystroke
   // elsewhere in the tree otherwise.
