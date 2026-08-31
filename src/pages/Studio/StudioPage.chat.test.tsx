@@ -87,6 +87,31 @@ describe('Chat composer', () => {
     expect(stream.requests[0]).toMatchObject({ question: '統計製程管制' });
   });
 
+  /** The other half of the guard, and the half the two tests above cannot reach.
+   *
+   *  Safari and several IMEs fire `compositionend` BEFORE the Enter that commits the
+   *  candidate, so by the time the keydown arrives `isComposingRef` is already false —
+   *  only the event's own `isComposing` flag still says a candidate is being chosen.
+   *  Without that second check the user's Enter picks a candidate and sends the
+   *  half-written sentence to the agent in the same keystroke. */
+  it('does not send when the keydown itself reports an in-flight composition', async () => {
+    const user = userEvent.setup();
+    const stream = mockAgentStream();
+    renderStudio();
+    await selectASession(user);
+
+    const textbox = screen.getByRole('textbox', { name: 'Message' });
+    fireEvent.compositionStart(textbox);
+    await user.type(textbox, '統計製程');
+    // The order Safari uses: composition ends first, and the committing Enter still
+    // carries isComposing.
+    fireEvent.compositionEnd(textbox);
+    fireEvent.keyDown(textbox, { key: 'Enter', isComposing: true });
+
+    expect(stream.requests).toHaveLength(0);
+    expect(textbox).toHaveValue('統計製程');
+  });
+
   it('shows the data-source chip alongside the theme toggle in the thread header', () => {
     renderStudio();
 
