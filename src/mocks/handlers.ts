@@ -4,6 +4,7 @@
 // stubbed in `src/api/`.
 import { artifactHandlers } from './handlers.artifacts';
 import { configHandlers } from './handlers.config';
+import { directoryHandlers } from './handlers.directory';
 import { fileHandlers } from './handlers.files';
 import { messageHandlers } from './handlers.messages';
 import { sessionHandlers } from './handlers.sessions';
@@ -17,4 +18,5 @@ export const handlers = [
   ...fileHandlers,
   ...messageHandlers,
   ...artifactHandlers,
+  ...directoryHandlers,
 ];

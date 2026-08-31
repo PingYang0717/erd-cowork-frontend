@@ -1,45 +1,6 @@
-import type { Artifact, DirectoryEntry } from '@/types/api/index';
+import type { Artifact } from '@/types/api/index';
 
 import { apiClient } from './apiClient';
-
-/** Stub for the one read the backend has not built yet (ADR-0006): the directory the
- *  share dialog searches. Sharing itself is live (10e61cc); recipients are picked from
- *  this fixed list until the real directory endpoint lands. */
-const DEPARTMENT_CODES = [
-  'A10INTD1-1',
-  'A10INTD1-2',
-  'A10INTD2-1',
-  'A10INTD2-2',
-  'A10PITD1-1',
-  'A10PITD1-2',
-  'A10YETD1-1',
-  'A10DETD1-1',
-];
-
-const SECTION_CODES = ['INTD-1', 'INTD-2', 'INTD-3', 'PITD-1', 'PITD-2', 'YETD-1', 'DETD-1'];
-
-const PEOPLE = [
-  { account: 'CHXXGHYC', name: '鄭凱宇' },
-  { account: 'CHXXABCD', name: '王思涵' },
-  { account: 'CHXXKLWU', name: '吳克良' },
-  { account: 'CHXXSHLN', name: '林淑惠' },
-  { account: 'CHXXYCCN', name: '陳彥志' },
-  { account: 'CHXXMHHU', name: '黃明翰' },
-  { account: 'CHXXTTLA', name: '賴宗霖' },
-  { account: 'CHXXPYHS', name: '許佩雅' },
-  { account: 'CHXXCKCH', name: '張家愷' },
-  { account: 'CHXXWJKM', name: '金宇真' },
-];
-
-const STUB_DIRECTORY: DirectoryEntry[] = [
-  ...DEPARTMENT_CODES.map((code) => ({ id: code, kind: 'department' as const, label: code })),
-  ...SECTION_CODES.map((code) => ({ id: code, kind: 'section' as const, label: code })),
-  ...PEOPLE.map((p) => ({
-    id: p.account,
-    kind: 'person' as const,
-    label: `${p.account} · ${p.name}`,
-  })),
-];
 
 export interface ArtifactShareResult {
   url: string;
@@ -89,8 +50,4 @@ export const artifactApi = {
     apiClient.post<ArtifactShareResult>(`/artifacts/${id}/share`, {
       targetIds,
     }),
-
-  /** Stubbed: no backend directory endpoint (ADR-0006). The share dialog searches this
-   *  fixed list until the real directory lands. */
-  listDirectory: () => Promise.resolve(STUB_DIRECTORY),
 };
