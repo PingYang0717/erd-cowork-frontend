@@ -29,9 +29,6 @@ export const sessions = createPersistedResource<Session>('erd-cowork:sessions:v2
  *  because attachment surfaces in the detail, not in the list. The two seeded sessions
  *  start with the three sources that were previously "connected" in the catalogue, so
  *  the panel opens on the same state it always did. */
-/** What a conversation draws on before the user says otherwise. */
-const DEFAULT_DATA_SOURCE_IDS = ['inline', 'wat', 'cp'];
-
 export const sessionDataSources = createPersistedResource<{
   sessionId: string;
   connectorId: string;
@@ -62,17 +59,6 @@ export function upsertSession(sessionId: string): void {
   sessions.write([
     ...all,
     { id: sessionId, title: DRAFT_SESSION_TITLE, pinnedAt: null, updatedAt: now },
-  ]);
-
-  // A brand-new conversation starts on the default sources rather than on nothing.
-  // Attachment is per session now, and without this every new chat would open unable to
-  // run anything until the user went and reconnected the same three sources by hand.
-  // WHICH sources a new session should start with is a backend decision (last used? a
-  // per-user default? all the ones they may reach?) — see
-  // docs/api/backend-questions-artifact.md.
-  sessionDataSources.write([
-    ...sessionDataSources.read(),
-    ...DEFAULT_DATA_SOURCE_IDS.map((connectorId) => ({ sessionId, connectorId })),
   ]);
 }
 
