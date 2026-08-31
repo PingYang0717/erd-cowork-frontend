@@ -459,7 +459,7 @@ describe('Streaming a run in the Studio', () => {
       expect(screen.getByRole('group', { name: 'Part ID' })).toBeInTheDocument();
       expect(screen.getByRole('group', { name: 'Time range' })).toBeInTheDocument();
 
-      // Seeded connectors: Inline / WAT / CP are connected, the rest are not.
+      // A new conversation opens on the default sources.
       const dataType = screen.getByRole('group', { name: 'Data type' });
       expect(within(dataType).getByRole('button', { name: 'Inline' })).toBeInTheDocument();
       expect(within(dataType).getByRole('button', { name: 'WAT' })).toBeInTheDocument();
@@ -469,6 +469,31 @@ describe('Streaming a run in the Studio', () => {
       expect(screen.queryByRole('button', { name: /^Worked through/ })).not.toBeInTheDocument();
       expect(screen.getByRole('button', { name: '送出' })).toBeDisabled();
       expect(screen.getByText('請先選 part id、time range、data type')).toBeInTheDocument();
+    });
+
+    /** The link between the two surfaces, asserted from the user's side rather than from
+     *  a fixture: connect a source in the panel, and the next run must offer it. These
+     *  used to read from different places — the question was built from a stale fixture
+     *  of its own — so a source the user had just connected never showed up, and the
+     *  test that "covered" this asserted the absent one was absent. */
+    it('offers a source the user just connected as a Data type option', async () => {
+      const user = userEvent.setup();
+      renderStudio();
+
+      await selectASession(user);
+      await user.click(
+        screen.getByRole('button', { name: 'Attach files or connect a data source' }),
+      );
+      await user.click(await screen.findByRole('menuitem', { name: /^Connectors/ }));
+      await user.click(await screen.findByRole('button', { name: 'Connect Defect' }));
+      await screen.findByRole('button', { name: 'Disconnect Defect' });
+      await user.click(screen.getByRole('button', { name: 'Done' }));
+
+      await user.click(screen.getByRole('button', { name: 'SPC analysis' }));
+      await screen.findByText('分析條件');
+
+      const dataType = screen.getByRole('group', { name: 'Data type' });
+      expect(within(dataType).getByRole('button', { name: 'Defect' })).toBeInTheDocument();
     });
 
     it('offers a way back to the connectors from the Data type field', async () => {

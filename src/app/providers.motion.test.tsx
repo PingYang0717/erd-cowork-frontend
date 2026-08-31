@@ -26,11 +26,18 @@ function instantDurationScopes(): string[] {
 }
 
 /** No overlay duration may be `0s`, whatever else changes: that is the value that broke
- *  mask cleanup, and it is the one a future "make it instant" edit would reach for. */
-function hasZeroDuration(): boolean {
-  return Array.from(document.querySelectorAll('style')).some((tag) =>
-    (tag.textContent ?? '').includes('--ant-motion-duration-mid:0s'),
-  );
+ *  mask cleanup, and it is the one a future "make it instant" edit would reach for.
+ *
+ *  All three tokens, not just `mid`. `fast` drives `zoom-big-fast-leave` — the Modal's
+ *  own exit — so checking one of the three would have let the identical bug back in
+ *  under a different name. */
+const DURATION_TOKENS = ['fast', 'mid', 'slow'] as const;
+
+function zeroDurationTokens(): string[] {
+  const css = Array.from(document.querySelectorAll('style'))
+    .map((tag) => tag.textContent ?? '')
+    .join('');
+  return DURATION_TOKENS.filter((token) => css.includes(`--ant-motion-duration-${token}:0s`));
 }
 
 describe('overlays open without a perceptible enter animation', () => {
@@ -54,7 +61,7 @@ describe('overlays open without a perceptible enter animation', () => {
       true,
     );
     // The regression that made this file worth having: `0s` leaves the mask behind.
-    expect(hasZeroDuration()).toBe(false);
+    expect(zeroDurationTokens()).toEqual([]);
   });
 
   it('the dropdown menu sits in an instant-duration scope', async () => {
@@ -74,6 +81,6 @@ describe('overlays open without a perceptible enter animation', () => {
     expect(
       instantDurationScopes().some((selector) => selector.includes('ant-dropdown-css-var')),
     ).toBe(true);
-    expect(hasZeroDuration()).toBe(false);
+    expect(zeroDurationTokens()).toEqual([]);
   });
 });
