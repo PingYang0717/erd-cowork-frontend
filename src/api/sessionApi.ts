@@ -21,4 +21,14 @@ export const sessionApi = {
     apiClient.post<{ id: string; pinnedAt: string | null }>(`/sessions/${id}/pin`),
 
   deleteSession: (id: string) => apiClient.delete<void>(`/sessions/${id}`),
+
+  /** Attaches a data source to the session. PATCH rather than PUT: this adds one source
+   *  to whatever is already attached, it does not replace the set. */
+  attachDataSource: (id: string, connectorId: string) =>
+    apiClient.patch<void>(`/sessions/${id}/data-source`, { connectorId }),
+
+  /** Detaches one data source. The id travels in the body rather than the path because
+   *  the endpoint is `/data-source` for both directions. */
+  detachDataSource: (id: string, connectorId: string) =>
+    apiClient.delete<void>(`/sessions/${id}/data-source`, { data: { connectorId } }),
 };

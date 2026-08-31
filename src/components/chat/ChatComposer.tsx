@@ -88,7 +88,7 @@ const ChatComposer: React.FC<ChatComposerProps> = ({
     addFiles,
     removeFile,
   } = useFileAttachments(sessionId);
-  const { data: connectors } = useConnectors();
+  const connectors = useConnectors(sessionId);
   const { retentionDays } = useAppConfig();
   const connectorsOpen = useConnectorsPanelStore((store) => store.isOpen);
   const openConnectors = useConnectorsPanelStore((store) => store.open);
@@ -250,7 +250,7 @@ const ChatComposer: React.FC<ChatComposerProps> = ({
         onAddFiles={(files) => void addFiles(files)}
         onRemoveFile={(fileId) => void removeFile(fileId)}
       />
-      <ConnectorsPanel open={connectorsOpen} onClose={closeConnectors} />
+      <ConnectorsPanel sessionId={sessionId} open={connectorsOpen} onClose={closeConnectors} />
     </div>
   );
 };

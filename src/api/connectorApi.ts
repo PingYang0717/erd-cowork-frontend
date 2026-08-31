@@ -1,9 +1,10 @@
 import { CONNECTOR_PREFS_STORAGE_KEY } from '@/constants/storage';
-import type { Connector, ConnectorStatus } from '@/types/api/index';
+import type { Connector } from '@/types/api/index';
 
 /** The catalogue of known sources (the ten fixtures the mock backend used to serve,
  *  verbatim — all four statuses present so the per-state styling and the status
- *  filter mean something). The user's own choices overlay this, from localStorage. */
+ *  filter mean something). Which of these a conversation is actually drawing on is the
+ *  session's business, not the catalogue's — see useConnectors. */
 const STUB_CONNECTORS: Connector[] = [
   {
     id: 'inline',
@@ -77,11 +78,10 @@ const STUB_CONNECTORS: Connector[] = [
   },
 ];
 
-/** The user's overlay on the catalogue: status choices per source, plus custom
- *  sources. localStorage, not backend state — there are no connector endpoints this
- *  round, and a preference should survive a reload. */
+/** Custom sources the user added. Still localStorage: adding a source to the catalogue
+ *  is a different act from attaching one to a conversation, and only the latter has an
+ *  endpoint (PATCH /sessions/{id}/data-source). */
 interface ConnectorPrefs {
-  statusById: Record<string, ConnectorStatus>;
   custom: Connector[];
 }
 
@@ -90,12 +90,12 @@ function readPrefs(): ConnectorPrefs {
     const raw = localStorage.getItem(CONNECTOR_PREFS_STORAGE_KEY);
     if (raw !== null) {
       const parsed = JSON.parse(raw) as Partial<ConnectorPrefs>;
-      return { statusById: parsed.statusById ?? {}, custom: parsed.custom ?? [] };
+      return { custom: parsed.custom ?? [] };
     }
   } catch {
     // A corrupt entry reads as "no preferences" and gets overwritten on the next write.
   }
-  return { statusById: {}, custom: [] };
+  return { custom: [] };
 }
 
 function writePrefs(prefs: ConnectorPrefs): void {
@@ -103,46 +103,33 @@ function writePrefs(prefs: ConnectorPrefs): void {
 }
 
 export const connectorApi = {
-  /** The catalogue with the user's choices applied. Async only to keep the query
-   *  seam — nothing here leaves the browser. */
-  listConnectors: (): Promise<Connector[]> => {
+  /** What data sources exist and whether the user may reach them. Async only to keep
+   *  the query seam — nothing here leaves the browser yet. Whether a given conversation
+   *  is drawing on one is the session's business (useConnectors joins the two). */
+  listCatalogue: (): Promise<Connector[]> => {
     const prefs = readPrefs();
-    const catalogue = STUB_CONNECTORS.map((connector) =>
-      prefs.statusById[connector.id] !== undefined
-        ? { ...connector, status: prefs.statusById[connector.id] }
-        : connector,
-    );
-    return Promise.resolve([...catalogue, ...prefs.custom]);
+    return Promise.resolve([...STUB_CONNECTORS, ...prefs.custom]);
   },
 
-  setStatus: (id: string, status: ConnectorStatus): Promise<void> => {
+  /** Adds a source to the catalogue and answers its id, so the caller can attach it to
+   *  the session it was added from — adding one IS choosing it. */
+  addConnector: (name: string): Promise<string> => {
     const prefs = readPrefs();
-    writePrefs({
-      statusById: { ...prefs.statusById, [id]: status },
-      custom: prefs.custom.map((connector) =>
-        connector.id === id ? { ...connector, status } : connector,
-      ),
-    });
-    return Promise.resolve();
-  },
-
-  /** A custom source starts connected — adding one IS choosing it. */
-  addConnector: (name: string): Promise<void> => {
-    const prefs = readPrefs();
+    const id = `custom-${crypto.randomUUID()}`;
     writePrefs({
       ...prefs,
       custom: [
         ...prefs.custom,
         {
-          id: `custom-${crypto.randomUUID()}`,
+          id,
           name,
           description: 'Custom data source',
           category: 'Custom',
-          status: 'connected',
+          status: 'available',
           custom: true,
         },
       ],
     });
-    return Promise.resolve();
+    return Promise.resolve(id);
   },
 };
