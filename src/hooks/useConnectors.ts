@@ -1,7 +1,7 @@
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
-import { connectorApi } from '@/api/connectorApi';
+import { listCatalogue } from '@/api/connectorApi';
 import type { Connector } from '@/types/api/index';
 
 import { useSessionDetail } from './useSessionDetail';
@@ -22,7 +22,7 @@ const NONE: string[] = [];
 export function useConnectors(sessionId: string) {
   const { data: catalogue } = useSuspenseQuery({
     queryKey: connectorsQueryKey,
-    queryFn: connectorApi.listCatalogue,
+    queryFn: listCatalogue,
   });
   const { data: detail } = useSessionDetail(sessionId);
   const attached = detail.dataSourceIds ?? NONE;

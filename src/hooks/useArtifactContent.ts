@@ -1,6 +1,6 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 
-import { artifactApi } from '@/api/artifactApi';
+import { getArtifactContent } from '@/api/artifactApi';
 
 /** Prefix for one Artifact's rendered HTML, all reload nonces included.
  *
@@ -27,7 +27,7 @@ export const artifactContentQueryKey = (artifactId: string) =>
 export function useArtifactContent(artifactId: string | undefined, reloadNonce = 0) {
   return useQuery({
     queryKey: [...artifactContentQueryKey(artifactId as string), reloadNonce] as const,
-    queryFn: () => artifactApi.getContent(artifactId as string, reloadNonce),
+    queryFn: () => getArtifactContent(artifactId as string, reloadNonce),
     enabled: artifactId !== undefined,
     placeholderData: keepPreviousData,
   });

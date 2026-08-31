@@ -1,6 +1,12 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
-import { artifactApi } from '@/api/artifactApi';
+import {
+  deleteArtifact,
+  publishArtifact,
+  shareArtifact,
+  toggleArtifactPin,
+  unpublishArtifact,
+} from '@/api/artifactApi';
 
 import { useActionErrorToast } from './useActionErrorToast';
 import { artifactsQueryKey } from './useArtifacts';
@@ -12,7 +18,7 @@ export function useToggleArtifactPin() {
   const toastError = useActionErrorToast();
 
   return useMutation({
-    mutationFn: (id: string) => artifactApi.togglePin(id),
+    mutationFn: (id: string) => toggleArtifactPin(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: artifactsQueryKey });
     },
@@ -25,7 +31,7 @@ export function useDeleteArtifact() {
   const toastError = useActionErrorToast();
 
   return useMutation({
-    mutationFn: (id: string) => artifactApi.deleteArtifact(id),
+    mutationFn: (id: string) => deleteArtifact(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: artifactsQueryKey });
     },
@@ -39,7 +45,7 @@ export function useShareArtifact() {
 
   return useMutation({
     mutationFn: ({ id, targetIds }: { id: string; targetIds: string[] }) =>
-      artifactApi.share(id, targetIds),
+      shareArtifact(id, targetIds),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: artifactsQueryKey });
     },
@@ -57,7 +63,7 @@ export function useUnpublishArtifact() {
   const toastError = useActionErrorToast();
 
   return useMutation({
-    mutationFn: (id: string) => artifactApi.unpublish(id),
+    mutationFn: (id: string) => unpublishArtifact(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: artifactsQueryKey });
     },
@@ -70,7 +76,7 @@ export function usePublishArtifact() {
   const toastError = useActionErrorToast();
 
   return useMutation({
-    mutationFn: (id: string) => artifactApi.publish(id),
+    mutationFn: (id: string) => publishArtifact(id),
     onSuccess: () => {
       // Only the list: publishedAt is metadata. The rendered HTML does not change on
       // publish, and its key lives in its own namespace now (artifactContentQueryKey).

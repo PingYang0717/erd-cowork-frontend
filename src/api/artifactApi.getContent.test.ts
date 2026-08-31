@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 
 import { server } from '@/mocks/server';
 
-import { artifactApi } from './artifactApi';
+import { getArtifactContent } from './artifactApi';
 
 const API_BASE = '/api';
 
@@ -28,11 +28,11 @@ function captureContentRequest(): { url: () => URL } {
 
 /** Artifact HTML has no theme variants (ADR-0001): the request carries no `theme`. What it may carry is `r`, the reload
  *  cache-buster, and only when a reload actually happened (nonce > 0). */
-describe('artifactApi.getContent', () => {
+describe('getArtifactContent', () => {
   it('requests the artifact without a theme parameter', async () => {
     const request = captureContentRequest();
 
-    await artifactApi.getContent('artifact-1', 0);
+    await getArtifactContent('artifact-1', 0);
 
     expect(request.url().searchParams.has('theme')).toBe(false);
   });
@@ -40,7 +40,7 @@ describe('artifactApi.getContent', () => {
   it('omits the reload cache-buster on the initial load (nonce 0)', async () => {
     const request = captureContentRequest();
 
-    await artifactApi.getContent('artifact-1', 0);
+    await getArtifactContent('artifact-1', 0);
 
     expect(request.url().searchParams.has('r')).toBe(false);
   });
@@ -48,13 +48,13 @@ describe('artifactApi.getContent', () => {
   it('carries the reload nonce as the r cache-buster after a reload', async () => {
     const request = captureContentRequest();
 
-    await artifactApi.getContent('artifact-1', 3);
+    await getArtifactContent('artifact-1', 3);
 
     expect(request.url().searchParams.get('r')).toBe('3');
   });
 
   it('returns the artifact document as a string', async () => {
-    const html = await artifactApi.getContent('artifact-1', 0);
+    const html = await getArtifactContent('artifact-1', 0);
 
     expect(typeof html).toBe('string');
     expect(html).toContain('<');
