@@ -1,7 +1,7 @@
 import {
   CopyOutlined,
   DashboardOutlined,
-  EyeInvisibleOutlined,
+  DeleteOutlined,
   MoreOutlined,
   PushpinFilled,
   PushpinOutlined,
@@ -55,9 +55,12 @@ const ArtifactCard: React.FC<ArtifactCardProps> = ({ artifact, onOpen }) => {
     { type: 'divider' as const },
     {
       key: 'unpublish',
-      label: 'Unpublish',
-      danger: true,
-      icon: <EyeInvisibleOutlined aria-hidden />,
+      // Reads "Delete" to the user, and is `unpublishArtifact` underneath: from where
+      // they stand this removes the Artifact, and the fact that it survives inside its
+      // conversation is not something the Gallery has to explain in a menu.
+      // Not `danger` — nothing is destroyed, so the red would be overstating it.
+      label: 'Delete',
+      icon: <DeleteOutlined aria-hidden />,
     },
   ].filter((item): item is NonNullable<typeof item> => item !== null);
 

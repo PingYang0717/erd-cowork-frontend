@@ -201,6 +201,37 @@ describe('Artifacts gallery', () => {
     expect(await screen.findByRole('button', { name: `Unpin ${name}` })).toBeInTheDocument();
   });
 
+  /** The toggle answers with the Artifact, but nothing says it answers with every field
+   *  of it. Writing that answer over the cached row would drop whatever it left out —
+   *  and `canPin` missing reads as "may not pin", which disables the very button that was
+   *  just used. Merged, not replaced. */
+  it('keeps the fields the toggle response leaves out, so the button stays usable', async () => {
+    const user = userEvent.setup();
+    const name = 'SPC analysis — Vt (gate CD)';
+    let listCalls = 0;
+    server.use(
+      http.get('/api/artifacts', () => {
+        listCalls += 1;
+        // Only the first read succeeds, so the merged row is what the button reads —
+        // exactly the case the merge exists for.
+        return listCalls === 1
+          ? HttpResponse.json([artifactDto({ id: 'artifact-1', title: name })])
+          : new HttpResponse(null, { status: 500 });
+      }),
+      // A partial answer: the pin state and the id, and nothing else.
+      http.post('/api/artifacts/:id/pin', () =>
+        HttpResponse.json({ id: 'artifact-1', pinnedAt: '2026-09-01T00:00:00.000Z' }),
+      ),
+    );
+    renderGalleryPage();
+    await screen.findByRole('button', { name: `Pin ${name}` });
+
+    await user.click(screen.getByRole('button', { name: `Pin ${name}` }));
+
+    const unpin = await screen.findByRole('button', { name: `Unpin ${name}` });
+    expect(unpin).toBeEnabled();
+  });
+
   it('disables the pin button when the user may not pin this Artifact', async () => {
     server.use(
       http.get('/api/artifacts', () =>
@@ -215,7 +246,7 @@ describe('Artifacts gallery', () => {
     expect(screen.getByRole('button', { name: 'Pin SPC analysis — Vt (gate CD)' })).toBeDisabled();
   });
 
-  it("shows Pin, Copy Link, Share, and Unpublish in an owned card's more-actions menu", async () => {
+  it("shows Pin, Copy Link, Share, and Delete in an owned card's more-actions menu", async () => {
     const user = userEvent.setup();
     renderGalleryPage();
     await screen.findByRole('button', { name: 'SPC analysis — Vt (gate CD)' });
@@ -225,7 +256,7 @@ describe('Artifacts gallery', () => {
     );
     // Nothing is disabled up front: every action goes to the backend, and an endpoint
     // that has not landed answers with an error instead.
-    for (const label of ['Pin', 'Copy link', 'Share', 'Unpublish']) {
+    for (const label of ['Pin', 'Copy link', 'Share', 'Delete']) {
       expect(screen.getByRole('menuitem', { name: label })).not.toHaveAttribute(
         'aria-disabled',
         'true',
@@ -233,9 +264,10 @@ describe('Artifacts gallery', () => {
     }
   });
 
-  /** Unpublish, not delete: what leaves is the Artifact's place on the shelf. The
-   *  Artifact itself goes on living in the conversation that produced it. */
-  it('unpublishes a card through the menu, and it leaves the Gallery', async () => {
+  /** The menu says Delete because that is what it means to the user — the card goes.
+   *  Underneath it unpublishes, which is why the Artifact survives in its conversation
+   *  (see StudioPage.artifact-unpublish.test.tsx). */
+  it('removes a card through the menu, and it leaves the Gallery', async () => {
     const user = userEvent.setup();
     renderGalleryPage();
     await screen.findByRole('button', { name: 'SPC analysis — Vt (gate CD)' });
@@ -243,7 +275,7 @@ describe('Artifacts gallery', () => {
     await user.click(
       screen.getByRole('button', { name: 'More actions for SPC analysis — Vt (gate CD)' }),
     );
-    await user.click(screen.getByRole('menuitem', { name: 'Unpublish' }));
+    await user.click(screen.getByRole('menuitem', { name: 'Delete' }));
 
     await waitFor(() =>
       expect(
