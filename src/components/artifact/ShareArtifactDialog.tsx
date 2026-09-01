@@ -14,9 +14,6 @@ import {
   directoryEntryLabel,
   directoryEntryMatches,
   directoryShareTarget,
-  shareAsDirectoryEntry,
-  shareTargetId,
-  shareTargetType,
 } from '@/utils/directoryEntry';
 
 import styles from './ShareArtifactDialog.module.css';
@@ -46,10 +43,9 @@ const ShareArtifactDialog: React.FC<ShareArtifactDialogProps> = ({ open, onClose
     }
   }
 
-  const alreadyShared = useMemo<DirectoryEntry[]>(
-    () => shares.map(shareAsDirectoryEntry),
-    [shares],
-  );
+  // The share list comes back in the picker's own shape, so it is already what the field
+  // works in — recipients read with their names, and nothing has to be mapped.
+  const alreadyShared = shares;
   const [edited, setEdited] = useState(false);
   const chosen = edited ? recipients : alreadyShared;
 
@@ -64,12 +60,7 @@ const ShareArtifactDialog: React.FC<ShareArtifactDialogProps> = ({ open, onClose
   }
 
   function handleConfirm() {
-    // Both sides reduced to the same {type, id} shape before comparing: the read side
-    // spells a recipient across three id fields, the write side as one pair.
-    const before = shares.map((share) => ({
-      type: shareTargetType(share),
-      id: shareTargetId(share),
-    }));
+    const before = alreadyShared.map(directoryShareTarget);
     const after = chosen.map(directoryShareTarget);
     const key = (target: ShareTarget) => `${target.type}:${target.id}`;
     const beforeKeys = new Set(before.map(key));

@@ -70,6 +70,26 @@ describe('Sharing an Artifact: picking recipients', () => {
     );
   });
 
+  /** The dialog maps over whatever the share list returns. A body that is not a list —
+   *  an error rendered as JSON, a shape change — must read as "nobody yet" rather than
+   *  taking the dialog down with it. */
+  it('survives a share list that is not an array', async () => {
+    const user = userEvent.setup();
+    server.use(
+      http.get('/api/artifacts/:id/share', () => HttpResponse.json({ message: 'unexpected' })),
+    );
+    renderDialog();
+
+    // Driven past the point the bad body arrives and is rendered: searching and choosing
+    // both walk the list, so a dialog that survives this survived the body.
+    const field = await screen.findByRole('combobox');
+    await user.click(field);
+    await user.type(field, 'CHXXGHYC');
+    await user.click(await screen.findByTitle(/鄭凱宇/, {}, { timeout: 3000 }));
+
+    expect(await selected()).toContainEqual(expect.stringContaining('鄭凱宇'));
+  });
+
   /** Submit is the only action here, and saving the list is the end of the dialog. */
   it('closes once the change has been saved', async () => {
     const user = userEvent.setup();
@@ -121,7 +141,7 @@ describe('Sharing an Artifact: picking recipients', () => {
     server.use(
       http.patch('/api/artifacts/:id/share', async ({ request }) => {
         body = await request.json();
-        return HttpResponse.json({ shares: [] });
+        return HttpResponse.json([]);
       }),
     );
     renderDialog();
@@ -148,28 +168,20 @@ describe('Sharing an Artifact: picking recipients', () => {
     let body: unknown;
     server.use(
       http.get('/api/artifacts/:id/share', () =>
-        HttpResponse.json({
-          shares: [
-            {
-              shareTargetType: 'SECTION',
-              shareTargetSectionId: 'INTD-1',
-              sourceUserId: 'u-001',
-              shareAt: '2026-09-01T00:00:00.000Z',
-            },
-          ],
-        }),
+        HttpResponse.json([
+          { type: 'ORG', orgId: 'INTD-1', orgName: '整合技術一課', orgLevel: 'SECTION' },
+        ]),
       ),
       http.patch('/api/artifacts/:id/share', async ({ request }) => {
         body = await request.json();
-        return HttpResponse.json({ shares: [] });
+        return HttpResponse.json([]);
       }),
     );
     renderDialog();
 
-    // Already there when the dialog opens — nothing was typed to find it.
-    // A share row carries ids, not names, so the chip shows the id — what matters is
-    // that an existing recipient appears at all.
-    const chip = await screen.findByTitle('INTD-1 | INTD-1');
+    // Already there when the dialog opens — nothing was typed to find it, and it reads
+    // with its name because the share list comes back in the picker's own shape.
+    const chip = await screen.findByTitle('INTD-1 | 整合技術一課');
     expect(chip).toBeInTheDocument();
 
     // antd's own remove affordance on the tag; there is no accessible name on it to

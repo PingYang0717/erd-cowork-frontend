@@ -28,23 +28,6 @@ export interface ShareTarget {
   id: string;
 }
 
-/** One row of `GET /artifacts/{id}/share`, verbatim.
- *
- *  The recipient is named by a kind plus one of three id fields — which one is populated
- *  follows the kind, the same way the directory's `org*` / `employee*` fields do. All are
- *  optional because that is the truth of the wire.
- *
- */
-export interface ArtifactShare {
-  shareTargetType?: string;
-  shareTargetUserId?: string;
-  shareTargetDeptId?: string;
-  shareTargetSectionId?: string;
-  /** Who shared it. Not shown yet — recorded so the shape stays honest. */
-  sourceUserId?: string;
-  shareAt?: string;
-}
-
 /** The change to an Artifact's share list. A delta rather than the whole list: two people
  *  editing the same Artifact then add and remove their own recipients instead of the
  *  second one silently reverting the first. */

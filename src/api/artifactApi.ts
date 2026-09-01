@@ -1,4 +1,4 @@
-import type { Artifact, ArtifactShare, ArtifactShareUpdate } from '@/types/api/index';
+import type { Artifact, ArtifactShareUpdate, DirectoryEntry } from '@/types/api/index';
 
 import { apiClient } from './apiClient';
 
@@ -40,25 +40,21 @@ export const publishArtifact = (id: string) => apiClient.post<Artifact>(`/artifa
  *  which goes on living in the conversation that produced it. */
 export const unpublishArtifact = (id: string) => apiClient.delete<void>(`/artifacts/${id}/publish`);
 
-/** The share list answers inside a `shares` envelope rather than as a bare array. */
-interface ArtifactSharesResponse {
-  shares?: ArtifactShare[];
-}
-
 /** Who this Artifact is already shared with. The dialog opens on this list rather than
  *  on an empty field: sharing is an edit to something that exists, not a fresh act each
  *  time.
  *
- *  The envelope is unwrapped here, and read defensively for the same reason the directory
- *  search is: a body without `shares` has to come out as "nobody yet" rather than as
- *  something the dialog will try to map over. */
-export const listArtifactShares = async (id: string): Promise<ArtifactShare[]> => {
-  const body = await apiClient.get<ArtifactSharesResponse>(`/artifacts/${id}/share`);
-  return Array.isArray(body?.shares) ? body.shares : [];
+ *  Rows come back in the same shape the directory search returns, so a recipient already
+ *  on the list reads with its name rather than as a bare id — no mapping in between.
+ *  Narrowed rather than trusted: a body that is not a list has to come out as "nobody
+ *  yet", not as something the dialog will try to map over. */
+export const listArtifactShares = async (id: string): Promise<DirectoryEntry[]> => {
+  const body = await apiClient.get<DirectoryEntry[]>(`/artifacts/${id}/share`);
+  return Array.isArray(body) ? body : [];
 };
 
 /** Changes the share list by delta. PATCH with what to add and what to remove, rather
  *  than PUT with the whole list: sending the list would make two people editing the same
  *  Artifact overwrite each other, the second one silently undoing the first. */
 export const updateArtifactShares = (id: string, update: ArtifactShareUpdate) =>
-  apiClient.patch<ArtifactShare[]>(`/artifacts/${id}/share`, update);
+  apiClient.patch<DirectoryEntry[]>(`/artifacts/${id}/share`, update);

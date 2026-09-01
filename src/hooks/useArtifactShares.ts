@@ -20,7 +20,5 @@ export function useArtifactShares(artifactId: string, enabled: boolean) {
     enabled,
   });
 
-  // Narrowed rather than trusted, for the same reason the directory search is: a body
-  // that is not a list must read as "nobody yet", not throw inside the dialog.
-  return { shares: Array.isArray(data) ? data : [], isLoading: enabled && isFetching };
+  return { shares: data ?? [], isLoading: enabled && isFetching };
 }
