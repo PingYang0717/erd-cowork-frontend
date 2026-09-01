@@ -21,6 +21,9 @@ export function useFileAttachments(sessionId: string) {
   /** How far the upload in flight has got, or null when nothing is uploading. A CSV
    *  here runs to gigabytes — without this the modal is frozen for minutes. */
   const [uploadPercent, setUploadPercent] = useState<number | null>(null);
+  /** A removal in flight. Uploading has `uploadPercent` to say so; removing has no
+   *  progress to report, only the fact that it is happening. */
+  const [isRemoving, setIsRemoving] = useState(false);
   const queryClient = useQueryClient();
   const { data: detail } = useSessionDetail(sessionId);
   const attachments = detail.files;
@@ -45,10 +48,24 @@ export function useFileAttachments(sessionId: string) {
   }
 
   async function removeFile(fileId: string) {
-    await deleteFile(sessionId, fileId);
-    setError('');
-    await queryClient.invalidateQueries({ queryKey: sessionDetailQueryKey(sessionId) });
+    setIsRemoving(true);
+    try {
+      await deleteFile(sessionId, fileId);
+      setError('');
+      await queryClient.invalidateQueries({ queryKey: sessionDetailQueryKey(sessionId) });
+    } finally {
+      setIsRemoving(false);
+    }
   }
 
-  return { attachments, error, uploadPercent, addFiles, removeFile };
+  return {
+    attachments,
+    error,
+    uploadPercent,
+    /** True while the session's file set is being written to, either way. A question sent
+     *  in this window would be answered against a set that is still changing under it. */
+    isMutating: uploadPercent !== null || isRemoving,
+    addFiles,
+    removeFile,
+  };
 }

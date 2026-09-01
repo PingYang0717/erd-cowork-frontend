@@ -84,6 +84,7 @@ const ChatComposer: React.FC<ChatComposerProps> = ({
     attachments,
     error: attachmentError,
     uploadPercent,
+    isMutating: isMutatingFiles,
     addFiles,
     removeFile,
   } = useFileAttachments(sessionId);
@@ -98,7 +99,9 @@ const ChatComposer: React.FC<ChatComposerProps> = ({
   // against data that is not there, so the composer closes until they are cleared —
   // the same call the backend makes when it answers FILES_EXPIRED.
   const hasExpiredFiles = attachments.some((upload) => upload.expired);
-  const isBlocked = disabled || hasExpiredFiles;
+  // Also shut while the session's files are being written to: a question sent then is
+  // answered against a set that is still changing under it.
+  const isBlocked = disabled || hasExpiredFiles || isMutatingFiles;
 
   // Attachments do not travel with the message: they already live on the session
   // (uploaded on attach), and the mock snapshots them onto the sent message.
