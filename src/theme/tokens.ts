@@ -23,6 +23,11 @@ export interface ThemeTokens {
   warning: string;
   warningBg: string;
   warningBorder: string;
+  /** A second accent, for an action that is deliberate but not a warning — copying the
+   *  share link sits beside Submit and should not compete with it for primary. antd's
+   *  orange-6 / orange-7, the same family the palette's other statuses come from. */
+  accent: string;
+  accentHover: string;
   error: string;
   errorBg: string;
   errorBorder: string;
@@ -66,6 +71,8 @@ export const THEME_TOKENS: Record<'light' | 'dark', ThemeTokens> = {
     warning: '#faad14',
     warningBg: '#fffbe6',
     warningBorder: '#ffe58f',
+    accent: '#fa8c16',
+    accentHover: '#d46b08',
     error: '#ff4d4f',
     errorBg: '#fff2f0',
     errorBorder: '#ffccc7',
@@ -103,6 +110,8 @@ export const THEME_TOKENS: Record<'light' | 'dark', ThemeTokens> = {
     warning: '#d89614',
     warningBg: '#2b2111',
     warningBorder: '#594214',
+    accent: '#d87a16',
+    accentHover: '#e89a3c',
     error: '#dc4446',
     errorBg: '#2c1618',
     errorBorder: '#5b2526',
@@ -143,6 +152,8 @@ export function themeCssVars(tokens: ThemeTokens): Record<string, string> {
     '--erd-color-warning': tokens.warning,
     '--erd-color-warning-bg': tokens.warningBg,
     '--erd-color-warning-border': tokens.warningBorder,
+    '--erd-color-accent': tokens.accent,
+    '--erd-color-accent-hover': tokens.accentHover,
     '--erd-color-error': tokens.error,
     '--erd-color-error-bg': tokens.errorBg,
     '--erd-color-error-border': tokens.errorBorder,

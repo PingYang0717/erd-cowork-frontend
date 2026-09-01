@@ -133,8 +133,11 @@ const ShareArtifactDialog: React.FC<ShareArtifactDialogProps> = ({ open, onClose
         <div className={styles.sectionLabel}>分享連結</div>
         <div className={styles.linkRow}>
           <Input readOnly prefix={<LinkOutlined aria-hidden />} value={shareUrl} />
+          {/* Orange rather than primary: it sits in the same dialog as Submit, and two
+              blue buttons make the reader work out which one finishes the job. */}
           <Button
             type="primary"
+            className={styles.accentButton}
             autoInsertSpace={false}
             icon={copied ? <CheckOutlined aria-hidden /> : <CopyOutlined aria-hidden />}
             onClick={handleCopy}
@@ -157,6 +160,7 @@ const ShareArtifactDialog: React.FC<ShareArtifactDialogProps> = ({ open, onClose
             empty delta, which is a no-op. */}
         <Button
           type="primary"
+          className={styles.dialogButton}
           autoInsertSpace={false}
           loading={updateShares.isPending}
           onClick={handleConfirm}
