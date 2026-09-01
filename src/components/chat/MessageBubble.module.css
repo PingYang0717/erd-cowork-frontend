@@ -59,7 +59,6 @@
 .artifactChip {
   align-self: stretch;
   display: flex;
-  align-items: center;
   gap: 8px;
   padding: 8px 12px;
   border-radius: 9px;
@@ -67,6 +66,20 @@
   background: var(--erd-color-bg-container, #fff);
   font-size: 12.5px;
   line-height: normal;
+}
+
+/* The chip is one row of things side by side; the step list is one step per line. They
+   share the surface above and part company here. */
+.artifactChip {
+  align-items: center;
+}
+
+/* Steps stack. This lived in a rule shared with `.stepsRecap`, which moved out to
+   StepList.module.css and took the whole declaration with it — leaving the list flexing
+   in its default row direction, every step on one line. */
+.workingSteps {
+  flex-direction: column;
+  gap: 9px;
 }
 
 .artifactChipTitle {
