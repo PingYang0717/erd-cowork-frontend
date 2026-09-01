@@ -1,4 +1,4 @@
-import { act, render, screen, within } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -170,28 +170,5 @@ describe('MessageBubble', () => {
     );
 
     expect(screen.getAllByRole('button', { name: /HTML/ })).toHaveLength(1);
-  });
-
-  it('carries the attachments that were sent with the message', () => {
-    render(
-      <MessageBubble
-        sender="USER"
-        text="Use these"
-        attachments={[
-          {
-            id: 'f1',
-            name: 'lots.csv',
-            alias: 't1',
-            sizeBytes: 1024,
-            type: 'text/csv',
-            rowCount: null,
-            expired: false,
-          },
-        ]}
-      />,
-    );
-
-    const list = screen.getByRole('list', { name: 'Message attachments' });
-    expect(within(list).getByText(/lots\.csv/)).toBeInTheDocument();
   });
 });

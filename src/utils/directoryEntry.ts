@@ -1,4 +1,4 @@
-import type { ArtifactShare, DirectoryEntry, ShareTarget } from '@/types/api/index';
+import type { DirectoryEntry, ShareTarget } from '@/types/api/index';
 
 /** What identifies a row: an employee by NT account, an organisation by its id. Also the
  *  option value the picker uses, so the two kinds cannot collide on a shared number. */
@@ -14,6 +14,31 @@ export function directoryEntryLabel(entry: DirectoryEntry): string {
     : `${entry.orgId} | ${entry.orgName}`;
 }
 
+/** Every text a row can be found by — not only the parts the label happens to show.
+ *
+ *  A person is as findable by their org as by their name, and an organisation by either
+ *  its code or its name. Matching on the label alone would quietly make some of these
+ *  unsearchable, which reads as "that person is not in the directory". */
+export function directoryEntryHaystack(entry: DirectoryEntry): string {
+  return [
+    entry.employeeName,
+    entry.employeeNt,
+    entry.employeeOrgName,
+    entry.orgName,
+    entry.orgId,
+    entry.orgLevel,
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase();
+}
+
+/** Whether a row answers to what the user typed. */
+export function directoryEntryMatches(entry: DirectoryEntry, keyword: string): boolean {
+  const needle = keyword.trim().toLowerCase();
+  return needle === '' || directoryEntryHaystack(entry).includes(needle);
+}
+
 /** The row as a share recipient.
  *
  *  An employee's type is the constant `EMPLOYEE`; an organisation's is its `orgLevel` —
@@ -23,21 +48,4 @@ export function directoryShareTarget(entry: DirectoryEntry): ShareTarget {
   return entry.type === 'EMPLOYEE'
     ? { type: 'EMPLOYEE', id: entry.employeeNt ?? '' }
     : { type: entry.orgLevel ?? 'ORG', id: entry.orgId ?? '' };
-}
-
-/** An existing recipient, in the shape the picker works in.
- *
- *  The share list names recipients the way the endpoint does — a kind and an id — so this
- *  fills in only what is knowable from that. `name` is whatever the backend chose to send
- *  along; without one the id stands in, which is better than an empty chip.
- */
-export function shareAsDirectoryEntry(share: ArtifactShare): DirectoryEntry {
-  return share.type === 'EMPLOYEE'
-    ? {
-        type: 'EMPLOYEE',
-        employeeNt: share.id,
-        employeeName: share.name ?? share.id,
-        employeeOrgName: '',
-      }
-    : { type: 'ORG', orgId: share.id, orgName: share.name ?? share.id, orgLevel: share.type };
 }

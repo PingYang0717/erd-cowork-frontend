@@ -22,6 +22,7 @@ import { deriveArtifactVersions } from '@/utils/deriveArtifactVersions';
 
 import ArtifactFrame from './ArtifactFrame';
 import styles from './ArtifactPanel.module.css';
+import PublishArtifactDialog from './PublishArtifactDialog';
 import ShareArtifactDialog from './ShareArtifactDialog';
 import VersionSwitcher from './VersionSwitcher';
 
@@ -123,6 +124,7 @@ const ArtifactPanelContent: React.FC<ArtifactPanelContentProps> = ({
   onSelectVersion,
 }) => {
   const [isShareOpen, setIsShareOpen] = useState(false);
+  const [isPublishOpen, setIsPublishOpen] = useState(false);
   const reloadNonce = useActiveRunStore((s) => s.artifactReloadNonce);
   const bumpArtifactReload = useActiveRunStore((s) => s.bumpArtifactReload);
   const isRunStreaming = useActiveRunStore((s) => s.isRunStreaming);
@@ -150,12 +152,20 @@ const ArtifactPanelContent: React.FC<ArtifactPanelContentProps> = ({
 
   // Enrich the derived versions with each artifact's published state for the menu's
   // green check; the artifacts list is the mock's 前端-only source for it.
+  // The menu's own numbering and naming come from the Artifacts list: `version` is what
+  // the backend counts, and `title` is the name the user gave it at publish time — the
+  // message's wording is only a stand-in until the list catches up.
   const enrichedVersions = useMemo<ArtifactVersion[]>(
     () =>
-      versions.map((version) => ({
-        ...version,
-        publishedAt: artifacts?.find((a) => a.id === version.artifactId)?.publishedAt,
-      })),
+      versions.map((version) => {
+        const listed = artifacts?.find((a) => a.id === version.artifactId);
+        return {
+          ...version,
+          title: listed?.title ?? version.title,
+          version: listed?.version,
+          publishedAt: listed?.publishedAt,
+        };
+      }),
     [versions, artifacts],
   );
 
@@ -187,7 +197,7 @@ const ArtifactPanelContent: React.FC<ArtifactPanelContentProps> = ({
             type="button"
             className={styles.generateButton}
             disabled={publishArtifact.isPending}
-            onClick={() => publishArtifact.mutate(artifactId, { onSuccess: startCoach })}
+            onClick={() => setIsPublishOpen(true)}
           >
             發布 Artifact
           </button>
@@ -247,6 +257,25 @@ const ArtifactPanelContent: React.FC<ArtifactPanelContentProps> = ({
           </p>
         ) : null}
       </div>
+      <PublishArtifactDialog
+        open={isPublishOpen}
+        // The version's own name is only a suggestion: what the Gallery will show is
+        // whatever the user settles on here.
+        suggestedTitle={activeVersion.title}
+        isPublishing={publishArtifact.isPending}
+        onCancel={() => setIsPublishOpen(false)}
+        onConfirm={(title) =>
+          publishArtifact.mutate(
+            { id: artifactId, title },
+            {
+              onSuccess: () => {
+                setIsPublishOpen(false);
+                startCoach();
+              },
+            },
+          )
+        }
+      />
       {artifact && (
         <ShareArtifactDialog
           open={isShareOpen}

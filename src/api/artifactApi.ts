@@ -1,4 +1,4 @@
-import type { Artifact, ArtifactShare, ArtifactShareUpdate } from '@/types/api/index';
+import type { Artifact, ArtifactShareUpdate, DirectoryEntry } from '@/types/api/index';
 
 import { apiClient } from './apiClient';
 
@@ -22,20 +22,20 @@ export const getArtifactRawHtml = (artifactId: string, signal?: AbortSignal) =>
     signal,
   });
 
-/** The two directions of pinning, split by method on one path — the same shape as
- *  publish below.
- *
- *  Not one toggling endpoint: with the direction left to the backend there was no way to
- *  say "unpin", and an Artifact could be pinned but never released. The client knows
- *  which way it wants to go, so it says so. */
-export const pinArtifact = (id: string) => apiClient.post<Artifact>(`/artifacts/${id}/pin`);
-
-export const unpinArtifact = (id: string) => apiClient.delete<Artifact>(`/artifacts/${id}/pin`);
+/** Toggles the pin. One endpoint and no body: the backend decides the direction, and the
+ *  Artifact it answers with carries the `pinnedAt` that resulted — which is what the
+ *  button reads its new state from. Asserting a direction from state the client read a
+ *  while ago would be guessing at what the server already knows. */
+export const toggleArtifactPin = (id: string) => apiClient.post<Artifact>(`/artifacts/${id}/pin`);
 
 /** Publishing is what makes an Artifact available to other people — and what sharing
- *  rests on. The two directions are split by method rather than a body flag, and the
- *  backend stamps `publishedAt` itself: the client never sends a time it believes it is. */
-export const publishArtifact = (id: string) => apiClient.post<Artifact>(`/artifacts/${id}/publish`);
+ *  rests on. It carries the title the Artifact goes on the shelf under: the Gallery names
+ *  a card by it, so it is the user's to write rather than the run's to inherit.
+ *
+ *  The two directions are split by method rather than a body flag, and the backend stamps
+ *  `publishedAt` itself: the client never sends a time it believes it is. */
+export const publishArtifact = (id: string, title: string) =>
+  apiClient.post<Artifact>(`/artifacts/${id}/publish`, { title });
 
 /** Takes an Artifact off the shelf — the reverse of `publishArtifact`, on the same path.
  *
@@ -46,12 +46,19 @@ export const unpublishArtifact = (id: string) => apiClient.delete<void>(`/artifa
 
 /** Who this Artifact is already shared with. The dialog opens on this list rather than
  *  on an empty field: sharing is an edit to something that exists, not a fresh act each
- *  time. */
-export const listArtifactShares = (id: string) =>
-  apiClient.get<ArtifactShare[]>(`/artifacts/${id}/share`);
+ *  time.
+ *
+ *  Rows come back in the same shape the directory search returns, so a recipient already
+ *  on the list reads with its name rather than as a bare id — no mapping in between.
+ *  Narrowed rather than trusted: a body that is not a list has to come out as "nobody
+ *  yet", not as something the dialog will try to map over. */
+export const listArtifactShares = async (id: string): Promise<DirectoryEntry[]> => {
+  const body = await apiClient.get<DirectoryEntry[]>(`/artifacts/${id}/share`);
+  return Array.isArray(body) ? body : [];
+};
 
 /** Changes the share list by delta. PATCH with what to add and what to remove, rather
  *  than PUT with the whole list: sending the list would make two people editing the same
  *  Artifact overwrite each other, the second one silently undoing the first. */
 export const updateArtifactShares = (id: string, update: ArtifactShareUpdate) =>
-  apiClient.patch<ArtifactShare[]>(`/artifacts/${id}/share`, update);
+  apiClient.patch<DirectoryEntry[]>(`/artifacts/${id}/share`, update);

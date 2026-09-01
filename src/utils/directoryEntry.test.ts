@@ -2,7 +2,12 @@ import { describe, expect, it } from 'vitest';
 
 import type { DirectoryEntry } from '@/types/api/index';
 
-import { directoryEntryKey, directoryEntryLabel, directoryShareTarget } from './directoryEntry';
+import {
+  directoryEntryKey,
+  directoryEntryLabel,
+  directoryEntryMatches,
+  directoryShareTarget,
+} from './directoryEntry';
 
 const org: DirectoryEntry = {
   type: 'ORG',
@@ -54,5 +59,30 @@ describe('directoryEntryKey', () => {
     expect(directoryEntryKey({ type: 'ORG', orgId: 'X1' })).not.toBe(
       directoryEntryKey({ type: 'EMPLOYEE', employeeNt: 'X1' }),
     );
+  });
+});
+
+describe('directoryEntryMatches', () => {
+  /** Every field a row can be found by, not just the ones the label prints. Someone
+   *  searching by an org code has to find the people in it, and matching the label alone
+   *  would answer "no such person". */
+  it.each([
+    ['name', '鄭凱宇'],
+    ['NT account', 'chxxghyc'],
+    ['their org', 'intd-1'],
+  ])('finds a person by %s', (_field, keyword) => {
+    expect(directoryEntryMatches(employee, keyword)).toBe(true);
+  });
+
+  it.each([
+    ['org id', 'intd-1'],
+    ['org name', '整合技術'],
+    ['level', 'section'],
+  ])('finds an organisation by %s', (_field, keyword) => {
+    expect(directoryEntryMatches(org, keyword)).toBe(true);
+  });
+
+  it('does not match something absent from every field', () => {
+    expect(directoryEntryMatches(employee, 'zzz')).toBe(false);
   });
 });

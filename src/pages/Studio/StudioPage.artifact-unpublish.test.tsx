@@ -29,7 +29,7 @@ describe('Unpublishing an Artifact from the Gallery', () => {
     await user.click(
       await screen.findByRole('button', { name: 'More actions for SPC analysis — Vt (gate CD)' }),
     );
-    await user.click(await screen.findByRole('menuitem', { name: 'Unpublish' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Delete' }));
     await waitFor(() =>
       expect(
         screen.queryByRole('button', { name: 'SPC analysis — Vt (gate CD)' }),

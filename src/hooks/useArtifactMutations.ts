@@ -1,9 +1,8 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import {
-  pinArtifact,
   publishArtifact,
-  unpinArtifact,
+  toggleArtifactPin,
   unpublishArtifact,
   updateArtifactShares,
 } from '@/api/artifactApi';
@@ -13,17 +12,28 @@ import { useActionErrorToast } from './useActionErrorToast';
 import { artifactsQueryKey } from './useArtifacts';
 import { artifactSharesQueryKey } from './useArtifactShares';
 
-/** Pins or releases one Artifact. The caller says which direction — a toggle resolved by
- *  the backend left no way to express "unpin", so a pinned Artifact could never be
- *  released. */
-export function useSetArtifactPinned() {
+/** Toggles one Artifact's pin.
+ *
+ *  The response is written straight into the list rather than only invalidating it. The
+ *  backend owns the direction, so its answer is the only thing that knows which way the
+ *  pin went — waiting for a refetch to find out leaves the button showing the old state
+ *  in the meantime, and shows the wrong one entirely if the refetch is slow or fails. */
+export function useToggleArtifactPin() {
   const queryClient = useQueryClient();
   const toastError = useActionErrorToast();
 
   return useMutation({
-    mutationFn: ({ id, pinned }: { id: string; pinned: boolean }) =>
-      pinned ? pinArtifact(id) : unpinArtifact(id),
-    onSuccess: () => {
+    mutationFn: (id: string) => toggleArtifactPin(id),
+    onSuccess: (updated) => {
+      // Merged onto the cached row, not written over it. The answer carries the pin
+      // state, but nothing promises it carries every other field — and a row that
+      // silently loses one is a row the UI then reads wrongly. Whatever the response
+      // does bring wins; the rest stays.
+      queryClient.setQueryData<Artifact[]>(artifactsQueryKey, (previous) =>
+        previous?.map((artifact) =>
+          artifact.id === updated.id ? { ...artifact, ...updated } : artifact,
+        ),
+      );
       queryClient.invalidateQueries({ queryKey: artifactsQueryKey });
     },
     onError: toastError,
@@ -76,7 +86,7 @@ export function usePublishArtifact() {
   const toastError = useActionErrorToast();
 
   return useMutation({
-    mutationFn: (id: string) => publishArtifact(id),
+    mutationFn: ({ id, title }: { id: string; title: string }) => publishArtifact(id, title),
     onSuccess: () => {
       // Only the list: publishedAt is metadata. The rendered HTML does not change on
       // publish, and its key lives in its own namespace now (artifactContentQueryKey).

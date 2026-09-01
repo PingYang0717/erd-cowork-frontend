@@ -12,6 +12,7 @@ import ShareArtifactDialog from './ShareArtifactDialog';
 
 const artifact: Artifact = {
   id: 'artifact-1',
+  version: 1,
   sessionId: 'session-1',
   sessionTitle: 'SPC — Vt (gate CD)',
   title: 'SPC analysis — Vt (gate CD)',
@@ -20,21 +21,93 @@ const artifact: Artifact = {
   publishedAt: '2026-08-20T09:20:00.000Z',
   owner: 'user-1',
   ownerDisplay: 'You',
-  canPin: true,
   isOwn: true,
   isShared: false,
   hasPersonalCopy: false,
 };
 
-function renderDialog() {
+function renderDialog(onClose = vi.fn()) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const wrapper = ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
   );
-  return render(<ShareArtifactDialog open onClose={vi.fn()} artifact={artifact} />, { wrapper });
+  return {
+    onClose,
+    ...render(<ShareArtifactDialog open onClose={onClose} artifact={artifact} />, { wrapper }),
+  };
+}
+
+/** Waits for a click on an option to have registered as a choice.
+ *
+ *  Reads the chosen tags, not the Submit button: Submit is always pressable now, so its
+ *  state says nothing about whether the click landed — which is exactly the confusion an
+ *  earlier version of these tests fell into. */
+async function selected(): Promise<string[]> {
+  return waitFor(() => {
+    const tags = Array.from(document.querySelectorAll('.ant-select-selection-item')).map(
+      (node) => node.getAttribute('title') ?? '',
+    );
+    expect(tags.length).toBeGreaterThan(0);
+    return tags;
+  });
 }
 
 describe('Sharing an Artifact: picking recipients', () => {
+  /** The link is the Artifact's address, not something sharing produces — someone who
+   *  opened this dialog only to copy it should not have to edit the recipient list first.
+   *  It used to appear only after a successful share. */
+  it('shows the link straight away, before anything has been shared', async () => {
+    const user = userEvent.setup();
+    renderDialog();
+
+    const field = await screen.findByDisplayValue(/\/#\/cowork\/artifact\/artifact-1$/);
+    expect(field).toBeInTheDocument();
+
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    navigator.clipboard.writeText = writeText;
+    await user.click(screen.getByRole('button', { name: /複製/ }));
+    expect(writeText).toHaveBeenCalledWith(
+      expect.stringContaining('/#/cowork/artifact/artifact-1'),
+    );
+  });
+
+  /** The dialog maps over whatever the share list returns. A body that is not a list —
+   *  an error rendered as JSON, a shape change — must read as "nobody yet" rather than
+   *  taking the dialog down with it. */
+  it('survives a share list that is not an array', async () => {
+    const user = userEvent.setup();
+    server.use(
+      http.get('/api/artifacts/:id/share', () => HttpResponse.json({ message: 'unexpected' })),
+    );
+    renderDialog();
+
+    // Driven past the point the bad body arrives and is rendered: searching and choosing
+    // both walk the list, so a dialog that survives this survived the body.
+    const field = await screen.findByRole('combobox');
+    await user.click(field);
+    await user.type(field, 'CHXXGHYC');
+    await user.click(await screen.findByTitle(/鄭凱宇/, {}, { timeout: 3000 }));
+
+    expect(await selected()).toContainEqual(expect.stringContaining('鄭凱宇'));
+  });
+
+  /** Submit is the only action here, and saving the list is the end of the dialog. */
+  it('closes once the change has been saved', async () => {
+    const user = userEvent.setup();
+    const { onClose } = renderDialog();
+    server.use(http.patch('/api/artifacts/:id/share', () => HttpResponse.json({ shares: [] })));
+
+    const field = screen.getByRole('combobox');
+    await user.click(field);
+    await user.type(field, 'CHXXGHYC');
+    await user.click(await screen.findByTitle(/鄭凱宇/, {}, { timeout: 3000 }));
+    expect(await selected()).toContainEqual(expect.stringContaining('鄭凱宇'));
+
+    await user.click(screen.getByRole('button', { name: 'Submit' }));
+
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
+  });
+
   /** The directory is the whole organisation. A one- or two-character key matches most
    *  of it, so the field says what it needs rather than sending a request that would be
    *  large, slow, and unreadable. */
@@ -80,9 +153,9 @@ describe('Sharing an Artifact: picking recipients', () => {
     await user.click(await screen.findByTitle(/鄭凱宇/, {}, { timeout: 3000 }));
     // Submit only opens once something has actually been chosen; without this the click
     // below would land on a disabled button and the test would pass on nothing.
-    await waitFor(() => expect(screen.getByRole('button', { name: '分享' })).toBeEnabled());
+    expect(await selected()).toContainEqual(expect.stringContaining('鄭凱宇'));
 
-    await user.click(screen.getByRole('button', { name: '分享' }));
+    await user.click(screen.getByRole('button', { name: 'Submit' }));
 
     await waitFor(() =>
       expect(body).toEqual({ add: [{ type: 'EMPLOYEE', id: 'CHXXGHYC' }], remove: [] }),
@@ -96,7 +169,9 @@ describe('Sharing an Artifact: picking recipients', () => {
     let body: unknown;
     server.use(
       http.get('/api/artifacts/:id/share', () =>
-        HttpResponse.json([{ type: 'SECTION', id: 'INTD-1', name: '整合技術一課' }]),
+        HttpResponse.json([
+          { type: 'ORG', orgId: 'INTD-1', orgName: '整合技術一課', orgLevel: 'SECTION' },
+        ]),
       ),
       http.patch('/api/artifacts/:id/share', async ({ request }) => {
         body = await request.json();
@@ -105,7 +180,8 @@ describe('Sharing an Artifact: picking recipients', () => {
     );
     renderDialog();
 
-    // Already there when the dialog opens — nothing was typed to find it.
+    // Already there when the dialog opens — nothing was typed to find it, and it reads
+    // with its name because the share list comes back in the picker's own shape.
     const chip = await screen.findByTitle('INTD-1 | 整合技術一課');
     expect(chip).toBeInTheDocument();
 
@@ -115,18 +191,21 @@ describe('Sharing an Artifact: picking recipients', () => {
       .closest('.ant-select-selection-item')
       ?.querySelector('.ant-select-selection-item-remove');
     await user.click(remove as HTMLElement);
-    await waitFor(() => expect(screen.getByRole('button', { name: '分享' })).toBeEnabled());
-    await user.click(screen.getByRole('button', { name: '分享' }));
+    // Removed, not merely clicked: the tag is gone before Submit is pressed.
+    await waitFor(() =>
+      expect(document.querySelectorAll('.ant-select-selection-item')).toHaveLength(0),
+    );
+    await user.click(screen.getByRole('button', { name: 'Submit' }));
 
     await waitFor(() =>
       expect(body).toEqual({ add: [], remove: [{ type: 'SECTION', id: 'INTD-1' }] }),
     );
   });
 
-  /** The picker walks the response with `for…of`. A body that is not a list — an
-   *  envelope, an error rendered as JSON — used to reach that loop and throw "entries is
-   *  not iterable" over the whole dialog. */
-  it('survives a search response that is not a list', async () => {
+  /** The picker walks the response with `for…of`. A body whose `content` is missing —
+   *  an error rendered as JSON, a shape change — used to reach that loop and throw
+   *  "entries is not iterable" over the whole dialog. */
+  it('survives a search response with no content array', async () => {
     const user = userEvent.setup();
     server.use(
       http.get('/api/hr/employeesAndOrgs', () => HttpResponse.json({ message: 'unexpected' })),
@@ -152,7 +231,7 @@ describe('Sharing an Artifact: picking recipients', () => {
     await user.click(await screen.findByTitle(/鄭凱宇/, {}, { timeout: 3000 }));
     // Selected, not merely rendered: the label has to survive because it is a choice,
     // and a click that never landed would leave nothing to survive.
-    await waitFor(() => expect(screen.getByRole('button', { name: '分享' })).toBeEnabled());
+    expect(await selected()).toContainEqual(expect.stringContaining('鄭凱宇'));
 
     await user.click(field);
     await user.type(field, 'INTD-1');

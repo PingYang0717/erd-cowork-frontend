@@ -28,13 +28,6 @@ export interface ShareTarget {
   id: string;
 }
 
-/** A recipient an Artifact is already shared with, as `GET /artifacts/{id}/share`
- *  returns it. `name` is whatever the backend has to show for it — without one the id is
- *  all the dialog can display, which is why reading it must not depend on it. */
-export interface ArtifactShare extends ShareTarget {
-  name?: string;
-}
-
 /** The change to an Artifact's share list. A delta rather than the whole list: two people
  *  editing the same Artifact then add and remove their own recipients instead of the
  *  second one silently reverting the first. */

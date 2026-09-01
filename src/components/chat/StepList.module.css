@@ -4,10 +4,8 @@
 .stepsRecap {
   display: flex;
   flex-direction: column;
-  gap: 9px;
-}
-
-.stepsRecap {
+  /* No gap: the recap's rows are a list that reads as one block, unlike the live steps
+     above it, which breathe. */
   gap: 0;
 }
 

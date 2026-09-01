@@ -1,7 +1,15 @@
-import { fireEvent, screen, waitForElementToBeRemoved, within } from '@testing-library/react';
+import {
+  fireEvent,
+  screen,
+  waitFor,
+  waitForElementToBeRemoved,
+  within,
+} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { http, HttpResponse } from 'msw';
 import { beforeEach, describe, expect, it } from 'vitest';
 
+import { server } from '@/mocks/server';
 import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
 import { useStudioLayoutStore } from '@/stores/useStudioLayoutStore';
 import { renderStudio, waitForComposer } from '@/test/renderStudio';
@@ -88,6 +96,42 @@ describe('File attachments', () => {
     void user;
   });
 
+  /** Removing a file is a write to the same set the next question would be answered
+   *  against. Until it lands, the composer is shut: a message sent in that window
+   *  describes a set of files that is already changing under it. */
+  it('shuts the composer while a file is being removed, and opens it again after', async () => {
+    const user = userEvent.setup();
+    let releaseDelete: (() => void) | undefined;
+    server.use(
+      http.delete('/api/sessions/:sessionId/files/:fileId', async () => {
+        await new Promise<void>((resolve) => {
+          releaseDelete = resolve;
+        });
+        return new HttpResponse(null, { status: 200 });
+      }),
+    );
+    renderStudio();
+    await selectASessionAndOpenFileModal(user);
+
+    await user.upload(screen.getByLabelText('Choose files'), fileOfSize('lots.csv', 512));
+    const dialog = screen.getByRole('dialog', { name: 'Attach files' });
+    await within(dialog).findByText('lots.csv');
+    await user.click(screen.getByRole('button', { name: 'Done' }));
+
+    const composer = screen.getByRole('textbox', { name: 'Message' });
+    expect(composer).toBeEnabled();
+
+    // The composer's own chip row, not the modal's copy of it (which is still mounted).
+    await user.click(
+      within(composerAttachments()).getByRole('button', { name: /^Remove lots\.csv/ }),
+    );
+    await waitFor(() => expect(composer).toBeDisabled());
+    expect(screen.getByRole('button', { name: 'Send message' })).toBeDisabled();
+
+    releaseDelete?.();
+    await waitFor(() => expect(composer).toBeEnabled());
+  });
+
   it('attaches a file via click-to-browse and shows it as a chip in the composer', async () => {
     const user = userEvent.setup();
     renderStudio();
@@ -166,7 +210,10 @@ describe('File attachments', () => {
     expect(within(xlsxRow).getByTestId('file-type-icon')).toHaveAttribute('data-file-type', 'xlsx');
   });
 
-  it('sends attachments with the message, rendering the chips inside the bubble above the text', async () => {
+  /** Sending consumes the session's files. The message itself carries none — `Message`
+   *  has no attachments on the wire — so what there is to observe is the composer's chip
+   *  row emptying, which is how the user knows the files went with the question. */
+  it('consumes the attached files on send, emptying the composer', async () => {
     const user = userEvent.setup();
     renderStudio();
     const dialog = await selectASessionAndOpenFileModal(user);
@@ -179,15 +226,10 @@ describe('File attachments', () => {
     await user.type(screen.getByRole('textbox', { name: 'Message' }), 'Check this lot data');
     await user.keyboard('{Enter}');
 
-    // The chips live inside the blue user bubble, before the message text.
-    const bubbleText = await screen.findByText('Check this lot data');
-    const bubble = bubbleText.parentElement as HTMLElement;
-    const sent = within(bubble).getByRole('list', { name: 'Message attachments' });
-    expect(within(sent).getByText('lot-genealogy.csv')).toBeInTheDocument();
-    expect(
-      sent.compareDocumentPosition(bubbleText) & Node.DOCUMENT_POSITION_FOLLOWING,
-    ).toBeTruthy();
-    expect(screen.queryByRole('list', { name: 'Attached files' })).not.toBeInTheDocument();
+    await screen.findByText('Check this lot data');
+    await waitFor(() =>
+      expect(screen.queryByRole('list', { name: 'Attached files' })).not.toBeInTheDocument(),
+    );
   });
 
   it('removes an attached file from the composer', async () => {

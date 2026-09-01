@@ -15,6 +15,7 @@ import ArtifactsGalleryPage from './ArtifactsGalleryPage';
  *  own data rather than take the seeded three. */
 function artifactDto(over: Partial<Artifact> & Pick<Artifact, 'id' | 'title'>): Artifact {
   return {
+    version: 1,
     sessionId: 'session-1',
     sessionTitle: 'SPC — Vt (gate CD)',
     pinnedAt: null,
@@ -22,7 +23,6 @@ function artifactDto(over: Partial<Artifact> & Pick<Artifact, 'id' | 'title'>): 
     createdAt: '2026-08-20T09:15:00.000Z',
     owner: 'u-001',
     ownerDisplay: 'Alex Chen',
-    canPin: true,
     isOwn: true,
     isShared: false,
     hasPersonalCopy: false,
@@ -170,21 +170,69 @@ describe('Artifacts gallery', () => {
     expect(await screen.findByRole('button', { name: `Pin ${name}` })).toBeInTheDocument();
   });
 
-  it('disables the pin button when the user may not pin this Artifact', async () => {
+  /** The backend owns the direction, so its answer is the only thing that knows which
+   *  way the pin went. Reading it from the response rather than waiting for the list to
+   *  come back again is what keeps the button honest when that refetch is slow — or, as
+   *  here, never arrives at all. */
+  it('flips the button from the toggle response, without waiting for the list to reload', async () => {
+    const user = userEvent.setup();
+    const name = 'SPC analysis — Vt (gate CD)';
+    let listCalls = 0;
     server.use(
-      http.get('/api/artifacts', () =>
-        HttpResponse.json([
-          artifactDto({ id: 'artifact-1', title: 'SPC analysis — Vt (gate CD)', canPin: false }),
-        ]),
+      http.get('/api/artifacts', () => {
+        listCalls += 1;
+        // Only the first read succeeds; everything after it fails, so nothing but the
+        // toggle's own answer can move the button.
+        return listCalls === 1
+          ? HttpResponse.json([artifactDto({ id: 'artifact-1', title: name })])
+          : new HttpResponse(null, { status: 500 });
+      }),
+      http.post('/api/artifacts/:id/pin', () =>
+        HttpResponse.json(
+          artifactDto({ id: 'artifact-1', title: name, pinnedAt: '2026-09-01T00:00:00.000Z' }),
+        ),
       ),
     );
     renderGalleryPage();
-    await screen.findByRole('button', { name: 'SPC analysis — Vt (gate CD)' });
+    await screen.findByRole('button', { name });
 
-    expect(screen.getByRole('button', { name: 'Pin SPC analysis — Vt (gate CD)' })).toBeDisabled();
+    await user.click(screen.getByRole('button', { name: `Pin ${name}` }));
+
+    expect(await screen.findByRole('button', { name: `Unpin ${name}` })).toBeInTheDocument();
   });
 
-  it("shows Pin, Copy Link, Share, and Unpublish in an owned card's more-actions menu", async () => {
+  /** The toggle answers with the Artifact, but nothing says it answers with every field
+   *  of it. Writing that answer over the cached row would drop whatever it left out —
+   *  Merged, not replaced: a field the answer omits has to survive, or the row loses
+   *  whatever the toggle did not happen to mention. */
+  it('keeps the fields the toggle response leaves out, so the button stays usable', async () => {
+    const user = userEvent.setup();
+    const name = 'SPC analysis — Vt (gate CD)';
+    let listCalls = 0;
+    server.use(
+      http.get('/api/artifacts', () => {
+        listCalls += 1;
+        // Only the first read succeeds, so the merged row is what the button reads —
+        // exactly the case the merge exists for.
+        return listCalls === 1
+          ? HttpResponse.json([artifactDto({ id: 'artifact-1', title: name })])
+          : new HttpResponse(null, { status: 500 });
+      }),
+      // A partial answer: the pin state and the id, and nothing else.
+      http.post('/api/artifacts/:id/pin', () =>
+        HttpResponse.json({ id: 'artifact-1', pinnedAt: '2026-09-01T00:00:00.000Z' }),
+      ),
+    );
+    renderGalleryPage();
+    await screen.findByRole('button', { name: `Pin ${name}` });
+
+    await user.click(screen.getByRole('button', { name: `Pin ${name}` }));
+
+    const unpin = await screen.findByRole('button', { name: `Unpin ${name}` });
+    expect(unpin).toBeEnabled();
+  });
+
+  it("shows Pin, Copy Link, Share, and Delete in an owned card's more-actions menu", async () => {
     const user = userEvent.setup();
     renderGalleryPage();
     await screen.findByRole('button', { name: 'SPC analysis — Vt (gate CD)' });
@@ -194,7 +242,7 @@ describe('Artifacts gallery', () => {
     );
     // Nothing is disabled up front: every action goes to the backend, and an endpoint
     // that has not landed answers with an error instead.
-    for (const label of ['Pin', 'Copy link', 'Share', 'Unpublish']) {
+    for (const label of ['Pin', 'Copy link', 'Share', 'Delete']) {
       expect(screen.getByRole('menuitem', { name: label })).not.toHaveAttribute(
         'aria-disabled',
         'true',
@@ -202,9 +250,10 @@ describe('Artifacts gallery', () => {
     }
   });
 
-  /** Unpublish, not delete: what leaves is the Artifact's place on the shelf. The
-   *  Artifact itself goes on living in the conversation that produced it. */
-  it('unpublishes a card through the menu, and it leaves the Gallery', async () => {
+  /** The menu says Delete because that is what it means to the user — the card goes.
+   *  Underneath it unpublishes, which is why the Artifact survives in its conversation
+   *  (see StudioPage.artifact-unpublish.test.tsx). */
+  it('removes a card through the menu, and it leaves the Gallery', async () => {
     const user = userEvent.setup();
     renderGalleryPage();
     await screen.findByRole('button', { name: 'SPC analysis — Vt (gate CD)' });
@@ -212,7 +261,7 @@ describe('Artifacts gallery', () => {
     await user.click(
       screen.getByRole('button', { name: 'More actions for SPC analysis — Vt (gate CD)' }),
     );
-    await user.click(screen.getByRole('menuitem', { name: 'Unpublish' }));
+    await user.click(screen.getByRole('menuitem', { name: 'Delete' }));
 
     await waitFor(() =>
       expect(
@@ -221,14 +270,34 @@ describe('Artifacts gallery', () => {
     );
   });
 
-  it('hides Share in the more-actions menu of a "Shared to me" card', async () => {
+  /** Someone else's Artifact offers exactly one action: pin it, which is a private
+   *  bookmark. Sharing it onward, or taking it off a shelf that is not yours, are the
+   *  owner's to do — so they are not merely disabled here, they are absent. */
+  it('offers only Pin on a "Shared to me" card', async () => {
     const user = userEvent.setup();
     renderGalleryPage();
     await screen.findByRole('button', { name: 'Daily monitor (A14)' });
 
     await user.click(screen.getByRole('button', { name: 'More actions for Daily monitor (A14)' }));
-    expect(screen.getByRole('menuitem', { name: /^Pin/ })).toBeInTheDocument();
-    expect(screen.queryByRole('menuitem', { name: /^Share/ })).not.toBeInTheDocument();
+
+    const items = screen.getAllByRole('menuitem').map((item) => item.textContent);
+    expect(items).toEqual([expect.stringMatching(/^(Pin|Unpin)/)]);
+  });
+
+  /** Pinning is always available: it is this reader's own bookmark, not a permission the
+   *  owner grants. A disabled pin was the contract asserting one anyway — and the field
+   *  behind it went missing often enough to disable the button by accident. */
+  it('never disables pinning, on an owned card or a shared one', async () => {
+    const user = userEvent.setup();
+    renderGalleryPage();
+    await screen.findByRole('button', { name: 'Daily monitor (A14)' });
+
+    expect(screen.getByRole('button', { name: /^Pin Daily monitor/ })).toBeEnabled();
+    await user.click(screen.getByRole('button', { name: 'More actions for Daily monitor (A14)' }));
+    expect(screen.getByRole('menuitem', { name: /^Pin/ })).not.toHaveAttribute(
+      'aria-disabled',
+      'true',
+    );
   });
 
   it("copies an Artifact's link to the clipboard from its card menu", async () => {

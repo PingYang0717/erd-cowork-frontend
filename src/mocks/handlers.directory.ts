@@ -2,7 +2,7 @@ import { http, HttpResponse } from 'msw';
 
 import { DIRECTORY_SEARCH_MIN_LENGTH } from '@/api/directoryApi';
 import type { DirectoryEntry } from '@/types/api/index';
-import { directoryEntryLabel } from '@/utils/directoryEntry';
+import { directoryEntryMatches } from '@/utils/directoryEntry';
 
 const ORGS: DirectoryEntry[] = [
   { type: 'ORG', orgId: 'A10INTD1-1', orgName: '整合技術一部一課', orgLevel: 'DEPARTMENT' },
@@ -30,11 +30,14 @@ export const directoryHandlers = [
   http.get('/api/hr/employeesAndOrgs', ({ request }) => {
     const key = new URL(request.url).searchParams.get('key')?.trim() ?? '';
     if (key.length < DIRECTORY_SEARCH_MIN_LENGTH) {
-      return HttpResponse.json([]);
+      return HttpResponse.json({ content: [] });
     }
-    const needle = key.toLowerCase();
-    return HttpResponse.json(
-      DIRECTORY.filter((entry) => directoryEntryLabel(entry).toLowerCase().includes(needle)),
-    );
+    // Matched on every field, the same way the picker narrows — a roster searchable only
+    // by the parts the label shows would make the two disagree about what exists.
+    // Enveloped in `content` like the real endpoint, or the unwrapping is never
+    // exercised.
+    return HttpResponse.json({
+      content: DIRECTORY.filter((entry) => directoryEntryMatches(entry, key)),
+    });
   }),
 ];
