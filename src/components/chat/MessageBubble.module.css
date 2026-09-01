@@ -42,7 +42,12 @@
 /* The agent's turn is one surface, not a stack of loose cards. The fill is cowork's
    opaque gray-100 (via token, so dark mode keeps its own rung) — a translucent fill
    read differently against the old gray thread background (ADR-0002). */
+/* Always this wide, not sized to its contents. An agent's bubble holds steps, tables and
+   prose that arrive over time, so one that hugged its text would start as a small box and
+   grow through the whole reply — and at the moment the run begins, with nothing in it yet,
+   that box is a stub. A fixed share of the column keeps it still while it fills. */
 .aiBubble {
+  width: 85%;
   max-width: 85%;
   min-width: 0;
   display: flex;
@@ -80,6 +85,20 @@
 .workingSteps {
   flex-direction: column;
   gap: 9px;
+}
+
+/* Says the run is in progress, from inside the panel that is filling with its steps. */
+.workingHeader {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-weight: 600;
+  color: var(--erd-color-text, #141414);
+}
+
+.workingHeaderIcon {
+  font-size: 13px;
+  color: var(--erd-color-primary, #1677ff);
 }
 
 .artifactChipTitle {
