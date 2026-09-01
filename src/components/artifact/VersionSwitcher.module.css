@@ -14,12 +14,6 @@
   background: var(--erd-color-bg-container, #fff);
 }
 
-.versionTriggerN {
-  flex: none;
-  font-weight: 700;
-  color: var(--erd-color-text, #141414);
-}
-
 .versionTriggerLabel {
   flex: 1;
   min-width: 0;
@@ -93,20 +87,10 @@
   background: var(--erd-color-primary-bg, #e6f4ff);
 }
 
-.versionMenuItemCurrent .versionMenuItemN {
-  color: var(--erd-color-primary, #1677ff);
-  font-weight: 600;
-}
-
 .versionMenuItemCheck {
   flex: none;
   font-size: 12px;
   color: var(--erd-color-success, #52c41a);
-}
-
-.versionMenuItemN {
-  flex: none;
-  font-weight: 700;
 }
 
 .versionMenuItemLabel {

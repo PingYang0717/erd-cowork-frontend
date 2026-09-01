@@ -40,10 +40,13 @@ export interface Artifact {
 /** Backend contract shape (cowork master): a version is an artifact-bearing message,
  *  derived client-side from the session's history — there is no versions endpoint.
  *  `createdAt` and `publishedAt` are enrichments the version menu reads. */
+/** One Artifact produced in a conversation. These are independent Artifacts, not
+ *  versions of a single thing — iterating in chat yields a new Artifact that is
+ *  published, pinned and shared on its own. Arrival order is the list's order; there is
+ *  no version number, because there is no lineage for one to count along. */
 export interface ArtifactVersion {
   artifactId: string;
   title: string;
-  version: number;
   createdAt?: string;
   publishedAt?: string | null;
 }

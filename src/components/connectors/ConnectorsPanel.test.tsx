@@ -6,12 +6,25 @@ import { describe, expect, it } from 'vitest';
 
 import ConnectorsPanel from './ConnectorsPanel';
 
-function renderPanel() {
+function renderPanel(sessionId = 'session-1', seedDraft = false) {
   const queryClient = new QueryClient();
+  if (seedDraft) {
+    // What openDraft() does: a draft's thread reads this shell until a write persists
+    // the session (ADR-0005). Without it the panel's suspense query 404s on mount and
+    // the test would be exercising something the app never does.
+    queryClient.setQueryData(['sessions', sessionId], {
+      id: sessionId,
+      title: 'New analysis',
+      createdAt: '2026-08-31T00:00:00.000Z',
+      messages: [],
+      files: [],
+      dataSourceIds: [],
+    });
+  }
   return render(
     <QueryClientProvider client={queryClient}>
       <Suspense fallback={null}>
-        <ConnectorsPanel open onClose={() => {}} />
+        <ConnectorsPanel sessionId={sessionId} open onClose={() => {}} />
       </Suspense>
     </QueryClientProvider>,
   );
@@ -21,10 +34,11 @@ function selectedSources() {
   return screen.getByRole('dialog').querySelector('[class*="selectedChips"]') as HTMLElement;
 }
 
-/** Connector choices are the user's preference, kept in localStorage — the backend has
- *  no connector endpoints this round, and a preference should not be lost to a reload. */
+/** A data source is attached to a conversation, not to the user: the write goes to
+ *  PATCH/DELETE /sessions/{id}/data-source, and what a fresh mount reads back is the
+ *  session's detail. Two conversations can draw on different sources. */
 describe('ConnectorsPanel', () => {
-  it('connects an available source and remembers it across a fresh mount', async () => {
+  it('attaches an available source to the session and reads it back on a fresh mount', async () => {
     const user = userEvent.setup();
     const first = renderPanel();
 
@@ -32,9 +46,39 @@ describe('ConnectorsPanel', () => {
     await user.click(await screen.findByRole('button', { name: 'Connect Lot Info' }));
     expect(within(selectedSources()).getByText('Lot Info')).toBeInTheDocument();
 
-    // A fresh tree with a fresh query cache reads the choice back from localStorage.
+    // A fresh tree with a fresh query cache reads the choice back from the session.
     first.unmount();
     renderPanel();
+    expect(await screen.findByRole('button', { name: 'Disconnect Lot Info' })).toBeInTheDocument();
+    expect(within(selectedSources()).getByText('Lot Info')).toBeInTheDocument();
+  });
+
+  /** The point of moving attachment onto the session: what one conversation draws on
+   *  says nothing about what another does. Under the old localStorage model this was
+   *  impossible — a connect was global to the tab. */
+  it('keeps each session\u2019s attachments separate', async () => {
+    const user = userEvent.setup();
+    const first = renderPanel('session-1');
+
+    await user.click(await screen.findByRole('button', { name: 'Connect Lot Info' }));
+    await screen.findByRole('button', { name: 'Disconnect Lot Info' });
+    first.unmount();
+
+    // session-2 was never given Lot Info, and must not have picked it up.
+    renderPanel('session-2');
+    expect(await screen.findByRole('button', { name: 'Connect Lot Info' })).toBeInTheDocument();
+  });
+
+  /** A draft session exists only in this client until a write lands (ADR-0005).
+   *  Attaching a source IS such a write, so it has to bring the session into being —
+   *  otherwise the refetch that follows 404s, the panel keeps the old (empty) list, and
+   *  the click looks like it did nothing at all. */
+  it('attaches a source from a draft session, which has never been written yet', async () => {
+    const user = userEvent.setup();
+    renderPanel('draft-never-written', true);
+
+    await user.click(await screen.findByRole('button', { name: 'Connect Lot Info' }));
+
     expect(await screen.findByRole('button', { name: 'Disconnect Lot Info' })).toBeInTheDocument();
     expect(within(selectedSources()).getByText('Lot Info')).toBeInTheDocument();
   });

@@ -81,6 +81,43 @@ describe('Session row actions', () => {
     expect(selectedSessionId).toBe('session-1');
   });
 
+  /** New chat → say something → delete it. The session persists on the first message
+   *  (ADR-0005), so this deletes a real session that is also the most recent one — and
+   *  that is what used to go wrong: clearing the selection let the landing effect pick
+   *  the most recent session it could see, and against a list not yet refetched that was
+   *  the session just deleted. It came back selected, and the thread carried on
+   *  rendering it from cache under its "New analysis" title. */
+  it('moves off a just-created session when it is deleted, rather than re-opening it', async () => {
+    const user = userEvent.setup();
+    renderStudio();
+
+    await user.click(await screen.findByRole('button', { name: 'New chat' }));
+    await screen.findByRole('button', { name: 'New analysis' });
+    await waitForComposer();
+    const draftId = useSessionSelectionStore.getState().selectedSessionId;
+
+    await user.type(
+      screen.getByRole('textbox', { name: 'Message' }),
+      'Run an SPC analysis.{Enter}',
+    );
+    await waitFor(
+      () => expect(screen.getByRole('button', { name: 'Send message' })).toBeInTheDocument(),
+      { timeout: 5000 },
+    );
+
+    await openMenuOf(user, 'New analysis');
+    await user.click(await screen.findByRole('menuitem', { name: 'Delete' }));
+
+    await waitFor(() =>
+      expect(screen.queryByRole('button', { name: 'New analysis' })).not.toBeInTheDocument(),
+    );
+    const { selectedSessionId, draftStartedAt } = useSessionSelectionStore.getState();
+    expect(selectedSessionId).not.toBe(draftId);
+    expect(draftStartedAt).toBeNull();
+    // The most recent remaining session is open, and its thread is what shows.
+    expect(screen.getByRole('button', { name: 'SPC — Vt (gate CD)' })).toBeInTheDocument();
+  });
+
   it('deletes a session and the row is gone', async () => {
     const user = userEvent.setup();
     renderStudio();

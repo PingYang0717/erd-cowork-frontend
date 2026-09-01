@@ -56,7 +56,6 @@ interface ArtifactPanelViewProps {
 const ArtifactPanelView: React.FC<ArtifactPanelViewProps> = ({ sessionId }) => {
   const { data: detail } = useSessionDetail(sessionId);
   const streamedArtifact = useActiveRunStore((s) => s.streamedArtifact);
-  const setDisplayedArtifactId = useActiveRunStore((s) => s.setDisplayedArtifactId);
   // The pick lives in the store rather than here because the version menu is no longer
   // the only thing that makes one: a past reply's Artifact chip picks too.
   const selectedArtifactId = useActiveRunStore((s) => s.pickedArtifactId);
@@ -75,7 +74,6 @@ const ArtifactPanelView: React.FC<ArtifactPanelViewProps> = ({ sessionId }) => {
       {
         artifactId: streamedArtifact.artifactId,
         title: streamedArtifact.title,
-        version: derived.length + 1,
       },
     ];
   }, [detail.messages, streamedArtifact]);
@@ -96,13 +94,6 @@ const ArtifactPanelView: React.FC<ArtifactPanelViewProps> = ({ sessionId }) => {
     (streamedId ? versions.find((v) => v.artifactId === streamedId) : undefined) ??
     versions[versions.length - 1];
   const artifactId = activeVersion?.artifactId ?? null;
-
-  // The thread sends the artifact on display as baseArtifactId, so a follow-up
-  // question iterates on what the user is looking at.
-  useEffect(() => {
-    setDisplayedArtifactId(artifactId);
-    return () => setDisplayedArtifactId(null);
-  }, [artifactId, setDisplayedArtifactId]);
 
   if (!activeVersion || !artifactId) {
     return <EmptyPanel />;
@@ -135,11 +126,27 @@ const ArtifactPanelContent: React.FC<ArtifactPanelContentProps> = ({
   const reloadNonce = useActiveRunStore((s) => s.artifactReloadNonce);
   const bumpArtifactReload = useActiveRunStore((s) => s.bumpArtifactReload);
   const isRunStreaming = useActiveRunStore((s) => s.isRunStreaming);
-  const { data } = useArtifactContent(artifactId, reloadNonce);
+  const { data, isError } = useArtifactContent(artifactId, reloadNonce);
   const { data: artifacts } = useArtifacts();
+  const setDisplayedArtifactId = useActiveRunStore((s) => s.setDisplayedArtifactId);
   const artifact = artifacts?.find((a) => a.id === artifactId);
   const publishArtifact = usePublishArtifact();
   const startCoach = usePublishCoachStore((s) => s.start);
+
+  // The thread sends the artifact on display as `baseArtifactId`, so a follow-up
+  // question iterates on what the user is looking at. Published from here, where the
+  // fetch result is known, rather than from the version resolution above: an artifact
+  // that has been deleted still appears in the version list (versions come from the
+  // messages, which keep their artifactId), and announcing it as "displayed" would send
+  // the backend off to iterate on something it no longer has.
+  // Gated on `isError`, not on `data`: a freshly produced Artifact has no content in
+  // hand for a moment, and refusing to announce it then would drop `baseArtifactId`
+  // from the very next question — the iteration case this exists for. Only a fetch that
+  // has actually failed means the Artifact is not there to iterate on.
+  useEffect(() => {
+    setDisplayedArtifactId(isError ? null : artifactId);
+    return () => setDisplayedArtifactId(null);
+  }, [artifactId, isError, setDisplayedArtifactId]);
 
   // Enrich the derived versions with each artifact's published state for the menu's
   // green check; the artifacts list is the mock's 前端-only source for it.
@@ -151,10 +158,6 @@ const ArtifactPanelContent: React.FC<ArtifactPanelContentProps> = ({
       })),
     [versions, artifacts],
   );
-
-  if (data === undefined) {
-    return <EmptyPanel />;
-  }
 
   // 發布 = 把這個 Artifact 開放給別人使用。The mockup's button says 生成 Artifact;
   // what it does is publish, and `publishedAt` is where that lives now.
@@ -189,11 +192,18 @@ const ArtifactPanelContent: React.FC<ArtifactPanelContentProps> = ({
             發布 Artifact
           </button>
         )}
-        <Tooltip content="分享" wrapperClassName={styles.shareButtonSlot}>
+        {/* Sharing rests on publication — a recipient's access is access to a published
+            Artifact, and unpublishing revokes it. Kept visible rather than hidden so the
+            relationship is something the user can see, not something they discover. */}
+        <Tooltip
+          content={isPublished ? '分享' : '發布後才能分享'}
+          wrapperClassName={styles.shareButtonSlot}
+        >
           <button
             type="button"
             className={styles.shareButton}
             aria-label="Share artifact"
+            disabled={!isPublished}
             onClick={() => setIsShareOpen(true)}
           >
             <ShareAltOutlined aria-hidden />
@@ -224,7 +234,18 @@ const ArtifactPanelContent: React.FC<ArtifactPanelContentProps> = ({
         </Tooltip>
       </div>
       <div className={styles.frameWrapper}>
-        <ArtifactFrame key={`${artifactId}-${reloadNonce}`} html={data} artifactId={artifactId} />
+        {/* The header above stays whatever happens here. An Artifact that has been
+            deleted is still listed as a version (versions come from the messages, which
+            keep their artifactId), so the frame failing must not take the version
+            switcher down with it — that would leave the user looking at nothing with no
+            way back to the versions that do still exist. */}
+        {data !== undefined ? (
+          <ArtifactFrame key={`${artifactId}-${reloadNonce}`} html={data} artifactId={artifactId} />
+        ) : isError ? (
+          <p role="status" className={styles.frameNotice}>
+            這個 Artifact 已不存在,可能已被刪除。請從上方選單挑選其他產出。
+          </p>
+        ) : null}
       </div>
       {artifact && (
         <ShareArtifactDialog

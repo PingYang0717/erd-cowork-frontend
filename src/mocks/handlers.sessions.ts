@@ -25,6 +25,22 @@ export const sessions = createPersistedResource<Session>('erd-cowork:sessions:v2
   },
 ]);
 
+/** Which data sources each session has attached. Separate from the Session records
+ *  because attachment surfaces in the detail, not in the list. The two seeded sessions
+ *  start with the three sources that were previously "connected" in the catalogue, so
+ *  the panel opens on the same state it always did. */
+export const sessionDataSources = createPersistedResource<{
+  sessionId: string;
+  connectorId: string;
+}>('erd-cowork:session-data-sources:v1', [
+  { sessionId: 'session-1', connectorId: 'inline' },
+  { sessionId: 'session-1', connectorId: 'wat' },
+  { sessionId: 'session-1', connectorId: 'cp' },
+  { sessionId: 'session-2', connectorId: 'inline' },
+  { sessionId: 'session-2', connectorId: 'wat' },
+  { sessionId: 'session-2', connectorId: 'cp' },
+]);
+
 /** Creates the session if this client has never sent to it before, and stamps its
  *  last activity either way. Mirrors ChatSession implementing Persistable<String>:
  *  the backend upserts on send rather than exposing a create endpoint. */
@@ -72,7 +88,41 @@ export const sessionHandlers = [
         .read()
         .filter((file) => file.sessionId === session.id)
         .map(toFileDto),
+      dataSourceIds: sessionDataSources
+        .read()
+        .filter((link) => link.sessionId === session.id)
+        .map((link) => link.connectorId),
     });
+  }),
+
+  // Data sources attach to a session, not to the user: PATCH adds one to whatever is
+  // already there, DELETE removes one. Both answer a bare 200 — the caller refetches
+  // the detail, which is where attachment lives.
+  http.patch('/api/sessions/:sessionId/data-source', async ({ params, request }) => {
+    const { connectorId } = (await request.json()) as { connectorId: string };
+    const sessionId = params.sessionId as string;
+    // Attaching a source upserts the session, exactly as uploading a file does
+    // (handlers.files.ts): both are writes, and a draft only exists client-side until
+    // one of them lands (ADR-0005). Without this, the caller's refetch of the session
+    // detail 404s and the panel silently keeps showing the source as unattached.
+    upsertSession(sessionId);
+    const links = sessionDataSources.read();
+    if (!links.some((link) => link.sessionId === sessionId && link.connectorId === connectorId)) {
+      sessionDataSources.write([...links, { sessionId, connectorId }]);
+    }
+    return new HttpResponse(null, { status: 200 });
+  }),
+
+  http.delete('/api/sessions/:sessionId/data-source', async ({ params, request }) => {
+    const { connectorId } = (await request.json()) as { connectorId: string };
+    const sessionId = params.sessionId as string;
+    upsertSession(sessionId);
+    sessionDataSources.write(
+      sessionDataSources
+        .read()
+        .filter((link) => !(link.sessionId === sessionId && link.connectorId === connectorId)),
+    );
+    return new HttpResponse(null, { status: 200 });
   }),
 
   // The three session writes, as agreed with the backend (api-checklist.md):

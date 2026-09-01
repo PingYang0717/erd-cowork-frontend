@@ -11,6 +11,4 @@ export interface AppConfig {
   singleFileLimits: Record<string, number>;
 }
 
-export const configApi = {
-  getConfig: () => apiClient.get<AppConfig>('/config'),
-};
+export const getConfig = () => apiClient.get<AppConfig>('/config');

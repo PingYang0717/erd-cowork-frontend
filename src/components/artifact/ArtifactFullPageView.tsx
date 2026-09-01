@@ -7,13 +7,13 @@ import {
   UsergroupAddOutlined,
 } from '@ant-design/icons';
 import { useQueryClient } from '@tanstack/react-query';
-import React, { useMemo, useState } from 'react';
+import React, { Suspense, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
+import ErrorBoundary from '@/components/common/ErrorBoundary';
 import ThemeToggle from '@/components/common/ThemeToggle';
 import Tooltip from '@/components/common/Tooltip';
-import { useArtifactContent } from '@/hooks/useArtifactContent';
-import { artifactContentQueryKey } from '@/hooks/useArtifactContent';
+import { artifactContentQueryKey, useArtifactContent } from '@/hooks/useArtifactContent';
 import { useArtifacts } from '@/hooks/useArtifacts';
 import { useSessionDetail } from '@/hooks/useSessionDetail';
 import type { Artifact, ArtifactVersion } from '@/types/api/index';
@@ -82,12 +82,21 @@ const ArtifactFullPageView: React.FC<ArtifactFullPageViewProps> = ({ artifactId 
             </div>
           ) : (
             routeArtifact && (
-              <SessionVersionSwitcher
-                artifact={routeArtifact}
-                artifacts={artifacts ?? []}
-                displayedArtifactId={displayedArtifactId}
-                onSelect={setSelectedArtifactId}
-              />
+              // Its own boundary, falling back to nothing. The switcher reads the
+              // producing session, and deleting a session does not delete the Artifacts
+              // it produced — so that read can 404 on a page whose Artifact is perfectly
+              // fetchable. Without this the page-level boundary caught it and replaced
+              // the whole view with a retry screen that could never succeed.
+              <ErrorBoundary fallback={() => null}>
+                <Suspense fallback={null}>
+                  <SessionVersionSwitcher
+                    artifact={routeArtifact}
+                    artifacts={artifacts ?? []}
+                    displayedArtifactId={displayedArtifactId}
+                    onSelect={setSelectedArtifactId}
+                  />
+                </Suspense>
+              </ErrorBoundary>
             )
           )}
         </div>

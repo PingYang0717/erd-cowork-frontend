@@ -1,87 +1,22 @@
 import { CONNECTOR_PREFS_STORAGE_KEY } from '@/constants/storage';
-import type { Connector, ConnectorStatus } from '@/types/api/index';
+import type { Connector } from '@/types/api/index';
 
-/** The catalogue of known sources (the ten fixtures the mock backend used to serve,
- *  verbatim — all four statuses present so the per-state styling and the status
- *  filter mean something). The user's own choices overlay this, from localStorage. */
-const STUB_CONNECTORS: Connector[] = [
-  {
-    id: 'inline',
-    name: 'Inline',
-    description: 'In-line metrology & process parametric',
-    category: 'Process',
-    status: 'connected',
-  },
-  {
-    id: 'wat',
-    name: 'WAT',
-    description: 'Wafer Acceptance Test (e-test parametric)',
-    category: 'Test',
-    status: 'connected',
-  },
-  {
-    id: 'cp',
-    name: 'CP',
-    description: 'Circuit Probe / wafer sort bin & yield',
-    category: 'Test',
-    status: 'connected',
-  },
-  {
-    id: 'lot',
-    name: 'Lot Info',
-    description: 'Lot genealogy, route & hold',
-    category: 'Lot',
-    status: 'available',
-  },
-  {
-    id: 'lotabn',
-    name: 'Lot Abnormal',
-    description: 'Qtime OOS, running hold, inline OOS, etc.',
-    category: 'Lot',
-    status: 'available',
-  },
-  {
-    id: 'process',
-    name: 'Process',
-    description: 'EXP Result, Qtime',
-    category: 'Process',
-    status: 'available',
-  },
-  {
-    id: 'defect',
-    name: 'Defect',
-    description: 'Defect inspection & wafer map',
-    category: 'Defect',
-    status: 'available',
-  },
-  {
-    id: 'tem',
-    name: 'TEM',
-    description: 'Cross-section TEM images & analysis',
-    category: 'Physical',
-    status: 'available',
-  },
-  {
-    id: 'recipe',
-    name: 'Recipe',
-    description: 'Process recipe params & splits',
-    category: 'Equipment',
-    status: 'expired',
-  },
-  {
-    id: 'tool',
-    name: 'Offline Tool Log',
-    description: 'Tool events, chamber & maintenance',
-    category: 'Equipment',
-    status: 'no_access',
-  },
-];
+import { apiClient } from './apiClient';
 
-/** The user's overlay on the catalogue: status choices per source, plus custom
- *  sources. localStorage, not backend state — there are no connector endpoints this
- *  round, and a preference should survive a reload. */
+/** What this browser remembers about the user's own preferences.
+ *
+ *  `lastSelected` is the combination they last worked with. A connector is a capability
+ *  the user may grant the agent, and in practice the same person grants roughly the same
+ *  ones every time — so a new conversation starts pre-selected on what they chose last
+ *  rather than making them pick the same set again. It is a convenience, never a
+ *  requirement: a conversation with nothing selected runs perfectly well.
+ *
+ *  `custom` holds sources they added themselves. Both are localStorage rather than
+ *  backend state because both are about this person's habits, not about any one
+ *  conversation — which of them a given conversation actually draws on is the session's
+ *  business (PATCH /sessions/{id}/data-source). */
 interface ConnectorPrefs {
-  statusById: Record<string, ConnectorStatus>;
+  lastSelected: string[];
   custom: Connector[];
 }
 
@@ -90,59 +25,55 @@ function readPrefs(): ConnectorPrefs {
     const raw = localStorage.getItem(CONNECTOR_PREFS_STORAGE_KEY);
     if (raw !== null) {
       const parsed = JSON.parse(raw) as Partial<ConnectorPrefs>;
-      return { statusById: parsed.statusById ?? {}, custom: parsed.custom ?? [] };
+      return { lastSelected: parsed.lastSelected ?? [], custom: parsed.custom ?? [] };
     }
   } catch {
     // A corrupt entry reads as "no preferences" and gets overwritten on the next write.
   }
-  return { statusById: {}, custom: [] };
+  return { lastSelected: [], custom: [] };
 }
+
+/** The combination to start a fresh conversation on. */
+export const readRememberedSelection = (): string[] => readPrefs().lastSelected;
+
+/** Remembers what the user is working with now, so the next conversation opens on it. */
+export const rememberSelection = (connectorIds: string[]): void => {
+  writePrefs({ ...readPrefs(), lastSelected: connectorIds });
+};
 
 function writePrefs(prefs: ConnectorPrefs): void {
   localStorage.setItem(CONNECTOR_PREFS_STORAGE_KEY, JSON.stringify(prefs));
 }
 
-export const connectorApi = {
-  /** The catalogue with the user's choices applied. Async only to keep the query
-   *  seam — nothing here leaves the browser. */
-  listConnectors: (): Promise<Connector[]> => {
-    const prefs = readPrefs();
-    const catalogue = STUB_CONNECTORS.map((connector) =>
-      prefs.statusById[connector.id] !== undefined
-        ? { ...connector, status: prefs.statusById[connector.id] }
-        : connector,
-    );
-    return Promise.resolve([...catalogue, ...prefs.custom]);
-  },
+/** What data sources exist and whether the user may reach them. The user's own custom
+ *  additions are merged on top of what the backend serves. Whether a given conversation
+ *  is drawing on one is the session's business (useConnectors joins the two). */
+export const listCatalogue = async (): Promise<Connector[]> => {
+  const catalogue = await apiClient.get<Connector[]>('/connectors');
+  return [...catalogue, ...readPrefs().custom];
+};
 
-  setStatus: (id: string, status: ConnectorStatus): Promise<void> => {
-    const prefs = readPrefs();
-    writePrefs({
-      statusById: { ...prefs.statusById, [id]: status },
-      custom: prefs.custom.map((connector) =>
-        connector.id === id ? { ...connector, status } : connector,
-      ),
-    });
-    return Promise.resolve();
-  },
-
-  /** A custom source starts connected — adding one IS choosing it. */
-  addConnector: (name: string): Promise<void> => {
-    const prefs = readPrefs();
-    writePrefs({
-      ...prefs,
-      custom: [
-        ...prefs.custom,
-        {
-          id: `custom-${crypto.randomUUID()}`,
-          name,
-          description: 'Custom data source',
-          category: 'Custom',
-          status: 'connected',
-          custom: true,
-        },
-      ],
-    });
-    return Promise.resolve();
-  },
+/** Adds a source to the catalogue and answers its id, so the caller can attach it to the
+ *  session it was added from — adding one IS choosing it.
+ *
+ *  Still localStorage rather than an endpoint: the backend has no way to register a
+ *  source yet, and this is the half of the model that is genuinely the user's. */
+export const addConnector = (name: string): Promise<string> => {
+  const prefs = readPrefs();
+  const id = `custom-${crypto.randomUUID()}`;
+  writePrefs({
+    ...prefs,
+    custom: [
+      ...prefs.custom,
+      {
+        id,
+        name,
+        description: 'Custom data source',
+        category: 'Custom',
+        status: 'available',
+        custom: true,
+      },
+    ],
+  });
+  return Promise.resolve(id);
 };

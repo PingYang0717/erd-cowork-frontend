@@ -88,6 +88,51 @@ describe('Per-version Artifact publishing', () => {
     expect(await screen.findByRole('dialog', { name: /分享/ })).toBeInTheDocument();
   });
 
+  /** Outputs in one conversation are independent Artifacts, not v1/v2/v3 of a single
+   *  thing — asking for "the same but with CPK" produces a new Artifact that can be
+   *  published on its own. Numbering them as versions read as a lineage that is not
+   *  there, so the menu names them by what they are and when they were made. */
+  it('names the conversation outputs by title and time, not as numbered versions', async () => {
+    const user = userEvent.setup();
+    renderStudio();
+
+    await user.click(await screen.findByRole('button', { name: 'SPC — Vt (gate CD)' }));
+    await screen.findByText('已發布');
+    await user.type(
+      await screen.findByRole('textbox', { name: 'Message' }),
+      'Regenerate the dashboard.{Enter}',
+    );
+    await screen.findByRole('button', { name: '發布 Artifact' });
+
+    await user.click(await screen.findByRole('button', { name: '切換產出' }));
+    const items = await screen.findAllByRole('menuitem');
+    expect(items.length).toBeGreaterThan(1);
+    for (const item of items) {
+      expect(item.textContent ?? '').not.toMatch(/\bv\d+\b/);
+    }
+  });
+
+  /** Publication is what sharing rests on: a recipient's access is access to a published
+   *  Artifact, and unpublishing revokes it. So there is nothing to share until the owner
+   *  publishes — the entry stays visible (it teaches the relationship) but does nothing. */
+  it('will not share a version that has not been published yet', async () => {
+    const user = userEvent.setup();
+    renderStudio();
+
+    await user.click(await screen.findByRole('button', { name: 'SPC — Vt (gate CD)' }));
+    await screen.findByText('已發布');
+
+    await user.type(
+      await screen.findByRole('textbox', { name: 'Message' }),
+      'Regenerate the dashboard.{Enter}',
+    );
+    await screen.findByRole('button', { name: '發布 Artifact' });
+
+    expect(screen.getByRole('button', { name: 'Share artifact' })).toBeDisabled();
+    await user.click(screen.getByRole('button', { name: 'Share artifact' }));
+    expect(screen.queryByRole('dialog', { name: /分享/ })).not.toBeInTheDocument();
+  });
+
   it('keeps each version’s published state independent when switching versions', async () => {
     const user = userEvent.setup();
     renderStudio();
@@ -101,14 +146,14 @@ describe('Per-version Artifact publishing', () => {
     );
     await screen.findByRole('button', { name: '發布 Artifact' });
 
-    // Switch back to the seeded, already-published v1: the chip returns.
-    await user.click(await screen.findByRole('button', { name: '切換版本' }));
-    await user.click(await screen.findByRole('menuitem', { name: /v1/ }));
+    // Switch back to the seeded, already-published first output: the chip returns.
+    await user.click(await screen.findByRole('button', { name: '切換產出' }));
+    await user.click((await screen.findAllByRole('menuitem')).at(-1) as HTMLElement);
     expect(await screen.findByText('已發布')).toBeInTheDocument();
 
-    // And v2 is still unpublished when switching to it again.
-    await user.click(await screen.findByRole('button', { name: '切換版本' }));
-    await user.click(await screen.findByRole('menuitem', { name: /v2/ }));
+    // And the newer output is still unpublished when switching to it again.
+    await user.click(await screen.findByRole('button', { name: '切換產出' }));
+    await user.click((await screen.findAllByRole('menuitem'))[0]);
     expect(await screen.findByRole('button', { name: '發布 Artifact' })).toBeInTheDocument();
   });
 });

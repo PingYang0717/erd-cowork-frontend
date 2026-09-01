@@ -17,7 +17,7 @@ function sortByRecency(sessions: Session[]) {
  *  what the backend names a new session, or the rail label changes under the user the
  *  moment the session becomes real. */
 function emptySessionDetail(id: string, createdAt: string): SessionDetail {
-  return { id, title: DRAFT_SESSION_TITLE, createdAt, messages: [], files: [] };
+  return { id, title: DRAFT_SESSION_TITLE, createdAt, messages: [], files: [], dataSourceIds: [] };
 }
 
 export function useSessionGroups() {

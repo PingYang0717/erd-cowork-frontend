@@ -17,4 +17,13 @@ export interface SessionDetail {
   createdAt: string;
   messages: Message[];
   files: UploadedFileInfo[];
+  /** Data sources attached to this session, by connector id. Attachment is per session,
+   *  not per user: two conversations can draw on different sources, and a run's answer
+   *  is only reproducible if you know what it was allowed to read.
+   *
+   *  Optional because the backend has not shipped it yet — the endpoints it goes with
+   *  (PATCH/DELETE /sessions/{id}/data-source) are mocked ahead of the real ones. A
+   *  response without it reads as "nothing attached" rather than crashing the thread;
+   *  make it required once the field is live. */
+  dataSourceIds?: string[];
 }

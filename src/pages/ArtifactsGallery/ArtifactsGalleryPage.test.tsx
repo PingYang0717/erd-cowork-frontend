@@ -62,6 +62,20 @@ describe('Artifacts gallery', () => {
     expect(screen.getByRole('button', { name: /^Pinned/ })).toHaveTextContent('1');
   });
 
+  /** The Gallery is a shelf of published work. An Artifact the user made but never
+   *  published lives in its session's thread and nowhere else — publishing is the
+   *  deliberate act that puts it here, and unpublishing takes it back out. */
+  it('leaves out an Artifact that was never published, and does not count it', async () => {
+    renderGalleryPage();
+
+    expect(
+      await screen.findByRole('button', { name: 'SPC analysis — Vt (gate CD)' }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Scratch — CPK by lot' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^All/ })).toHaveTextContent('3');
+    expect(screen.getByRole('button', { name: /^Yours/ })).toHaveTextContent('2');
+  });
+
   it('narrows the list per filter, independent of any pin/rename interaction', async () => {
     const user = userEvent.setup();
     renderGalleryPage();
@@ -173,6 +187,54 @@ describe('Artifacts gallery', () => {
     }
   });
 
+  /** Everything on the shelf is published, so Unpublish is the one action every owned
+   *  card can offer — it is how an Artifact leaves the Gallery. */
+  it("offers Unpublish in an owned card's menu, and the card leaves the Gallery", async () => {
+    const user = userEvent.setup();
+    renderGalleryPage();
+    await screen.findByRole('button', { name: 'SPC analysis — Vt (gate CD)' });
+
+    await user.click(
+      screen.getByRole('button', { name: 'More actions for SPC analysis — Vt (gate CD)' }),
+    );
+    await user.click(screen.getByRole('menuitem', { name: 'Unpublish' }));
+
+    await waitFor(() =>
+      expect(
+        screen.queryByRole('button', { name: 'SPC analysis — Vt (gate CD)' }),
+      ).not.toBeInTheDocument(),
+    );
+  });
+
+  /** Publication is what sharing rests on (unpublish revokes access), so an Artifact
+   *  that has been shared out cannot leave quietly — the owner is told what it costs
+   *  before it happens. */
+  it('warns before unpublishing an Artifact that is currently shared out', async () => {
+    const user = userEvent.setup();
+    server.use(
+      http.get('/api/artifacts', () =>
+        HttpResponse.json([
+          artifactDto({
+            id: 'artifact-1',
+            title: 'SPC analysis — Vt (gate CD)',
+            isShared: true,
+          }),
+        ]),
+      ),
+    );
+    renderGalleryPage();
+    await screen.findByRole('button', { name: 'SPC analysis — Vt (gate CD)' });
+
+    await user.click(
+      screen.getByRole('button', { name: 'More actions for SPC analysis — Vt (gate CD)' }),
+    );
+    await user.click(screen.getByRole('menuitem', { name: 'Unpublish' }));
+
+    expect(await screen.findByText(/收回/)).toBeInTheDocument();
+    // Still on the shelf until the owner confirms.
+    expect(screen.getByRole('button', { name: 'SPC analysis — Vt (gate CD)' })).toBeInTheDocument();
+  });
+
   it('deletes a card through the menu, and the card is gone', async () => {
     const user = userEvent.setup();
     renderGalleryPage();
@@ -212,7 +274,13 @@ describe('Artifacts gallery', () => {
     );
     await user.click(screen.getByRole('menuitem', { name: 'Copy link' }));
 
-    expect(writeText).toHaveBeenCalledWith(expect.stringContaining('/cowork/artifact/artifact-1'));
+    // The `#` is the whole point: the router is a hash router, so a link without it is
+    // one that silently does not open when pasted anywhere outside the app. Asserted as
+    // a literal rather than through `artifactHref`, which would agree with the
+    // implementation by construction.
+    expect(writeText).toHaveBeenCalledWith(
+      expect.stringContaining('/#/cowork/artifact/artifact-1'),
+    );
   });
 
   it('names the producing session and badges sharing states', async () => {

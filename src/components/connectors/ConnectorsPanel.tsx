@@ -19,10 +19,9 @@ import {
   WarningOutlined,
 } from '@ant-design/icons';
 import { Button, Input, Modal } from 'antd';
-import type { ReactNode } from 'react';
-import React, { useState } from 'react';
+import React, { type ReactNode, useState } from 'react';
 
-import { useAddConnector, useSetConnectorStatus } from '@/hooks/useConnectorMutations';
+import { useAddConnector, useSetSessionDataSource } from '@/hooks/useConnectorMutations';
 import { useConnectors } from '@/hooks/useConnectors';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import type { Connector, ConnectorStatus } from '@/types/api/index';
@@ -86,18 +85,17 @@ function toggleIcon(status: ConnectorStatus, isPending: boolean) {
   }
 }
 
-const EMPTY_CONNECTORS: Connector[] = [];
-
 interface ConnectorsPanelProps {
+  /** Data sources attach per conversation, so the panel edits this session's set. */
+  sessionId: string;
   open: boolean;
   onClose: () => void;
 }
 
-const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ open, onClose }) => {
-  const { data } = useConnectors();
-  const connectors = data ?? EMPTY_CONNECTORS;
-  const setStatus = useSetConnectorStatus();
-  const addConnector = useAddConnector();
+const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ sessionId, open, onClose }) => {
+  const connectors = useConnectors(sessionId);
+  const setDataSource = useSetSessionDataSource(sessionId);
+  const addConnector = useAddConnector(sessionId);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('All');
   const [addValue, setAddValue] = useState('');
@@ -123,10 +121,7 @@ const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ open, onClose }) => {
     if (connector.status === 'no_access') {
       return;
     }
-    setStatus.mutate({
-      id: connector.id,
-      status: connector.status === 'connected' ? 'available' : 'connected',
-    });
+    setDataSource.mutate({ id: connector.id, attached: connector.status !== 'connected' });
   }
 
   function submitAddConnector() {
@@ -250,7 +245,8 @@ const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ open, onClose }) => {
       <ul className={styles.list}>
         {visibleConnectors.length ? (
           visibleConnectors.map((connector) => {
-            const isPending = setStatus.isPending && setStatus.variables?.id === connector.id;
+            const isPending =
+              setDataSource.isPending && setDataSource.variables?.id === connector.id;
             const meta = statusMeta(connector.status, isPending);
             const isConnected = connector.status === 'connected';
             return (

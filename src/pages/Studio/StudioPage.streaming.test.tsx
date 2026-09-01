@@ -449,7 +449,7 @@ describe('Streaming a run in the Studio', () => {
   // Runs against the scripted mock backend: this is about what the backend asks for,
   // not about holding a stream still.
   describe('the analysis conditions a Scenario asks for', () => {
-    it('asks before running anything, with Data type drawn from the connected connectors', async () => {
+    it('asks before running anything, and never blocks on an unconnected connector', async () => {
       const user = userEvent.setup();
       renderStudio();
 
@@ -459,16 +459,99 @@ describe('Streaming a run in the Studio', () => {
       expect(screen.getByRole('group', { name: 'Part ID' })).toBeInTheDocument();
       expect(screen.getByRole('group', { name: 'Time range' })).toBeInTheDocument();
 
-      // Seeded connectors: Inline / WAT / CP are connected, the rest are not.
+      // A connector is a capability the user MAY grant the agent, not a precondition for
+      // talking to it: a fresh conversation has none attached, and the form still offers
+      // something to pick so the run is never blocked on a choice the user did not make.
       const dataType = screen.getByRole('group', { name: 'Data type' });
-      expect(within(dataType).getByRole('button', { name: 'Inline' })).toBeInTheDocument();
-      expect(within(dataType).getByRole('button', { name: 'WAT' })).toBeInTheDocument();
+      expect(within(dataType).getAllByRole('button').length).toBeGreaterThan(0);
       expect(within(dataType).queryByRole('button', { name: 'Defect' })).not.toBeInTheDocument();
 
       // Nothing has run yet — the agent is waiting on the user.
       expect(screen.queryByRole('button', { name: /^Worked through/ })).not.toBeInTheDocument();
       expect(screen.getByRole('button', { name: '送出' })).toBeDisabled();
       expect(screen.getByText('請先選 part id、time range、data type')).toBeInTheDocument();
+    });
+
+    /** The principle a connector rests on: it is a capability the user may grant the
+     *  agent — one more way for it to go and fetch data — not something that has to be
+     *  chosen before the agent will talk. A conversation with nothing connected must run
+     *  to completion, and this drives it all the way to a finished artifact to say so. */
+    it('runs an analysis to completion with no connector attached at all', async () => {
+      const user = userEvent.setup();
+      renderStudio();
+
+      await startAnalysis(user);
+      await screen.findByText('分析條件');
+      await answerAnalysisConditions(user);
+
+      await screen.findByRole('button', { name: /^Worked through \d+ steps$/ });
+      expect(screen.getByText(/Done — recomputed control limits/)).toBeInTheDocument();
+    });
+
+    /** The convenience the localStorage preference exists for: the same person grants
+     *  roughly the same capabilities every time, so having chosen once, a new conversation
+     *  opens on that combination rather than making them choose it again. Carried in on
+     *  send, which is when the session comes into being (ADR-0005). */
+    it('carries the combination the user last chose into the next conversation', async () => {
+      const user = userEvent.setup();
+      renderStudio();
+
+      // First conversation: grant Defect on top of what is there.
+      await selectASession(user);
+      await user.click(
+        screen.getByRole('button', { name: 'Attach files or connect a data source' }),
+      );
+      await user.click(await screen.findByRole('menuitem', { name: /^Connectors/ }));
+      await user.click(await screen.findByRole('button', { name: 'Connect Defect' }));
+      await screen.findByRole('button', { name: 'Disconnect Defect' });
+      await user.click(screen.getByRole('button', { name: 'Done' }));
+
+      // Make the first conversation real: New chat is a no-op while a draft is still
+      // open (useSessionGroups), so it has to have been sent to before a second one can
+      // be started.
+      await user.type(screen.getByRole('textbox', { name: 'Message' }), 'Anything at all.{Enter}');
+      await waitFor(
+        () => expect(screen.getByRole('button', { name: 'Send message' })).toBeInTheDocument(),
+        { timeout: 5000 },
+      );
+
+      // A second, entirely fresh conversation — nothing attached to it of its own.
+      const firstSessionId = useSessionSelectionStore.getState().selectedSessionId;
+      await user.click(screen.getByRole('button', { name: 'New chat' }));
+      await waitFor(() =>
+        expect(useSessionSelectionStore.getState().selectedSessionId).not.toBe(firstSessionId),
+      );
+      await waitForComposer();
+      await user.click(screen.getByRole('button', { name: 'SPC analysis' }));
+      await screen.findByText('分析條件');
+
+      const dataType = screen.getByRole('group', { name: 'Data type' });
+      expect(within(dataType).getByRole('button', { name: 'Defect' })).toBeInTheDocument();
+    });
+
+    /** The link between the two surfaces, asserted from the user's side rather than from
+     *  a fixture: connect a source in the panel, and the next run must offer it. These
+     *  used to read from different places — the question was built from a stale fixture
+     *  of its own — so a source the user had just connected never showed up, and the
+     *  test that "covered" this asserted the absent one was absent. */
+    it('offers a source the user just connected as a Data type option', async () => {
+      const user = userEvent.setup();
+      renderStudio();
+
+      await selectASession(user);
+      await user.click(
+        screen.getByRole('button', { name: 'Attach files or connect a data source' }),
+      );
+      await user.click(await screen.findByRole('menuitem', { name: /^Connectors/ }));
+      await user.click(await screen.findByRole('button', { name: 'Connect Defect' }));
+      await screen.findByRole('button', { name: 'Disconnect Defect' });
+      await user.click(screen.getByRole('button', { name: 'Done' }));
+
+      await user.click(screen.getByRole('button', { name: 'SPC analysis' }));
+      await screen.findByText('分析條件');
+
+      const dataType = screen.getByRole('group', { name: 'Data type' });
+      expect(within(dataType).getByRole('button', { name: 'Defect' })).toBeInTheDocument();
     });
 
     it('offers a way back to the connectors from the Data type field', async () => {

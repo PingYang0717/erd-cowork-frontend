@@ -1,0 +1,94 @@
+/* Styles for the step list and its recap card — moved verbatim from
+   MessageBubble.module.css when StepList.tsx was split out. */
+
+.stepsRecap {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.stepsRecap {
+  gap: 0;
+}
+
+.workingStep {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  font-size: 12.5px;
+  color: var(--erd-color-text, inherit);
+}
+
+.stepText {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.stepTitle {
+  font-size: 12.5px;
+}
+
+.stepDescription {
+  font-size: 11.5px;
+  color: var(--erd-color-text-tertiary, #8c8c8c);
+}
+
+.stepsRecapToggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12.5px;
+  color: var(--erd-color-text-secondary, rgba(0, 0, 0, 0.65));
+  text-align: left;
+}
+
+/* The run's outcome leads the row in the mockup, and the chevron sits hard against the
+   right edge rather than next to the label. */
+.stepsRecapStatus {
+  font-size: 14px;
+}
+
+.stepsRecapChevron {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--erd-color-text-secondary, rgba(0, 0, 0, 0.65));
+}
+
+.stepsRecapList {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding: 9px 0 0 20px;
+}
+
+.stepIconSuccess {
+  color: var(--erd-color-success, #52c41a);
+}
+
+.stepIconError {
+  color: var(--erd-color-error, #ff4d4f);
+}
+
+.stepIconRunning {
+  color: var(--erd-color-primary, #1677ff);
+}
+
+.stepIconPending {
+  display: inline-block;
+  width: 11px;
+  height: 11px;
+  border: 2px solid var(--erd-color-border, #d9d9d9);
+  border-radius: 50%;
+}
+
+/* The artifact hand-off is the one thing in the bubble the reader is meant to act on,
+   so it keeps a raised surface with its own border — cowork's full-width card
+   (ADR-0002). */

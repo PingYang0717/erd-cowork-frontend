@@ -1,10 +1,12 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { http, HttpResponse } from 'msw';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 
 import StudioShell from '@/components/layouts/StudioShell';
+import { server } from '@/mocks/server';
 import ArtifactsGalleryPage from '@/pages/ArtifactsGallery/ArtifactsGalleryPage';
 import StudioPage from '@/pages/Studio/StudioPage';
 import { artifactHref } from '@/utils/artifactUrl';
@@ -31,6 +33,22 @@ function renderArtifactPageAt(path: string) {
 }
 
 describe('Artifact full-page view', () => {
+  /** The version switcher reads the producing session, which may be gone — deleting a
+   *  session does not delete the Artifacts it produced, and their cards stay in the
+   *  Gallery. The switcher is an extra; the Artifact is the point, so its absence must
+   *  not take the page down with it. */
+  it('still renders the Artifact when its producing session has been deleted', async () => {
+    server.use(http.get('/api/sessions/:sessionId', () => new HttpResponse(null, { status: 404 })));
+    renderArtifactPageAt('/cowork/artifact/artifact-1');
+
+    const iframe = (await screen.findByTitle('Artifact preview')) as HTMLIFrameElement;
+    expect(iframe.getAttribute('srcdoc')).toContain('SPC analysis — Vt (gate CD)');
+    // No version switcher (there is no session to derive versions from), and no error
+    // screen standing in for the whole page.
+    expect(screen.queryByRole('button', { name: '切換產出' })).not.toBeInTheDocument();
+    expect(screen.queryByText(/載入失敗/)).not.toBeInTheDocument();
+  });
+
   it('renders the correct seeded Artifact when navigated to directly, with no prior session context', async () => {
     renderArtifactPageAt('/cowork/artifact/artifact-1');
 
@@ -77,7 +95,7 @@ describe('Artifact full-page view', () => {
     // Versions derive from the artifact's session history: session-1 seeds one
     // artifact-bearing message, so artifact-1 is its v1 (and its only version).
     // Switching between versions is covered in the Studio panel's suite.
-    await user.click(await screen.findByRole('button', { name: '切換版本' }));
+    await user.click(await screen.findByRole('button', { name: '切換產出' }));
     const items = await screen.findAllByRole('menuitem');
     expect(items).toHaveLength(1);
     expect(items[0]).toHaveTextContent('SPC analysis — Vt (gate CD)');
@@ -92,7 +110,7 @@ describe('Artifact full-page view', () => {
     const header = screen.getByLabelText('Shared to me');
     expect(within(header).getByText('Alice Wu')).toBeInTheDocument();
     expect(within(header).getByText('Shared to me')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: '切換版本' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '切換產出' })).not.toBeInTheDocument();
   });
 
   it('offers Share, Refresh, and Open-in-new-tab in the toolbar', async () => {
