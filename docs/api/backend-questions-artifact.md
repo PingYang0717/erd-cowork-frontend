@@ -29,14 +29,11 @@
 ```ts
 /** 釘選的時間戳(ISO 8601),未釘選為 null。 */
 pinnedAt: string | null;
-
-/** Whether **the signed-in user** may pin this Artifact. A permission, decided by
- *  the backend — not a statement about whether the pin endpoint exists. */
-canPin: boolean;
 ```
 
-`canPin` 的措辭(「the signed-in user」)暗示釘選是**針對呼叫者**的,但 `pinnedAt`
-只有一個值,讀起來像是 artifact 本身的屬性。兩者對不起來。
+> **2026-09-01 更新**:前端已移除 `canPin`。釘選是讀者自己的書籤,不是擁有者授予的權限,
+> 所以按鈕永遠可按——而那個欄位一旦在某次回應裡缺席,就會把按鈕誤停用。它原本的措辭
+> (「the signed-in user」)也正是下面這個矛盾的線索。
 
 **為什麼卡住我們**:分享來的 Artifact(`isOwn === false`)如果被我釘選——
 

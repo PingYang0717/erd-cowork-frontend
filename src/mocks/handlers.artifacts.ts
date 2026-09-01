@@ -122,7 +122,6 @@ function toArtifactDto(stored: StoredArtifact): Artifact {
     ownerDisplay: isOwn
       ? currentUser.name
       : (OWNER_DISPLAY_NAMES[stored.ownerId] ?? stored.ownerId),
-    canPin: true,
     isOwn,
     isShared: stored.isShared,
     hasPersonalCopy: false,

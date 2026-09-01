@@ -22,9 +22,6 @@ export interface Artifact {
   /** Owner's id. `ownerDisplay` is who to show; this is who to compare. */
   owner: string;
   ownerDisplay: string;
-  /** Whether the signed-in user may pin this Artifact. A permission, decided by the
-   *  backend — not a statement about whether the pin endpoint exists. */
-  canPin: boolean;
   /** Whether the signed-in user owns this Artifact — which is also what decides whether
    *  they may share it onward. There is no separate `canShare`: the two were always the
    *  same value, and keeping both invited them to drift apart. */

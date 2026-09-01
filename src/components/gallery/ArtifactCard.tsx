@@ -35,34 +35,33 @@ const ArtifactCard: React.FC<ArtifactCardProps> = ({ artifact, onOpen }) => {
   const isSharedToMe = !artifact.isOwn;
 
   // Everything goes straight to the backend; an endpoint that has not landed answers
-  // with an error the mutation toasts. `canPin` is the one permission the backend
-  // states up front.
+  // Pinning is never gated: it is this reader's own bookmark on someone's work, not
+  // something the owner grants. Everything else here acts on the Artifact itself, so it
+  // belongs to whoever owns it — and is absent rather than disabled on a card that does
+  // not, since a greyed row invites a click that can never work.
   const menuItems = [
     {
       key: 'pin',
       label: isPinned ? 'Unpin' : 'Pin',
       icon: isPinned ? <PushpinFilled aria-hidden /> : <PushpinOutlined aria-hidden />,
-      disabled: !artifact.canPin,
     },
-    { key: 'copyLink', label: 'Copy link', icon: <CopyOutlined aria-hidden /> },
-    artifact.isOwn
-      ? {
-          key: 'share',
-          label: 'Share',
-          icon: <ShareAltOutlined aria-hidden />,
-        }
-      : null,
-    { type: 'divider' as const },
-    {
-      key: 'unpublish',
-      // Reads "Delete" to the user, and is `unpublishArtifact` underneath: from where
-      // they stand this removes the Artifact, and the fact that it survives inside its
-      // conversation is not something the Gallery has to explain in a menu.
-      // Not `danger` — nothing is destroyed, so the red would be overstating it.
-      label: 'Delete',
-      icon: <DeleteOutlined aria-hidden />,
-    },
-  ].filter((item): item is NonNullable<typeof item> => item !== null);
+    ...(artifact.isOwn
+      ? [
+          { key: 'copyLink', label: 'Copy link', icon: <CopyOutlined aria-hidden /> },
+          { key: 'share', label: 'Share', icon: <ShareAltOutlined aria-hidden /> },
+          { type: 'divider' as const },
+          {
+            key: 'unpublish',
+            // Reads "Delete" to the user, and is `unpublishArtifact` underneath: from
+            // where they stand this removes the Artifact, and the fact that it survives
+            // inside its conversation is not something a menu has to explain. Not
+            // `danger` — nothing is destroyed, so the red would be overstating it.
+            label: 'Delete',
+            icon: <DeleteOutlined aria-hidden />,
+          },
+        ]
+      : []),
+  ];
 
   function handleMenuClick(key: string) {
     dispatchMenuAction(key, {
@@ -108,7 +107,6 @@ const ArtifactCard: React.FC<ArtifactCardProps> = ({ artifact, onOpen }) => {
           className={styles.pinButton}
           aria-label={isPinned ? `Unpin ${artifact.title}` : `Pin ${artifact.title}`}
           aria-pressed={isPinned}
-          disabled={!artifact.canPin}
           onClick={() => toggleArtifactPin.mutate(artifact.id)}
         >
           {isPinned ? <PushpinFilled aria-hidden /> : <PushpinOutlined aria-hidden />}
