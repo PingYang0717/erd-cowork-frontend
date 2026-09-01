@@ -57,6 +57,9 @@ const VersionSwitcher: React.FC<VersionSwitcherProps> = ({ versions, activeVersi
           onClick={() => setIsOpen((v) => !v)}
         >
           <HistoryOutlined aria-hidden />
+          {activeVersion?.version !== undefined && (
+            <span className={styles.versionTriggerN}>v{activeVersion.version}</span>
+          )}
           <span className={styles.versionTriggerLabel}>{activeVersion?.title ?? ''}</span>
           <DownOutlined aria-hidden className={styles.versionTriggerChevron} />
         </button>
@@ -84,6 +87,9 @@ const VersionSwitcher: React.FC<VersionSwitcherProps> = ({ versions, activeVersi
                   setIsOpen(false);
                 }}
               >
+                {v.version !== undefined && (
+                  <span className={styles.versionMenuItemN}>v{v.version}</span>
+                )}
                 <span className={styles.versionMenuItemLabel}>{v.title}</span>
                 <span className={styles.versionMenuItemTime}>
                   {v.createdAt ? formatRelativeTime(v.createdAt) : ''}

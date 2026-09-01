@@ -119,6 +119,7 @@ function toArtifactDto(stored: StoredArtifact): Artifact {
   return {
     id: stored.id,
     title: stored.title,
+    version: artifactVersionNumber(stored),
     sessionId: stored.sessionId,
     sessionTitle: sessions.read().find((session) => session.id === stored.sessionId)?.title ?? '',
     pinnedAt: stored.pinnedAt,
@@ -178,7 +179,14 @@ export const artifactHandlers = [
   }),
 
   /** 發布 / 取消發布 — split by method, and the timestamp is the server's to write. */
-  http.post('/api/artifacts/:id/publish', ({ params }) => setPublished(params.id, true)),
+  // Publishing carries the title the Artifact goes on the shelf under.
+  http.post('/api/artifacts/:id/publish', async ({ params, request }) => {
+    const { title } = (await request.json()) as { title?: string };
+    return updateArtifact(params.id, {
+      publishedAt: new Date().toISOString(),
+      ...(title ? { title } : {}),
+    });
+  }),
 
   // Unpublish, not delete: the Artifact goes on living in the conversation that produced
   // it — what it loses is its place on the Gallery's shelf.

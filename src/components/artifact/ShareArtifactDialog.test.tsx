@@ -12,6 +12,7 @@ import ShareArtifactDialog from './ShareArtifactDialog';
 
 const artifact: Artifact = {
   id: 'artifact-1',
+  version: 1,
   sessionId: 'session-1',
   sessionTitle: 'SPC — Vt (gate CD)',
   title: 'SPC analysis — Vt (gate CD)',

@@ -1,6 +1,6 @@
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { http } from 'msw';
+import { http, HttpResponse } from 'msw';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { server } from '@/mocks/server';
@@ -8,6 +8,7 @@ import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
 import { useStudioLayoutStore } from '@/stores/useStudioLayoutStore';
 import { useThemeStore } from '@/stores/useThemeStore';
 import { renderStudio } from '@/test/renderStudio';
+import { publishArtifactAs } from '@/test/studioRun';
 
 describe('Per-version Artifact publishing', () => {
   beforeEach(() => {
@@ -33,10 +34,10 @@ describe('Per-version Artifact publishing', () => {
       'Regenerate the dashboard.{Enter}',
     );
 
-    const publishButton = await screen.findByRole('button', { name: '發布 Artifact' });
+    await screen.findByRole('button', { name: '發布 Artifact' });
     expect(screen.queryByText('已發布')).not.toBeInTheDocument();
 
-    await user.click(publishButton);
+    await publishArtifactAs(user);
 
     expect(await screen.findByText('已發布')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: '發布 Artifact' })).not.toBeInTheDocument();
@@ -65,10 +66,10 @@ describe('Per-version Artifact publishing', () => {
       await screen.findByRole('textbox', { name: 'Message' }),
       'Regenerate the dashboard.{Enter}',
     );
-    const publishButton = await screen.findByRole('button', { name: '發布 Artifact' });
+    await screen.findByRole('button', { name: '發布 Artifact' });
     const fetchesBeforePublish = contentFetches;
 
-    await user.click(publishButton);
+    await publishArtifactAs(user);
     await screen.findByText('已發布');
     // The list refetch (publishedAt badge) has landed by now; give any stray content
     // refetch the same window before counting.
@@ -86,6 +87,39 @@ describe('Per-version Artifact publishing', () => {
 
     await user.click(screen.getByRole('button', { name: 'Share artifact' }));
     expect(await screen.findByRole('dialog', { name: /分享/ })).toBeInTheDocument();
+  });
+
+  /** The Gallery names a card by its title, so publishing asks for one — and refuses to
+   *  go ahead without it. A card with no name is one nobody finds again. */
+  it('asks for a name before publishing, and will not publish without one', async () => {
+    const user = userEvent.setup();
+    let published: unknown;
+    server.use(
+      http.post('/api/artifacts/:id/publish', async ({ request }) => {
+        published = await request.json();
+        return new HttpResponse(null, { status: 200 });
+      }),
+    );
+    renderStudio();
+
+    await user.click(await screen.findByRole('button', { name: 'SPC — Vt (gate CD)' }));
+    await screen.findByText('已發布');
+    await user.type(
+      await screen.findByRole('textbox', { name: 'Message' }),
+      'Regenerate the dashboard.{Enter}',
+    );
+
+    await user.click(await screen.findByRole('button', { name: '發布 Artifact' }));
+    const nameField = await screen.findByLabelText('名稱');
+
+    // Emptied, the confirm closes.
+    await user.clear(nameField);
+    expect(screen.getByRole('button', { name: /^發布$/ })).toBeDisabled();
+
+    await user.type(nameField, '8 月 A14 良率追蹤');
+    await user.click(screen.getByRole('button', { name: /^發布$/ }));
+
+    await waitFor(() => expect(published).toEqual({ title: '8 月 A14 良率追蹤' }));
   });
 
   /** Outputs in one conversation are independent Artifacts, not v1/v2/v3 of a single

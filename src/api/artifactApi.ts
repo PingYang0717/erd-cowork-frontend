@@ -29,9 +29,13 @@ export const getArtifactRawHtml = (artifactId: string, signal?: AbortSignal) =>
 export const toggleArtifactPin = (id: string) => apiClient.post<Artifact>(`/artifacts/${id}/pin`);
 
 /** Publishing is what makes an Artifact available to other people — and what sharing
- *  rests on. The two directions are split by method rather than a body flag, and the
- *  backend stamps `publishedAt` itself: the client never sends a time it believes it is. */
-export const publishArtifact = (id: string) => apiClient.post<Artifact>(`/artifacts/${id}/publish`);
+ *  rests on. It carries the title the Artifact goes on the shelf under: the Gallery names
+ *  a card by it, so it is the user's to write rather than the run's to inherit.
+ *
+ *  The two directions are split by method rather than a body flag, and the backend stamps
+ *  `publishedAt` itself: the client never sends a time it believes it is. */
+export const publishArtifact = (id: string, title: string) =>
+  apiClient.post<Artifact>(`/artifacts/${id}/publish`, { title });
 
 /** Takes an Artifact off the shelf — the reverse of `publishArtifact`, on the same path.
  *
