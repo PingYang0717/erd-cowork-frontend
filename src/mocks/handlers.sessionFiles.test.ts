@@ -100,9 +100,10 @@ describe('session file endpoints', () => {
     const response = await fetch(`${API_BASE}/sessions/session-2`);
     const detail = (await response.json()) as SessionDetail;
 
+    // The message itself carries no attachments — `Message` has none on the wire. What
+    // sending does to files is consume them, so the composer's chip row empties.
     const userMessage = [...detail.messages].reverse().find((m: Message) => m.sender === 'USER');
-    expect(userMessage?.attachments?.map((file) => file.name)).toEqual(['lot-genealogy.csv']);
-    // Consumed: the composer's chips row empties once the message carries them.
+    expect(userMessage).toBeDefined();
     expect(detail.files).toHaveLength(0);
   });
 });

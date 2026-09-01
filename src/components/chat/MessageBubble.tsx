@@ -1,10 +1,9 @@
 import { AppstoreOutlined, ThunderboltFilled, ToolOutlined } from '@ant-design/icons';
 import React, { useDeferredValue, useMemo } from 'react';
 
-import AttachmentChip from '@/components/files/AttachmentChip';
 import { INTERRUPTED_TEXTS, REPAIR_RECORD_PREFIXES } from '@/constants/messages';
 import type { AgentStreamState } from '@/hooks/useAgentStream';
-import type { QuestionForm, StepItem, UploadedFileInfo } from '@/types/api/index';
+import type { QuestionForm, StepItem } from '@/types/api/index';
 import { splitAnswerByTableMarkers } from '@/utils/tableMarkers';
 
 import CollapsiblePanel from './CollapsiblePanel';
@@ -40,7 +39,6 @@ export interface MessageBubbleProps {
   /** A settled message's text. The live bubble's text comes from `live.liveText`. */
   text?: string;
   /** Attachments sent with this message. Ours hang off the message, not the session. */
-  attachments?: UploadedFileInfo[];
   steps?: StepItem[] | null;
   artifact?: { artifactId: string; title: string } | null;
   question?: QuestionForm | null;
@@ -84,7 +82,6 @@ function systemRecordKind(text: string): 'interrupted' | 'repair' | null {
 const MessageBubble: React.FC<MessageBubbleProps> = ({
   sender,
   text: settledText,
-  attachments = [],
   steps: settledSteps,
   artifact: settledArtifact,
   question: settledQuestion,
@@ -129,15 +126,6 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
     return (
       <div className={styles.userRow}>
         <div className={styles.userBubble}>
-          {attachments.length > 0 && (
-            <ul className={styles.userAttachments} aria-label="Message attachments">
-              {attachments.map((upload) => (
-                <li key={upload.id}>
-                  <AttachmentChip upload={upload} />
-                </li>
-              ))}
-            </ul>
-          )}
           <span className={styles.userText}>{text}</span>
         </div>
       </div>

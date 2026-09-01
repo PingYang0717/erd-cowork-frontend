@@ -11,7 +11,7 @@ import { currentUser } from './currentUser';
 import { DC_ITEM_FIXTURES, ROWS_PER_DC_ITEM } from './dcItemFixtures';
 import { artifacts, type StoredArtifact } from './handlers.artifacts';
 import { CATALOGUE } from './handlers.connectors';
-import { sessionFiles, toFileDto } from './handlers.files';
+import { sessionFiles } from './handlers.files';
 import { sessionDataSources, upsertSession } from './handlers.sessions';
 import { createPersistedResource } from './persistedResource';
 import { dcItemQuestion, flattenQuestionForm, openingQuestion } from './questionFixtures';
@@ -44,7 +44,6 @@ export const messages = createPersistedResource<StoredMessage>('erd-cowork:messa
     createdAt: '2026-08-20T09:15:00.000Z',
     artifactTitle: 'SPC analysis — Vt (gate CD)',
     questionsJson: null,
-    scenario: 'spc',
   },
 ]);
 
@@ -201,7 +200,6 @@ function streamRun(
       createdAt: new Date().toISOString(),
       artifactTitle: artifactName,
       questionsJson: null,
-      scenario: scenarioKey,
     },
   ]);
 
@@ -240,12 +238,11 @@ export const messageHandlers = [
     // becomes real here and nowhere else.
     upsertSession(sessionId);
 
-    // Snapshot the session's files onto the user message (the 前端-only extension
-    // behind the mockup's in-bubble chips), then consume them so the composer's
-    // chips row empties — mirrors eRDWorkspace20260819.html.
+    // Sending consumes the session's files, so the composer's chip row empties —
+    // mirrors eRDWorkspace20260819.html. They are not snapshotted onto the message:
+    // `Message` has no attachments on the wire.
     const allFiles = sessionFiles.read();
-    const consumedFiles = allFiles.filter((file) => file.sessionId === sessionId);
-    if (consumedFiles.length > 0) {
+    if (allFiles.some((file) => file.sessionId === sessionId)) {
       sessionFiles.write(allFiles.filter((file) => file.sessionId !== sessionId));
     }
 
@@ -261,7 +258,6 @@ export const messageHandlers = [
         createdAt: new Date().toISOString(),
         artifactTitle: null,
         questionsJson: null,
-        attachments: consumedFiles.length > 0 ? consumedFiles.map(toFileDto) : undefined,
       },
     ]);
 

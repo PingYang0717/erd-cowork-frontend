@@ -218,7 +218,8 @@ export const artifactHandlers = [
   // the same Artifact add and remove their own recipients instead of the second one
   // silently reverting the first.
   http.get('/api/artifacts/:id/share', ({ params }) =>
-    HttpResponse.json(sharesOf(params.id as string)),
+    // Enveloped, like the real endpoint — otherwise the unwrapping is never exercised.
+    HttpResponse.json({ shares: sharesOf(params.id as string) }),
   ),
 
   http.patch('/api/artifacts/:id/share', async ({ params, request }) => {
@@ -247,7 +248,7 @@ export const artifactHandlers = [
     artifacts.write(
       all.map((artifact) => (artifact.id === artifactId ? { ...artifact, isShared } : artifact)),
     );
-    return HttpResponse.json(sharesOf(artifactId));
+    return HttpResponse.json({ shares: sharesOf(artifactId) });
   }),
 
   http.post('/api/artifacts/:id/repair', ({ params }) => {
