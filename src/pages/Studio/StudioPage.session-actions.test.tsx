@@ -68,6 +68,31 @@ describe('Session row actions', () => {
     expect(openDetailFetches).toBe(fetchesBeforeRename);
   });
 
+  /** An Artifact carries the name of the session that produced it, denormalised, so the
+   *  Gallery can say where a card came from without fetching the session list. Renaming
+   *  therefore has to reach that copy — and it cannot wait for a remount to fix itself,
+   *  because the rail's badge keeps the artifacts list mounted on every page. */
+  it('renaming a session updates the name its Artifacts carry', async () => {
+    const user = userEvent.setup();
+    renderStudio();
+    await screen.findByRole('button', { name: 'SPC — Vt (gate CD)' });
+
+    await openMenuOf(user, 'SPC — Vt (gate CD)');
+    await user.click(await screen.findByRole('menuitem', { name: 'Rename' }));
+    const input = await screen.findByRole('textbox', { name: 'Rename SPC — Vt (gate CD)' });
+    await user.clear(input);
+    await user.type(input, 'Vt tracking — Aug{Enter}');
+    await screen.findByRole('button', { name: 'Vt tracking — Aug' });
+
+    await user.click(screen.getByRole('button', { name: /^Artifacts/ }));
+    const card = (
+      await screen.findByRole('button', { name: 'SPC analysis — Vt (gate CD)' })
+    ).closest('[role="listitem"]') as HTMLElement;
+
+    expect(card).toHaveTextContent('Vt tracking — Aug');
+    expect(card).not.toHaveTextContent('SPC — Vt (gate CD)');
+  });
+
   it('pins a recent session and finds it under Pinned', async () => {
     const user = userEvent.setup();
     renderStudio();
