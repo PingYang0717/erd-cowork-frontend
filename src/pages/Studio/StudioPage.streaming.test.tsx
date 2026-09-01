@@ -50,6 +50,28 @@ describe('Streaming a run in the Studio', () => {
     expect(screen.getByText('Inline DB · Vt (gate CD)')).toBeInTheDocument();
   });
 
+  /** Who is speaking and what they are doing are two different statements. The label
+   *  names the speaker and reads the same throughout; that the run is in progress belongs
+   *  inside the step panel, beside the steps it is producing. */
+  it('says it is working from inside the step panel, not from the speaker label', async () => {
+    const user = userEvent.setup();
+    const stream = mockAgentStream();
+    renderStudio();
+    await startAnalysis(user);
+
+    const panel = await screen.findByRole('status', { name: 'eRD AI is working' });
+    expect(within(panel).getByText(/處理中/)).toBeInTheDocument();
+
+    // The label above stays the speaker's name while the run is going.
+    expect(screen.getByText('eRD AI')).toBeInTheDocument();
+
+    act(() => stream.push({ type: 'ANSWER', text: 'Done.' }));
+    act(() => stream.close());
+
+    // And the panel's claim goes with the panel when the run ends.
+    await waitFor(() => expect(screen.queryByText(/處理中/)).not.toBeInTheDocument());
+  });
+
   it('shows the reply building up token by token while the run is still going', async () => {
     const user = userEvent.setup();
     const stream = mockAgentStream();
