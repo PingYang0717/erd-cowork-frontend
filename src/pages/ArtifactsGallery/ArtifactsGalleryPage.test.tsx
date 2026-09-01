@@ -154,6 +154,22 @@ describe('Artifacts gallery', () => {
     ).toBeGreaterThan(0);
   });
 
+  /** The direction has to be the caller's to state. With one toggling endpoint and the
+   *  backend deciding, there was no way to say "unpin" — an Artifact could be pinned and
+   *  then never released, which is exactly what happened. */
+  it('pins an Artifact and releases it again', async () => {
+    const user = userEvent.setup();
+    renderGalleryPage();
+    const name = 'SPC analysis — Vt (gate CD)';
+    await screen.findByRole('button', { name });
+
+    await user.click(screen.getByRole('button', { name: `Pin ${name}` }));
+    expect(await screen.findByRole('button', { name: `Unpin ${name}` })).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: `Unpin ${name}` }));
+    expect(await screen.findByRole('button', { name: `Pin ${name}` })).toBeInTheDocument();
+  });
+
   it('disables the pin button when the user may not pin this Artifact', async () => {
     server.use(
       http.get('/api/artifacts', () =>
@@ -168,7 +184,7 @@ describe('Artifacts gallery', () => {
     expect(screen.getByRole('button', { name: 'Pin SPC analysis — Vt (gate CD)' })).toBeDisabled();
   });
 
-  it("shows Pin, Copy Link, Share, and Delete in an owned card's more-actions menu", async () => {
+  it("shows Pin, Copy Link, Share, and Unpublish in an owned card's more-actions menu", async () => {
     const user = userEvent.setup();
     renderGalleryPage();
     await screen.findByRole('button', { name: 'SPC analysis — Vt (gate CD)' });
@@ -178,7 +194,7 @@ describe('Artifacts gallery', () => {
     );
     // Nothing is disabled up front: every action goes to the backend, and an endpoint
     // that has not landed answers with an error instead.
-    for (const label of ['Pin', 'Copy link', 'Share', 'Delete']) {
+    for (const label of ['Pin', 'Copy link', 'Share', 'Unpublish']) {
       expect(screen.getByRole('menuitem', { name: label })).not.toHaveAttribute(
         'aria-disabled',
         'true',
@@ -186,7 +202,9 @@ describe('Artifacts gallery', () => {
     }
   });
 
-  it('deletes a card through the menu, and the card is gone', async () => {
+  /** Unpublish, not delete: what leaves is the Artifact's place on the shelf. The
+   *  Artifact itself goes on living in the conversation that produced it. */
+  it('unpublishes a card through the menu, and it leaves the Gallery', async () => {
     const user = userEvent.setup();
     renderGalleryPage();
     await screen.findByRole('button', { name: 'SPC analysis — Vt (gate CD)' });
@@ -194,7 +212,7 @@ describe('Artifacts gallery', () => {
     await user.click(
       screen.getByRole('button', { name: 'More actions for SPC analysis — Vt (gate CD)' }),
     );
-    await user.click(screen.getByRole('menuitem', { name: 'Delete' }));
+    await user.click(screen.getByRole('menuitem', { name: 'Unpublish' }));
 
     await waitFor(() =>
       expect(

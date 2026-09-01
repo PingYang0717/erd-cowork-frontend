@@ -27,19 +27,27 @@ export const getArtifactRawHtml = (artifactId: string, signal?: AbortSignal) =>
     signal,
   });
 
-/** Toggles the pin. One endpoint, no body: which way it goes is the backend's call, not
- *  something the client asserts from state it may have read a while ago. */
-export const toggleArtifactPin = (id: string) => apiClient.post<Artifact>(`/artifacts/${id}/pin`);
+/** The two directions of pinning, split by method on one path — the same shape as
+ *  publish below.
+ *
+ *  Not one toggling endpoint: with the direction left to the backend there was no way to
+ *  say "unpin", and an Artifact could be pinned but never released. The client knows
+ *  which way it wants to go, so it says so. */
+export const pinArtifact = (id: string) => apiClient.post<Artifact>(`/artifacts/${id}/pin`);
+
+export const unpinArtifact = (id: string) => apiClient.delete<Artifact>(`/artifacts/${id}/pin`);
 
 /** Publishing is what makes an Artifact available to other people — and what sharing
  *  rests on. The two directions are split by method rather than a body flag, and the
  *  backend stamps `publishedAt` itself: the client never sends a time it believes it is. */
 export const publishArtifact = (id: string) => apiClient.post<Artifact>(`/artifacts/${id}/publish`);
 
-/** Removes the Artifact. There is no separate unpublish: taking something off the shelf
- *  and deleting it are the same act here, so offering both would be two buttons for one
- *  outcome — and the one that sounded reversible would not be. */
-export const deleteArtifact = (id: string) => apiClient.delete<void>(`/artifacts/${id}`);
+/** Takes an Artifact off the shelf — the reverse of `publishArtifact`, on the same path.
+ *
+ *  "Unpublish" rather than "delete" because that is what actually happens: the Gallery
+ *  lists published work, and removing something from it does not destroy the Artifact,
+ *  which goes on living in the conversation that produced it. */
+export const unpublishArtifact = (id: string) => apiClient.delete<void>(`/artifacts/${id}/publish`);
 
 export const shareArtifact = (id: string, targetIds: string[]) =>
   apiClient.post<ArtifactShareResult>(`/artifacts/${id}/share`, {

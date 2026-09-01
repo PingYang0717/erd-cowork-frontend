@@ -108,18 +108,25 @@ function toArtifactDto(stored: StoredArtifact): Artifact {
     hasPersonalCopy: false,
   };
 }
-/** Publishing only goes one way: there is no unpublish, because taking an Artifact off
- *  the shelf and deleting it are the same act. */
-function publish(id: string | readonly string[] | undefined) {
+function updateArtifact(
+  id: string | readonly string[] | undefined,
+  change: Partial<StoredArtifact>,
+) {
   const all = artifacts.read();
   const existing = all.find((artifact) => artifact.id === id);
   if (!existing) {
     return new HttpResponse(null, { status: 404 });
   }
-  const updated: StoredArtifact = { ...existing, publishedAt: new Date().toISOString() };
+  const updated: StoredArtifact = { ...existing, ...change };
   artifacts.write(all.map((artifact) => (artifact.id === id ? updated : artifact)));
   return HttpResponse.json(toArtifactDto(updated));
 }
+
+const setPinned = (id: string | readonly string[] | undefined, pinned: boolean) =>
+  updateArtifact(id, { pinnedAt: pinned ? new Date().toISOString() : null });
+
+const setPublished = (id: string | readonly string[] | undefined, published: boolean) =>
+  updateArtifact(id, { publishedAt: published ? new Date().toISOString() : null });
 
 /** Each artifact IS a version (deriveArtifactVersions); number it the way the client
  *  does — by its position among the session's artifact-bearing messages — so the
@@ -139,22 +146,18 @@ export const artifactHandlers = [
 
   /** Toggle: which way it goes is the backend's call, so the request carries no
    *  direction and the client cannot act on a stale reading of its own. */
-  http.post('/api/artifacts/:id/pin', ({ params }) => {
-    const all = artifacts.read();
-    const existing = all.find((artifact) => artifact.id === params.id);
-    if (!existing) {
-      return new HttpResponse(null, { status: 404 });
-    }
-    const updated: StoredArtifact = {
-      ...existing,
-      pinnedAt: existing.pinnedAt === null ? new Date().toISOString() : null,
-    };
-    artifacts.write(all.map((artifact) => (artifact.id === params.id ? updated : artifact)));
-    return HttpResponse.json(toArtifactDto(updated));
-  }),
+  // Pinning takes a direction from the caller rather than toggling: a toggle left no way
+  // to say "unpin", so an Artifact could be pinned and never released.
+  http.post('/api/artifacts/:id/pin', ({ params }) => setPinned(params.id, true)),
+
+  http.delete('/api/artifacts/:id/pin', ({ params }) => setPinned(params.id, false)),
 
   /** 發布 / 取消發布 — split by method, and the timestamp is the server's to write. */
-  http.post('/api/artifacts/:id/publish', ({ params }) => publish(params.id)),
+  http.post('/api/artifacts/:id/publish', ({ params }) => setPublished(params.id, true)),
+
+  // Unpublish, not delete: the Artifact goes on living in the conversation that produced
+  // it — what it loses is its place on the Gallery's shelf.
+  http.delete('/api/artifacts/:id/publish', ({ params }) => setPublished(params.id, false)),
 
   http.get('/api/artifacts/:id', ({ params }) => {
     const artifact = artifacts.read().find((a) => a.id === params.id);
@@ -189,11 +192,6 @@ export const artifactHandlers = [
   // Rebuilding an artifact whose HTML threw. Every repair here succeeds — a real
   // backend can also come back empty-handed, which the UI already handles; tests
   // exercise that path by stubbing this endpoint.
-  http.delete('/api/artifacts/:id', ({ params }) => {
-    artifacts.write(artifacts.read().filter((stored) => stored.id !== params.id));
-    return new HttpResponse(null, { status: 200 });
-  }),
-
   // Share has no backend this round: the mock answers the agreed error shape so the
   // UI exercises the same path the real backend produces.
   http.post('/api/artifacts/:id/share', () =>

@@ -1,7 +1,7 @@
 import {
   CopyOutlined,
   DashboardOutlined,
-  DeleteOutlined,
+  EyeInvisibleOutlined,
   MoreOutlined,
   PushpinFilled,
   PushpinOutlined,
@@ -12,7 +12,7 @@ import { Dropdown } from 'antd';
 import React, { useState } from 'react';
 
 import ShareArtifactDialog from '@/components/artifact/ShareArtifactDialog';
-import { useDeleteArtifact, useToggleArtifactPin } from '@/hooks/useArtifactMutations';
+import { useSetArtifactPinned, useUnpublishArtifact } from '@/hooks/useArtifactMutations';
 import type { Artifact } from '@/types/api/index';
 import { artifactHref } from '@/utils/artifactUrl';
 import { dispatchMenuAction } from '@/utils/dispatchMenuAction';
@@ -26,8 +26,8 @@ interface ArtifactCardProps {
 }
 
 const ArtifactCard: React.FC<ArtifactCardProps> = ({ artifact, onOpen }) => {
-  const toggleArtifactPin = useToggleArtifactPin();
-  const deleteArtifact = useDeleteArtifact();
+  const setArtifactPinned = useSetArtifactPinned();
+  const unpublishArtifact = useUnpublishArtifact();
   const [isShareOpen, setIsShareOpen] = useState(false);
   const isPinned = artifact.pinnedAt !== null;
   // Shared *to me*: someone else owns it. `isShared` is the opposite direction —
@@ -54,19 +54,19 @@ const ArtifactCard: React.FC<ArtifactCardProps> = ({ artifact, onOpen }) => {
       : null,
     { type: 'divider' as const },
     {
-      key: 'delete',
-      label: 'Delete',
+      key: 'unpublish',
+      label: 'Unpublish',
       danger: true,
-      icon: <DeleteOutlined aria-hidden />,
+      icon: <EyeInvisibleOutlined aria-hidden />,
     },
   ].filter((item): item is NonNullable<typeof item> => item !== null);
 
   function handleMenuClick(key: string) {
     dispatchMenuAction(key, {
-      pin: () => toggleArtifactPin.mutate(artifact.id),
+      pin: () => setArtifactPinned.mutate({ id: artifact.id, pinned: !isPinned }),
       copyLink: () => navigator.clipboard.writeText(artifactHref(artifact.id)),
       share: () => setIsShareOpen(true),
-      delete: () => deleteArtifact.mutate(artifact.id),
+      unpublish: () => unpublishArtifact.mutate(artifact.id),
     });
   }
 
@@ -106,7 +106,7 @@ const ArtifactCard: React.FC<ArtifactCardProps> = ({ artifact, onOpen }) => {
           aria-label={isPinned ? `Unpin ${artifact.title}` : `Pin ${artifact.title}`}
           aria-pressed={isPinned}
           disabled={!artifact.canPin}
-          onClick={() => toggleArtifactPin.mutate(artifact.id)}
+          onClick={() => setArtifactPinned.mutate({ id: artifact.id, pinned: !isPinned })}
         >
           {isPinned ? <PushpinFilled aria-hidden /> : <PushpinOutlined aria-hidden />}
         </button>
