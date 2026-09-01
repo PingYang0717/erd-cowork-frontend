@@ -20,7 +20,6 @@ const artifact: Artifact = {
   publishedAt: '2026-08-20T09:20:00.000Z',
   owner: 'user-1',
   ownerDisplay: 'You',
-  canPin: true,
   isOwn: true,
   isShared: false,
   hasPersonalCopy: false,
