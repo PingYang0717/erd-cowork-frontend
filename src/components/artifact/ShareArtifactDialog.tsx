@@ -151,13 +151,22 @@ const ShareArtifactDialog: React.FC<ShareArtifactDialogProps> = ({ open, onClose
             {copied ? '已複製' : '複製'}
           </Button>
         </div>
+        {/* Styled as a hint, not as the green success banner it used to be: the link is
+            here from the moment the dialog opens, so a panel announcing that something
+            succeeded would be claiming it before anything had happened. */}
+        <div className={styles.hint}>
+          已加入左側 Artifacts 清單 — 可到 Artifacts 開啟或再次分享。
+        </div>
       </div>
 
       <div className={styles.actions}>
+        {/* Always pressable. Submit is also how this dialog is finished with, so gating
+            it on having changed something leaves someone who only came to copy the link
+            with no way out but the corner cross. Submitting an unchanged list sends an
+            empty delta, which is a no-op. */}
         <Button
           type="primary"
           autoInsertSpace={false}
-          disabled={!edited}
           loading={updateShares.isPending}
           onClick={handleConfirm}
         >

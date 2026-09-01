@@ -6,8 +6,10 @@ import {
   within,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { http, HttpResponse } from 'msw';
 import { beforeEach, describe, expect, it } from 'vitest';
 
+import { server } from '@/mocks/server';
 import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
 import { useStudioLayoutStore } from '@/stores/useStudioLayoutStore';
 import { renderStudio, waitForComposer } from '@/test/renderStudio';
@@ -92,6 +94,42 @@ describe('File attachments', () => {
       }),
     ).toBeEnabled();
     void user;
+  });
+
+  /** Removing a file is a write to the same set the next question would be answered
+   *  against. Until it lands, the composer is shut: a message sent in that window
+   *  describes a set of files that is already changing under it. */
+  it('shuts the composer while a file is being removed, and opens it again after', async () => {
+    const user = userEvent.setup();
+    let releaseDelete: (() => void) | undefined;
+    server.use(
+      http.delete('/api/sessions/:sessionId/files/:fileId', async () => {
+        await new Promise<void>((resolve) => {
+          releaseDelete = resolve;
+        });
+        return new HttpResponse(null, { status: 200 });
+      }),
+    );
+    renderStudio();
+    await selectASessionAndOpenFileModal(user);
+
+    await user.upload(screen.getByLabelText('Choose files'), fileOfSize('lots.csv', 512));
+    const dialog = screen.getByRole('dialog', { name: 'Attach files' });
+    await within(dialog).findByText('lots.csv');
+    await user.click(screen.getByRole('button', { name: 'Done' }));
+
+    const composer = screen.getByRole('textbox', { name: 'Message' });
+    expect(composer).toBeEnabled();
+
+    // The composer's own chip row, not the modal's copy of it (which is still mounted).
+    await user.click(
+      within(composerAttachments()).getByRole('button', { name: /^Remove lots\.csv/ }),
+    );
+    await waitFor(() => expect(composer).toBeDisabled());
+    expect(screen.getByRole('button', { name: 'Send message' })).toBeDisabled();
+
+    releaseDelete?.();
+    await waitFor(() => expect(composer).toBeEnabled());
   });
 
   it('attaches a file via click-to-browse and shows it as a chip in the composer', async () => {

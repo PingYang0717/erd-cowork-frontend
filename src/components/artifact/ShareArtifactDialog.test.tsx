@@ -36,6 +36,21 @@ function renderDialog(onClose = vi.fn()) {
   };
 }
 
+/** Waits for a click on an option to have registered as a choice.
+ *
+ *  Reads the chosen tags, not the Submit button: Submit is always pressable now, so its
+ *  state says nothing about whether the click landed — which is exactly the confusion an
+ *  earlier version of these tests fell into. */
+async function selected(): Promise<string[]> {
+  return waitFor(() => {
+    const tags = Array.from(document.querySelectorAll('.ant-select-selection-item')).map(
+      (node) => node.getAttribute('title') ?? '',
+    );
+    expect(tags.length).toBeGreaterThan(0);
+    return tags;
+  });
+}
+
 describe('Sharing an Artifact: picking recipients', () => {
   /** The link is the Artifact's address, not something sharing produces — someone who
    *  opened this dialog only to copy it should not have to edit the recipient list first.
@@ -65,7 +80,7 @@ describe('Sharing an Artifact: picking recipients', () => {
     await user.click(field);
     await user.type(field, 'CHXXGHYC');
     await user.click(await screen.findByTitle(/鄭凱宇/, {}, { timeout: 3000 }));
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Submit' })).toBeEnabled());
+    expect(await selected()).toContainEqual(expect.stringContaining('鄭凱宇'));
 
     await user.click(screen.getByRole('button', { name: 'Submit' }));
 
@@ -117,7 +132,7 @@ describe('Sharing an Artifact: picking recipients', () => {
     await user.click(await screen.findByTitle(/鄭凱宇/, {}, { timeout: 3000 }));
     // Submit only opens once something has actually been chosen; without this the click
     // below would land on a disabled button and the test would pass on nothing.
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Submit' })).toBeEnabled());
+    expect(await selected()).toContainEqual(expect.stringContaining('鄭凱宇'));
 
     await user.click(screen.getByRole('button', { name: 'Submit' }));
 
@@ -163,7 +178,10 @@ describe('Sharing an Artifact: picking recipients', () => {
       .closest('.ant-select-selection-item')
       ?.querySelector('.ant-select-selection-item-remove');
     await user.click(remove as HTMLElement);
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Submit' })).toBeEnabled());
+    // Removed, not merely clicked: the tag is gone before Submit is pressed.
+    await waitFor(() =>
+      expect(document.querySelectorAll('.ant-select-selection-item')).toHaveLength(0),
+    );
     await user.click(screen.getByRole('button', { name: 'Submit' }));
 
     await waitFor(() =>
@@ -200,7 +218,7 @@ describe('Sharing an Artifact: picking recipients', () => {
     await user.click(await screen.findByTitle(/鄭凱宇/, {}, { timeout: 3000 }));
     // Selected, not merely rendered: the label has to survive because it is a choice,
     // and a click that never landed would leave nothing to survive.
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Submit' })).toBeEnabled());
+    expect(await selected()).toContainEqual(expect.stringContaining('鄭凱宇'));
 
     await user.click(field);
     await user.type(field, 'INTD-1');
