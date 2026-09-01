@@ -59,11 +59,13 @@
 }
 
 /* Inside the bubble nothing draws its own outline: the bubble is the boundary, and a
-   second one reads as a frame within a frame. Depth comes from the fill instead. */
-.workingSteps,
+   second one reads as a frame within a frame. The chip is a thing you can press, so it
+   gets a surface of its own; the step list is the turn's own narration and sits directly
+   on the bubble. */
 .artifactChip {
   align-self: stretch;
   display: flex;
+  align-items: center;
   gap: 8px;
   padding: 8px 12px;
   border-radius: 9px;
@@ -73,18 +75,17 @@
   line-height: normal;
 }
 
-/* The chip is one row of things side by side; the step list is one step per line. They
-   share the surface above and part company here. */
-.artifactChip {
-  align-items: center;
-}
-
-/* Steps stack. This lived in a rule shared with `.stepsRecap`, which moved out to
-   StepList.module.css and took the whole declaration with it — leaving the list flexing
-   in its default row direction, every step on one line. */
+/* Steps stack, on the bubble's own fill — no card of their own. Everything it needs is
+   written here rather than shared with `.artifactChip`: the two looked alike enough to
+   share a rule, and a later edit that moved part of that rule elsewhere left this one
+   flexing in the default row direction, every step on one line. */
 .workingSteps {
+  align-self: stretch;
+  display: flex;
   flex-direction: column;
   gap: 9px;
+  font-size: 12.5px;
+  line-height: normal;
 }
 
 /* Says the run is in progress, from inside the panel that is filling with its steps. */
