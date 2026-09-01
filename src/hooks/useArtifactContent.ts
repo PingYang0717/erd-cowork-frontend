@@ -30,5 +30,11 @@ export function useArtifactContent(artifactId: string | undefined, reloadNonce =
     queryFn: () => getArtifactContent(artifactId as string, reloadNonce),
     enabled: artifactId !== undefined,
     placeholderData: keepPreviousData,
+    // An Artifact's HTML never changes once produced, so it never goes stale on its
+    // own — without this, switching versions A→B→A downloaded the whole document a
+    // third time for nothing. The two real refresh paths are untouched: Reload bumps
+    // the nonce (a different key), and a repair invalidates the key by name, which
+    // overrides staleTime.
+    staleTime: Infinity,
   });
 }

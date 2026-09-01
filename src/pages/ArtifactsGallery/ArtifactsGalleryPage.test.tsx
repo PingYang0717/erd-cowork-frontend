@@ -201,6 +201,31 @@ describe('Artifacts gallery', () => {
     expect(await screen.findByRole('button', { name: `Unpin ${name}` })).toBeInTheDocument();
   });
 
+  /** The toggle's answer, merged into the cache, is the whole change — so nothing else
+   *  should go over the wire. The rail's badge keeps the artifacts list mounted on every
+   *  page, which made the follow-up invalidate this pins down cost one full list
+   *  download per pin, from anywhere in the app. */
+  it('pinning costs one POST and no list re-download', async () => {
+    let listFetches = 0;
+    server.use(
+      // Counting tap: returning undefined falls through to the real handler.
+      http.get('/api/artifacts', () => {
+        listFetches += 1;
+        return undefined;
+      }),
+    );
+    const user = userEvent.setup();
+    renderGalleryPage();
+    const name = 'SPC analysis — Vt (gate CD)';
+    await screen.findByRole('button', { name });
+    const fetchesBeforePin = listFetches;
+
+    await user.click(screen.getByRole('button', { name: `Pin ${name}` }));
+    await screen.findByRole('button', { name: `Unpin ${name}` });
+
+    expect(listFetches).toBe(fetchesBeforePin);
+  });
+
   /** The toggle answers with the Artifact, but nothing says it answers with every field
    *  of it. Writing that answer over the cached row would drop whatever it left out —
    *  Merged, not replaced: a field the answer omits has to survive, or the row loses
