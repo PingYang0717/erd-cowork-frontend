@@ -88,6 +88,27 @@
   gap: 8px;
 }
 
+/* The dialog's two buttons are a matched pair — one copies the link, one saves the list.
+   Same width so they read as siblings rather than as one being an afterthought; the copy
+   button carries an icon and would otherwise be the wider of the two. */
+.dialogButton,
+.accentButton {
+  min-width: 96px;
+}
+
+/* A second accent, so the dialog does not offer two blue buttons and leave the reader to
+   work out which one finishes the job. */
+.accentButton {
+  background: var(--erd-color-accent, #fa8c16);
+  border-color: var(--erd-color-accent, #fa8c16);
+}
+
+.accentButton:hover,
+.accentButton:focus-visible {
+  background: var(--erd-color-accent-hover, #d46b08) !important;
+  border-color: var(--erd-color-accent-hover, #d46b08) !important;
+}
+
 .actions {
   display: flex;
   justify-content: flex-end;
