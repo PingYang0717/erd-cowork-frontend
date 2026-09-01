@@ -154,11 +154,17 @@ lineage 層(第 5 題)。
 
 ---
 
-## 8【待確認】分享端點的路徑單複數
+## 8【待確認】分享端點的兩處拼寫
 
-前端一律用 **`/artifacts/{id}/share`**(複數),與 `/artifacts/{id}/publish`、
-`/artifacts/{id}/pin` 一致。規格討論時寫的是 `/api/artifact/{id}/share`(單數),推測是
-筆誤,但若後端真的是單數請告知——這是一改就會全錯的那種差異。
+**路徑單複數。** 前端一律用 **`/artifacts/{id}/share`**(複數),與
+`/artifacts/{id}/publish`、`/artifacts/{id}/pin` 一致。規格討論時寫的是
+`/api/artifact/{id}/share`(單數),推測是筆誤,但若後端真的是單數請告知——這是一改就會
+全錯的那種差異。
+
+**`shareTargetType` 還是 `sharesTargetType`?** 交付的欄位清單裡,只有這一個是複數
+(`sharesTargetType`),鄰近的 `shareTargetUserId` / `shareTargetDeptId` /
+`shareTargetSectionId` 都是單數。前端目前**兩種拼法都讀**,因為猜錯的後果是收件者清單顯示
+空白——看起來就像從來沒分享過任何人,而不是一個看得出來的錯誤。確認後會收斂成一種。
 
 ---
 

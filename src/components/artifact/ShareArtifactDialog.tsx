@@ -12,8 +12,11 @@ import { artifactHref } from '@/utils/artifactUrl';
 import {
   directoryEntryKey,
   directoryEntryLabel,
+  directoryEntryMatches,
   directoryShareTarget,
   shareAsDirectoryEntry,
+  shareTargetId,
+  shareTargetType,
 } from '@/utils/directoryEntry';
 
 import styles from './ShareArtifactDialog.module.css';
@@ -62,7 +65,12 @@ const ShareArtifactDialog: React.FC<ShareArtifactDialogProps> = ({ open, onClose
   }
 
   function handleConfirm() {
-    const before = shares;
+    // Both sides reduced to the same {type, id} shape before comparing: the read side
+    // spells a recipient across three id fields, the write side as one pair.
+    const before = shares.map((share) => ({
+      type: shareTargetType(share),
+      id: shareTargetId(share),
+    }));
     const after = chosen.map(directoryShareTarget);
     const key = (target: ShareTarget) => `${target.type}:${target.id}`;
     const beforeKeys = new Set(before.map(key));
@@ -73,9 +81,7 @@ const ShareArtifactDialog: React.FC<ShareArtifactDialogProps> = ({ open, onClose
         id: artifact.id,
         update: {
           add: after.filter((target) => !beforeKeys.has(key(target))),
-          remove: before
-            .map((share) => ({ type: share.type, id: share.id }))
-            .filter((target) => !afterKeys.has(key(target))),
+          remove: before.filter((target) => !afterKeys.has(key(target))),
         },
       },
       {
@@ -205,6 +211,7 @@ const RecipientSelect: React.FC<RecipientSelectProps> = ({ value, loading, onCha
     return [...byKey.entries()].map(([key, entry]) => ({
       value: key,
       label: directoryEntryLabel(entry),
+      entry,
     }));
   }, [entries, value]);
 
@@ -228,7 +235,13 @@ const RecipientSelect: React.FC<RecipientSelectProps> = ({ value, loading, onCha
       // `filterOption: false` hands matching to the backend, which is doing the
       // searching — filtering again here would hide rows it deliberately returned.
       showSearch={{
-        filterOption: false,
+        // Narrows on every field a row can be found by, not on the label: a person is as
+        // findable by their org as by their name. The backend is searching too, but on
+        // the debounced keyword — this is what answers the keystroke in between, and it
+        // never hides a row the backend returned, because it looks at more than the
+        // backend was given.
+        filterOption: (input, option) =>
+          option?.entry === undefined || directoryEntryMatches(option.entry, input),
         searchValue: keyword,
         onSearch: setKeyword,
       }}

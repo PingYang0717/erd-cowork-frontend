@@ -95,7 +95,16 @@ describe('Sharing an Artifact: picking recipients', () => {
     let body: unknown;
     server.use(
       http.get('/api/artifacts/:id/share', () =>
-        HttpResponse.json({ shares: [{ type: 'SECTION', id: 'INTD-1', name: '整合技術一課' }] }),
+        HttpResponse.json({
+          shares: [
+            {
+              shareTargetType: 'SECTION',
+              shareTargetSectionId: 'INTD-1',
+              sourceUserId: 'u-001',
+              shareAt: '2026-09-01T00:00:00.000Z',
+            },
+          ],
+        }),
       ),
       http.patch('/api/artifacts/:id/share', async ({ request }) => {
         body = await request.json();
@@ -105,7 +114,9 @@ describe('Sharing an Artifact: picking recipients', () => {
     renderDialog();
 
     // Already there when the dialog opens — nothing was typed to find it.
-    const chip = await screen.findByTitle('INTD-1 | 整合技術一課');
+    // A share row carries ids, not names, so the chip shows the id — what matters is
+    // that an existing recipient appears at all.
+    const chip = await screen.findByTitle('INTD-1 | INTD-1');
     expect(chip).toBeInTheDocument();
 
     // antd's own remove affordance on the tag; there is no accessible name on it to
