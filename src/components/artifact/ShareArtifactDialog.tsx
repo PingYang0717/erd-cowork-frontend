@@ -31,8 +31,8 @@ const ShareArtifactDialog: React.FC<ShareArtifactDialogProps> = ({ open, onClose
   const { shares, isLoading } = useArtifactShares(artifact.id, open);
   const updateShares = useUpdateArtifactShares();
   const [recipients, setRecipients] = useState<DirectoryEntry[]>([]);
-  const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const shareUrl = artifactHref(artifact.id);
 
   // Opening loads who it is already shared with, and the picker starts from them: this
   // is an edit to a list, not a fresh act each time. Adjusted during render on the
@@ -42,7 +42,6 @@ const ShareArtifactDialog: React.FC<ShareArtifactDialogProps> = ({ open, onClose
     setWasOpen(open);
     if (!open) {
       setRecipients([]);
-      setShareUrl(null);
       setCopied(false);
     }
   }
@@ -84,20 +83,15 @@ const ShareArtifactDialog: React.FC<ShareArtifactDialogProps> = ({ open, onClose
           remove: before.filter((target) => !afterKeys.has(key(target))),
         },
       },
-      {
-        // The link is this client's to build (`artifactHref`), so it does not wait on a
-        // URL from the response — the same link the Gallery's Copy link produces.
-        onSuccess: () => {
-          setEdited(false);
-          setShareUrl(artifactHref(artifact.id));
-        },
-      },
+      // Submitting is the end of the dialog: the recipient list was the thing being
+      // edited, and once it is saved there is nothing left here to do.
+      { onSuccess: handleClose },
     );
   }
 
   async function handleCopy() {
     try {
-      await navigator.clipboard.writeText(shareUrl ?? '');
+      await navigator.clipboard.writeText(shareUrl);
     } catch {
       // clipboard may be unavailable (e.g. insecure context); the link is
       // still visible and selectable in the input for manual copying
@@ -141,41 +135,34 @@ const ShareArtifactDialog: React.FC<ShareArtifactDialogProps> = ({ open, onClose
         </div>
       </div>
 
-      {shareUrl && (
-        <div className={styles.section}>
-          <div className={styles.sectionLabel}>分享連結</div>
-          <div className={styles.linkRow}>
-            <Input readOnly prefix={<LinkOutlined aria-hidden />} value={shareUrl} />
-            <Button
-              type="primary"
-              autoInsertSpace={false}
-              icon={copied ? <CheckOutlined aria-hidden /> : <CopyOutlined aria-hidden />}
-              onClick={handleCopy}
-            >
-              {copied ? '已複製' : '複製'}
-            </Button>
-          </div>
-          <div className={styles.confirmBanner}>
-            已加入左側 Artifacts 清單 — 可到 Artifacts 開啟或再次分享。
-          </div>
-        </div>
-      )}
-
-      <div className={styles.actions}>
-        <Button autoInsertSpace={false} onClick={handleClose}>
-          {shareUrl ? '完成' : '取消'}
-        </Button>
-        {!shareUrl && (
+      {/* Always here, not revealed by sharing. The link is the Artifact's address, not a
+          reward for pressing a button — someone who opened this dialog only to copy it
+          should not have to change the recipient list first. */}
+      <div className={styles.section}>
+        <div className={styles.sectionLabel}>分享連結</div>
+        <div className={styles.linkRow}>
+          <Input readOnly prefix={<LinkOutlined aria-hidden />} value={shareUrl} />
           <Button
             type="primary"
             autoInsertSpace={false}
-            disabled={!edited}
-            loading={updateShares.isPending}
-            onClick={handleConfirm}
+            icon={copied ? <CheckOutlined aria-hidden /> : <CopyOutlined aria-hidden />}
+            onClick={handleCopy}
           >
-            分享
+            {copied ? '已複製' : '複製'}
           </Button>
-        )}
+        </div>
+      </div>
+
+      <div className={styles.actions}>
+        <Button
+          type="primary"
+          autoInsertSpace={false}
+          disabled={!edited}
+          loading={updateShares.isPending}
+          onClick={handleConfirm}
+        >
+          Submit
+        </Button>
       </div>
     </Modal>
   );
