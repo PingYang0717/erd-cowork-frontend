@@ -141,9 +141,11 @@
 
 /* Coach highlight after generating an Artifact: pulses the row until the
    toast is dismissed. */
+/* An outline that pulses, and nothing else. The filled background this used to carry is
+   how the rail marks the page you are actually on (`aria-current`), so wearing it made a
+   nudge look like a location — the entry read as selected while the user was still
+   somewhere else entirely. */
 .navShortcut[data-coach='true'] {
-  background: var(--erd-color-primary-bg, #e6f4ff);
-  box-shadow: 0 0 0 1px var(--erd-color-primary-border, #91caff) inset;
   animation: coach-pulse 1.2s ease-in-out infinite;
 }
 
