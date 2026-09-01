@@ -123,10 +123,10 @@ describe('Sharing an Artifact: picking recipients', () => {
     );
   });
 
-  /** The picker walks the response with `for…of`. A body that is not a list — an
-   *  envelope, an error rendered as JSON — used to reach that loop and throw "entries is
-   *  not iterable" over the whole dialog. */
-  it('survives a search response that is not a list', async () => {
+  /** The picker walks the response with `for…of`. A body whose `content` is missing —
+   *  an error rendered as JSON, a shape change — used to reach that loop and throw
+   *  "entries is not iterable" over the whole dialog. */
+  it('survives a search response with no content array', async () => {
     const user = userEvent.setup();
     server.use(
       http.get('/api/hr/employeesAndOrgs', () => HttpResponse.json({ message: 'unexpected' })),

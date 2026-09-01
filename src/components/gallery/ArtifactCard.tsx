@@ -12,7 +12,7 @@ import { Dropdown } from 'antd';
 import React, { useState } from 'react';
 
 import ShareArtifactDialog from '@/components/artifact/ShareArtifactDialog';
-import { useSetArtifactPinned, useUnpublishArtifact } from '@/hooks/useArtifactMutations';
+import { useToggleArtifactPin, useUnpublishArtifact } from '@/hooks/useArtifactMutations';
 import type { Artifact } from '@/types/api/index';
 import { artifactHref } from '@/utils/artifactUrl';
 import { dispatchMenuAction } from '@/utils/dispatchMenuAction';
@@ -26,7 +26,7 @@ interface ArtifactCardProps {
 }
 
 const ArtifactCard: React.FC<ArtifactCardProps> = ({ artifact, onOpen }) => {
-  const setArtifactPinned = useSetArtifactPinned();
+  const toggleArtifactPin = useToggleArtifactPin();
   const unpublishArtifact = useUnpublishArtifact();
   const [isShareOpen, setIsShareOpen] = useState(false);
   const isPinned = artifact.pinnedAt !== null;
@@ -63,7 +63,7 @@ const ArtifactCard: React.FC<ArtifactCardProps> = ({ artifact, onOpen }) => {
 
   function handleMenuClick(key: string) {
     dispatchMenuAction(key, {
-      pin: () => setArtifactPinned.mutate({ id: artifact.id, pinned: !isPinned }),
+      pin: () => toggleArtifactPin.mutate(artifact.id),
       copyLink: () => navigator.clipboard.writeText(artifactHref(artifact.id)),
       share: () => setIsShareOpen(true),
       unpublish: () => unpublishArtifact.mutate(artifact.id),
@@ -106,7 +106,7 @@ const ArtifactCard: React.FC<ArtifactCardProps> = ({ artifact, onOpen }) => {
           aria-label={isPinned ? `Unpin ${artifact.title}` : `Pin ${artifact.title}`}
           aria-pressed={isPinned}
           disabled={!artifact.canPin}
-          onClick={() => setArtifactPinned.mutate({ id: artifact.id, pinned: !isPinned })}
+          onClick={() => toggleArtifactPin.mutate(artifact.id)}
         >
           {isPinned ? <PushpinFilled aria-hidden /> : <PushpinOutlined aria-hidden />}
         </button>

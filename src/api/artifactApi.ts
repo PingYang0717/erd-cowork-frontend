@@ -22,15 +22,11 @@ export const getArtifactRawHtml = (artifactId: string, signal?: AbortSignal) =>
     signal,
   });
 
-/** The two directions of pinning, split by method on one path — the same shape as
- *  publish below.
- *
- *  Not one toggling endpoint: with the direction left to the backend there was no way to
- *  say "unpin", and an Artifact could be pinned but never released. The client knows
- *  which way it wants to go, so it says so. */
-export const pinArtifact = (id: string) => apiClient.post<Artifact>(`/artifacts/${id}/pin`);
-
-export const unpinArtifact = (id: string) => apiClient.delete<Artifact>(`/artifacts/${id}/pin`);
+/** Toggles the pin. One endpoint and no body: the backend decides the direction, and the
+ *  Artifact it answers with carries the `pinnedAt` that resulted — which is what the
+ *  button reads its new state from. Asserting a direction from state the client read a
+ *  while ago would be guessing at what the server already knows. */
+export const toggleArtifactPin = (id: string) => apiClient.post<Artifact>(`/artifacts/${id}/pin`);
 
 /** Publishing is what makes an Artifact available to other people — and what sharing
  *  rests on. The two directions are split by method rather than a body flag, and the
