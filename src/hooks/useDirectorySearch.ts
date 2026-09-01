@@ -23,5 +23,10 @@ export function useDirectorySearch(key: string) {
     staleTime: 5 * 60 * 1000,
   });
 
-  return { entries: data ?? [], isSearching: enabled && isFetching, enabled };
+  // Narrowed rather than trusted. A response that is not a list — an envelope, an error
+  // body rendered as JSON — would otherwise reach a `for…of` and throw "entries is not
+  // iterable" from inside the picker, which is exactly what happened.
+  const entries = Array.isArray(data) ? data : [];
+
+  return { entries, isSearching: enabled && isFetching, enabled };
 }
