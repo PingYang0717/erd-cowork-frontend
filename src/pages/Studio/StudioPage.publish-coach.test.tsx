@@ -6,7 +6,7 @@ import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
 import { useStudioLayoutStore } from '@/stores/useStudioLayoutStore';
 import { useThemeStore } from '@/stores/useThemeStore';
 import { renderStudio, waitForComposer } from '@/test/renderStudio';
-import { answerAnalysisConditions } from '@/test/studioRun';
+import { answerAnalysisConditions, publishArtifactAs } from '@/test/studioRun';
 
 function artifactsNav() {
   // Name starts with the label ("Artifacts" + badge count); the toast's
@@ -38,15 +38,11 @@ describe('Publish feedback: badge count, coach highlight, toast', () => {
     await answerAnalysisConditions(user);
 
     // The new artifact arrives unpublished once the steps animation finishes.
-    const publishButton = await screen.findByRole(
-      'button',
-      { name: '發布 Artifact' },
-      { timeout: 5000 },
-    );
+    await screen.findByRole('button', { name: '發布 Artifact' }, { timeout: 5000 });
     expect(within(await artifactsNav()).getByText('3')).toBeInTheDocument();
     expect(await artifactsNav()).not.toHaveAttribute('data-coach');
 
-    await user.click(publishButton);
+    await publishArtifactAs(user);
 
     // Badge +1, coach highlight on, toast with both actions.
     expect(await within(await artifactsNav()).findByText('4')).toBeInTheDocument();
@@ -71,9 +67,8 @@ describe('Publish feedback: badge count, coach highlight, toast', () => {
     await waitForComposer();
     await user.click(screen.getByRole('button', { name: 'SPC analysis' }));
     await answerAnalysisConditions(user);
-    await user.click(
-      await screen.findByRole('button', { name: '發布 Artifact' }, { timeout: 5000 }),
-    );
+    await screen.findByRole('button', { name: '發布 Artifact' }, { timeout: 5000 });
+    await publishArtifactAs(user);
     expect(await artifactsNav()).toHaveAttribute('data-coach', 'true');
 
     // The rail entry, not the toast's shortcut.
@@ -91,9 +86,8 @@ describe('Publish feedback: badge count, coach highlight, toast', () => {
     await waitForComposer();
     await user.click(screen.getByRole('button', { name: 'SPC analysis' }));
     await answerAnalysisConditions(user);
-    await user.click(
-      await screen.findByRole('button', { name: '發布 Artifact' }, { timeout: 5000 }),
-    );
+    await screen.findByRole('button', { name: '發布 Artifact' }, { timeout: 5000 });
+    await publishArtifactAs(user);
 
     const toast = await screen.findByRole('status', { name: 'Artifact 已發布' });
     await user.click(within(toast).getByRole('button', { name: '知道了' }));
@@ -105,7 +99,8 @@ describe('Publish feedback: badge count, coach highlight, toast', () => {
       await screen.findByRole('textbox', { name: 'Message' }),
       'Regenerate the dashboard.{Enter}',
     );
-    await user.click(await screen.findByRole('button', { name: '發布 Artifact' }));
+    await screen.findByRole('button', { name: '發布 Artifact' });
+    await publishArtifactAs(user);
     const toast2 = await screen.findByRole('status', { name: 'Artifact 已發布' });
     await user.click(within(toast2).getByRole('button', { name: '前往 Artifacts' }));
 

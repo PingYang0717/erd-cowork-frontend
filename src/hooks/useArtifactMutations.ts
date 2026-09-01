@@ -86,7 +86,7 @@ export function usePublishArtifact() {
   const toastError = useActionErrorToast();
 
   return useMutation({
-    mutationFn: (id: string) => publishArtifact(id),
+    mutationFn: ({ id, title }: { id: string; title: string }) => publishArtifact(id, title),
     onSuccess: () => {
       // Only the list: publishedAt is metadata. The rendered HTML does not change on
       // publish, and its key lives in its own namespace now (artifactContentQueryKey).
