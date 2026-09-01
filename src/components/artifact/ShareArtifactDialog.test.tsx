@@ -60,16 +60,16 @@ describe('Sharing an Artifact: picking recipients', () => {
     expect(await screen.findByText(/鄭凱宇/, {}, { timeout: 3000 })).toBeInTheDocument();
   });
 
-  /** That the dialog sends recipients in the shape the endpoint wants — kind and id,
-   *  not the row it was picked from. Which kind and which id is the mapping's business
-   *  and is pinned per case in `directoryEntry.test.ts`; this is the wiring. */
-  it('sends the recipient as its kind and id, not as the row it was picked from', async () => {
+  /** The change travels as a delta of what to add and what to remove, each recipient
+   *  named by kind and id rather than by the row it was picked from. Which kind and which
+   *  id is the mapping's business, pinned per case in `directoryEntry.test.ts`. */
+  it('sends the change as add/remove, each recipient as its kind and id', async () => {
     const user = userEvent.setup();
     let body: unknown;
     server.use(
-      http.post('/api/artifacts/:id/share', async ({ request }) => {
+      http.patch('/api/artifacts/:id/share', async ({ request }) => {
         body = await request.json();
-        return HttpResponse.json({ url: 'https://example.test/a', artifact });
+        return HttpResponse.json([]);
       }),
     );
     renderDialog();
@@ -78,13 +78,49 @@ describe('Sharing an Artifact: picking recipients', () => {
     await user.click(field);
     await user.type(field, 'CHXXGHYC');
     await user.click(await screen.findByTitle(/鄭凱宇/, {}, { timeout: 3000 }));
-    // The picker reports the choice by enabling submit; without that the click landed on
-    // a text node rather than on the option.
+    // Submit only opens once something has actually been chosen; without this the click
+    // below would land on a disabled button and the test would pass on nothing.
     await waitFor(() => expect(screen.getByRole('button', { name: '分享' })).toBeEnabled());
 
     await user.click(screen.getByRole('button', { name: '分享' }));
 
-    await waitFor(() => expect(body).toEqual({ targets: [{ type: 'EMPLOYEE', id: 'CHXXGHYC' }] }));
+    await waitFor(() =>
+      expect(body).toEqual({ add: [{ type: 'EMPLOYEE', id: 'CHXXGHYC' }], remove: [] }),
+    );
+  });
+
+  /** Sharing is an edit to a list that already exists, so the dialog opens on it — and
+   *  taking someone off travels as `remove`, not as a shorter `add`. */
+  it('opens on the current recipients, and removing one sends it under remove', async () => {
+    const user = userEvent.setup();
+    let body: unknown;
+    server.use(
+      http.get('/api/artifacts/:id/share', () =>
+        HttpResponse.json([{ type: 'SECTION', id: 'INTD-1', name: '整合技術一課' }]),
+      ),
+      http.patch('/api/artifacts/:id/share', async ({ request }) => {
+        body = await request.json();
+        return HttpResponse.json([]);
+      }),
+    );
+    renderDialog();
+
+    // Already there when the dialog opens — nothing was typed to find it.
+    const chip = await screen.findByTitle('INTD-1 | 整合技術一課');
+    expect(chip).toBeInTheDocument();
+
+    // antd's own remove affordance on the tag; there is no accessible name on it to
+    // query by, so the class is the only handle.
+    const remove = chip
+      .closest('.ant-select-selection-item')
+      ?.querySelector('.ant-select-selection-item-remove');
+    await user.click(remove as HTMLElement);
+    await waitFor(() => expect(screen.getByRole('button', { name: '分享' })).toBeEnabled());
+    await user.click(screen.getByRole('button', { name: '分享' }));
+
+    await waitFor(() =>
+      expect(body).toEqual({ add: [], remove: [{ type: 'SECTION', id: 'INTD-1' }] }),
+    );
   });
 
   /** The picker walks the response with `for…of`. A body that is not a list — an

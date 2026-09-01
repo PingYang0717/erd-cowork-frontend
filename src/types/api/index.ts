@@ -13,7 +13,13 @@ export type {
 export type { Artifact, ArtifactVersion } from './artifact';
 export type { Connector, ConnectorStatus } from './connector';
 export type { DcItem } from './dcItem';
-export type { DirectoryEntry, DirectoryEntryType, ShareTarget } from './directory';
+export type {
+  ArtifactShare,
+  ArtifactShareUpdate,
+  DirectoryEntry,
+  DirectoryEntryType,
+  ShareTarget,
+} from './directory';
 export type { Message } from './message';
 export type { Scenario, ScenarioKey } from './scenario';
 export type { ScheduleJob, ScheduleJobStatus } from './scheduleJob';

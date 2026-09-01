@@ -21,8 +21,24 @@ export interface DirectoryEntry {
   orgLevel?: string;
 }
 
-/** A recipient as the share endpoint wants it. */
+/** A recipient as the share endpoint names one: an `EMPLOYEE` with an NT account, or an
+ *  org level (department, section, …) with an org id. */
 export interface ShareTarget {
   type: string;
   id: string;
+}
+
+/** A recipient an Artifact is already shared with, as `GET /artifacts/{id}/share`
+ *  returns it. `name` is whatever the backend has to show for it — without one the id is
+ *  all the dialog can display, which is why reading it must not depend on it. */
+export interface ArtifactShare extends ShareTarget {
+  name?: string;
+}
+
+/** The change to an Artifact's share list. A delta rather than the whole list: two people
+ *  editing the same Artifact then add and remove their own recipients instead of the
+ *  second one silently reverting the first. */
+export interface ArtifactShareUpdate {
+  add: ShareTarget[];
+  remove: ShareTarget[];
 }

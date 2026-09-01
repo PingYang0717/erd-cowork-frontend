@@ -1,6 +1,7 @@
 import { http, HttpResponse } from 'msw';
 
 import type { Artifact } from '@/types/api/artifact';
+import type { ShareTarget } from '@/types/api/directory';
 import type { ScenarioKey } from '@/types/api/scenario';
 
 import { type ArtifactKind, buildArtifactFixture } from './artifactFixtures';
@@ -33,6 +34,25 @@ export interface StoredArtifact {
   publishedAt: string | null;
   /** Shared out by its owner. Whether it was shared *to* you is `!isOwn`. */
   isShared: boolean;
+}
+
+interface StoredShare {
+  artifactId: string;
+  type: string;
+  id: string;
+}
+
+/** Who each Artifact is shared with. Separate from the Artifact records because the list
+ *  is read on its own endpoint, not nested in the DTO. */
+const shares = createPersistedResource<StoredShare>('erd-cowork:artifact-shares:v1', []);
+
+const targetKey = (target: { type: string; id: string }) => `${target.type}:${target.id}`;
+
+function sharesOf(artifactId: string) {
+  return shares
+    .read()
+    .filter((share) => share.artifactId === artifactId)
+    .map(({ type, id }) => ({ type, id }));
 }
 
 export const artifacts = createPersistedResource<StoredArtifact>('erd-cowork:artifacts:v6', [
@@ -194,12 +214,41 @@ export const artifactHandlers = [
   // exercise that path by stubbing this endpoint.
   // Share has no backend this round: the mock answers the agreed error shape so the
   // UI exercises the same path the real backend produces.
-  http.post('/api/artifacts/:id/share', () =>
-    HttpResponse.json(
-      { code: 'NOT_IMPLEMENTED', message: '分享功能後端尚未就緒' },
-      { status: 501 },
-    ),
+  // Reading is what the dialog opens on; the change is a delta, so two people editing
+  // the same Artifact add and remove their own recipients instead of the second one
+  // silently reverting the first.
+  http.get('/api/artifacts/:id/share', ({ params }) =>
+    HttpResponse.json(sharesOf(params.id as string)),
   ),
+
+  http.patch('/api/artifacts/:id/share', async ({ params, request }) => {
+    const artifactId = params.id as string;
+    const { add = [], remove = [] } = (await request.json()) as {
+      add?: ShareTarget[];
+      remove?: ShareTarget[];
+    };
+    const removed = new Set(remove.map(targetKey));
+    const kept = shares
+      .read()
+      .filter((share) => share.artifactId !== artifactId || !removed.has(targetKey(share)));
+    const existing = new Set(
+      kept.filter((share) => share.artifactId === artifactId).map(targetKey),
+    );
+    shares.write([
+      ...kept,
+      ...add
+        .filter((target) => !existing.has(targetKey(target)))
+        .map((target) => ({ artifactId, type: target.type, id: target.id })),
+    ]);
+
+    // `isShared` is the owner's view of whether anyone holds it, so it follows the list.
+    const all = artifacts.read();
+    const isShared = sharesOf(artifactId).length > 0;
+    artifacts.write(
+      all.map((artifact) => (artifact.id === artifactId ? { ...artifact, isShared } : artifact)),
+    );
+    return HttpResponse.json(sharesOf(artifactId));
+  }),
 
   http.post('/api/artifacts/:id/repair', ({ params }) => {
     const artifact = artifacts.read().find((a) => a.id === params.id);
