@@ -62,6 +62,27 @@ response unwrap 不在範圍內。原本的寫法讓 16 個呼叫點各自重複
 
 - internal 接入只需寫一份 `internal.impl.ts`,兩份前端通用;上游演進時,比對的是上面
   列出的那幾項語意,而不是整支檔案的字面。
-- 本專案其餘 api 模組維持物件風格(`artifactApi.getContent`),與 cowork 的具名函式
-  風格並存。對齊範圍只含上列三支檔案,不擴。
+- ~~本專案其餘 api 模組維持物件風格(`artifactApi.getContent`),與 cowork 的具名函式
+  風格並存。對齊範圍只含上列三支檔案,不擴。~~
+
+  **2026-08-31 推翻。** 其餘模組也改成具名函式,`src/api/` 從此只有一種形式。這不是
+  擴大對齊範圍,而是讓對齊**不再需要是例外**:三支檔案本來就是具名函式,當全部都是
+  具名函式時,cowork 那一側的形式自動成立,不必再寫一條規則說明它們為何不同。
+
+  改用具名函式的判斷依據是實測而非偏好:
+  - 物件風格常見的理由是測試可以 `vi.spyOn(artifactApi, 'publish')`——本專案**一次都
+    沒這樣做**,測試一律走 MSW 在網路層攔截(ADR-0006),所以物件沒帶來測試上的便利。
+  - tree-shaking 也不成立:八個方法用到八個,沒有東西可以搖掉。
+  - 反而 `artifactApi.togglePin` 與 `sessionApi.togglePin` 是同名的,拆開成
+    `toggleArtifactPin` / `toggleSessionPin` 之後名字才明確。
+
+  六個方法因此加上名詞(`publish` → `publishArtifact`、`getContent` →
+  `getArtifactContent` 等),其餘原名不變。API 層只被 hooks 使用(7 個檔案、13 個呼叫
+  點),改動範圍侷限在 `src/api/` 與 `src/hooks/` 之間。
+
+- **`connectorApi` 的 73 行假目錄搬到 `src/mocks/handlers.connectors.ts`**(同上日期)。
+  它原本 135 行裡有 73 行是 fixture、24 行是 localStorage 存取,**一行 HTTP 都沒有**
+  ——一個假後端住在 runtime 層,違反 ADR-0006。現在它打真的 `GET /connectors`(mock 先
+  行),剩 60 行。使用者自行新增的 custom source 仍留在 localStorage:把資料源加進
+  **目錄**與把它附掛到**對話**是兩件事,只有後者有端點。
 - 測試環境需要兩道 shim 才能跑,見 [ADR-0009](0009-two-test-environment-shims.md)。

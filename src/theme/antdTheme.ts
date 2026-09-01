@@ -1,5 +1,4 @@
-import type { ThemeConfig } from 'antd';
-import { theme } from 'antd';
+import { theme, type ThemeConfig } from 'antd';
 
 import { THEME_TOKENS } from './tokens';
 
@@ -28,11 +27,17 @@ export const FONT_FAMILY =
  *  by default); on a dialog or a menu that reads as lag, not as motion — the user is
  *  already looking at where the panel will appear. Applied per component rather than via
  *  the global `motion: false` seed, which would also flatten button waves, collapse and
- *  toasts — those animate things the eye is not yet fixed on, and there the motion helps. */
+ *  toasts — those animate things the eye is not yet fixed on, and there the motion helps.
+ *
+ *  Not `0s`: a zero-duration CSS transition fires no `transitionend`, and rc-motion (what
+ *  antd removes an overlay with) waits for that event before unmounting. A Modal closed
+ *  under `0s` faded its mask to nothing and then left it in the DOM — invisible, still
+ *  swallowing clicks and holding the focus lock, so the page looked fine but would not
+ *  take a keystroke. 10ms is imperceptible and still fires the event. */
 const INSTANT = {
-  motionDurationFast: '0s',
-  motionDurationMid: '0s',
-  motionDurationSlow: '0s',
+  motionDurationFast: '0.01s',
+  motionDurationMid: '0.01s',
+  motionDurationSlow: '0.01s',
 } as const;
 
 /** Maps the product's palette onto antd's token names.

@@ -1,11 +1,12 @@
 import { CheckOutlined, CopyOutlined, FundOutlined, LinkOutlined } from '@ant-design/icons';
 import { Button, Input, Modal, Select } from 'antd';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 
-import DataBoundary from '@/components/common/DataBoundary';
+import { DIRECTORY_SEARCH_MIN_LENGTH } from '@/api/directoryApi';
 import { useShareArtifact } from '@/hooks/useArtifactMutations';
-import { useDirectory } from '@/hooks/useDirectory';
-import type { Artifact } from '@/types/api/index';
+import { useDebouncedValue } from '@/hooks/useDebouncedValue';
+import { useDirectorySearch } from '@/hooks/useDirectorySearch';
+import type { Artifact, DirectoryEntry } from '@/types/api/index';
 
 import styles from './ShareArtifactDialog.module.css';
 
@@ -75,14 +76,7 @@ const ShareArtifactDialog: React.FC<ShareArtifactDialogProps> = ({ open, onClose
 
       <div className={styles.section}>
         <div className={styles.sectionLabel}>分享對象</div>
-        {/* The recipient directory is a suspense query. It sits behind its own boundary
-            here, not at the top of the dialog: this is an antd Modal, and a suspend at
-            the top would propagate up the React tree to the Artifact pane's boundary and
-            blank the whole pane. Contained here, only the picker shows a loader. With
-            `destroyOnHidden`, the query does not even run until the dialog opens. */}
-        <DataBoundary label="收件者名單">
-          <RecipientSelect value={targetIds} onChange={setTargetIds} />
-        </DataBoundary>
+        <RecipientSelect value={targetIds} onChange={setTargetIds} />
         <div className={styles.hint}>
           可混選部門(A10INTD1-1)、課別(INTD-1)與人員(CHXXGHYC · 鄭凱宇)
         </div>
@@ -133,18 +127,53 @@ interface RecipientSelectProps {
   onChange: (ids: string[]) => void;
 }
 
+/** The directory is the whole organisation, so this searches the backend rather than
+ *  filtering a list it holds. Two consequences shape the field: nothing is offered until
+ *  the key is long enough to narrow anything (`filterOption={false}` hands matching to
+ *  the backend), and what the user picked has to survive the options list changing under
+ *  it — so chosen entries are remembered here and merged back into the options. */
 const RecipientSelect: React.FC<RecipientSelectProps> = ({ value, onChange }) => {
-  const { data: directory } = useDirectory();
+  const [key, setKey] = useState('');
+  const debouncedKey = useDebouncedValue(key);
+  const { entries, isSearching, enabled } = useDirectorySearch(debouncedKey);
+  const [picked, setPicked] = useState<DirectoryEntry[]>([]);
+
+  const options = useMemo(() => {
+    const byId = new Map(picked.map((entry) => [entry.id, entry]));
+    for (const entry of entries) {
+      byId.set(entry.id, entry);
+    }
+    return [...byId.values()].map((entry) => ({ value: entry.id, label: entry.label }));
+  }, [entries, picked]);
+
+  function handleChange(ids: string[]) {
+    // Keep the labels of everything still selected; a later search must not turn a
+    // chosen recipient back into a bare id.
+    const known = new Map([...picked, ...entries].map((entry) => [entry.id, entry]));
+    setPicked(ids.map((id) => known.get(id)).filter((entry): entry is DirectoryEntry => !!entry));
+    onChange(ids);
+  }
+
   return (
     <Select
       mode="multiple"
       virtual={false}
       showSearch
-      optionFilterProp="label"
+      filterOption={false}
+      searchValue={key}
+      onSearch={setKey}
+      loading={isSearching}
       value={value}
-      onChange={onChange}
-      options={directory.map((entry) => ({ value: entry.id, label: entry.label }))}
-      placeholder="搜尋部門碼 / 課別碼 或 NT account · 中文名,可多選…"
+      onChange={handleChange}
+      options={options}
+      notFoundContent={
+        isSearching
+          ? '搜尋中…'
+          : enabled
+            ? '找不到符合的對象'
+            : `請至少輸入 ${DIRECTORY_SEARCH_MIN_LENGTH} 個字元`
+      }
+      placeholder={`輸入 ${DIRECTORY_SEARCH_MIN_LENGTH} 個字元以上搜尋部門碼 / 課別碼 或 NT account · 中文名`}
       style={{ width: '100%' }}
     />
   );

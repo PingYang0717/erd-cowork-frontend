@@ -1,11 +1,11 @@
 import { DatabaseOutlined, ThunderboltFilled } from '@ant-design/icons';
-import type { ReactNode } from 'react';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 
 import DataBoundary from '@/components/common/DataBoundary';
 import ThemeToggle from '@/components/common/ThemeToggle';
 import { type SendInput, useAgentStream } from '@/hooks/useAgentStream';
 import { useArtifactRepair } from '@/hooks/useArtifactRepair';
+import { useApplyRememberedDataSources } from '@/hooks/useConnectorMutations';
 import { useSessionDetail } from '@/hooks/useSessionDetail';
 import { useActiveRunStore } from '@/stores/useActiveRunStore';
 import { useRepairOfferStore } from '@/stores/useRepairOfferStore';
@@ -113,6 +113,7 @@ const ThreadView: React.FC<ThreadViewProps> = ({ sessionId }) => {
   const dismissRepair = useRepairOfferStore((store) => store.dismiss);
   const resetRepair = useRepairOfferStore((store) => store.reset);
   const repair = useArtifactRepair();
+  const applyRememberedDataSources = useApplyRememberedDataSources(sessionId);
 
   // An offer belongs to one artifact in one session. Moving away from that session
   // leaves it pointing at something the user is no longer looking at.
@@ -149,9 +150,20 @@ const ThreadView: React.FC<ThreadViewProps> = ({ sessionId }) => {
       // the end), so it does not defeat ChatComposer's memo mid-stream — handleSend's
       // identity changes once per completed turn, outside the token loop.
       setPending({ text: input.question, atLength: messages.length });
+      // Before the message, not after: this is the moment the session comes into being
+      // (ADR-0005), and the run this message starts should already have the capabilities
+      // the user habitually grants.
+      await applyRememberedDataSources(detail.dataSourceIds ?? []);
       await send({ baseArtifactId: displayedArtifactId ?? undefined, ...input });
     },
-    [send, displayedArtifactId, isStreaming, messages.length],
+    [
+      send,
+      displayedArtifactId,
+      isStreaming,
+      messages.length,
+      applyRememberedDataSources,
+      detail.dataSourceIds,
+    ],
   );
 
   // The backend body is question-only, so a reask's answers travel as one prose

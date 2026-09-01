@@ -1,7 +1,7 @@
 import { CodeOutlined, DownOutlined, UpOutlined } from '@ant-design/icons';
 import React, { useEffect, useRef, useState } from 'react';
 
-import { artifactApi } from '@/api/artifactApi';
+import { getArtifactRawHtml } from '@/api/artifactApi';
 
 import styles from './HtmlCodePanel.module.css';
 
@@ -46,8 +46,7 @@ const HtmlCodePanel: React.FC<HtmlCodePanelProps> = ({ code, artifactId, autoScr
       return undefined;
     }
     const controller = new AbortController();
-    artifactApi
-      .getRawHtml(artifactId, controller.signal)
+    getArtifactRawHtml(artifactId, controller.signal)
       .then((html) => setOutcome({ artifactId, result: { status: 'ok', code: html } }))
       .catch((error: unknown) => {
         // The abort is ours (collapse, unmount, version switch) — not a failure to report.

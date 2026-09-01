@@ -10,8 +10,9 @@ import type { ArtifactKind } from './artifactFixtures';
 import { currentUser } from './currentUser';
 import { DC_ITEM_FIXTURES, ROWS_PER_DC_ITEM } from './dcItemFixtures';
 import { artifacts, type StoredArtifact } from './handlers.artifacts';
+import { CATALOGUE } from './handlers.connectors';
 import { sessionFiles, toFileDto } from './handlers.files';
-import { upsertSession } from './handlers.sessions';
+import { sessionDataSources, upsertSession } from './handlers.sessions';
 import { createPersistedResource } from './persistedResource';
 import { dcItemQuestion, flattenQuestionForm, openingQuestion } from './questionFixtures';
 import { matchScenario, SCENARIO_FIXTURES, SLIDES_STEP } from './scenarioFixtures';
@@ -52,78 +53,24 @@ export const messages = createPersistedResource<StoredMessage>('erd-cowork:messa
 // the mock needs both to decide which fixture HTML to build — while `isOwn`,
 // `ownerDisplay`, `sessionTitle` and the permission flags are things a backend
 // derives per request rather than stores. `toArtifactDto` does that deriving.
-const connectors = createPersistedResource<Connector>('erd-cowork:connectors', [
-  {
-    id: 'inline',
-    name: 'Inline',
-    description: 'In-line metrology & process parametric',
-    category: 'Process',
-    status: 'connected',
-  },
-  {
-    id: 'wat',
-    name: 'WAT',
-    description: 'Wafer Acceptance Test (e-test parametric)',
-    category: 'Test',
-    status: 'connected',
-  },
-  {
-    id: 'cp',
-    name: 'CP',
-    description: 'Circuit Probe / wafer sort bin & yield',
-    category: 'Test',
-    status: 'connected',
-  },
-  {
-    id: 'lot',
-    name: 'Lot Info',
-    description: 'Lot genealogy, route & hold',
-    category: 'Lot',
-    status: 'available',
-  },
-  {
-    id: 'lotabn',
-    name: 'Lot Abnormal',
-    description: 'Qtime OOS, running hold, inline OOS, etc.',
-    category: 'Lot',
-    status: 'available',
-  },
-  {
-    id: 'process',
-    name: 'Process',
-    description: 'EXP Result, Qtime',
-    category: 'Process',
-    status: 'available',
-  },
-  {
-    id: 'defect',
-    name: 'Defect',
-    description: 'Defect inspection & wafer map',
-    category: 'Defect',
-    status: 'available',
-  },
-  {
-    id: 'tem',
-    name: 'TEM',
-    description: 'Cross-section TEM images & analysis',
-    category: 'Physical',
-    status: 'available',
-  },
-  {
-    id: 'recipe',
-    name: 'Recipe',
-    description: 'Process recipe params & splits',
-    category: 'Equipment',
-    status: 'expired',
-  },
-  {
-    id: 'tool',
-    name: 'Offline Tool Log',
-    description: 'Tool events, chamber & maintenance',
-    category: 'Equipment',
-    status: 'no_access',
-  },
-]);
+/** The data sources this session is actually drawing on, as the opening question's
+ *  "Data type" options. Read at request time from the session's attachments — the panel
+ *  writes them through PATCH /sessions/{id}/data-source — rather than from a fixture of
+ *  its own, which is how the two used to disagree: a source connected in the panel never
+ *  appeared in the question, and the test that "covered" this asserted the absent one
+ *  was absent. */
+function attachedConnectors(sessionId: string): Connector[] {
+  const attached = new Set(
+    sessionDataSources
+      .read()
+      .filter((link) => link.sessionId === sessionId)
+      .map((link) => link.connectorId),
+  );
+  return CATALOGUE.filter((connector) => attached.has(connector.id)).map((connector) => ({
+    ...connector,
+    status: 'connected' as const,
+  }));
+}
 
 // Session-level files per the backend contract (POST /sessions/{id}/files).
 
@@ -354,7 +301,7 @@ export const messageHandlers = [
     // iteration whose scenario was inherited (a regenerate, a "make it tighter")
     // already has its conditions from the base run, so it runs straight away.
     const inherited = matchScenario(question) === null && baseArtifact !== undefined;
-    const form = inherited ? null : openingQuestion(scenarioKey, connectors.read());
+    const form = inherited ? null : openingQuestion(scenarioKey, attachedConnectors(sessionId));
     if (form) {
       pendingRuns.set(sessionId, { scenarioKey, artifactKind, form, stage: 'conditions' });
       return sseResponse([{ type: 'QUESTION', questions: flattenQuestionForm(form), form }]);

@@ -2,17 +2,22 @@ import {
   CopyOutlined,
   DashboardOutlined,
   DeleteOutlined,
+  EyeInvisibleOutlined,
   MoreOutlined,
   PushpinFilled,
   PushpinOutlined,
   ShareAltOutlined,
   UsergroupAddOutlined,
 } from '@ant-design/icons';
-import { Dropdown } from 'antd';
+import { Dropdown, Modal } from 'antd';
 import React, { useState } from 'react';
 
 import ShareArtifactDialog from '@/components/artifact/ShareArtifactDialog';
-import { useDeleteArtifact, useToggleArtifactPin } from '@/hooks/useArtifactMutations';
+import {
+  useDeleteArtifact,
+  useToggleArtifactPin,
+  useUnpublishArtifact,
+} from '@/hooks/useArtifactMutations';
 import type { Artifact } from '@/types/api/index';
 import { artifactHref } from '@/utils/artifactUrl';
 import { dispatchMenuAction } from '@/utils/dispatchMenuAction';
@@ -28,6 +33,7 @@ interface ArtifactCardProps {
 const ArtifactCard: React.FC<ArtifactCardProps> = ({ artifact, onOpen }) => {
   const toggleArtifactPin = useToggleArtifactPin();
   const deleteArtifact = useDeleteArtifact();
+  const unpublishArtifact = useUnpublishArtifact();
   const [isShareOpen, setIsShareOpen] = useState(false);
   const isPinned = artifact.pinnedAt !== null;
   // Shared *to me*: someone else owns it. `isShared` is the opposite direction —
@@ -52,6 +58,13 @@ const ArtifactCard: React.FC<ArtifactCardProps> = ({ artifact, onOpen }) => {
           icon: <ShareAltOutlined aria-hidden />,
         }
       : null,
+    artifact.isOwn
+      ? {
+          key: 'unpublish',
+          label: 'Unpublish',
+          icon: <EyeInvisibleOutlined aria-hidden />,
+        }
+      : null,
     { type: 'divider' as const },
     {
       key: 'delete',
@@ -61,11 +74,30 @@ const ArtifactCard: React.FC<ArtifactCardProps> = ({ artifact, onOpen }) => {
     },
   ].filter((item): item is NonNullable<typeof item> => item !== null);
 
+  // Unpublishing revokes access for everyone the Artifact was shared with — publication
+  // is what sharing rests on. An Artifact nobody has been given goes quietly; one that
+  // is out there does not.
+  function confirmUnpublish() {
+    if (!artifact.isShared) {
+      unpublishArtifact.mutate(artifact.id);
+      return;
+    }
+    Modal.confirm({
+      title: '取消發布這個 Artifact?',
+      content: `「${artifact.title}」已分享出去。取消發布會一併收回所有收件者的存取權,他們的連結將立即失效。`,
+      okText: '取消發布',
+      okButtonProps: { danger: true },
+      cancelText: '保留',
+      onOk: () => unpublishArtifact.mutate(artifact.id),
+    });
+  }
+
   function handleMenuClick(key: string) {
     dispatchMenuAction(key, {
       pin: () => toggleArtifactPin.mutate(artifact.id),
       copyLink: () => navigator.clipboard.writeText(artifactHref(artifact.id)),
       share: () => setIsShareOpen(true),
+      unpublish: confirmUnpublish,
       delete: () => deleteArtifact.mutate(artifact.id),
     });
   }

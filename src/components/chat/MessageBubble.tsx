@@ -1,26 +1,18 @@
-import {
-  AppstoreOutlined,
-  CheckCircleFilled,
-  ClockCircleOutlined,
-  CloseCircleFilled,
-  DownOutlined,
-  LoadingOutlined,
-  ThunderboltFilled,
-  ToolOutlined,
-  UpOutlined,
-} from '@ant-design/icons';
-import React, { useDeferredValue, useEffect, useMemo, useState } from 'react';
+import { AppstoreOutlined, ThunderboltFilled, ToolOutlined } from '@ant-design/icons';
+import React, { useDeferredValue, useMemo } from 'react';
 
 import AttachmentChip from '@/components/files/AttachmentChip';
 import { INTERRUPTED_TEXTS, REPAIR_RECORD_PREFIXES } from '@/constants/messages';
 import type { AgentStreamState } from '@/hooks/useAgentStream';
-import type { QuestionForm, StepItem, StepStatus, UploadedFileInfo } from '@/types/api/index';
-import { formatDuration } from '@/utils/formatDuration';
+import type { QuestionForm, StepItem, UploadedFileInfo } from '@/types/api/index';
 import { splitAnswerByTableMarkers } from '@/utils/tableMarkers';
 
+import CollapsiblePanel from './CollapsiblePanel';
+import { Elapsed, LiveElapsed } from './Elapsed';
 import HtmlCodePanel from './HtmlCodePanel';
 import styles from './MessageBubble.module.css';
 import QuestionFormCard, { type Answers } from './QuestionFormCard';
+import { StepRow, StepsRecap } from './StepList';
 
 /** The slice of a run's state this bubble renders. A `Pick` rather than its own shape:
  *  the reducer's state is the single source of truth for what a run carries, so a new
@@ -42,7 +34,6 @@ export type LiveRun = Pick<
 >;
 import ReplyText from './ReplyText';
 import ResultTable from './ResultTable';
-import ThinkingPanel from './ThinkingPanel';
 
 export interface MessageBubbleProps {
   sender: 'USER' | 'AI';
@@ -78,102 +69,6 @@ export interface MessageBubbleProps {
 // Steps used to be revealed by a client-side timer, so a step could only ever be
 // pending, running or done. The backend now reports the status itself, which means a
 // step can also fail — hence the fourth state (ADR-0003).
-const STEP_STATUS_LABEL: Record<StepStatus, string> = {
-  PENDING: 'Pending',
-  RUNNING: 'Running',
-  SUCCESS: 'Done',
-  ERROR: 'Failed',
-};
-
-interface StepStatusIconProps {
-  status: StepStatus;
-}
-
-const StepStatusIcon: React.FC<StepStatusIconProps> = ({ status }) => {
-  const label = STEP_STATUS_LABEL[status];
-
-  if (status === 'SUCCESS') {
-    return <CheckCircleFilled aria-label={label} className={styles.stepIconSuccess} />;
-  }
-  if (status === 'RUNNING') {
-    return <LoadingOutlined aria-label={label} spin className={styles.stepIconRunning} />;
-  }
-  if (status === 'ERROR') {
-    return <CloseCircleFilled aria-label={label} className={styles.stepIconError} />;
-  }
-  return <span aria-label={label} role="img" className={styles.stepIconPending} />;
-};
-
-interface StepRowProps {
-  step: StepItem;
-}
-
-const StepRow: React.FC<StepRowProps> = ({ step }) => {
-  return (
-    <div className={styles.workingStep}>
-      <StepStatusIcon status={step.status} />
-      <span className={styles.stepText}>
-        <span className={styles.stepTitle}>{step.title}</span>
-        {step.description !== null && (
-          <span className={styles.stepDescription}>{step.description}</span>
-        )}
-      </span>
-    </div>
-  );
-};
-
-// After a run completes, its steps stay behind as the mockup's collapsed
-// "Worked through N steps" card, expandable to each step's title and description.
-interface StepsRecapProps {
-  steps: StepItem[];
-}
-
-const StepsRecap: React.FC<StepsRecapProps> = ({ steps }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
-  // The mockup leads the row with the run's outcome. A recap is only ever rendered for
-  // a finished run, so the only question left is whether any step failed.
-  const hasFailure = steps.some((step) => step.status === 'ERROR');
-
-  return (
-    <div className={styles.stepsRecap}>
-      <button
-        type="button"
-        className={styles.stepsRecapToggle}
-        aria-expanded={isExpanded}
-        onClick={() => setIsExpanded((v) => !v)}
-      >
-        {/* Decorative, like every other icon on this surface: the toggle's accessible
-            name has to stay exactly its label, and each step's own status is announced
-            by `StepStatusIcon` once expanded. */}
-        {hasFailure ? (
-          <CloseCircleFilled
-            aria-hidden
-            className={`${styles.stepsRecapStatus} ${styles.stepIconError}`}
-          />
-        ) : (
-          <CheckCircleFilled
-            aria-hidden
-            className={`${styles.stepsRecapStatus} ${styles.stepIconSuccess}`}
-          />
-        )}
-        Worked through {steps.length} steps
-        {isExpanded ? (
-          <UpOutlined aria-hidden className={styles.stepsRecapChevron} />
-        ) : (
-          <DownOutlined aria-hidden className={styles.stepsRecapChevron} />
-        )}
-      </button>
-      {isExpanded && (
-        <div className={styles.stepsRecapList}>
-          {steps.map((step) => (
-            <StepRow key={step.stepKey} step={step} />
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
-
 /** Messages the backend persists on its own behalf — an interrupted response, a repair
  *  outcome. They are records, not agent prose, so they never reach the Markdown renderer. */
 function systemRecordKind(text: string): 'interrupted' | 'repair' | null {
@@ -286,7 +181,14 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
         )}
         {!turnInPlay && hasSteps && <StepsRecap steps={steps} />}
 
-        {thinking && <ThinkingPanel thinking={thinking} />}
+        {/* The agent's reasoning as it arrives. Collapsed by default and never
+            persisted: it belongs to this connection, not to the conversation
+            (ADR-0003). */}
+        {thinking && (
+          <CollapsiblePanel label="Thinking">
+            <p className={styles.thinkingBody}>{thinking}</p>
+          </CollapsiblePanel>
+        )}
         {codeText && <HtmlCodePanel code={codeText} autoScroll={streaming} />}
 
         {recordKind === 'interrupted' && (
@@ -391,34 +293,6 @@ function agentLabel(streaming: boolean, stopped: boolean): string {
 
 /** The open turn's timer. The clock is read in the interval rather than during render —
  *  a render has to be able to run twice and say the same thing. */
-interface LiveElapsedProps {
-  startedAt: number;
-}
-
-const LiveElapsed: React.FC<LiveElapsedProps> = ({ startedAt }) => {
-  const [elapsedMs, setElapsedMs] = useState(0);
-
-  useEffect(() => {
-    const intervalId = setInterval(() => setElapsedMs(Date.now() - startedAt), 1000);
-    return () => clearInterval(intervalId);
-  }, [startedAt]);
-
-  return <Elapsed ms={elapsedMs} />;
-};
-
-interface ElapsedProps {
-  ms: number;
-}
-
-const Elapsed: React.FC<ElapsedProps> = ({ ms }) => {
-  return (
-    <p className={styles.elapsed}>
-      <ClockCircleOutlined aria-hidden className={styles.elapsedIcon} />
-      {formatDuration(ms)}
-    </p>
-  );
-};
-
 // Memoised: a streaming run re-renders the whole list on every token, while a settled
 // message above it never changes.
 const MemoisedMessageBubble = React.memo(MessageBubble);

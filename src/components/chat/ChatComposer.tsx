@@ -11,8 +11,7 @@ import {
   PlusOutlined,
 } from '@ant-design/icons';
 import { Dropdown, Input } from 'antd';
-import type { ReactNode } from 'react';
-import React, { useRef, useState } from 'react';
+import React, { type ReactNode, useRef, useState } from 'react';
 
 import ConnectorsPanel from '@/components/connectors/ConnectorsPanel';
 import AttachmentChip from '@/components/files/AttachmentChip';
@@ -88,7 +87,7 @@ const ChatComposer: React.FC<ChatComposerProps> = ({
     addFiles,
     removeFile,
   } = useFileAttachments(sessionId);
-  const { data: connectors } = useConnectors();
+  const connectors = useConnectors(sessionId);
   const { retentionDays } = useAppConfig();
   const connectorsOpen = useConnectorsPanelStore((store) => store.isOpen);
   const openConnectors = useConnectorsPanelStore((store) => store.open);
@@ -250,7 +249,7 @@ const ChatComposer: React.FC<ChatComposerProps> = ({
         onAddFiles={(files) => void addFiles(files)}
         onRemoveFile={(fileId) => void removeFile(fileId)}
       />
-      <ConnectorsPanel open={connectorsOpen} onClose={closeConnectors} />
+      <ConnectorsPanel sessionId={sessionId} open={connectorsOpen} onClose={closeConnectors} />
     </div>
   );
 };
