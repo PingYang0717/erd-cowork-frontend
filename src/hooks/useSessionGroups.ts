@@ -1,6 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 import { DRAFT_SESSION_TITLE } from '@/constants/messages';
 import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
@@ -32,6 +32,7 @@ export function useSessionGroups() {
   const startDraft = useSessionSelectionStore((s) => s.startDraft);
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const location = useLocation();
 
   // A draft is "the selection the server has never heard of". Derived rather than
   // stored, so the entry disappears by itself the moment the first message persists it.
@@ -112,7 +113,11 @@ export function useSessionGroups() {
     pinned,
     recent,
     draftSessionId: draftSession?.id ?? null,
-    selectedSessionId,
+    /** Which row the rail should mark as current — the selection, but only while the
+     *  thread is what the user is looking at. The selection itself survives a trip to the
+     *  Gallery or the Schedule (coming back reopens it); the highlight does not, because
+     *  a marked row on another page claims to be where you are. */
+    selectedSessionId: location.pathname === '/cowork' ? selectedSessionId : null,
     selectAndNavigate,
     createAndNavigate,
   };

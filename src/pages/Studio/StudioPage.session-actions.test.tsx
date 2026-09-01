@@ -118,6 +118,38 @@ describe('Session row actions', () => {
     expect(screen.getByRole('button', { name: 'SPC — Vt (gate CD)' })).toBeInTheDocument();
   });
 
+  /** The rail marks the row you are looking at. Leaving for the Gallery does not change
+   *  which session is selected — coming back reopens it — but while you are away no row
+   *  is the page you are on, and one still marked claims otherwise. */
+  it('drops the row highlight while the user is in the Gallery, and restores it on return', async () => {
+    const user = userEvent.setup();
+    renderStudio();
+
+    await user.click(await screen.findByRole('button', { name: 'Defect pareto — W12' }));
+    await waitForComposer();
+    expect(screen.getByRole('button', { name: 'Defect pareto — W12' })).toHaveAttribute(
+      'aria-current',
+      'true',
+    );
+
+    await user.click(screen.getByRole('button', { name: /^Artifacts/ }));
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Defect pareto — W12' })).not.toHaveAttribute(
+        'aria-current',
+      ),
+    );
+    // The selection itself is untouched: the row is still what reopens.
+    expect(useSessionSelectionStore.getState().selectedSessionId).toBe('session-2');
+
+    await user.click(screen.getByRole('button', { name: 'Defect pareto — W12' }));
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Defect pareto — W12' })).toHaveAttribute(
+        'aria-current',
+        'true',
+      ),
+    );
+  });
+
   it('deletes a session and the row is gone', async () => {
     const user = userEvent.setup();
     renderStudio();
