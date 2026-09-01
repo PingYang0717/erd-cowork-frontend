@@ -85,7 +85,7 @@ const ArtifactsGallery: React.FC = () => {
 
   // The Gallery is a shelf of published work, not an index of everything ever made.
   // An unpublished Artifact lives in its session's thread; publishing is the deliberate
-  // act that puts it here, and unpublishing takes it back out.
+  // act that puts it here, and deleting is what takes it back out.
   const artifacts = useMemo(() => data.filter((artifact) => artifact.publishedAt !== null), [data]);
 
   // Four passes over the list plus a dedupe and a sort — recomputed on every keystroke

@@ -19,7 +19,6 @@ const artifact: Artifact = {
   owner: 'user-1',
   ownerDisplay: 'You',
   canPin: true,
-  canShare: true,
   isOwn: true,
   isShared: false,
   hasPersonalCopy: false,
