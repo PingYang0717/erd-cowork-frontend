@@ -3,14 +3,15 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   pinArtifact,
   publishArtifact,
-  shareArtifact,
   unpinArtifact,
   unpublishArtifact,
+  updateArtifactShares,
 } from '@/api/artifactApi';
-import type { Artifact, ShareTarget } from '@/types/api/index';
+import type { Artifact, ArtifactShareUpdate } from '@/types/api/index';
 
 import { useActionErrorToast } from './useActionErrorToast';
 import { artifactsQueryKey } from './useArtifacts';
+import { artifactSharesQueryKey } from './useArtifactShares';
 
 /** Pins or releases one Artifact. The caller says which direction — a toggle resolved by
  *  the backend left no way to express "unpin", so a pinned Artifact could never be
@@ -53,14 +54,17 @@ export function useUnpublishArtifact() {
   });
 }
 
-export function useShareArtifact() {
+/** Applies a change to an Artifact's share list. */
+export function useUpdateArtifactShares() {
   const queryClient = useQueryClient();
   const toastError = useActionErrorToast();
 
   return useMutation({
-    mutationFn: ({ id, targets }: { id: string; targets: ShareTarget[] }) =>
-      shareArtifact(id, targets),
-    onSuccess: () => {
+    mutationFn: ({ id, update }: { id: string; update: ArtifactShareUpdate }) =>
+      updateArtifactShares(id, update),
+    onSuccess: (_result, { id }) => {
+      queryClient.invalidateQueries({ queryKey: artifactSharesQueryKey(id) });
+      // `isShared` lives on the Artifact, so the list has to hear about it too.
       queryClient.invalidateQueries({ queryKey: artifactsQueryKey });
     },
     onError: toastError,

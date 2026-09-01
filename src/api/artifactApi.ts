@@ -1,11 +1,6 @@
-import type { Artifact, ShareTarget } from '@/types/api/index';
+import type { Artifact, ArtifactShare, ArtifactShareUpdate } from '@/types/api/index';
 
 import { apiClient } from './apiClient';
-
-export interface ArtifactShareResult {
-  url: string;
-  artifact: Artifact;
-}
 
 export const listArtifacts = () => apiClient.get<Artifact[]>('/artifacts');
 
@@ -49,7 +44,14 @@ export const publishArtifact = (id: string) => apiClient.post<Artifact>(`/artifa
  *  which goes on living in the conversation that produced it. */
 export const unpublishArtifact = (id: string) => apiClient.delete<void>(`/artifacts/${id}/publish`);
 
-/** Shares with a list of recipients, each named by kind and id: `EMPLOYEE` with an NT
- *  account, or an org level (department, section, …) with an org id. */
-export const shareArtifact = (id: string, targets: ShareTarget[]) =>
-  apiClient.post<ArtifactShareResult>(`/artifacts/${id}/share`, { targets });
+/** Who this Artifact is already shared with. The dialog opens on this list rather than
+ *  on an empty field: sharing is an edit to something that exists, not a fresh act each
+ *  time. */
+export const listArtifactShares = (id: string) =>
+  apiClient.get<ArtifactShare[]>(`/artifacts/${id}/share`);
+
+/** Changes the share list by delta. PATCH with what to add and what to remove, rather
+ *  than PUT with the whole list: sending the list would make two people editing the same
+ *  Artifact overwrite each other, the second one silently undoing the first. */
+export const updateArtifactShares = (id: string, update: ArtifactShareUpdate) =>
+  apiClient.patch<ArtifactShare[]>(`/artifacts/${id}/share`, update);
