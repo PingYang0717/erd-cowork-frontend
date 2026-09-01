@@ -14,7 +14,6 @@ export type { Artifact, ArtifactVersion } from './artifact';
 export type { Connector, ConnectorStatus } from './connector';
 export type { DcItem } from './dcItem';
 export type {
-  ArtifactShare,
   ArtifactShareUpdate,
   DirectoryEntry,
   DirectoryEntryType,

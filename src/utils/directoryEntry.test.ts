@@ -7,7 +7,6 @@ import {
   directoryEntryLabel,
   directoryEntryMatches,
   directoryShareTarget,
-  shareAsDirectoryEntry,
 } from './directoryEntry';
 
 const org: DirectoryEntry = {
@@ -85,33 +84,5 @@ describe('directoryEntryMatches', () => {
 
   it('does not match something absent from every field', () => {
     expect(directoryEntryMatches(employee, 'zzz')).toBe(false);
-  });
-});
-
-describe('shareAsDirectoryEntry', () => {
-  /** The read side spells a recipient across three id fields, one per kind. Reading the
-   *  wrong one leaves the chip empty, which looks exactly like "not shared with anyone". */
-  it('reads a person out of shareTargetUserId', () => {
-    const entry = shareAsDirectoryEntry({
-      shareTargetType: 'EMPLOYEE',
-      shareTargetUserId: 'NTDEMO01',
-    });
-    expect(directoryShareTarget(entry)).toEqual({ type: 'EMPLOYEE', id: 'NTDEMO01' });
-  });
-
-  it('reads a section out of shareTargetSectionId, keeping its level', () => {
-    const entry = shareAsDirectoryEntry({
-      shareTargetType: 'SECTION',
-      shareTargetSectionId: 'SEC-11',
-    });
-    expect(directoryShareTarget(entry)).toEqual({ type: 'SECTION', id: 'SEC-11' });
-  });
-
-  it('reads a department out of shareTargetDeptId', () => {
-    const entry = shareAsDirectoryEntry({
-      shareTargetType: 'DEPARTMENT',
-      shareTargetDeptId: 'DEPT-11',
-    });
-    expect(directoryShareTarget(entry)).toEqual({ type: 'DEPARTMENT', id: 'DEPT-11' });
   });
 });

@@ -1,7 +1,7 @@
 import { http, HttpResponse } from 'msw';
 
 import type { Artifact } from '@/types/api/artifact';
-import type { ShareTarget } from '@/types/api/directory';
+import type { DirectoryEntry, ShareTarget } from '@/types/api/directory';
 import type { ScenarioKey } from '@/types/api/scenario';
 
 import { type ArtifactKind, buildArtifactFixture } from './artifactFixtures';
@@ -48,20 +48,17 @@ const shares = createPersistedResource<StoredShare>('erd-cowork:artifact-shares:
 
 const targetKey = (target: { type: string; id: string }) => `${target.type}:${target.id}`;
 
-/** A stored share in the shape the read endpoint returns it: a kind, and the recipient
- *  in whichever of the three id fields that kind uses. */
-function sharesOf(artifactId: string) {
+/** A stored share as the read endpoint returns it: the same shape the directory search
+ *  uses, so a recipient already on the list reads with its name. */
+function sharesOf(artifactId: string): DirectoryEntry[] {
   return shares
     .read()
     .filter((share) => share.artifactId === artifactId)
-    .map(({ type, id }) => ({
-      shareTargetType: type,
-      shareTargetUserId: type === 'EMPLOYEE' ? id : undefined,
-      shareTargetDeptId: type === 'DEPARTMENT' ? id : undefined,
-      shareTargetSectionId: type === 'SECTION' ? id : undefined,
-      sourceUserId: currentUser.id,
-      shareAt: '2026-09-01T00:00:00.000Z',
-    }));
+    .map(({ type, id }) =>
+      type === 'EMPLOYEE'
+        ? { type: 'EMPLOYEE' as const, employeeNt: id, employeeName: id, employeeOrgName: '' }
+        : { type: 'ORG' as const, orgId: id, orgName: id, orgLevel: type },
+    );
 }
 
 export const artifacts = createPersistedResource<StoredArtifact>('erd-cowork:artifacts:v6', [
@@ -226,8 +223,7 @@ export const artifactHandlers = [
   // the same Artifact add and remove their own recipients instead of the second one
   // silently reverting the first.
   http.get('/api/artifacts/:id/share', ({ params }) =>
-    // Enveloped, like the real endpoint — otherwise the unwrapping is never exercised.
-    HttpResponse.json({ shares: sharesOf(params.id as string) }),
+    HttpResponse.json(sharesOf(params.id as string)),
   ),
 
   http.patch('/api/artifacts/:id/share', async ({ params, request }) => {
@@ -256,7 +252,7 @@ export const artifactHandlers = [
     artifacts.write(
       all.map((artifact) => (artifact.id === artifactId ? { ...artifact, isShared } : artifact)),
     );
-    return HttpResponse.json({ shares: sharesOf(artifactId) });
+    return HttpResponse.json(sharesOf(artifactId));
   }),
 
   http.post('/api/artifacts/:id/repair', ({ params }) => {

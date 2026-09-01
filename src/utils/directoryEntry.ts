@@ -1,4 +1,4 @@
-import type { ArtifactShare, DirectoryEntry, ShareTarget } from '@/types/api/index';
+import type { DirectoryEntry, ShareTarget } from '@/types/api/index';
 
 /** What identifies a row: an employee by NT account, an organisation by its id. Also the
  *  option value the picker uses, so the two kinds cannot collide on a shared number. */
@@ -48,28 +48,4 @@ export function directoryShareTarget(entry: DirectoryEntry): ShareTarget {
   return entry.type === 'EMPLOYEE'
     ? { type: 'EMPLOYEE', id: entry.employeeNt ?? '' }
     : { type: entry.orgLevel ?? 'ORG', id: entry.orgId ?? '' };
-}
-
-/** The kind of recipient a share row names. */
-export function shareTargetType(share: ArtifactShare): string {
-  return share.shareTargetType ?? '';
-}
-
-/** Which of the three id fields this row's kind puts the recipient in. */
-export function shareTargetId(share: ArtifactShare): string {
-  return share.shareTargetUserId ?? share.shareTargetDeptId ?? share.shareTargetSectionId ?? '';
-}
-
-/** An existing recipient, in the shape the picker works in.
- *
- *  A share row carries ids, not names — so the id is what the chip can show. That is the
- *  point of doing it at all: a recipient already on the list has to appear as something,
- *  and an id the user recognises beats an empty field or a silently missing chip.
- */
-export function shareAsDirectoryEntry(share: ArtifactShare): DirectoryEntry {
-  const id = shareTargetId(share);
-  const type = shareTargetType(share);
-  return share.shareTargetUserId !== undefined || type === 'EMPLOYEE'
-    ? { type: 'EMPLOYEE', employeeNt: id, employeeName: id, employeeOrgName: '' }
-    : { type: 'ORG', orgId: id, orgName: id, orgLevel: type };
 }
