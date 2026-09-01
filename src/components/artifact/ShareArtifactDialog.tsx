@@ -133,8 +133,11 @@ const ShareArtifactDialog: React.FC<ShareArtifactDialogProps> = ({ open, onClose
         <div className={styles.sectionLabel}>分享連結</div>
         <div className={styles.linkRow}>
           <Input readOnly prefix={<LinkOutlined aria-hidden />} value={shareUrl} />
+          {/* Secondary, not primary: a dialog has one button that finishes the job, and
+              this is not it. The confirmation the user needs after pressing it is the
+              tick and the wording, which do not depend on a colour. */}
           <Button
-            type="primary"
+            className={styles.dialogButton}
             autoInsertSpace={false}
             icon={copied ? <CheckOutlined aria-hidden /> : <CopyOutlined aria-hidden />}
             onClick={handleCopy}
@@ -157,6 +160,7 @@ const ShareArtifactDialog: React.FC<ShareArtifactDialogProps> = ({ open, onClose
             empty delta, which is a no-op. */}
         <Button
           type="primary"
+          className={styles.dialogButton}
           autoInsertSpace={false}
           loading={updateShares.isPending}
           onClick={handleConfirm}

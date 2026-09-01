@@ -88,6 +88,13 @@
   gap: 8px;
 }
 
+/* The dialog's two buttons are a matched pair — one copies the link, one saves the list.
+   Same width so they read as siblings rather than as one being an afterthought; the copy
+   button carries an icon and would otherwise be the wider of the two. */
+.dialogButton {
+  min-width: 96px;
+}
+
 .actions {
   display: flex;
   justify-content: flex-end;

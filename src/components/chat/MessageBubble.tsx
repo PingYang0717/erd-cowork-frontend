@@ -1,4 +1,9 @@
-import { AppstoreOutlined, ThunderboltFilled, ToolOutlined } from '@ant-design/icons';
+import {
+  AppstoreOutlined,
+  LoadingOutlined,
+  ThunderboltFilled,
+  ToolOutlined,
+} from '@ant-design/icons';
 import React, { useDeferredValue, useMemo } from 'react';
 
 import { INTERRUPTED_TEXTS, REPAIR_RECORD_PREFIXES } from '@/constants/messages';
@@ -147,7 +152,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
     <div className={styles.aiRow}>
       <div className={styles.aiLabel}>
         <ThunderboltFilled aria-hidden className={styles.aiLabelIcon} />
-        {agentLabel(streaming, stopped)}
+        {agentLabel(stopped)}
       </div>
       <div className={styles.aiBubble}>
         {/* The live region exists for as long as the run does, not only once it has
@@ -155,6 +160,13 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
             what a screen reader needs announced. */}
         {streaming && (
           <div role="status" aria-label="eRD AI is working" className={styles.workingSteps}>
+            {/* The run says it is running from inside the step panel, where the steps it
+                is producing appear — rather than from the label above, which names who is
+                speaking and should read the same whether or not they are mid-sentence. */}
+            <div className={styles.workingHeader}>
+              <LoadingOutlined aria-hidden spin className={styles.workingHeaderIcon} />
+              eRD AI 處理中…
+            </div>
             {(steps ?? []).map((step) => (
               <StepRow key={step.stepKey} step={step} />
             ))}
@@ -270,12 +282,12 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
   );
 };
 
-function agentLabel(streaming: boolean, stopped: boolean): string {
-  if (streaming) {
-    return 'eRD AI 處理中…';
-  }
-  // A stop is reported inside the bubble (⏹ 已停止生成, cowork's wording); repeating
-  // it in the label would say it twice.
+/** Who is speaking. It stays the same whether or not they are mid-sentence: that the run
+ *  is in progress is said inside the bubble, next to the steps it is producing.
+ *
+ *  A stop is likewise reported inside (⏹ 已停止生成, cowork's wording) — the label carries
+ *  it too because a stopped turn has no live panel left to say it from. */
+function agentLabel(stopped: boolean): string {
   return stopped ? 'eRD AI · 已停止' : 'eRD AI';
 }
 
