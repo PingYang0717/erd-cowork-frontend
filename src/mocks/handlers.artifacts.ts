@@ -48,11 +48,20 @@ const shares = createPersistedResource<StoredShare>('erd-cowork:artifact-shares:
 
 const targetKey = (target: { type: string; id: string }) => `${target.type}:${target.id}`;
 
+/** A stored share in the shape the read endpoint returns it: a kind, and the recipient
+ *  in whichever of the three id fields that kind uses. */
 function sharesOf(artifactId: string) {
   return shares
     .read()
     .filter((share) => share.artifactId === artifactId)
-    .map(({ type, id }) => ({ type, id }));
+    .map(({ type, id }) => ({
+      shareTargetType: type,
+      shareTargetUserId: type === 'EMPLOYEE' ? id : undefined,
+      shareTargetDeptId: type === 'DEPARTMENT' ? id : undefined,
+      shareTargetSectionId: type === 'SECTION' ? id : undefined,
+      sourceUserId: currentUser.id,
+      shareAt: '2026-09-01T00:00:00.000Z',
+    }));
 }
 
 export const artifacts = createPersistedResource<StoredArtifact>('erd-cowork:artifacts:v6', [

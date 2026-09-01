@@ -2,7 +2,13 @@ import { describe, expect, it } from 'vitest';
 
 import type { DirectoryEntry } from '@/types/api/index';
 
-import { directoryEntryKey, directoryEntryLabel, directoryShareTarget } from './directoryEntry';
+import {
+  directoryEntryKey,
+  directoryEntryLabel,
+  directoryEntryMatches,
+  directoryShareTarget,
+  shareAsDirectoryEntry,
+} from './directoryEntry';
 
 const org: DirectoryEntry = {
   type: 'ORG',
@@ -54,5 +60,69 @@ describe('directoryEntryKey', () => {
     expect(directoryEntryKey({ type: 'ORG', orgId: 'X1' })).not.toBe(
       directoryEntryKey({ type: 'EMPLOYEE', employeeNt: 'X1' }),
     );
+  });
+});
+
+describe('directoryEntryMatches', () => {
+  /** Every field a row can be found by, not just the ones the label prints. Someone
+   *  searching by an org code has to find the people in it, and matching the label alone
+   *  would answer "no such person". */
+  it.each([
+    ['name', '示範甲'],
+    ['NT account', 'ntdemo01'],
+    ['their org', 'sec-11'],
+  ])('finds a person by %s', (_field, keyword) => {
+    expect(directoryEntryMatches(employee, keyword)).toBe(true);
+  });
+
+  it.each([
+    ['org id', 'sec-11'],
+    ['org name', '示範'],
+    ['level', 'section'],
+  ])('finds an organisation by %s', (_field, keyword) => {
+    expect(directoryEntryMatches(org, keyword)).toBe(true);
+  });
+
+  it('does not match something absent from every field', () => {
+    expect(directoryEntryMatches(employee, 'zzz')).toBe(false);
+  });
+});
+
+describe('shareAsDirectoryEntry', () => {
+  /** The read side spells a recipient across three id fields, one per kind. Reading the
+   *  wrong one leaves the chip empty, which looks exactly like "not shared with anyone". */
+  it('reads a person out of shareTargetUserId', () => {
+    const entry = shareAsDirectoryEntry({
+      shareTargetType: 'EMPLOYEE',
+      shareTargetUserId: 'NTDEMO01',
+    });
+    expect(directoryShareTarget(entry)).toEqual({ type: 'EMPLOYEE', id: 'NTDEMO01' });
+  });
+
+  it('reads a section out of shareTargetSectionId, keeping its level', () => {
+    const entry = shareAsDirectoryEntry({
+      shareTargetType: 'SECTION',
+      shareTargetSectionId: 'SEC-11',
+    });
+    expect(directoryShareTarget(entry)).toEqual({ type: 'SECTION', id: 'SEC-11' });
+  });
+
+  it('reads a department out of shareTargetDeptId', () => {
+    const entry = shareAsDirectoryEntry({
+      shareTargetType: 'DEPARTMENT',
+      shareTargetDeptId: 'DEPT-11',
+    });
+    expect(directoryShareTarget(entry)).toEqual({ type: 'DEPARTMENT', id: 'DEPT-11' });
+  });
+
+  /** The contract arrived with this one field pluralised while its neighbours are not, so
+   *  both spellings are honoured until the backend confirms which is real. Guessing wrong
+   *  would show an empty recipient list and look like nothing was ever shared. */
+  it('accepts the pluralised spelling of the type field', () => {
+    const entry = shareAsDirectoryEntry({
+      sharesTargetType: 'SECTION',
+      shareTargetSectionId: 'SEC-11',
+    });
+    expect(directoryShareTarget(entry)).toEqual({ type: 'SECTION', id: 'SEC-11' });
   });
 });

@@ -28,11 +28,27 @@ export interface ShareTarget {
   id: string;
 }
 
-/** A recipient an Artifact is already shared with, as `GET /artifacts/{id}/share`
- *  returns it. `name` is whatever the backend has to show for it — without one the id is
- *  all the dialog can display, which is why reading it must not depend on it. */
-export interface ArtifactShare extends ShareTarget {
-  name?: string;
+/** One row of `GET /artifacts/{id}/share`, verbatim.
+ *
+ *  The recipient is named by a kind plus one of three id fields — which one is populated
+ *  follows the kind, the same way the directory's `org*` / `employee*` fields do. All are
+ *  optional because that is the truth of the wire.
+ *
+ *  `shareTargetType` is read under both spellings on purpose: the contract as given used
+ *  `sharesTargetType` for this one field while every neighbouring field is singular, and
+ *  guessing wrong here means the dialog silently shows nobody — the exact failure this is
+ *  meant to prevent. **待後端確認正確拼法**。
+ */
+export interface ArtifactShare {
+  shareTargetType?: string;
+  /** The spelling the contract was handed over with; see above. */
+  sharesTargetType?: string;
+  shareTargetUserId?: string;
+  shareTargetDeptId?: string;
+  shareTargetSectionId?: string;
+  /** Who shared it. Not shown yet — recorded so the shape stays honest. */
+  sourceUserId?: string;
+  shareAt?: string;
 }
 
 /** The change to an Artifact's share list. A delta rather than the whole list: two people
