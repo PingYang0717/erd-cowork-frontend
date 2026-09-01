@@ -80,20 +80,19 @@ export function useApplyRememberedDataSources(sessionId: string) {
   );
 }
 
-/** Adds a source to the catalogue and attaches it to this session in one act — adding
- *  one IS choosing it, and the catalogue alone would leave it listed but unused. */
-export function useAddConnector(sessionId: string) {
+/** Adds a source to the catalogue.
+ *
+ *  Only the catalogue: whether this conversation draws on it is part of the selection the
+ *  user submits, so the new source arrives pre-picked in the draft and reaches the session
+ *  with everything else on Submit. */
+export function useAddConnector() {
   const queryClient = useQueryClient();
   const toastError = useActionErrorToast();
 
   return useMutation({
-    mutationFn: async (name: string) => {
-      const id = await addConnectorRequest(name);
-      await attachDataSource(sessionId, id);
-    },
+    mutationFn: (name: string) => addConnectorRequest(name),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: connectorsQueryKey });
-      queryClient.invalidateQueries({ queryKey: sessionDetailQueryKey(sessionId) });
     },
     onError: toastError,
   });

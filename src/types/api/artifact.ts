@@ -25,9 +25,9 @@ export interface Artifact {
   /** Whether the signed-in user may pin this Artifact. A permission, decided by the
    *  backend — not a statement about whether the pin endpoint exists. */
   canPin: boolean;
-  /** Owner and non-copy only: a personal copy of someone else's Artifact cannot be
-   *  shared onward. */
-  canShare: boolean;
+  /** Whether the signed-in user owns this Artifact — which is also what decides whether
+   *  they may share it onward. There is no separate `canShare`: the two were always the
+   *  same value, and keeping both invited them to drift apart. */
   isOwn: boolean;
   /** Whether this Artifact has been shared out — the owner's view of it. Whether it
    *  was shared *to* you is `!isOwn`. */

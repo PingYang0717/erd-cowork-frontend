@@ -52,6 +52,42 @@ describe('File attachments', () => {
     expect(within(composerAttachments()).getByText(/big\.csv/)).toBeInTheDocument();
   });
 
+  /** While bytes are going out, the surfaces that would start or undo an upload are shut.
+   *  A CSV here runs to gigabytes, so the window is long enough to click in — and a
+   *  second batch chosen mid-flight, or a file removed from under one, lands on a request
+   *  that is already describing a different set. */
+  it('closes the file surfaces while an upload is in flight, and opens them again after', async () => {
+    const user = userEvent.setup();
+    renderStudio();
+    await selectASessionAndOpenFileModal(user);
+
+    fireEvent.change(screen.getByLabelText('Choose files'), {
+      target: { files: [fileOfSize('big.csv', 4096)] },
+    });
+
+    expect(screen.getByRole('progressbar', { name: 'Uploading' })).toBeInTheDocument();
+    expect(screen.getByLabelText('Choose files')).toBeDisabled();
+    expect(screen.getByRole('button', { name: /點擊選擇/ })).toHaveAttribute(
+      'aria-disabled',
+      'true',
+    );
+
+    await waitForElementToBeRemoved(() => screen.queryByRole('progressbar', { name: 'Uploading' }));
+
+    expect(screen.getByLabelText('Choose files')).toBeEnabled();
+    expect(screen.getByRole('button', { name: /點擊選擇/ })).not.toHaveAttribute(
+      'aria-disabled',
+      'true',
+    );
+    // The just-uploaded file can be removed again now that nothing is in flight.
+    expect(
+      within(screen.getByRole('dialog', { name: 'Attach files' })).getByRole('button', {
+        name: /Remove/,
+      }),
+    ).toBeEnabled();
+    void user;
+  });
+
   it('attaches a file via click-to-browse and shows it as a chip in the composer', async () => {
     const user = userEvent.setup();
     renderStudio();

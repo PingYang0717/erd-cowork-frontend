@@ -1,7 +1,6 @@
 import {
   CopyOutlined,
   DashboardOutlined,
-  DeleteOutlined,
   EyeInvisibleOutlined,
   MoreOutlined,
   PushpinFilled,
@@ -9,15 +8,11 @@ import {
   ShareAltOutlined,
   UsergroupAddOutlined,
 } from '@ant-design/icons';
-import { Dropdown, Modal } from 'antd';
+import { Dropdown } from 'antd';
 import React, { useState } from 'react';
 
 import ShareArtifactDialog from '@/components/artifact/ShareArtifactDialog';
-import {
-  useDeleteArtifact,
-  useToggleArtifactPin,
-  useUnpublishArtifact,
-} from '@/hooks/useArtifactMutations';
+import { useSetArtifactPinned, useUnpublishArtifact } from '@/hooks/useArtifactMutations';
 import type { Artifact } from '@/types/api/index';
 import { artifactHref } from '@/utils/artifactUrl';
 import { dispatchMenuAction } from '@/utils/dispatchMenuAction';
@@ -31,8 +26,7 @@ interface ArtifactCardProps {
 }
 
 const ArtifactCard: React.FC<ArtifactCardProps> = ({ artifact, onOpen }) => {
-  const toggleArtifactPin = useToggleArtifactPin();
-  const deleteArtifact = useDeleteArtifact();
+  const setArtifactPinned = useSetArtifactPinned();
   const unpublishArtifact = useUnpublishArtifact();
   const [isShareOpen, setIsShareOpen] = useState(false);
   const isPinned = artifact.pinnedAt !== null;
@@ -51,54 +45,28 @@ const ArtifactCard: React.FC<ArtifactCardProps> = ({ artifact, onOpen }) => {
       disabled: !artifact.canPin,
     },
     { key: 'copyLink', label: 'Copy link', icon: <CopyOutlined aria-hidden /> },
-    artifact.canShare
+    artifact.isOwn
       ? {
           key: 'share',
           label: 'Share',
           icon: <ShareAltOutlined aria-hidden />,
         }
       : null,
-    artifact.isOwn
-      ? {
-          key: 'unpublish',
-          label: 'Unpublish',
-          icon: <EyeInvisibleOutlined aria-hidden />,
-        }
-      : null,
     { type: 'divider' as const },
     {
-      key: 'delete',
-      label: 'Delete',
+      key: 'unpublish',
+      label: 'Unpublish',
       danger: true,
-      icon: <DeleteOutlined aria-hidden />,
+      icon: <EyeInvisibleOutlined aria-hidden />,
     },
   ].filter((item): item is NonNullable<typeof item> => item !== null);
 
-  // Unpublishing revokes access for everyone the Artifact was shared with — publication
-  // is what sharing rests on. An Artifact nobody has been given goes quietly; one that
-  // is out there does not.
-  function confirmUnpublish() {
-    if (!artifact.isShared) {
-      unpublishArtifact.mutate(artifact.id);
-      return;
-    }
-    Modal.confirm({
-      title: '取消發布這個 Artifact?',
-      content: `「${artifact.title}」已分享出去。取消發布會一併收回所有收件者的存取權,他們的連結將立即失效。`,
-      okText: '取消發布',
-      okButtonProps: { danger: true },
-      cancelText: '保留',
-      onOk: () => unpublishArtifact.mutate(artifact.id),
-    });
-  }
-
   function handleMenuClick(key: string) {
     dispatchMenuAction(key, {
-      pin: () => toggleArtifactPin.mutate(artifact.id),
+      pin: () => setArtifactPinned.mutate({ id: artifact.id, pinned: !isPinned }),
       copyLink: () => navigator.clipboard.writeText(artifactHref(artifact.id)),
       share: () => setIsShareOpen(true),
-      unpublish: confirmUnpublish,
-      delete: () => deleteArtifact.mutate(artifact.id),
+      unpublish: () => unpublishArtifact.mutate(artifact.id),
     });
   }
 
@@ -138,7 +106,7 @@ const ArtifactCard: React.FC<ArtifactCardProps> = ({ artifact, onOpen }) => {
           aria-label={isPinned ? `Unpin ${artifact.title}` : `Pin ${artifact.title}`}
           aria-pressed={isPinned}
           disabled={!artifact.canPin}
-          onClick={() => toggleArtifactPin.mutate(artifact.id)}
+          onClick={() => setArtifactPinned.mutate({ id: artifact.id, pinned: !isPinned })}
         >
           {isPinned ? <PushpinFilled aria-hidden /> : <PushpinOutlined aria-hidden />}
         </button>

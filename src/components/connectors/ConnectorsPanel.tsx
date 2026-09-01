@@ -19,7 +19,7 @@ import {
   WarningOutlined,
 } from '@ant-design/icons';
 import { Button, Input, Modal } from 'antd';
-import React, { type ReactNode, useState } from 'react';
+import React, { type ReactNode, useMemo, useState } from 'react';
 
 import { useAddConnector, useSetSessionDataSource } from '@/hooks/useConnectorMutations';
 import { useConnectors } from '@/hooks/useConnectors';
@@ -93,17 +93,53 @@ interface ConnectorsPanelProps {
 }
 
 const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ sessionId, open, onClose }) => {
-  const connectors = useConnectors(sessionId);
+  const sessionConnectors = useConnectors(sessionId);
   const setDataSource = useSetSessionDataSource(sessionId);
-  const addConnector = useAddConnector(sessionId);
+  const addConnector = useAddConnector();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('All');
   const [addValue, setAddValue] = useState('');
 
-  // Connect, disconnect and add write the user's preference to localStorage — the
-  // backend has no connector endpoints this round, and a choice is the user's to keep.
+  const attachedIds = useMemo(
+    () => selectConnected(sessionConnectors).map((connector) => connector.id),
+    [sessionConnectors],
+  );
+
+  // What the user has picked but not yet submitted. Choosing sources is one decision made
+  // out of several clicks, so nothing is written until Submit: a request per checkbox
+  // would leave a half-made choice on the server every time someone changed their mind
+  // mid-way, and Cancel would have nothing to cancel.
+  const [draftIds, setDraftIds] = useState<string[]>(attachedIds);
+  // Opening starts a fresh decision from whatever the session currently has. Adjusting
+  // during render (React's documented pattern for state derived from a prop change)
+  // rather than in an effect, so the first paint of an opened panel already shows the
+  // right ticks instead of last time's for one frame.
+  const [wasOpen, setWasOpen] = useState(open);
+  if (open !== wasOpen) {
+    setWasOpen(open);
+    if (open) {
+      setDraftIds(attachedIds);
+    }
+  }
+
+  // The list reads its `connected` from the draft, so the panel shows the decision being
+  // made rather than the one already stored. `expired` and `no_access` are the
+  // catalogue's word and outrank any of it.
+  const connectors = useMemo<Connector[]>(
+    () =>
+      sessionConnectors.map((connector) =>
+        connector.status === 'expired' || connector.status === 'no_access'
+          ? connector
+          : { ...connector, status: draftIds.includes(connector.id) ? 'connected' : 'available' },
+      ),
+    [sessionConnectors, draftIds],
+  );
+
   const connectedConnectors = selectConnected(connectors);
   const connectedCount = connectedConnectors.length;
+  const isDirty =
+    connectedConnectors.length !== attachedIds.length ||
+    connectedConnectors.some((connector) => !attachedIds.includes(connector.id));
 
   // The list filters on the settled value while the input stays on the raw one, so
   // typing never feels delayed — only the filtering behind it is.
@@ -121,13 +157,41 @@ const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ sessionId, open, onCl
     if (connector.status === 'no_access') {
       return;
     }
-    setDataSource.mutate({ id: connector.id, attached: connector.status !== 'connected' });
+    setDraftIds((previous) =>
+      previous.includes(connector.id)
+        ? previous.filter((id) => id !== connector.id)
+        : [...previous, connector.id],
+    );
+  }
+
+  /** Writes the decision: one call per source that actually changed, then closes.
+   *
+   *  Sequential rather than parallel — each attach may upsert the session (ADR-0005), and
+   *  firing them together would race several creations of the same one. */
+  async function submit() {
+    try {
+      for (const id of draftIds.filter((id) => !attachedIds.includes(id))) {
+        await setDataSource.mutateAsync({ id, attached: true });
+      }
+      for (const id of attachedIds.filter((id) => !draftIds.includes(id))) {
+        await setDataSource.mutateAsync({ id, attached: false });
+      }
+    } catch {
+      // The mutation has already toasted it. The panel closes either way: a connector is
+      // a capability, and holding the dialog open over one that would not attach helps
+      // nobody.
+    }
+    onClose();
   }
 
   function submitAddConnector() {
     const name = addValue.trim();
     if (!name) return;
-    addConnector.mutate(name);
+    // Adding one IS picking it, so it lands in the draft — and reaches the session with
+    // the rest of the selection on Submit.
+    addConnector.mutate(name, {
+      onSuccess: (id) => setDraftIds((previous) => [...previous, id]),
+    });
     setAddValue('');
   }
 
@@ -150,8 +214,14 @@ const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ sessionId, open, onCl
           <span className={styles.footerCount}>
             Showing {visibleConnectors.length} of {connectors.length}
           </span>
-          <Button type="primary" onClick={onClose}>
-            Done
+          <Button onClick={onClose}>取消</Button>
+          <Button
+            type="primary"
+            loading={setDataSource.isPending}
+            disabled={!isDirty}
+            onClick={() => void submit()}
+          >
+            Submit
           </Button>
         </div>
       }

@@ -1,6 +1,7 @@
 import { http, HttpResponse } from 'msw';
 
 import type { Artifact } from '@/types/api/artifact';
+import type { ShareTarget } from '@/types/api/directory';
 import type { ScenarioKey } from '@/types/api/scenario';
 
 import { type ArtifactKind, buildArtifactFixture } from './artifactFixtures';
@@ -33,6 +34,25 @@ export interface StoredArtifact {
   publishedAt: string | null;
   /** Shared out by its owner. Whether it was shared *to* you is `!isOwn`. */
   isShared: boolean;
+}
+
+interface StoredShare {
+  artifactId: string;
+  type: string;
+  id: string;
+}
+
+/** Who each Artifact is shared with. Separate from the Artifact records because the list
+ *  is read on its own endpoint, not nested in the DTO. */
+const shares = createPersistedResource<StoredShare>('erd-cowork:artifact-shares:v1', []);
+
+const targetKey = (target: { type: string; id: string }) => `${target.type}:${target.id}`;
+
+function sharesOf(artifactId: string) {
+  return shares
+    .read()
+    .filter((share) => share.artifactId === artifactId)
+    .map(({ type, id }) => ({ type, id }));
 }
 
 export const artifacts = createPersistedResource<StoredArtifact>('erd-cowork:artifacts:v6', [
@@ -103,26 +123,30 @@ function toArtifactDto(stored: StoredArtifact): Artifact {
       ? currentUser.name
       : (OWNER_DISPLAY_NAMES[stored.ownerId] ?? stored.ownerId),
     canPin: true,
-    // Personal copies are not modelled, so "owner and non-copy" is just "owner".
-    canShare: isOwn,
     isOwn,
     isShared: stored.isShared,
     hasPersonalCopy: false,
   };
 }
-function setPublished(id: string | readonly string[] | undefined, published: boolean) {
+function updateArtifact(
+  id: string | readonly string[] | undefined,
+  change: Partial<StoredArtifact>,
+) {
   const all = artifacts.read();
   const existing = all.find((artifact) => artifact.id === id);
   if (!existing) {
     return new HttpResponse(null, { status: 404 });
   }
-  const updated: StoredArtifact = {
-    ...existing,
-    publishedAt: published ? new Date().toISOString() : null,
-  };
+  const updated: StoredArtifact = { ...existing, ...change };
   artifacts.write(all.map((artifact) => (artifact.id === id ? updated : artifact)));
   return HttpResponse.json(toArtifactDto(updated));
 }
+
+const setPinned = (id: string | readonly string[] | undefined, pinned: boolean) =>
+  updateArtifact(id, { pinnedAt: pinned ? new Date().toISOString() : null });
+
+const setPublished = (id: string | readonly string[] | undefined, published: boolean) =>
+  updateArtifact(id, { publishedAt: published ? new Date().toISOString() : null });
 
 /** Each artifact IS a version (deriveArtifactVersions); number it the way the client
  *  does — by its position among the session's artifact-bearing messages — so the
@@ -142,23 +166,17 @@ export const artifactHandlers = [
 
   /** Toggle: which way it goes is the backend's call, so the request carries no
    *  direction and the client cannot act on a stale reading of its own. */
-  http.post('/api/artifacts/:id/pin', ({ params }) => {
-    const all = artifacts.read();
-    const existing = all.find((artifact) => artifact.id === params.id);
-    if (!existing) {
-      return new HttpResponse(null, { status: 404 });
-    }
-    const updated: StoredArtifact = {
-      ...existing,
-      pinnedAt: existing.pinnedAt === null ? new Date().toISOString() : null,
-    };
-    artifacts.write(all.map((artifact) => (artifact.id === params.id ? updated : artifact)));
-    return HttpResponse.json(toArtifactDto(updated));
-  }),
+  // Pinning takes a direction from the caller rather than toggling: a toggle left no way
+  // to say "unpin", so an Artifact could be pinned and never released.
+  http.post('/api/artifacts/:id/pin', ({ params }) => setPinned(params.id, true)),
+
+  http.delete('/api/artifacts/:id/pin', ({ params }) => setPinned(params.id, false)),
 
   /** 發布 / 取消發布 — split by method, and the timestamp is the server's to write. */
   http.post('/api/artifacts/:id/publish', ({ params }) => setPublished(params.id, true)),
 
+  // Unpublish, not delete: the Artifact goes on living in the conversation that produced
+  // it — what it loses is its place on the Gallery's shelf.
   http.delete('/api/artifacts/:id/publish', ({ params }) => setPublished(params.id, false)),
 
   http.get('/api/artifacts/:id', ({ params }) => {
@@ -194,19 +212,43 @@ export const artifactHandlers = [
   // Rebuilding an artifact whose HTML threw. Every repair here succeeds — a real
   // backend can also come back empty-handed, which the UI already handles; tests
   // exercise that path by stubbing this endpoint.
-  http.delete('/api/artifacts/:id', ({ params }) => {
-    artifacts.write(artifacts.read().filter((stored) => stored.id !== params.id));
-    return new HttpResponse(null, { status: 200 });
-  }),
-
   // Share has no backend this round: the mock answers the agreed error shape so the
   // UI exercises the same path the real backend produces.
-  http.post('/api/artifacts/:id/share', () =>
-    HttpResponse.json(
-      { code: 'NOT_IMPLEMENTED', message: '分享功能後端尚未就緒' },
-      { status: 501 },
-    ),
+  // Reading is what the dialog opens on; the change is a delta, so two people editing
+  // the same Artifact add and remove their own recipients instead of the second one
+  // silently reverting the first.
+  http.get('/api/artifacts/:id/share', ({ params }) =>
+    HttpResponse.json(sharesOf(params.id as string)),
   ),
+
+  http.patch('/api/artifacts/:id/share', async ({ params, request }) => {
+    const artifactId = params.id as string;
+    const { add = [], remove = [] } = (await request.json()) as {
+      add?: ShareTarget[];
+      remove?: ShareTarget[];
+    };
+    const removed = new Set(remove.map(targetKey));
+    const kept = shares
+      .read()
+      .filter((share) => share.artifactId !== artifactId || !removed.has(targetKey(share)));
+    const existing = new Set(
+      kept.filter((share) => share.artifactId === artifactId).map(targetKey),
+    );
+    shares.write([
+      ...kept,
+      ...add
+        .filter((target) => !existing.has(targetKey(target)))
+        .map((target) => ({ artifactId, type: target.type, id: target.id })),
+    ]);
+
+    // `isShared` is the owner's view of whether anyone holds it, so it follows the list.
+    const all = artifacts.read();
+    const isShared = sharesOf(artifactId).length > 0;
+    artifacts.write(
+      all.map((artifact) => (artifact.id === artifactId ? { ...artifact, isShared } : artifact)),
+    );
+    return HttpResponse.json(sharesOf(artifactId));
+  }),
 
   http.post('/api/artifacts/:id/repair', ({ params }) => {
     const artifact = artifacts.read().find((a) => a.id === params.id);
