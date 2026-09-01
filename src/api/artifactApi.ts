@@ -1,4 +1,4 @@
-import type { Artifact } from '@/types/api/index';
+import type { Artifact, ShareTarget } from '@/types/api/index';
 
 import { apiClient } from './apiClient';
 
@@ -49,7 +49,7 @@ export const publishArtifact = (id: string) => apiClient.post<Artifact>(`/artifa
  *  which goes on living in the conversation that produced it. */
 export const unpublishArtifact = (id: string) => apiClient.delete<void>(`/artifacts/${id}/publish`);
 
-export const shareArtifact = (id: string, targetIds: string[]) =>
-  apiClient.post<ArtifactShareResult>(`/artifacts/${id}/share`, {
-    targetIds,
-  });
+/** Shares with a list of recipients, each named by kind and id: `EMPLOYEE` with an NT
+ *  account, or an org level (department, section, …) with an org id. */
+export const shareArtifact = (id: string, targets: ShareTarget[]) =>
+  apiClient.post<ArtifactShareResult>(`/artifacts/${id}/share`, { targets });

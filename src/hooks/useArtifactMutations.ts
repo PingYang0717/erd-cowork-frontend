@@ -7,7 +7,7 @@ import {
   unpinArtifact,
   unpublishArtifact,
 } from '@/api/artifactApi';
-import type { Artifact } from '@/types/api/index';
+import type { Artifact, ShareTarget } from '@/types/api/index';
 
 import { useActionErrorToast } from './useActionErrorToast';
 import { artifactsQueryKey } from './useArtifacts';
@@ -58,8 +58,8 @@ export function useShareArtifact() {
   const toastError = useActionErrorToast();
 
   return useMutation({
-    mutationFn: ({ id, targetIds }: { id: string; targetIds: string[] }) =>
-      shareArtifact(id, targetIds),
+    mutationFn: ({ id, targets }: { id: string; targets: ShareTarget[] }) =>
+      shareArtifact(id, targets),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: artifactsQueryKey });
     },
