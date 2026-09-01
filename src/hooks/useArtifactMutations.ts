@@ -25,8 +25,14 @@ export function useToggleArtifactPin() {
   return useMutation({
     mutationFn: (id: string) => toggleArtifactPin(id),
     onSuccess: (updated) => {
+      // Merged onto the cached row, not written over it. The answer carries the pin
+      // state, but nothing promises it carries every other field — and a missing
+      // `canPin` reads as "may not pin", which would disable the button the user just
+      // pressed. Whatever the response does bring wins; the rest stays.
       queryClient.setQueryData<Artifact[]>(artifactsQueryKey, (previous) =>
-        previous?.map((artifact) => (artifact.id === updated.id ? updated : artifact)),
+        previous?.map((artifact) =>
+          artifact.id === updated.id ? { ...artifact, ...updated } : artifact,
+        ),
       );
       queryClient.invalidateQueries({ queryKey: artifactsQueryKey });
     },
