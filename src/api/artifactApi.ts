@@ -40,11 +40,22 @@ export const publishArtifact = (id: string) => apiClient.post<Artifact>(`/artifa
  *  which goes on living in the conversation that produced it. */
 export const unpublishArtifact = (id: string) => apiClient.delete<void>(`/artifacts/${id}/publish`);
 
+/** The share list answers inside a `shares` envelope rather than as a bare array. */
+interface ArtifactSharesResponse {
+  shares?: ArtifactShare[];
+}
+
 /** Who this Artifact is already shared with. The dialog opens on this list rather than
  *  on an empty field: sharing is an edit to something that exists, not a fresh act each
- *  time. */
-export const listArtifactShares = (id: string) =>
-  apiClient.get<ArtifactShare[]>(`/artifacts/${id}/share`);
+ *  time.
+ *
+ *  The envelope is unwrapped here, and read defensively for the same reason the directory
+ *  search is: a body without `shares` has to come out as "nobody yet" rather than as
+ *  something the dialog will try to map over. */
+export const listArtifactShares = async (id: string): Promise<ArtifactShare[]> => {
+  const body = await apiClient.get<ArtifactSharesResponse>(`/artifacts/${id}/share`);
+  return Array.isArray(body?.shares) ? body.shares : [];
+};
 
 /** Changes the share list by delta. PATCH with what to add and what to remove, rather
  *  than PUT with the whole list: sending the list would make two people editing the same

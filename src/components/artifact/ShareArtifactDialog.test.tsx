@@ -69,7 +69,7 @@ describe('Sharing an Artifact: picking recipients', () => {
     server.use(
       http.patch('/api/artifacts/:id/share', async ({ request }) => {
         body = await request.json();
-        return HttpResponse.json([]);
+        return HttpResponse.json({ shares: [] });
       }),
     );
     renderDialog();
@@ -96,11 +96,11 @@ describe('Sharing an Artifact: picking recipients', () => {
     let body: unknown;
     server.use(
       http.get('/api/artifacts/:id/share', () =>
-        HttpResponse.json([{ type: 'SECTION', id: 'INTD-1', name: '整合技術一課' }]),
+        HttpResponse.json({ shares: [{ type: 'SECTION', id: 'INTD-1', name: '整合技術一課' }] }),
       ),
       http.patch('/api/artifacts/:id/share', async ({ request }) => {
         body = await request.json();
-        return HttpResponse.json([]);
+        return HttpResponse.json({ shares: [] });
       }),
     );
     renderDialog();

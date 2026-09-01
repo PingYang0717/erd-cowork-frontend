@@ -152,7 +152,6 @@ const MessageList: React.FC<MessageListProps> = ({
           key={message.id}
           sender={message.sender}
           text={message.text}
-          attachments={message.attachments}
           steps={parsedHistory[index].steps}
           artifact={parsedHistory[index].artifact}
           question={parsedHistory[index].question}

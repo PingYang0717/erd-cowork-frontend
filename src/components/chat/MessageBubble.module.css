@@ -4,15 +4,6 @@
 }
 
 /* Attachment chips sit inside the blue bubble, above the text (mockup). */
-.userAttachments {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin: 0 0 8px;
-  padding: 0;
-  list-style: none;
-}
-
 .userBubble {
   max-width: 85%;
   background: var(--erd-color-primary, #1677ff);
