@@ -54,8 +54,11 @@ const ArtifactCard: React.FC<ArtifactCardProps> = ({ artifact, onOpen }) => {
             key: 'unpublish',
             // Reads "Delete" to the user, and is `unpublishArtifact` underneath: from
             // where they stand this removes the Artifact, and the fact that it survives
-            // inside its conversation is not something a menu has to explain. Not
-            // `danger` — nothing is destroyed, so the red would be overstating it.
+            // inside its conversation is not something a menu has to explain.
+            // `danger` for the red wording — the fill it normally brings is turned off in
+            // `.erd-menu` (index.css), since a red row reads as a warning about where the
+            // pointer is rather than about what the action does.
+            danger: true,
             label: 'Delete',
             icon: <DeleteOutlined aria-hidden />,
           },

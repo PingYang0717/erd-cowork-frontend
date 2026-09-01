@@ -85,6 +85,19 @@ body {
   color: var(--erd-color-text-secondary, rgba(0, 0, 0, 0.65));
 }
 
+/* A destructive item says so in its wording and its icon, not with a filled row: antd's
+   `danger` also paints the background on hover, which reads as a warning about where the
+   pointer is rather than about what the action does. */
+.erd-menu .ant-dropdown-menu-item-danger:hover,
+.erd-menu .ant-dropdown-menu-item-danger:active,
+.erd-menu .ant-dropdown-menu-item-danger.ant-dropdown-menu-item-active {
+  background: var(--erd-color-fill-tertiary, rgba(0, 0, 0, 0.04));
+}
+
+.erd-menu .ant-dropdown-menu-item-danger .anticon {
+  color: inherit;
+}
+
 .erd-menu .ant-dropdown-menu-item-divider {
   background: var(--erd-color-fill-quaternary, rgba(0, 0, 0, 0.02));
 }

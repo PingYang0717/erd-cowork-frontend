@@ -34,15 +34,9 @@ export interface ShareTarget {
  *  follows the kind, the same way the directory's `org*` / `employee*` fields do. All are
  *  optional because that is the truth of the wire.
  *
- *  `shareTargetType` is read under both spellings on purpose: the contract as given used
- *  `sharesTargetType` for this one field while every neighbouring field is singular, and
- *  guessing wrong here means the dialog silently shows nobody — the exact failure this is
- *  meant to prevent. **待後端確認正確拼法**。
  */
 export interface ArtifactShare {
   shareTargetType?: string;
-  /** The spelling the contract was handed over with; see above. */
-  sharesTargetType?: string;
   shareTargetUserId?: string;
   shareTargetDeptId?: string;
   shareTargetSectionId?: string;

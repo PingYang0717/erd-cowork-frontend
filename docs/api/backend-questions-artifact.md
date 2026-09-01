@@ -161,10 +161,8 @@ lineage 層(第 5 題)。
 `/api/artifact/{id}/share`(單數),推測是筆誤,但若後端真的是單數請告知——這是一改就會
 全錯的那種差異。
 
-**`shareTargetType` 還是 `sharesTargetType`?** 交付的欄位清單裡,只有這一個是複數
-(`sharesTargetType`),鄰近的 `shareTargetUserId` / `shareTargetDeptId` /
-`shareTargetSectionId` 都是單數。前端目前**兩種拼法都讀**,因為猜錯的後果是收件者清單顯示
-空白——看起來就像從來沒分享過任何人,而不是一個看得出來的錯誤。確認後會收斂成一種。
+~~**`shareTargetType` 還是 `sharesTargetType`?**~~ **已確認:一律單數**
+(`shareTargetType`),前端已收斂。
 
 ---
 
