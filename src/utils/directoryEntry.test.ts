@@ -114,15 +114,4 @@ describe('shareAsDirectoryEntry', () => {
     });
     expect(directoryShareTarget(entry)).toEqual({ type: 'DEPARTMENT', id: 'DEPT-11' });
   });
-
-  /** The contract arrived with this one field pluralised while its neighbours are not, so
-   *  both spellings are honoured until the backend confirms which is real. Guessing wrong
-   *  would show an empty recipient list and look like nothing was ever shared. */
-  it('accepts the pluralised spelling of the type field', () => {
-    const entry = shareAsDirectoryEntry({
-      sharesTargetType: 'SECTION',
-      shareTargetSectionId: 'SEC-11',
-    });
-    expect(directoryShareTarget(entry)).toEqual({ type: 'SECTION', id: 'SEC-11' });
-  });
 });

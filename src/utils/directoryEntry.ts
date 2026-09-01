@@ -50,9 +50,9 @@ export function directoryShareTarget(entry: DirectoryEntry): ShareTarget {
     : { type: entry.orgLevel ?? 'ORG', id: entry.orgId ?? '' };
 }
 
-/** The kind of recipient a share row names, under either spelling of the field. */
+/** The kind of recipient a share row names. */
 export function shareTargetType(share: ArtifactShare): string {
-  return share.shareTargetType ?? share.sharesTargetType ?? '';
+  return share.shareTargetType ?? '';
 }
 
 /** Which of the three id fields this row's kind puts the recipient in. */
