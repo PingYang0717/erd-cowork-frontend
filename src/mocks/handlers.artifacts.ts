@@ -103,23 +103,20 @@ function toArtifactDto(stored: StoredArtifact): Artifact {
       ? currentUser.name
       : (OWNER_DISPLAY_NAMES[stored.ownerId] ?? stored.ownerId),
     canPin: true,
-    // Personal copies are not modelled, so "owner and non-copy" is just "owner".
-    canShare: isOwn,
     isOwn,
     isShared: stored.isShared,
     hasPersonalCopy: false,
   };
 }
-function setPublished(id: string | readonly string[] | undefined, published: boolean) {
+/** Publishing only goes one way: there is no unpublish, because taking an Artifact off
+ *  the shelf and deleting it are the same act. */
+function publish(id: string | readonly string[] | undefined) {
   const all = artifacts.read();
   const existing = all.find((artifact) => artifact.id === id);
   if (!existing) {
     return new HttpResponse(null, { status: 404 });
   }
-  const updated: StoredArtifact = {
-    ...existing,
-    publishedAt: published ? new Date().toISOString() : null,
-  };
+  const updated: StoredArtifact = { ...existing, publishedAt: new Date().toISOString() };
   artifacts.write(all.map((artifact) => (artifact.id === id ? updated : artifact)));
   return HttpResponse.json(toArtifactDto(updated));
 }
@@ -157,9 +154,7 @@ export const artifactHandlers = [
   }),
 
   /** 發布 / 取消發布 — split by method, and the timestamp is the server's to write. */
-  http.post('/api/artifacts/:id/publish', ({ params }) => setPublished(params.id, true)),
-
-  http.delete('/api/artifacts/:id/publish', ({ params }) => setPublished(params.id, false)),
+  http.post('/api/artifacts/:id/publish', ({ params }) => publish(params.id)),
 
   http.get('/api/artifacts/:id', ({ params }) => {
     const artifact = artifacts.read().find((a) => a.id === params.id);

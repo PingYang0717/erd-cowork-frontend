@@ -113,7 +113,7 @@ describe('Per-version Artifact publishing', () => {
   });
 
   /** Publication is what sharing rests on: a recipient's access is access to a published
-   *  Artifact, and unpublishing revokes it. So there is nothing to share until the owner
+   *  Artifact. So there is nothing to share until the owner
    *  publishes — the entry stays visible (it teaches the relationship) but does nothing. */
   it('will not share a version that has not been published yet', async () => {
     const user = userEvent.setup();

@@ -36,14 +36,9 @@ export const toggleArtifactPin = (id: string) => apiClient.post<Artifact>(`/arti
  *  backend stamps `publishedAt` itself: the client never sends a time it believes it is. */
 export const publishArtifact = (id: string) => apiClient.post<Artifact>(`/artifacts/${id}/publish`);
 
-/** Takes an Artifact back off the shelf. This is expected to revoke access for everyone
- *  it was shared with — publication is the precondition for sharing, so removing it
- *  removes the access too (see docs/artifact-model-decisions.md, Q4). */
-export const unpublishArtifact = (id: string) =>
-  apiClient.delete<Artifact>(`/artifacts/${id}/publish`);
-
-// Live since 10e61cc: the Gallery card's delete and the share dialog both reach the
-// backend for real (ADR-0006).
+/** Removes the Artifact. There is no separate unpublish: taking something off the shelf
+ *  and deleting it are the same act here, so offering both would be two buttons for one
+ *  outcome — and the one that sounded reversible would not be. */
 export const deleteArtifact = (id: string) => apiClient.delete<void>(`/artifacts/${id}`);
 
 export const shareArtifact = (id: string, targetIds: string[]) =>

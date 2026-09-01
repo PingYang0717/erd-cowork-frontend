@@ -39,15 +39,17 @@ Q1 之後,session 裡的產出是兄弟而非版本鏈,編號成 v1/v2/v3 讀起
 
 **代價**:想快速給同事看一眼也得先發布。
 
-### Q4 unpublish 收回存取權
+### ~~Q4 unpublish 收回存取權~~ →(2026-09-01 修訂)沒有 unpublish
 
-取消發布會讓所有收件者的連結**立即失效**。再次發布不自動恢復先前的分享名單。
+**取消發布這個動作不存在,它等同刪除。** Artifact 從架上拿下來和刪掉是同一件事,所以
+只保留 Delete;提供兩個按鈕會變成同一個結果的兩種說法,而聽起來可以復原的那個其實
+不能。
 
-**理由**:與 Q3 一致——前提消失,存取也消失。對 fab 資料而言,這也是唯一能「分錯人了
-趕快收回」的手段。
+前端已移除 Gallery 卡片的 Unpublish 入口、`unpublishArtifact` API 與其 mutation、
+以及 mock 的 `DELETE /artifacts/{id}/publish`。發布因此是單向的。
 
-**前端因應**:已分享的 Artifact 按 unpublish 會跳確認,說明會一併收回所有收件者的
-存取權。**實際的撤銷發生在後端**,見「待後端」。
+**仍然成立的部分**:刪除必須撤銷已發出的存取權(原本 Q4 的實質內容),這一條移到刪除
+上,仍是後端需求。
 
 ### Q5 資料源綁在 session 上
 
@@ -88,7 +90,7 @@ Gallery 只放已發布的。沒發布的待在產生它的 session 對話串裡
 | Q1   | 已是現況,無需改動                                                                                     |
 | Q2   | 選單改「此對話的產出 · 共 N 個」,觸發鍵改「切換產出」;移除 `version` 欄位與兩條孤兒 CSS               |
 | Q3   | ArtifactPanel 分享鍵未發布時 disabled,tooltip 說明。Gallery 卡片不需改——它只含已發布的                |
-| Q4   | Gallery 卡片選單補 Unpublish;已分享時跳確認說明會收回存取權                                           |
+| Q4   | 已修訂:沒有 unpublish,Delete 就是它;卡片選單只保留 Delete                                             |
 | Q5   | `useConnectors(sessionId)` join 目錄與 session 附掛;新增 `SessionDetail.dataSourceIds`;端點 mock 先行 |
 | Q7   | Gallery 過濾 `publishedAt !== null`;mock 新增一份未發布 fixture 讓邊界被測到                          |
 
@@ -104,8 +106,8 @@ Gallery 只放已發布的。沒發布的待在產生它的 session 對話串裡
 
 1. **`Artifact.pinnedAt` 是否 per-user** — 契約自相矛盾,且是現在就存在的問題(釘選
    別人分享來的 Artifact 會改到擁有者的資料)。
-2. **unpublish 的撤銷語意** — Q4 已決定「收回存取權」,需要後端據此實作:已分享的連結
-   在 unpublish 後必須失效。
+2. **刪除的撤銷語意** — 刪除一個已分享的 Artifact,收件者的連結必須立即失效(原為
+   unpublish 的語意,Q4 修訂後移到刪除上)。
 3. **`data-source` 端點** — 目前 mock 先行。**待確認**:`DELETE` 的 `connectorId` 走
    request body(現行實作)還是 query / path?
 4. **lineage 欄位**(如 `rootArtifactId`)— 從「低優先」升格為 Q6 的**必要條件**。
