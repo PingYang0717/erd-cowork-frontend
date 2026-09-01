@@ -1,13 +1,19 @@
-/** Backend contract, 定版 2026-08-27.
+/** Backend contract.
  *
- *  What is deliberately absent: the Artifact's own kind (dashboard / slides). It is
- *  coming back as `type`, which the backend has yet to add — until then nothing on
- *  screen distinguishes the two, and the Gallery's thumbnail and Dash/Deck tag are
- *  gone rather than defaulting every card to the same wrong answer.
+ *  Deliberately absent: the Artifact's own kind (dashboard / slides). There is no `type`
+ *  — nothing on screen distinguishes the two, and the Gallery's thumbnail and Dash/Deck
+ *  tag are gone rather than defaulting every card to the same wrong answer. Permissions
+ *  are absent too: pinning is the reader's own bookmark and sharing follows `isOwn`, so
+ *  neither needs a field of its own.
  */
 export interface Artifact {
   id: string;
+  /** What the Gallery shows. The user writes it when they publish — an Artifact is put
+   *  on the shelf under a name they chose, not under whatever the run was called. */
   title: string;
+  /** Which version of its analysis this is. The version menu reads it; the Gallery does
+   *  not, because a card is named by its title. */
+  version: number;
   sessionId: string;
   /** The producing session's title, denormalised — the Gallery card no longer has to
    *  fetch the session list to name where an Artifact came from. */
@@ -22,9 +28,6 @@ export interface Artifact {
   /** Owner's id. `ownerDisplay` is who to show; this is who to compare. */
   owner: string;
   ownerDisplay: string;
-  /** Whether the signed-in user may pin this Artifact. A permission, decided by the
-   *  backend — not a statement about whether the pin endpoint exists. */
-  canPin: boolean;
   /** Whether the signed-in user owns this Artifact — which is also what decides whether
    *  they may share it onward. There is no separate `canShare`: the two were always the
    *  same value, and keeping both invited them to drift apart. */
@@ -40,13 +43,15 @@ export interface Artifact {
 /** Backend contract shape (cowork master): a version is an artifact-bearing message,
  *  derived client-side from the session's history — there is no versions endpoint.
  *  `createdAt` and `publishedAt` are enrichments the version menu reads. */
-/** One Artifact produced in a conversation. These are independent Artifacts, not
- *  versions of a single thing — iterating in chat yields a new Artifact that is
- *  published, pinned and shared on its own. Arrival order is the list's order; there is
- *  no version number, because there is no lineage for one to count along. */
+/** One Artifact produced in a conversation, as the version menu lists it.
+ *
+ *  `title` and `version` are enrichments joined from the Artifacts list — a freshly
+ *  produced Artifact is not in that list yet, so both may be missing for a moment. The
+ *  menu falls back to the message's own wording when they are. */
 export interface ArtifactVersion {
   artifactId: string;
   title: string;
+  version?: number;
   createdAt?: string;
   publishedAt?: string | null;
 }

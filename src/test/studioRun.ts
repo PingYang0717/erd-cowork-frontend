@@ -48,3 +48,18 @@ export async function answerAnalysisConditions(user: User): Promise<void> {
     await answerOneForm(user, submit);
   }
 }
+
+/** Publishes the Artifact on display: presses 發布 Artifact, then names it in the dialog
+ *  that asks. Publishing takes a title now — the Gallery reads a card by it, so it is
+ *  written at that moment rather than inherited from the run. */
+export async function publishArtifactAs(user: User, title?: string): Promise<void> {
+  await user.click(await screen.findByRole('button', { name: '發布 Artifact' }));
+  const nameField = await screen.findByLabelText('名稱');
+  if (title !== undefined) {
+    await user.clear(nameField);
+    await user.type(nameField, title);
+  }
+  // The dialog's own confirm, not the panel button that opened it — that one reads
+  // 發布 Artifact.
+  await user.click(screen.getByRole('button', { name: /^發布$/ }));
+}

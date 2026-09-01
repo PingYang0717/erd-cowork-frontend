@@ -12,8 +12,8 @@ import { artifactHref } from '@/utils/artifactUrl';
 import {
   directoryEntryKey,
   directoryEntryLabel,
+  directoryEntryMatches,
   directoryShareTarget,
-  shareAsDirectoryEntry,
 } from '@/utils/directoryEntry';
 
 import styles from './ShareArtifactDialog.module.css';
@@ -28,8 +28,8 @@ const ShareArtifactDialog: React.FC<ShareArtifactDialogProps> = ({ open, onClose
   const { shares, isLoading } = useArtifactShares(artifact.id, open);
   const updateShares = useUpdateArtifactShares();
   const [recipients, setRecipients] = useState<DirectoryEntry[]>([]);
-  const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const shareUrl = artifactHref(artifact.id);
 
   // Opening loads who it is already shared with, and the picker starts from them: this
   // is an edit to a list, not a fresh act each time. Adjusted during render on the
@@ -39,15 +39,13 @@ const ShareArtifactDialog: React.FC<ShareArtifactDialogProps> = ({ open, onClose
     setWasOpen(open);
     if (!open) {
       setRecipients([]);
-      setShareUrl(null);
       setCopied(false);
     }
   }
 
-  const alreadyShared = useMemo<DirectoryEntry[]>(
-    () => shares.map(shareAsDirectoryEntry),
-    [shares],
-  );
+  // The share list comes back in the picker's own shape, so it is already what the field
+  // works in — recipients read with their names, and nothing has to be mapped.
+  const alreadyShared = shares;
   const [edited, setEdited] = useState(false);
   const chosen = edited ? recipients : alreadyShared;
 
@@ -62,7 +60,7 @@ const ShareArtifactDialog: React.FC<ShareArtifactDialogProps> = ({ open, onClose
   }
 
   function handleConfirm() {
-    const before = shares;
+    const before = alreadyShared.map(directoryShareTarget);
     const after = chosen.map(directoryShareTarget);
     const key = (target: ShareTarget) => `${target.type}:${target.id}`;
     const beforeKeys = new Set(before.map(key));
@@ -73,25 +71,18 @@ const ShareArtifactDialog: React.FC<ShareArtifactDialogProps> = ({ open, onClose
         id: artifact.id,
         update: {
           add: after.filter((target) => !beforeKeys.has(key(target))),
-          remove: before
-            .map((share) => ({ type: share.type, id: share.id }))
-            .filter((target) => !afterKeys.has(key(target))),
+          remove: before.filter((target) => !afterKeys.has(key(target))),
         },
       },
-      {
-        // The link is this client's to build (`artifactHref`), so it does not wait on a
-        // URL from the response — the same link the Gallery's Copy link produces.
-        onSuccess: () => {
-          setEdited(false);
-          setShareUrl(artifactHref(artifact.id));
-        },
-      },
+      // Submitting is the end of the dialog: the recipient list was the thing being
+      // edited, and once it is saved there is nothing left here to do.
+      { onSuccess: handleClose },
     );
   }
 
   async function handleCopy() {
     try {
-      await navigator.clipboard.writeText(shareUrl ?? '');
+      await navigator.clipboard.writeText(shareUrl);
     } catch {
       // clipboard may be unavailable (e.g. insecure context); the link is
       // still visible and selectable in the input for manual copying
@@ -135,41 +126,43 @@ const ShareArtifactDialog: React.FC<ShareArtifactDialogProps> = ({ open, onClose
         </div>
       </div>
 
-      {shareUrl && (
-        <div className={styles.section}>
-          <div className={styles.sectionLabel}>分享連結</div>
-          <div className={styles.linkRow}>
-            <Input readOnly prefix={<LinkOutlined aria-hidden />} value={shareUrl} />
-            <Button
-              type="primary"
-              autoInsertSpace={false}
-              icon={copied ? <CheckOutlined aria-hidden /> : <CopyOutlined aria-hidden />}
-              onClick={handleCopy}
-            >
-              {copied ? '已複製' : '複製'}
-            </Button>
-          </div>
-          <div className={styles.confirmBanner}>
-            已加入左側 Artifacts 清單 — 可到 Artifacts 開啟或再次分享。
-          </div>
-        </div>
-      )}
-
-      <div className={styles.actions}>
-        <Button autoInsertSpace={false} onClick={handleClose}>
-          {shareUrl ? '完成' : '取消'}
-        </Button>
-        {!shareUrl && (
+      {/* Always here, not revealed by sharing. The link is the Artifact's address, not a
+          reward for pressing a button — someone who opened this dialog only to copy it
+          should not have to change the recipient list first. */}
+      <div className={styles.section}>
+        <div className={styles.sectionLabel}>分享連結</div>
+        <div className={styles.linkRow}>
+          <Input readOnly prefix={<LinkOutlined aria-hidden />} value={shareUrl} />
           <Button
             type="primary"
             autoInsertSpace={false}
-            disabled={!edited}
-            loading={updateShares.isPending}
-            onClick={handleConfirm}
+            icon={copied ? <CheckOutlined aria-hidden /> : <CopyOutlined aria-hidden />}
+            onClick={handleCopy}
           >
-            分享
+            {copied ? '已複製' : '複製'}
           </Button>
-        )}
+        </div>
+        {/* Styled as a hint, not as the green success banner it used to be: the link is
+            here from the moment the dialog opens, so a panel announcing that something
+            succeeded would be claiming it before anything had happened. */}
+        <div className={styles.hint}>
+          已加入左側 Artifacts 清單 — 可到 Artifacts 開啟或再次分享。
+        </div>
+      </div>
+
+      <div className={styles.actions}>
+        {/* Always pressable. Submit is also how this dialog is finished with, so gating
+            it on having changed something leaves someone who only came to copy the link
+            with no way out but the corner cross. Submitting an unchanged list sends an
+            empty delta, which is a no-op. */}
+        <Button
+          type="primary"
+          autoInsertSpace={false}
+          loading={updateShares.isPending}
+          onClick={handleConfirm}
+        >
+          Submit
+        </Button>
       </div>
     </Modal>
   );
@@ -205,6 +198,7 @@ const RecipientSelect: React.FC<RecipientSelectProps> = ({ value, loading, onCha
     return [...byKey.entries()].map(([key, entry]) => ({
       value: key,
       label: directoryEntryLabel(entry),
+      entry,
     }));
   }, [entries, value]);
 
@@ -228,7 +222,13 @@ const RecipientSelect: React.FC<RecipientSelectProps> = ({ value, loading, onCha
       // `filterOption: false` hands matching to the backend, which is doing the
       // searching — filtering again here would hide rows it deliberately returned.
       showSearch={{
-        filterOption: false,
+        // Narrows on every field a row can be found by, not on the label: a person is as
+        // findable by their org as by their name. The backend is searching too, but on
+        // the debounced keyword — this is what answers the keystroke in between, and it
+        // never hides a row the backend returned, because it looks at more than the
+        // backend was given.
+        filterOption: (input, option) =>
+          option?.entry === undefined || directoryEntryMatches(option.entry, input),
         searchValue: keyword,
         onSearch: setKeyword,
       }}

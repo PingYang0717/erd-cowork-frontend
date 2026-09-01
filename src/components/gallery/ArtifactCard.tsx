@@ -1,7 +1,7 @@
 import {
   CopyOutlined,
   DashboardOutlined,
-  EyeInvisibleOutlined,
+  DeleteOutlined,
   MoreOutlined,
   PushpinFilled,
   PushpinOutlined,
@@ -12,7 +12,7 @@ import { Dropdown } from 'antd';
 import React, { useState } from 'react';
 
 import ShareArtifactDialog from '@/components/artifact/ShareArtifactDialog';
-import { useSetArtifactPinned, useUnpublishArtifact } from '@/hooks/useArtifactMutations';
+import { useToggleArtifactPin, useUnpublishArtifact } from '@/hooks/useArtifactMutations';
 import type { Artifact } from '@/types/api/index';
 import { artifactHref } from '@/utils/artifactUrl';
 import { dispatchMenuAction } from '@/utils/dispatchMenuAction';
@@ -26,7 +26,7 @@ interface ArtifactCardProps {
 }
 
 const ArtifactCard: React.FC<ArtifactCardProps> = ({ artifact, onOpen }) => {
-  const setArtifactPinned = useSetArtifactPinned();
+  const toggleArtifactPin = useToggleArtifactPin();
   const unpublishArtifact = useUnpublishArtifact();
   const [isShareOpen, setIsShareOpen] = useState(false);
   const isPinned = artifact.pinnedAt !== null;
@@ -35,35 +35,40 @@ const ArtifactCard: React.FC<ArtifactCardProps> = ({ artifact, onOpen }) => {
   const isSharedToMe = !artifact.isOwn;
 
   // Everything goes straight to the backend; an endpoint that has not landed answers
-  // with an error the mutation toasts. `canPin` is the one permission the backend
-  // states up front.
+  // Pinning is never gated: it is this reader's own bookmark on someone's work, not
+  // something the owner grants. Everything else here acts on the Artifact itself, so it
+  // belongs to whoever owns it — and is absent rather than disabled on a card that does
+  // not, since a greyed row invites a click that can never work.
   const menuItems = [
     {
       key: 'pin',
       label: isPinned ? 'Unpin' : 'Pin',
       icon: isPinned ? <PushpinFilled aria-hidden /> : <PushpinOutlined aria-hidden />,
-      disabled: !artifact.canPin,
     },
-    { key: 'copyLink', label: 'Copy link', icon: <CopyOutlined aria-hidden /> },
-    artifact.isOwn
-      ? {
-          key: 'share',
-          label: 'Share',
-          icon: <ShareAltOutlined aria-hidden />,
-        }
-      : null,
-    { type: 'divider' as const },
-    {
-      key: 'unpublish',
-      label: 'Unpublish',
-      danger: true,
-      icon: <EyeInvisibleOutlined aria-hidden />,
-    },
-  ].filter((item): item is NonNullable<typeof item> => item !== null);
+    ...(artifact.isOwn
+      ? [
+          { key: 'copyLink', label: 'Copy link', icon: <CopyOutlined aria-hidden /> },
+          { key: 'share', label: 'Share', icon: <ShareAltOutlined aria-hidden /> },
+          { type: 'divider' as const },
+          {
+            key: 'unpublish',
+            // Reads "Delete" to the user, and is `unpublishArtifact` underneath: from
+            // where they stand this removes the Artifact, and the fact that it survives
+            // inside its conversation is not something a menu has to explain.
+            // `danger` for the red wording — the fill it normally brings is turned off in
+            // `.erd-menu` (index.css), since a red row reads as a warning about where the
+            // pointer is rather than about what the action does.
+            danger: true,
+            label: 'Delete',
+            icon: <DeleteOutlined aria-hidden />,
+          },
+        ]
+      : []),
+  ];
 
   function handleMenuClick(key: string) {
     dispatchMenuAction(key, {
-      pin: () => setArtifactPinned.mutate({ id: artifact.id, pinned: !isPinned }),
+      pin: () => toggleArtifactPin.mutate(artifact.id),
       copyLink: () => navigator.clipboard.writeText(artifactHref(artifact.id)),
       share: () => setIsShareOpen(true),
       unpublish: () => unpublishArtifact.mutate(artifact.id),
@@ -105,8 +110,7 @@ const ArtifactCard: React.FC<ArtifactCardProps> = ({ artifact, onOpen }) => {
           className={styles.pinButton}
           aria-label={isPinned ? `Unpin ${artifact.title}` : `Pin ${artifact.title}`}
           aria-pressed={isPinned}
-          disabled={!artifact.canPin}
-          onClick={() => setArtifactPinned.mutate({ id: artifact.id, pinned: !isPinned })}
+          onClick={() => toggleArtifactPin.mutate(artifact.id)}
         >
           {isPinned ? <PushpinFilled aria-hidden /> : <PushpinOutlined aria-hidden />}
         </button>
