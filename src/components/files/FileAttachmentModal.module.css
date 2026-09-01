@@ -180,3 +180,9 @@
 .uploadProgress {
   margin-top: 12px;
 }
+
+/* The dropzone while an upload is in flight: still readable, plainly not a target. */
+.dropzoneBusy {
+  cursor: default;
+  opacity: 0.55;
+}
