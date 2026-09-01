@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Suspense } from 'react';
 import { describe, expect, it } from 'vitest';
@@ -30,13 +30,25 @@ function renderPanel(sessionId = 'session-1', seedDraft = false) {
   );
 }
 
+/** Presses Submit and waits for the write to land. The button goes back to disabled once
+ *  the refetched session matches the draft, which is the panel's own signal that there is
+ *  nothing left unsaved — steadier than watching for the dialog, which this harness never
+ *  closes (its `onClose` is a no-op). */
+async function submitSelection(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(screen.getByRole('button', { name: 'Submit' }));
+  await waitFor(() => expect(screen.getByRole('button', { name: 'Submit' })).toBeDisabled());
+}
+
 function selectedSources() {
   return screen.getByRole('dialog').querySelector('[class*="selectedChips"]') as HTMLElement;
 }
 
 /** A data source is attached to a conversation, not to the user: the write goes to
  *  PATCH/DELETE /sessions/{id}/data-source, and what a fresh mount reads back is the
- *  session's detail. Two conversations can draw on different sources. */
+ *  session's detail. Two conversations can draw on different sources.
+ *
+ *  Picking is one decision made out of several clicks, so nothing reaches the server
+ *  until Submit — every test here has to press it. */
 describe('ConnectorsPanel', () => {
   it('attaches an available source to the session and reads it back on a fresh mount', async () => {
     const user = userEvent.setup();
@@ -45,6 +57,7 @@ describe('ConnectorsPanel', () => {
     // Lot Info seeds as available.
     await user.click(await screen.findByRole('button', { name: 'Connect Lot Info' }));
     expect(within(selectedSources()).getByText('Lot Info')).toBeInTheDocument();
+    await submitSelection(user);
 
     // A fresh tree with a fresh query cache reads the choice back from the session.
     first.unmount();
@@ -61,7 +74,7 @@ describe('ConnectorsPanel', () => {
     const first = renderPanel('session-1');
 
     await user.click(await screen.findByRole('button', { name: 'Connect Lot Info' }));
-    await screen.findByRole('button', { name: 'Disconnect Lot Info' });
+    await submitSelection(user);
     first.unmount();
 
     // session-2 was never given Lot Info, and must not have picked it up.
@@ -78,9 +91,10 @@ describe('ConnectorsPanel', () => {
     renderPanel('draft-never-written', true);
 
     await user.click(await screen.findByRole('button', { name: 'Connect Lot Info' }));
+    await submitSelection(user);
 
-    expect(await screen.findByRole('button', { name: 'Disconnect Lot Info' })).toBeInTheDocument();
-    expect(within(selectedSources()).getByText('Lot Info')).toBeInTheDocument();
+    // The write landed on a session the backend had never heard of until it did.
+    expect(screen.getByRole('button', { name: 'Disconnect Lot Info' })).toBeInTheDocument();
   });
 
   it('disconnects a connected source', async () => {
@@ -88,7 +102,8 @@ describe('ConnectorsPanel', () => {
     renderPanel();
 
     await user.click(await screen.findByRole('button', { name: 'Disconnect WAT' }));
-    expect(await screen.findByRole('button', { name: 'Connect WAT' })).toBeInTheDocument();
+    await submitSelection(user);
+    expect(screen.getByRole('button', { name: 'Connect WAT' })).toBeInTheDocument();
     expect(within(selectedSources()).queryByText('WAT')).not.toBeInTheDocument();
   });
 
@@ -103,10 +118,11 @@ describe('ConnectorsPanel', () => {
     );
     await user.click(screen.getByRole('button', { name: /Add/ }));
 
+    // Added and picked, but not yet written.
     expect(
       await screen.findByRole('button', { name: 'Disconnect My Team DB' }),
     ).toBeInTheDocument();
-
+    await submitSelection(user);
     first.unmount();
     renderPanel();
     expect(

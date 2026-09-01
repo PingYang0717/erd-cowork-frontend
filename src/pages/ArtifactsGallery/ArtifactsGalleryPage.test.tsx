@@ -23,7 +23,6 @@ function artifactDto(over: Partial<Artifact> & Pick<Artifact, 'id' | 'title'>): 
     owner: 'u-001',
     ownerDisplay: 'Alex Chen',
     canPin: true,
-    canShare: true,
     isOwn: true,
     isShared: false,
     hasPersonalCopy: false,
@@ -64,7 +63,7 @@ describe('Artifacts gallery', () => {
 
   /** The Gallery is a shelf of published work. An Artifact the user made but never
    *  published lives in its session's thread and nowhere else — publishing is the
-   *  deliberate act that puts it here, and unpublishing takes it back out. */
+   *  deliberate act that puts it here, and deleting is what takes it back out. */
   it('leaves out an Artifact that was never published, and does not count it', async () => {
     renderGalleryPage();
 
@@ -155,6 +154,22 @@ describe('Artifacts gallery', () => {
     ).toBeGreaterThan(0);
   });
 
+  /** The direction has to be the caller's to state. With one toggling endpoint and the
+   *  backend deciding, there was no way to say "unpin" — an Artifact could be pinned and
+   *  then never released, which is exactly what happened. */
+  it('pins an Artifact and releases it again', async () => {
+    const user = userEvent.setup();
+    renderGalleryPage();
+    const name = 'SPC analysis — Vt (gate CD)';
+    await screen.findByRole('button', { name });
+
+    await user.click(screen.getByRole('button', { name: `Pin ${name}` }));
+    expect(await screen.findByRole('button', { name: `Unpin ${name}` })).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: `Unpin ${name}` }));
+    expect(await screen.findByRole('button', { name: `Pin ${name}` })).toBeInTheDocument();
+  });
+
   it('disables the pin button when the user may not pin this Artifact', async () => {
     server.use(
       http.get('/api/artifacts', () =>
@@ -169,7 +184,7 @@ describe('Artifacts gallery', () => {
     expect(screen.getByRole('button', { name: 'Pin SPC analysis — Vt (gate CD)' })).toBeDisabled();
   });
 
-  it("shows Pin, Copy Link, Share, and Delete in an owned card's more-actions menu", async () => {
+  it("shows Pin, Copy Link, Share, and Unpublish in an owned card's more-actions menu", async () => {
     const user = userEvent.setup();
     renderGalleryPage();
     await screen.findByRole('button', { name: 'SPC analysis — Vt (gate CD)' });
@@ -179,7 +194,7 @@ describe('Artifacts gallery', () => {
     );
     // Nothing is disabled up front: every action goes to the backend, and an endpoint
     // that has not landed answers with an error instead.
-    for (const label of ['Pin', 'Copy link', 'Share', 'Delete']) {
+    for (const label of ['Pin', 'Copy link', 'Share', 'Unpublish']) {
       expect(screen.getByRole('menuitem', { name: label })).not.toHaveAttribute(
         'aria-disabled',
         'true',
@@ -187,9 +202,9 @@ describe('Artifacts gallery', () => {
     }
   });
 
-  /** Everything on the shelf is published, so Unpublish is the one action every owned
-   *  card can offer — it is how an Artifact leaves the Gallery. */
-  it("offers Unpublish in an owned card's menu, and the card leaves the Gallery", async () => {
+  /** Unpublish, not delete: what leaves is the Artifact's place on the shelf. The
+   *  Artifact itself goes on living in the conversation that produced it. */
+  it('unpublishes a card through the menu, and it leaves the Gallery', async () => {
     const user = userEvent.setup();
     renderGalleryPage();
     await screen.findByRole('button', { name: 'SPC analysis — Vt (gate CD)' });
@@ -198,52 +213,6 @@ describe('Artifacts gallery', () => {
       screen.getByRole('button', { name: 'More actions for SPC analysis — Vt (gate CD)' }),
     );
     await user.click(screen.getByRole('menuitem', { name: 'Unpublish' }));
-
-    await waitFor(() =>
-      expect(
-        screen.queryByRole('button', { name: 'SPC analysis — Vt (gate CD)' }),
-      ).not.toBeInTheDocument(),
-    );
-  });
-
-  /** Publication is what sharing rests on (unpublish revokes access), so an Artifact
-   *  that has been shared out cannot leave quietly — the owner is told what it costs
-   *  before it happens. */
-  it('warns before unpublishing an Artifact that is currently shared out', async () => {
-    const user = userEvent.setup();
-    server.use(
-      http.get('/api/artifacts', () =>
-        HttpResponse.json([
-          artifactDto({
-            id: 'artifact-1',
-            title: 'SPC analysis — Vt (gate CD)',
-            isShared: true,
-          }),
-        ]),
-      ),
-    );
-    renderGalleryPage();
-    await screen.findByRole('button', { name: 'SPC analysis — Vt (gate CD)' });
-
-    await user.click(
-      screen.getByRole('button', { name: 'More actions for SPC analysis — Vt (gate CD)' }),
-    );
-    await user.click(screen.getByRole('menuitem', { name: 'Unpublish' }));
-
-    expect(await screen.findByText(/收回/)).toBeInTheDocument();
-    // Still on the shelf until the owner confirms.
-    expect(screen.getByRole('button', { name: 'SPC analysis — Vt (gate CD)' })).toBeInTheDocument();
-  });
-
-  it('deletes a card through the menu, and the card is gone', async () => {
-    const user = userEvent.setup();
-    renderGalleryPage();
-    await screen.findByRole('button', { name: 'SPC analysis — Vt (gate CD)' });
-
-    await user.click(
-      screen.getByRole('button', { name: 'More actions for SPC analysis — Vt (gate CD)' }),
-    );
-    await user.click(screen.getByRole('menuitem', { name: 'Delete' }));
 
     await waitFor(() =>
       expect(
@@ -327,13 +296,12 @@ describe('Artifacts gallery', () => {
 
   it('de-duplicates "Shared to me" by artifact id without collapsing distinct same-name artifacts', async () => {
     const shared = (over: Partial<Artifact> & Pick<Artifact, 'id' | 'title'>) =>
-      // Someone else's Artifact: not own, and not shareable onward.
+      // Someone else's Artifact: not own, so not shareable onward either.
       artifactDto({
         sessionId: 'session-2',
         sessionTitle: 'Defect pareto — W12',
         ownerDisplay: 'Alice Wu',
         isOwn: false,
-        canShare: false,
         isShared: true,
         ...over,
       });
