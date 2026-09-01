@@ -1,9 +1,8 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import {
-  pinArtifact,
   publishArtifact,
-  unpinArtifact,
+  toggleArtifactPin,
   unpublishArtifact,
   updateArtifactShares,
 } from '@/api/artifactApi';
@@ -13,17 +12,22 @@ import { useActionErrorToast } from './useActionErrorToast';
 import { artifactsQueryKey } from './useArtifacts';
 import { artifactSharesQueryKey } from './useArtifactShares';
 
-/** Pins or releases one Artifact. The caller says which direction — a toggle resolved by
- *  the backend left no way to express "unpin", so a pinned Artifact could never be
- *  released. */
-export function useSetArtifactPinned() {
+/** Toggles one Artifact's pin.
+ *
+ *  The response is written straight into the list rather than only invalidating it. The
+ *  backend owns the direction, so its answer is the only thing that knows which way the
+ *  pin went — waiting for a refetch to find out leaves the button showing the old state
+ *  in the meantime, and shows the wrong one entirely if the refetch is slow or fails. */
+export function useToggleArtifactPin() {
   const queryClient = useQueryClient();
   const toastError = useActionErrorToast();
 
   return useMutation({
-    mutationFn: ({ id, pinned }: { id: string; pinned: boolean }) =>
-      pinned ? pinArtifact(id) : unpinArtifact(id),
-    onSuccess: () => {
+    mutationFn: (id: string) => toggleArtifactPin(id),
+    onSuccess: (updated) => {
+      queryClient.setQueryData<Artifact[]>(artifactsQueryKey, (previous) =>
+        previous?.map((artifact) => (artifact.id === updated.id ? updated : artifact)),
+      );
       queryClient.invalidateQueries({ queryKey: artifactsQueryKey });
     },
     onError: toastError,

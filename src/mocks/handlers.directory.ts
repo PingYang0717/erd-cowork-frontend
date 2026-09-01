@@ -30,11 +30,15 @@ export const directoryHandlers = [
   http.get('/api/hr/employeesAndOrgs', ({ request }) => {
     const key = new URL(request.url).searchParams.get('key')?.trim() ?? '';
     if (key.length < DIRECTORY_SEARCH_MIN_LENGTH) {
-      return HttpResponse.json([]);
+      return HttpResponse.json({ content: [] });
     }
     const needle = key.toLowerCase();
-    return HttpResponse.json(
-      DIRECTORY.filter((entry) => directoryEntryLabel(entry).toLowerCase().includes(needle)),
-    );
+    // The real endpoint answers inside a `content` envelope; so does this, or the
+    // unwrapping would never be exercised.
+    return HttpResponse.json({
+      content: DIRECTORY.filter((entry) =>
+        directoryEntryLabel(entry).toLowerCase().includes(needle),
+      ),
+    });
   }),
 ];

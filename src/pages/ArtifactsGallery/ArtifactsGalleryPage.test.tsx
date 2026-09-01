@@ -170,6 +170,37 @@ describe('Artifacts gallery', () => {
     expect(await screen.findByRole('button', { name: `Pin ${name}` })).toBeInTheDocument();
   });
 
+  /** The backend owns the direction, so its answer is the only thing that knows which
+   *  way the pin went. Reading it from the response rather than waiting for the list to
+   *  come back again is what keeps the button honest when that refetch is slow — or, as
+   *  here, never arrives at all. */
+  it('flips the button from the toggle response, without waiting for the list to reload', async () => {
+    const user = userEvent.setup();
+    const name = 'SPC analysis — Vt (gate CD)';
+    let listCalls = 0;
+    server.use(
+      http.get('/api/artifacts', () => {
+        listCalls += 1;
+        // Only the first read succeeds; everything after it fails, so nothing but the
+        // toggle's own answer can move the button.
+        return listCalls === 1
+          ? HttpResponse.json([artifactDto({ id: 'artifact-1', title: name })])
+          : new HttpResponse(null, { status: 500 });
+      }),
+      http.post('/api/artifacts/:id/pin', () =>
+        HttpResponse.json(
+          artifactDto({ id: 'artifact-1', title: name, pinnedAt: '2026-09-01T00:00:00.000Z' }),
+        ),
+      ),
+    );
+    renderGalleryPage();
+    await screen.findByRole('button', { name });
+
+    await user.click(screen.getByRole('button', { name: `Pin ${name}` }));
+
+    expect(await screen.findByRole('button', { name: `Unpin ${name}` })).toBeInTheDocument();
+  });
+
   it('disables the pin button when the user may not pin this Artifact', async () => {
     server.use(
       http.get('/api/artifacts', () =>

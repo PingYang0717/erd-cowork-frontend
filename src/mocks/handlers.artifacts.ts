@@ -142,9 +142,6 @@ function updateArtifact(
   return HttpResponse.json(toArtifactDto(updated));
 }
 
-const setPinned = (id: string | readonly string[] | undefined, pinned: boolean) =>
-  updateArtifact(id, { pinnedAt: pinned ? new Date().toISOString() : null });
-
 const setPublished = (id: string | readonly string[] | undefined, published: boolean) =>
   updateArtifact(id, { publishedAt: published ? new Date().toISOString() : null });
 
@@ -166,11 +163,14 @@ export const artifactHandlers = [
 
   /** Toggle: which way it goes is the backend's call, so the request carries no
    *  direction and the client cannot act on a stale reading of its own. */
-  // Pinning takes a direction from the caller rather than toggling: a toggle left no way
-  // to say "unpin", so an Artifact could be pinned and never released.
-  http.post('/api/artifacts/:id/pin', ({ params }) => setPinned(params.id, true)),
-
-  http.delete('/api/artifacts/:id/pin', ({ params }) => setPinned(params.id, false)),
+  // One endpoint, no body: the backend decides the direction and answers with the
+  // Artifact, whose `pinnedAt` is what the client reads the new state from.
+  http.post('/api/artifacts/:id/pin', ({ params }) => {
+    const existing = artifacts.read().find((artifact) => artifact.id === params.id);
+    return updateArtifact(params.id, {
+      pinnedAt: existing?.pinnedAt == null ? new Date().toISOString() : null,
+    });
+  }),
 
   /** 發布 / 取消發布 — split by method, and the timestamp is the server's to write. */
   http.post('/api/artifacts/:id/publish', ({ params }) => setPublished(params.id, true)),

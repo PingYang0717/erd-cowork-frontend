@@ -7,11 +7,26 @@ import { apiClient } from './apiClient';
  *  request would be large, slow, and useless to read. */
 export const DIRECTORY_SEARCH_MIN_LENGTH = 3;
 
+/** The HR directory answers inside a `content` envelope rather than as a bare array. */
+interface DirectorySearchResponse {
+  content?: DirectoryEntry[];
+}
+
 /** Searches people and org units by a free-text key (department code, section code, NT
  *  account or name). A search rather than a full listing: the directory is the whole
- *  organisation, which is far too large to send and filter client-side. */
-export const searchDirectory = (key: string, signal?: AbortSignal) =>
-  apiClient.get<DirectoryEntry[]>('/hr/employeesAndOrgs', {
+ *  organisation, which is far too large to send and filter client-side.
+ *
+ *  The envelope is unwrapped here so nothing downstream has to know about it — and read
+ *  defensively, because a body without `content` (an error rendered as JSON, a shape
+ *  change) has to come out as "no results" rather than as something the picker will try
+ *  to iterate. */
+export const searchDirectory = async (
+  key: string,
+  signal?: AbortSignal,
+): Promise<DirectoryEntry[]> => {
+  const body = await apiClient.get<DirectorySearchResponse>('/hr/employeesAndOrgs', {
     params: { key },
     signal,
   });
+  return Array.isArray(body?.content) ? body.content : [];
+};
