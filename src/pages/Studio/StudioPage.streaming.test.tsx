@@ -2,6 +2,7 @@ import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
 
+import { useConnectorsPanelStore } from '@/stores/useConnectorsPanelStore';
 import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
 import { useStudioLayoutStore } from '@/stores/useStudioLayoutStore';
 import { mockAgentStream } from '@/test/agentStream';
@@ -503,8 +504,14 @@ describe('Streaming a run in the Studio', () => {
       );
       await user.click(await screen.findByRole('menuitem', { name: /^Connectors/ }));
       await user.click(await screen.findByRole('button', { name: 'Connect Defect' }));
-      await screen.findByRole('button', { name: 'Disconnect Defect' });
-      await user.click(screen.getByRole('button', { name: 'Done' }));
+      // Nothing is written until Submit: picking sources is one decision, not one per
+      // click.
+      // Nothing is written until Submit: picking sources is one decision, not one per
+      // click. The panel closes only after every write has landed, so its own open flag
+      // is the signal that the session now has them — the dialog element itself is no
+      // use here, since antd leaves it in the DOM and merely hides it.
+      await user.click(screen.getByRole('button', { name: 'Submit' }));
+      await waitFor(() => expect(useConnectorsPanelStore.getState().isOpen).toBe(false));
 
       // Make the first conversation real: New chat is a no-op while a draft is still
       // open (useSessionGroups), so it has to have been sent to before a second one can
@@ -544,8 +551,14 @@ describe('Streaming a run in the Studio', () => {
       );
       await user.click(await screen.findByRole('menuitem', { name: /^Connectors/ }));
       await user.click(await screen.findByRole('button', { name: 'Connect Defect' }));
-      await screen.findByRole('button', { name: 'Disconnect Defect' });
-      await user.click(screen.getByRole('button', { name: 'Done' }));
+      // Nothing is written until Submit: picking sources is one decision, not one per
+      // click.
+      // Nothing is written until Submit: picking sources is one decision, not one per
+      // click. The panel closes only after every write has landed, so its own open flag
+      // is the signal that the session now has them — the dialog element itself is no
+      // use here, since antd leaves it in the DOM and merely hides it.
+      await user.click(screen.getByRole('button', { name: 'Submit' }));
+      await waitFor(() => expect(useConnectorsPanelStore.getState().isOpen).toBe(false));
 
       await user.click(screen.getByRole('button', { name: 'SPC analysis' }));
       await screen.findByText('分析條件');

@@ -23,10 +23,13 @@ function fileExtension(fileName: string) {
 // xlsx/xls = success.
 interface FileRowProps {
   upload: UploadedFileInfo;
+  /** True while another upload is in flight: removing a file then would race the request
+   *  that is still describing the old set. */
+  disabled: boolean;
   onRemove: () => void;
 }
 
-const FileRow: React.FC<FileRowProps> = ({ upload, onRemove }) => {
+const FileRow: React.FC<FileRowProps> = ({ upload, disabled, onRemove }) => {
   const ext = fileExtension(upload.name);
   return (
     <span className={styles.fileRow}>
@@ -48,6 +51,7 @@ const FileRow: React.FC<FileRowProps> = ({ upload, onRemove }) => {
         type="button"
         className={styles.fileRowRemove}
         aria-label={`Remove ${upload.name}`}
+        disabled={disabled}
         onClick={onRemove}
       >
         <CloseOutlined aria-hidden />
@@ -78,6 +82,7 @@ const FileAttachmentModal: React.FC<FileAttachmentModalProps> = ({
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const totalBytes = attachments.reduce((sum, a) => sum + a.sizeBytes, 0);
+  const isUploading = uploadPercent !== null;
 
   return (
     <Modal open={open} onCancel={onClose} title="Attach files" footer={null} destroyOnHidden>
@@ -90,6 +95,7 @@ const FileAttachmentModal: React.FC<FileAttachmentModalProps> = ({
         accept={ACCEPT_ATTRIBUTE}
         className={styles.hiddenInput}
         aria-label="Choose files"
+        disabled={isUploading}
         onChange={(e) => {
           if (e.target.files) {
             onAddFiles(e.target.files);
@@ -97,20 +103,28 @@ const FileAttachmentModal: React.FC<FileAttachmentModalProps> = ({
           e.target.value = '';
         }}
       />
+      {/* Shut while bytes are going out. A CSV here runs to gigabytes, so the upload is
+          a window the user can act in — and a second batch chosen mid-flight, or a file
+          removed from under one, lands on a request already describing a different set. */}
       <div
         role="button"
-        tabIndex={0}
-        className={styles.dropzone}
-        onClick={() => inputRef.current?.click()}
+        tabIndex={isUploading ? -1 : 0}
+        aria-disabled={isUploading || undefined}
+        className={isUploading ? `${styles.dropzone} ${styles.dropzoneBusy}` : styles.dropzone}
+        onClick={() => {
+          if (!isUploading) {
+            inputRef.current?.click();
+          }
+        }}
         onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
+          if (!isUploading && (e.key === 'Enter' || e.key === ' ')) {
             inputRef.current?.click();
           }
         }}
         onDragOver={(e) => e.preventDefault()}
         onDrop={(e) => {
           e.preventDefault();
-          if (e.dataTransfer.files.length) {
+          if (!isUploading && e.dataTransfer.files.length) {
             onAddFiles(e.dataTransfer.files);
           }
         }}
@@ -152,7 +166,11 @@ const FileAttachmentModal: React.FC<FileAttachmentModalProps> = ({
           <ul className={styles.attachedList}>
             {attachments.map((upload) => (
               <li key={upload.id}>
-                <FileRow upload={upload} onRemove={() => onRemoveFile(upload.id)} />
+                <FileRow
+                  upload={upload}
+                  disabled={isUploading}
+                  onRemove={() => onRemoveFile(upload.id)}
+                />
               </li>
             ))}
           </ul>
