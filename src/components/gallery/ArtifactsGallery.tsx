@@ -6,10 +6,11 @@ import {
   SortAscendingOutlined,
 } from '@ant-design/icons';
 import { Dropdown } from 'antd';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { useArtifacts } from '@/hooks/useArtifacts';
+import { usePublishCoachStore } from '@/stores/usePublishCoachStore';
 import type { Artifact } from '@/types/api/index';
 import { artifactRoute } from '@/utils/artifactUrl';
 
@@ -78,6 +79,12 @@ function sortArtifacts(artifacts: Artifact[], sort: SortKey) {
 }
 
 const ArtifactsGallery: React.FC = () => {
+  // The coach highlight on the rail is asking the user to come here; arriving is what it
+  // was asking for, so this is where it ends — whichever way they got here, the toast's
+  // shortcut or the rail entry itself.
+  const dismissCoach = usePublishCoachStore((store) => store.dismiss);
+  useEffect(dismissCoach, [dismissCoach]);
+
   const { data } = useArtifacts();
   const navigate = useNavigate();
   const [category, setCategory] = useState<FilterCategory>('all');
