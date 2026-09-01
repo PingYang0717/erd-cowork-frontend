@@ -1,7 +1,9 @@
 import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { http } from 'msw';
 import { beforeEach, describe, expect, it } from 'vitest';
 
+import { server } from '@/mocks/server';
 import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
 import { useStudioLayoutStore } from '@/stores/useStudioLayoutStore';
 import { useThemeStore } from '@/stores/useThemeStore';
@@ -45,6 +47,38 @@ describe('Artifact version switcher', () => {
     await user.click(screen.getByRole('button', { name: '切換產出' }));
     await user.click((await screen.findAllByRole('menuitem')).at(-1) as HTMLElement);
     await expect.poll(artifactSrcdoc).toContain('· v1');
+  });
+
+  /** An Artifact's HTML is immutable once produced, so going back to a version already
+   *  seen must serve it from cache — the third fetch this counts against was a full
+   *  document re-downloaded for nothing on every switch back. */
+  it('switching back to a version already seen does not re-download it', async () => {
+    let contentFetches = 0;
+    server.use(
+      // Counting tap: returning undefined falls through to the real handler.
+      http.get('/api/artifacts/:id', () => {
+        contentFetches += 1;
+        return undefined;
+      }),
+    );
+    const user = userEvent.setup();
+    renderStudio();
+
+    await user.click(await screen.findByRole('button', { name: 'SPC — Vt (gate CD)' }));
+    await expect.poll(artifactSrcdoc).toContain('· v1');
+    await user.type(
+      await screen.findByRole('textbox', { name: 'Message' }),
+      'Regenerate the dashboard.{Enter}',
+    );
+    await expect.poll(artifactSrcdoc, { timeout: 5000 }).toContain('· v2');
+    const fetchesForBoth = contentFetches;
+
+    // Back to the first output: same document, already in hand.
+    await user.click(screen.getByRole('button', { name: '切換產出' }));
+    await user.click((await screen.findAllByRole('menuitem')).at(-1) as HTMLElement);
+    await expect.poll(artifactSrcdoc).toContain('· v1');
+
+    expect(contentFetches).toBe(fetchesForBoth);
   });
 
   it('shows the custom menu: header row, current-output highlight, per-row time, and published checks', async () => {

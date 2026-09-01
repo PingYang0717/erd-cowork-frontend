@@ -34,7 +34,10 @@ export function useToggleArtifactPin() {
           artifact.id === updated.id ? { ...artifact, ...updated } : artifact,
         ),
       );
-      queryClient.invalidateQueries({ queryKey: artifactsQueryKey });
+      // No invalidate to follow it. The merge above already holds everything the toggle
+      // changed, so a list refetch would only re-download what was just written — with
+      // the rail's badge keeping useArtifacts mounted on every page, that was one full
+      // list per pin, anywhere in the app.
     },
     onError: toastError,
   });
@@ -58,7 +61,8 @@ export function useUnpublishArtifact() {
       queryClient.setQueryData<Artifact[]>(artifactsQueryKey, (previous) =>
         previous?.filter((artifact) => artifact.id !== unpublishedId),
       );
-      queryClient.invalidateQueries({ queryKey: artifactsQueryKey });
+      // No invalidate: the filter above is the whole change — the row is gone, and a
+      // refetch would only confirm a list that was just made correct.
     },
     onError: toastError,
   });
@@ -72,10 +76,23 @@ export function useUpdateArtifactShares() {
   return useMutation({
     mutationFn: ({ id, update }: { id: string; update: ArtifactShareUpdate }) =>
       updateArtifactShares(id, update),
-    onSuccess: (_result, { id }) => {
-      queryClient.invalidateQueries({ queryKey: artifactSharesQueryKey(id) });
-      // `isShared` lives on the Artifact, so the list has to hear about it too.
-      queryClient.invalidateQueries({ queryKey: artifactsQueryKey });
+    onSuccess: (result, { id }) => {
+      // The PATCH answers with the new share list, so refetching it right back would be
+      // asking for what is already in hand. Guarded, because a body that is not a list
+      // (an envelope, an error rendered as JSON) must fall back to a refetch rather than
+      // be written into the cache as-is.
+      if (Array.isArray(result)) {
+        queryClient.setQueryData(artifactSharesQueryKey(id), result);
+        // `isShared` lives on the Artifact row, and the list in hand is what decides it.
+        queryClient.setQueryData<Artifact[]>(artifactsQueryKey, (previous) =>
+          previous?.map((artifact) =>
+            artifact.id === id ? { ...artifact, isShared: result.length > 0 } : artifact,
+          ),
+        );
+      } else {
+        queryClient.invalidateQueries({ queryKey: artifactSharesQueryKey(id) });
+        queryClient.invalidateQueries({ queryKey: artifactsQueryKey, exact: true });
+      }
     },
     onError: toastError,
   });
