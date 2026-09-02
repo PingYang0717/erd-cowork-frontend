@@ -2,7 +2,7 @@ import { CheckOutlined, DownOutlined, HistoryOutlined } from '@ant-design/icons'
 import React, { useEffect, useRef, useState } from 'react';
 
 import Tooltip from '@/components/common/Tooltip';
-import type { ArtifactVersion } from '@/types/api/index';
+import type { ArtifactVersion } from '@/types/api';
 import { formatRelativeTime } from '@/utils/formatRelativeTime';
 
 import styles from './VersionSwitcher.module.css';

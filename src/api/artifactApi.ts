@@ -1,4 +1,4 @@
-import type { Artifact, ArtifactShareUpdate, DirectoryEntry } from '@/types/api/index';
+import type { Artifact, ArtifactShareUpdate, DirectoryEntry } from '@/types/api';
 
 import { apiClient } from './apiClient';
 

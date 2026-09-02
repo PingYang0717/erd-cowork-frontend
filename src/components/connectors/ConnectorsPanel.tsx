@@ -24,7 +24,7 @@ import React, { type ReactNode, useMemo, useState } from 'react';
 import { useAddConnector, useSetSessionDataSource } from '@/hooks/useConnectorMutations';
 import { useConnectors } from '@/hooks/useConnectors';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
-import type { Connector, ConnectorStatus } from '@/types/api/index';
+import type { Connector, ConnectorStatus } from '@/types/api';
 import { selectConnected } from '@/utils/connectorSelectors';
 
 import styles from './ConnectorsPanel.module.css';

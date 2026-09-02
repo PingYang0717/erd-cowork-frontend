@@ -7,7 +7,7 @@ import { useUpdateArtifactShares } from '@/hooks/useArtifactMutations';
 import { useArtifactShares } from '@/hooks/useArtifactShares';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { useDirectorySearch } from '@/hooks/useDirectorySearch';
-import type { Artifact, DirectoryEntry, ShareTarget } from '@/types/api/index';
+import type { Artifact, DirectoryEntry, ShareTarget } from '@/types/api';
 import { artifactHref } from '@/utils/artifactUrl';
 import {
   directoryEntryKey,

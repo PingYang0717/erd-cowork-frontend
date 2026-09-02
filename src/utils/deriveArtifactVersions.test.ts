@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { Message } from '@/types/api/index';
+import type { Message } from '@/types/api';
 
 import { deriveArtifactVersions } from './deriveArtifactVersions';
 

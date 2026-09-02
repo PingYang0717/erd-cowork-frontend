@@ -1,5 +1,5 @@
 import { CONNECTOR_PREFS_STORAGE_KEY } from '@/constants/storage';
-import type { Connector } from '@/types/api/index';
+import type { Connector } from '@/types/api';
 
 import { apiClient } from './apiClient';
 

@@ -1,7 +1,7 @@
 ﻿import { CloseOutlined, FileExcelOutlined, FileTextOutlined } from '@ant-design/icons';
 import React from 'react';
 
-import type { UploadedFileInfo } from '@/types/api/index';
+import type { UploadedFileInfo } from '@/types/api';
 import { formatBytes } from '@/utils/formatBytes';
 
 import styles from './AttachmentChip.module.css';

@@ -6,7 +6,7 @@ import {
   unpublishArtifact,
   updateArtifactShares,
 } from '@/api/artifactApi';
-import type { Artifact, ArtifactShareUpdate } from '@/types/api/index';
+import type { Artifact, ArtifactShareUpdate } from '@/types/api';
 
 import { useActionErrorToast } from './useActionErrorToast';
 import { artifactsQueryKey } from './useArtifacts';

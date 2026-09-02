@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { DirectoryEntry } from '@/types/api/index';
+import type { DirectoryEntry } from '@/types/api';
 
 import {
   directoryEntryKey,

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { TableResult } from '@/types/api/index';
+import type { TableResult } from '@/types/api';
 
 import { splitAnswerByTableMarkers } from './tableMarkers';
 

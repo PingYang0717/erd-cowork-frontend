@@ -16,7 +16,7 @@ import { useSessionDetail } from '@/hooks/useSessionDetail';
 import { useActiveRunStore } from '@/stores/useActiveRunStore';
 import { usePublishCoachStore } from '@/stores/usePublishCoachStore';
 import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
-import type { ArtifactVersion } from '@/types/api/index';
+import type { ArtifactVersion } from '@/types/api';
 import { artifactHref } from '@/utils/artifactUrl';
 import { deriveArtifactVersions } from '@/utils/deriveArtifactVersions';
 

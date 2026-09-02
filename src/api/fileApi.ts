@@ -1,4 +1,4 @@
-import type { UploadedFileInfo } from '@/types/api/index';
+import type { UploadedFileInfo } from '@/types/api';
 
 import { apiClient } from './apiClient';
 

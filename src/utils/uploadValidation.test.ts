@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { UploadedFileInfo } from '@/types/api/index';
+import type { UploadedFileInfo } from '@/types/api';
 
 import { planFileAdditions } from './uploadValidation';
 
