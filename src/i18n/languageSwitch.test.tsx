@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import ShareArtifactDialog from '@/components/artifact/ShareArtifactDialog';
 import LanguageToggle from '@/components/common/LanguageToggle';
@@ -25,12 +25,13 @@ function renderDialogWithToggle() {
   );
 }
 
-/** The switch itself, not the wording it produces. The rest of the suite runs in Chinese
- *  (the default), asserting behaviour rather than language; these are the few cases that
- *  exist to prove the other language is reachable at all — and that the two dictionaries
- *  are not the same object wearing two names. */
+/** The switch itself, not the wording it produces. The rest of the suite is pinned to
+ *  English (setup.ts) and asserts behaviour rather than language; these are the few
+ *  cases that exist to prove the switch works from the app's own default — and that
+ *  the two dictionaries are not the same object wearing two names. */
 describe('Switching the interface language', () => {
-  afterEach(() => {
+  // From the app's real starting point, not the test suite's pinned language.
+  beforeEach(() => {
     useLanguageStore.setState({ language: 'zh-TW' });
   });
 

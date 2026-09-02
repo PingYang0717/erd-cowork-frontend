@@ -112,16 +112,16 @@ describe('Artifacts gallery', () => {
         .map((item) => within(item).getAllByRole('button')[0].textContent);
     }
 
-    await user.click(screen.getByRole('button', { name: /排序:/ }));
-    await user.click(screen.getByRole('menuitem', { name: /名稱 A→Z/ }));
+    await user.click(screen.getByRole('button', { name: /Sort:/ }));
+    await user.click(screen.getByRole('menuitem', { name: /Name A→Z/ }));
 
     const namesByNameSort = orderedCardNames();
     expect(namesByNameSort[0]).toContain('Daily monitor');
     expect(namesByNameSort[1]).toContain('Inline dashboard');
     expect(namesByNameSort[2]).toContain('SPC analysis');
 
-    await user.click(screen.getByRole('button', { name: /排序:/ }));
-    await user.click(screen.getByRole('menuitem', { name: /最近建立/ }));
+    await user.click(screen.getByRole('button', { name: /Sort:/ }));
+    await user.click(screen.getByRole('menuitem', { name: /Most recent/ }));
 
     const namesByRecency = orderedCardNames();
     expect(namesByRecency[0]).toContain('Inline dashboard');

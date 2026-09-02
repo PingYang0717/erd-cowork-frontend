@@ -4,10 +4,11 @@ import './seedTestIdentity';
 import '@testing-library/jest-dom/vitest';
 
 import { cleanup, configure } from '@testing-library/react';
-import { afterAll, afterEach, beforeAll } from 'vitest';
+import { afterAll, afterEach, beforeAll, beforeEach } from 'vitest';
 
 import { setStreamPace } from '@/mocks/handlers';
 import { server } from '@/mocks/server';
+import { useLanguageStore } from '@/stores/useLanguageStore';
 
 import { installFormDataWire } from './formDataWire';
 import { TEST_USER_ID } from './seedTestIdentity';
@@ -49,6 +50,17 @@ beforeAll(() => {
   // to sit through it.
   setStreamPace(0, 0);
   server.listen({ onUnhandledRequest: 'error' });
+});
+
+// Tests run in English, whatever the app's default is. The dictionary itself has its
+// own guards (the type alignment, the entry-by-entry comparison test, and
+// languageSwitch.test.tsx proving the toggle works); every other test is about
+// behavior, and pinning one language keeps its assertions from tracking copy edits
+// in the other. beforeEach, not beforeAll: a test that switches language must not
+// leak its choice into the next one. (Revises ADR-0012's "tests stay on the Chinese
+// default" — that held only while these strings were not in the dictionary at all.)
+beforeEach(() => {
+  useLanguageStore.setState({ language: 'en' });
 });
 
 afterEach(() => {

@@ -75,7 +75,7 @@ describe('File attachments', () => {
 
     expect(screen.getByRole('progressbar', { name: 'Uploading' })).toBeInTheDocument();
     expect(screen.getByLabelText('Choose files')).toBeDisabled();
-    expect(screen.getByRole('button', { name: /點擊選擇/ })).toHaveAttribute(
+    expect(screen.getByRole('button', { name: /Click to choose/ })).toHaveAttribute(
       'aria-disabled',
       'true',
     );
@@ -83,7 +83,7 @@ describe('File attachments', () => {
     await waitForElementToBeRemoved(() => screen.queryByRole('progressbar', { name: 'Uploading' }));
 
     expect(screen.getByLabelText('Choose files')).toBeEnabled();
-    expect(screen.getByRole('button', { name: /點擊選擇/ })).not.toHaveAttribute(
+    expect(screen.getByRole('button', { name: /Click to choose/ })).not.toHaveAttribute(
       'aria-disabled',
       'true',
     );
@@ -138,8 +138,8 @@ describe('File attachments', () => {
     const dialog = await selectASessionAndOpenFileModal(user);
 
     // The dropzone speaks the mockup's Chinese copy.
-    expect(within(dialog).getByText('點擊選擇')).toBeInTheDocument();
-    expect(within(dialog).getByText('最多 5 個檔案 · 總計上限 5 GB')).toBeInTheDocument();
+    expect(within(dialog).getByText('Click to choose')).toBeInTheDocument();
+    expect(within(dialog).getByText('Up to 5 files · 5 GB in total')).toBeInTheDocument();
 
     const input = screen.getByLabelText('Choose files');
     await user.upload(input, fileOfSize('lot-genealogy.csv', 1024));
@@ -159,7 +159,9 @@ describe('File attachments', () => {
 
     await user.upload(input, fileOfSize('notes.pdf', 1024));
 
-    expect(await within(dialog).findByRole('alert')).toHaveTextContent('僅支援 .csv / .xlsx');
+    expect(await within(dialog).findByRole('alert')).toHaveTextContent(
+      'Only .csv / .xlsx are supported',
+    );
     expect(within(dialog).queryByText('notes.pdf')).not.toBeInTheDocument();
 
     // Supported types still go through afterwards.
@@ -176,7 +178,7 @@ describe('File attachments', () => {
     const files = Array.from({ length: 6 }, (_, i) => fileOfSize(`file-${i}.csv`, 1024));
     await user.upload(input, files);
 
-    expect(await within(dialog).findByRole('alert')).toHaveTextContent('最多 5 個檔案');
+    expect(await within(dialog).findByRole('alert')).toHaveTextContent('Up to 5 files');
     expect(within(dialog).getAllByRole('button', { name: /^Remove file-/ })).toHaveLength(5);
     expect(within(dialog).queryByText('file-5.csv')).not.toBeInTheDocument();
   });
