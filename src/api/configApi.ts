@@ -1,5 +1,5 @@
 import { apiClient } from './apiClient';
-import { type Contract, readObject } from './responseContract';
+import { asObject, type Contract } from './responseContract';
 
 /** The limits the backend actually enforces. Published so the UI can state them rather
  *  than keep a second copy that drifts out of step with the server's. */
@@ -26,5 +26,4 @@ const APP_CONFIG: Contract<AppConfig> = {
   },
 };
 
-export const getConfig = async () =>
-  readObject(await apiClient.get<unknown>('/config'), APP_CONFIG);
+export const getConfig = () => apiClient.get('/config').then(asObject(APP_CONFIG));

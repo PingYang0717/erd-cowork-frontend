@@ -1,7 +1,7 @@
 import type { DirectoryEntry } from '@/types/api';
 
 import { apiClient } from './apiClient';
-import { type Contract, readArrayIn } from './responseContract';
+import { asArrayIn, type Contract } from './responseContract';
 
 /** How many characters the user must type before a search is worth making. The
  *  directory is org-wide, so a one- or two-character key matches most of it — the
@@ -34,12 +34,7 @@ export const DIRECTORY_ENTRY: Contract<DirectoryEntry> = {
  *  raises on a body without one (an error rendered as JSON, a shape change), because
  *  "no such person" is a real answer and a useful one: a broken response wearing that
  *  answer sends the user off to re-check a spelling that was never the problem. */
-export const searchDirectory = async (
-  keyword: string,
-  signal?: AbortSignal,
-): Promise<DirectoryEntry[]> =>
-  readArrayIn(
-    await apiClient.get<unknown>('/hr/employeesAndOrgs', { params: { keyword }, signal }),
-    'content',
-    DIRECTORY_ENTRY,
-  );
+export const searchDirectory = (keyword: string, signal?: AbortSignal): Promise<DirectoryEntry[]> =>
+  apiClient
+    .get('/hr/employeesAndOrgs', { params: { keyword }, signal })
+    .then(asArrayIn('content', DIRECTORY_ENTRY));

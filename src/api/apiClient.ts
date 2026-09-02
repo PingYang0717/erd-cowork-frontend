@@ -62,13 +62,18 @@ httpClient.interceptors.response.use(
 /** The interceptor above unwraps `response.data`, so axios's own return types
  *  (`AxiosResponse<T>`) no longer describe what callers receive. This wrapper corrects
  *  the type once, here, rather than having every endpoint module cast. */
+/** `T` defaults to `unknown` — the honest type of a wire body — so a JSON endpoint
+ *  writes `apiClient.get(url).then(asArray(CONTRACT))` and the return type flows
+ *  from the contract, not from an annotation. The explicit `<T>` form remains for
+ *  the text endpoints (`responseType: 'text'`) and the void writes, whose bodies a
+ *  contract has nothing to say about. */
 export const apiClient = {
-  get: <T>(url: string, config?: AxiosRequestConfig) =>
+  get: <T = unknown>(url: string, config?: AxiosRequestConfig) =>
     httpClient.get(url, config) as unknown as Promise<T>,
-  post: <T>(url: string, data?: unknown, config?: AxiosRequestConfig) =>
+  post: <T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig) =>
     httpClient.post(url, data, config) as unknown as Promise<T>,
-  patch: <T>(url: string, data?: unknown, config?: AxiosRequestConfig) =>
+  patch: <T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig) =>
     httpClient.patch(url, data, config) as unknown as Promise<T>,
-  delete: <T>(url: string, config?: AxiosRequestConfig) =>
+  delete: <T = unknown>(url: string, config?: AxiosRequestConfig) =>
     httpClient.delete(url, config) as unknown as Promise<T>,
 };

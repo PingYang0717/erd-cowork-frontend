@@ -164,3 +164,28 @@ export const readArrayIn = <T extends object>(
   }
   return readArray((body as Record<string, unknown>)[key], contract);
 };
+
+/** Curried forms for the endpoint modules' pipeline style:
+ *
+ *      export const listArtifacts = () =>
+ *        apiClient.get('/artifacts').then(asArray(ARTIFACT));
+ *
+ *  The call site reads as one declarative line — fetch, then read through the
+ *  contract — and the return type flows from the contract instead of from a
+ *  `<unknown>` annotation the reader has to look past. The uncurried `read*`
+ *  functions above stay exported for the places that read outside a promise chain
+ *  (the agent stream's refusal body, the hook-level attempted read on shares). */
+export const asObject =
+  <T extends object>(contract: Contract<T>) =>
+  (body: unknown): T =>
+    readObject(body, contract);
+
+export const asArray =
+  <T extends object>(contract: Contract<T>) =>
+  (body: unknown): T[] =>
+    readArray(body, contract);
+
+export const asArrayIn =
+  <T extends object>(key: string, contract: Contract<T>) =>
+  (body: unknown): T[] =>
+    readArrayIn(body, key, contract);

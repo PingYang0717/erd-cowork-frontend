@@ -2,7 +2,7 @@ import { CONNECTOR_PREFS_STORAGE_KEY } from '@/constants/storage';
 import type { Connector } from '@/types/api';
 
 import { apiClient } from './apiClient';
-import { type Contract, readArray } from './responseContract';
+import { asArray, type Contract } from './responseContract';
 
 /** What this browser remembers about the user's own preferences.
  *
@@ -65,10 +65,11 @@ const CONNECTOR: Contract<Connector> = {
   },
 };
 
-export const listCatalogue = async (): Promise<Connector[]> => {
-  const catalogue = readArray(await apiClient.get<unknown>('/connectors'), CONNECTOR);
-  return [...catalogue, ...readPrefs().custom];
-};
+export const listCatalogue = (): Promise<Connector[]> =>
+  apiClient
+    .get('/connectors')
+    .then(asArray(CONNECTOR))
+    .then((catalogue) => [...catalogue, ...readPrefs().custom]);
 
 /** Adds a source to the catalogue and answers its id, so the caller can attach it to the
  *  session it was added from — adding one IS choosing it.

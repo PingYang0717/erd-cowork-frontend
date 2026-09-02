@@ -2,7 +2,7 @@ import type { Artifact, ArtifactShareUpdate, DirectoryEntry } from '@/types/api'
 
 import { apiClient } from './apiClient';
 import { DIRECTORY_ENTRY } from './directoryApi';
-import { type Contract, readArray, readObject } from './responseContract';
+import { asArray, asObject, type Contract } from './responseContract';
 
 /** What the list promises per row (ADR-0013). The flags fall back to their deny/plain
  *  state — a card that under-claims is recoverable, one that over-claims is not — while
@@ -28,8 +28,7 @@ const ARTIFACT: Contract<Artifact> = {
   },
 };
 
-export const listArtifacts = async () =>
-  readArray(await apiClient.get<unknown>('/artifacts'), ARTIFACT);
+export const listArtifacts = () => apiClient.get('/artifacts').then(asArray(ARTIFACT));
 
 /** The backend returns the artifact's HTML as text/html directly. `responseType` is
  *  explicit so a document that happens to parse as JSON still arrives as text. `r` is a
@@ -91,8 +90,8 @@ const ARTIFACT_PIN_RESULT: Contract<ArtifactPinResult> = {
  *
  *  PATCH, not POST: the call edits one field of something that already exists rather than
  *  creating anything. */
-export const toggleArtifactPin = async (id: string) =>
-  readObject(await apiClient.patch<unknown>(`/artifacts/${id}/pin`), ARTIFACT_PIN_RESULT);
+export const toggleArtifactPin = (id: string) =>
+  apiClient.patch(`/artifacts/${id}/pin`).then(asObject(ARTIFACT_PIN_RESULT));
 
 /** Publishing is what makes an Artifact available to other people — and what sharing
  *  rests on. It carries the title the Artifact goes on the shelf under: the Gallery names
@@ -133,11 +132,10 @@ export const unpublishArtifact = (id: string) => apiClient.delete<void>(`/artifa
  *  nobody" are different facts, and the second is the one a user would act on: it says an
  *  Artifact is private while the Gallery card beside it may still be showing a Shared
  *  badge from the same data. Failing here lets the dialog tell them which it is. */
-export const listArtifactShares = async (id: string): Promise<DirectoryEntry[]> =>
-  readArray(await apiClient.get<unknown>(`/artifacts/${id}/shares`), {
-    ...DIRECTORY_ENTRY,
-    label: 'the share list',
-  });
+export const listArtifactShares = (id: string): Promise<DirectoryEntry[]> =>
+  apiClient
+    .get(`/artifacts/${id}/shares`)
+    .then(asArray({ ...DIRECTORY_ENTRY, label: 'the share list' }));
 
 /** Changes the share list by delta. PATCH with what to add and what to remove, rather
  *  than PUT with the whole list: sending the list would make two people editing the same
@@ -149,7 +147,7 @@ export const listArtifactShares = async (id: string): Promise<DirectoryEntry[]> 
  *  non-list into the cache the dialog maps over. `unknown` makes the check the compiler's
  *  business rather than a comment's. */
 export const updateArtifactShares = (id: string, update: ArtifactShareUpdate) =>
-  apiClient.patch<unknown>(`/artifacts/${id}/shares`, update);
+  apiClient.patch(`/artifacts/${id}/shares`, update);
 
 /** One JS error an Artifact's document reported while running, verbatim as its
  *  injected collector posts it. Lives here because it is a wire shape — the repair
@@ -168,8 +166,7 @@ const REPAIR_RESULT: Contract<{ repaired: boolean }> = {
 /** Asks the agent to rebuild an Artifact whose HTML threw while running. The answer
  *  is one honest boolean: a repair that produced no improvement says so rather than
  *  being reported as success. */
-export const repairArtifact = async (id: string, errors: BrowserJsError[]) =>
-  readObject(
-    await apiClient.post<unknown>(`/artifacts/${encodeURIComponent(id)}/repair`, { errors }),
-    REPAIR_RESULT,
-  );
+export const repairArtifact = (id: string, errors: BrowserJsError[]) =>
+  apiClient
+    .post(`/artifacts/${encodeURIComponent(id)}/repair`, { errors })
+    .then(asObject(REPAIR_RESULT));

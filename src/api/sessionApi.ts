@@ -3,7 +3,7 @@ import type { Session, SessionDetail } from '@/types/api/session';
 
 import { apiClient } from './apiClient';
 import { UPLOADED_FILE } from './fileApi';
-import { type Contract, readArray, readObject } from './responseContract';
+import { asArray, asObject, type Contract } from './responseContract';
 
 /** What a list row promises (ADR-0013). `updatedAt` is required because the rail's
  *  recency sort calls `.localeCompare` on it — a number here crashed the whole rail,
@@ -50,11 +50,10 @@ const SESSION_DETAIL: Contract<SessionDetail> = {
   },
 };
 
-export const listSessions = async () =>
-  readArray(await apiClient.get<unknown>('/sessions'), SESSION);
+export const listSessions = () => apiClient.get('/sessions').then(asArray(SESSION));
 
-export const getSession = async (id: string) =>
-  readObject(await apiClient.get<unknown>(`/sessions/${id}`), SESSION_DETAIL);
+export const getSession = (id: string) =>
+  apiClient.get(`/sessions/${id}`).then(asObject(SESSION_DETAIL));
 
 /** What a rename answers with. Like the artifact endpoints, it names its subject
  *  `sessionId` rather than `id`, and carries only what the call settled. */

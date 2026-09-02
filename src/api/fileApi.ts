@@ -1,7 +1,7 @@
 import type { UploadedFileInfo } from '@/types/api';
 
 import { apiClient } from './apiClient';
-import { type Contract, readArray } from './responseContract';
+import { asArray, type Contract } from './responseContract';
 
 /** What a file row promises (ADR-0013). Identity and `sizeBytes` are required — the
  *  size reaches `formatBytes` and the client-side quota math, where a missing number
@@ -32,25 +32,26 @@ export interface UploadProgress {
   phase: 'transferring' | 'processing';
 }
 
-export const uploadFiles = async (
+export const uploadFiles = (
   sessionId: string,
   files: File[],
   onProgress?: (progress: UploadProgress) => void,
 ): Promise<UploadedFileInfo[]> => {
   const formData = new FormData();
   files.forEach((file) => formData.append('files', file));
-  const body = await apiClient.post<unknown>(`/sessions/${sessionId}/files`, formData, {
-    onUploadProgress: (event) => {
-      if (onProgress && event.total) {
-        // floor, not round: the bar may only reach 90 when the last byte is out.
-        onProgress({
-          percent: Math.floor((event.loaded / event.total) * 90),
-          phase: event.loaded >= event.total ? 'processing' : 'transferring',
-        });
-      }
-    },
-  });
-  return readArray(body, UPLOADED_FILE);
+  return apiClient
+    .post(`/sessions/${sessionId}/files`, formData, {
+      onUploadProgress: (event) => {
+        if (onProgress && event.total) {
+          // floor, not round: the bar may only reach 90 when the last byte is out.
+          onProgress({
+            percent: Math.floor((event.loaded / event.total) * 90),
+            phase: event.loaded >= event.total ? 'processing' : 'transferring',
+          });
+        }
+      },
+    })
+    .then(asArray(UPLOADED_FILE));
 };
 
 export const deleteFile = (sessionId: string, fileId: string): Promise<void> =>
