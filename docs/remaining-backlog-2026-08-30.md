@@ -7,6 +7,12 @@ A11y)後,**尚未修復**的全部項目,逐項驗證過在 `perf/deep-review` �
 
 已修復的不列在這裡(見 `deep-review-2026-08-28-fixes.md` 與各 commit)。
 
+## 2026-09-03 更新
+
+- **無障礙 A-1〜A-6 已全部修復**(commit `72facf3`),各附行為測試;下方段落保留為
+  紀錄,標題加註。A-7(次要集)與「jsx-a11y 零規則」仍未處理。
+- S-3 / S-4 仍待決策,現在是這份文件唯一的未結項(加上 A-7 與正確性次要)。
+
 ## 2026-08-31 更新
 
 - **正確性 C-2〜C-5 與 G-1 已全部修復**(批次 A,commit `ba1254a`),下方段落保留為
@@ -94,7 +100,7 @@ session、C 拋錯建立新 offer → A 的結果(`repaired:false`→`setStatus(
 
 ## 無障礙(全部 VERIFIED;`jsx-a11y` 目前註冊但零規則)
 
-### A-1 串流訊息整段重複朗讀 — 最嚴重
+### A-1 串流訊息整段重複朗讀 — 最嚴重 — ✅ 已修復(2026-09-03)
 
 `MessageList.tsx:146` 整個 thread 是 `role="log"`(隱含 `aria-live="polite"`),串流泡泡
 就在裡面。每個 token 進來重寫段落 → 螢幕閱讀器每個 token 重念愈來愈長的回覆;切 session
@@ -102,31 +108,31 @@ session、C 拋錯建立新 offer → A 的結果(`repaired:false`→`setStatus(
 **修法**:thread 顯式 `aria-live="off"`,另設一個 sr-only `aria-live="polite"` 區塊,只在
 stream 結束時放入完整回覆。**lint 抓不到**(語意正確、行為錯誤)。
 
-### A-2 版本選單是假 menu
+### A-2 版本選單是假 menu — ✅ 已修復(2026-09-03)
 
 `VersionSwitcher.tsx:66,76` 有 `role="menu"/"menuitem"` 但無方向鍵、無 roving tabindex;
 Escape 後焦點掉回 `<body>`,三欄版面裡等於位置全失;`:67` 標題 div 是 menu 的非法子元素。
 **修法**:改用 antd `Dropdown`(專案別處已用),或補方向鍵 + 關閉時還焦。
 
-### A-3 步驟清單累積重播
+### A-3 步驟清單累積重播 — ✅ 已修復(2026-09-03)
 
 `MessageBubble.tsx:274` `role="status"` 隱含 `aria-atomic="true"`,每加一步重念全部。
 **修法**:改 `aria-live="polite" aria-atomic="false"`,或只讓最新一列進 live region。
 **lint 抓不到。**
 
-### A-4 分隔條純滑鼠
+### A-4 分隔條純滑鼠 — ✅ 已修復(2026-09-03)
 
 `ResizeHandle.tsx:25` 有 `role="separator"` 但無 `tabIndex`/`onKeyDown`/
 `aria-valuenow`,只有 pointer。鍵盤使用者無法調整任一欄寬。
 **修法**:`tabIndex={0}` + 左右鍵呼叫 `onDrag(±16)` + `aria-valuenow/min/max`。
 **lint 抓不到。**
 
-### A-5 Tooltip 不會被朗讀
+### A-5 Tooltip 不會被朗讀 — ✅ 已修復(2026-09-03)
 
 `Tooltip.tsx:29,62` 產了 `tipId` 卻從未以 `aria-describedby` 接到 trigger。焦點可觸發
 但內容無關聯;包在非可聚焦 `<span>` 時完全讀不到。**lint 抓不到。**
 
-### A-6 收合 rail 的 flyout 是假 dialog
+### A-6 收合 rail 的 flyout 是假 dialog — ✅ 已修復(2026-09-03)
 
 `CollapsedSessionRail.tsx:112` `role="dialog"` 但無焦點移入/trap/Escape;`:109` backdrop
 是 `div onClick`(鍵盤無法關)。**啟用 jsx-a11y 會抓到這一條**
