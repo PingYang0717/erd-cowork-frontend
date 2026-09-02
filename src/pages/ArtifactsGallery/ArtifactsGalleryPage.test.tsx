@@ -258,6 +258,47 @@ describe('Artifacts gallery', () => {
     expect(listFetches).toBe(fetchesBeforePin);
   });
 
+  /** The row to update is found by the id that was asked about, not by one read back out
+   *  of the answer. A response without `id` matched nothing, so the merge rewrote no row
+   *  and the button never moved — the request succeeded and the screen said otherwise. */
+  it('updates the card even when the toggle answers without an id', async () => {
+    const user = userEvent.setup();
+    const name = 'SPC analysis — Vt (gate CD)';
+    server.use(
+      http.get('/api/artifacts', () =>
+        HttpResponse.json([artifactDto({ id: 'artifact-1', title: name })]),
+      ),
+      http.post('/api/artifacts/:id/pin', () =>
+        HttpResponse.json({ pinnedAt: '2026-09-02T00:00:00.000Z' }),
+      ),
+    );
+    renderGalleryPage();
+    await screen.findByRole('button', { name: `Pin ${name}` });
+
+    await user.click(screen.getByRole('button', { name: `Pin ${name}` }));
+
+    expect(await screen.findByRole('button', { name: `Unpin ${name}` })).toBeInTheDocument();
+  });
+
+  /** Even an answer with nothing in it at all still moved the pin: the request succeeded,
+   *  so the state changed, and leaving the button where it was would be a lie. */
+  it('flips the pin locally when the toggle answers with no pin state', async () => {
+    const user = userEvent.setup();
+    const name = 'SPC analysis — Vt (gate CD)';
+    server.use(
+      http.get('/api/artifacts', () =>
+        HttpResponse.json([artifactDto({ id: 'artifact-1', title: name })]),
+      ),
+      http.post('/api/artifacts/:id/pin', () => HttpResponse.json({})),
+    );
+    renderGalleryPage();
+    await screen.findByRole('button', { name: `Pin ${name}` });
+
+    await user.click(screen.getByRole('button', { name: `Pin ${name}` }));
+
+    expect(await screen.findByRole('button', { name: `Unpin ${name}` })).toBeInTheDocument();
+  });
+
   /** The toggle answers with the Artifact, but nothing says it answers with every field
    *  of it. Writing that answer over the cached row would drop whatever it left out —
    *  Merged, not replaced: a field the answer omits has to survive, or the row loses
