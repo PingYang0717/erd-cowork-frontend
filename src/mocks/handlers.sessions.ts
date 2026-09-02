@@ -128,7 +128,7 @@ export const sessionHandlers = [
   // The three session writes, as agreed with the backend (api-checklist.md):
   // rename is a PATCH, pin is an artifact-family toggle that stamps its own time
   // and answers { id, pinnedAt }, delete answers a bare 200.
-  http.patch('/api/sessions/:sessionId', async ({ params, request }) => {
+  http.patch('/api/sessions/:sessionId/rename', async ({ params, request }) => {
     const body = (await request.json()) as { title?: string };
     const all = sessions.read();
     const session = all.find((stored) => stored.id === params.sessionId);
@@ -137,7 +137,9 @@ export const sessionHandlers = [
     }
     const updated = { ...session, ...(body.title !== undefined ? { title: body.title } : {}) };
     sessions.write(all.map((stored) => (stored.id === updated.id ? updated : stored)));
-    return HttpResponse.json(updated);
+    // Answers with what the rename settled, not with the whole Session — and names its
+    // subject `sessionId`, not `id`.
+    return HttpResponse.json({ sessionId: updated.id, title: updated.title });
   }),
 
   http.post('/api/sessions/:sessionId/pin', ({ params }) => {
