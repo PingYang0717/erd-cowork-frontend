@@ -1,4 +1,4 @@
-﻿import {
+import {
   CloseOutlined,
   CloudUploadOutlined,
   ExclamationCircleOutlined,

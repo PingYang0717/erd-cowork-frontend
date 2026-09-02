@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- eRD Cowork:圓角方塊 + 閃電,取 ThreadHeader 的 ThunderboltFilled 與主色 #1677ff -->
+  <rect width="32" height="32" rx="7" fill="#1677ff" />
+  <path d="M18.5 4 8.5 17.5h6L12.5 28l11-14.5h-6.5L18.5 4Z" fill="#fff" />
+</svg>
