@@ -1,4 +1,4 @@
-import { DatabaseOutlined, ThunderboltFilled } from '@ant-design/icons';
+import { ThunderboltFilled } from '@ant-design/icons';
 import React, { type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 
 import DataBoundary from '@/components/common/DataBoundary';
@@ -8,6 +8,7 @@ import { type SendInput, useAgentStream } from '@/hooks/useAgentStream';
 import { useArtifactRepair } from '@/hooks/useArtifactRepair';
 import { useApplyRememberedDataSources } from '@/hooks/useConnectorMutations';
 import { useSessionDetail } from '@/hooks/useSessionDetail';
+import { useTranslations } from '@/i18n/useTranslations';
 import { useActiveRunStore } from '@/stores/useActiveRunStore';
 import { useRepairOfferStore } from '@/stores/useRepairOfferStore';
 import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
@@ -27,13 +28,10 @@ const ThreadHeader: React.FC = () => {
         <ThunderboltFilled aria-hidden className={styles.headerIcon} />
         Cowork · Data studio
       </span>
-      {/* The mockup's data-source chip (its demo is wired to the Inline DB /
-          N5 line fixture); sits beside the ThemeToggle because the Workspace
-          header itself is out of scope — this app is the eRD Cowork App only. */}
-      <span className={styles.dataSourceChip}>
-        <DatabaseOutlined aria-hidden />
-        Inline DB · N5 line
-      </span>
+      {/* No data-source chip here: the mockup hard-coded "Inline DB · N5 line", which
+          asserted a fact the Connectors panel could flatly contradict (attach WAT,
+          drop Inline, and the chip still claimed Inline). What a conversation reads is
+          the session's business, and it is already shown where it is decided. */}
       <LanguageToggle />
       <ThemeToggle />
     </header>
@@ -62,6 +60,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({ heading, subtitle }) => {
  *  conversation is open, and a header that blinks away every time a session loads is a
  *  worse answer than one that stays put. */
 const ThreadPanel: React.FC = () => {
+  const t = useTranslations();
   const selectedSessionId = useSessionSelectionStore((s) => s.selectedSessionId);
 
   return (
@@ -77,8 +76,8 @@ const ThreadPanel: React.FC = () => {
       ) : (
         <div className={styles.body}>
           <EmptyState
-            heading="Select or start a session"
-            subtitle="Start or select a session from the left to begin an analysis."
+            heading={t.studio.emptyNoSessionHeading}
+            subtitle={t.studio.emptyNoSessionSubtitle}
           />
         </div>
       )}
@@ -91,6 +90,7 @@ interface ThreadViewProps {
 }
 
 const ThreadView: React.FC<ThreadViewProps> = ({ sessionId }) => {
+  const t = useTranslations();
   const { data: detail } = useSessionDetail(sessionId);
   const messages = detail.messages;
   const { state, send, stop } = useAgentStream(sessionId);
@@ -223,10 +223,7 @@ const ThreadView: React.FC<ThreadViewProps> = ({ sessionId }) => {
         />
       ) : (
         <div className={styles.body}>
-          <EmptyState
-            heading="Start an analysis"
-            subtitle={'Try "Daily monitor (A14)" below, or ask for an SPC analysis on Vt.'}
-          />
+          <EmptyState heading={t.studio.emptyStartHeading} subtitle={t.studio.emptyStartSubtitle} />
         </div>
       )}
       <div className={styles.composer}>

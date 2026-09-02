@@ -53,6 +53,8 @@ describe('Session row actions', () => {
 
     await openMenuOf(user, 'Defect pareto — W12');
     await user.click(await screen.findByRole('menuitem', { name: /Delete/ }));
+    // The destructive step now sits behind a confirm — click through it.
+    await user.click(await screen.findByRole('button', { name: 'Delete' }));
 
     expect(await screen.findByText(en.errors.notReady)).toBeInTheDocument();
     // The row stays: a delete that failed did not happen.
@@ -163,6 +165,8 @@ describe('Session row actions', () => {
 
     await openMenuOf(user, 'Defect pareto — W12');
     await user.click(await screen.findByRole('menuitem', { name: 'Delete' }));
+    // The destructive step now sits behind a confirm — click through it.
+    await user.click(await screen.findByRole('button', { name: 'Delete' }));
 
     await waitFor(() =>
       expect(screen.queryByRole('button', { name: 'Defect pareto — W12' })).not.toBeInTheDocument(),
@@ -202,6 +206,8 @@ describe('Session row actions', () => {
 
     await openMenuOf(user, 'New analysis');
     await user.click(await screen.findByRole('menuitem', { name: 'Delete' }));
+    // The destructive step now sits behind a confirm — click through it.
+    await user.click(await screen.findByRole('button', { name: 'Delete' }));
 
     await waitFor(() =>
       expect(screen.queryByRole('button', { name: 'New analysis' })).not.toBeInTheDocument(),
@@ -251,9 +257,24 @@ describe('Session row actions', () => {
 
     await openMenuOf(user, 'Defect pareto — W12');
     await user.click(await screen.findByRole('menuitem', { name: 'Delete' }));
+    // The destructive step now sits behind a confirm — click through it.
+    await user.click(await screen.findByRole('button', { name: 'Delete' }));
 
     await waitFor(() =>
       expect(screen.queryByRole('button', { name: 'Defect pareto — W12' })).not.toBeInTheDocument(),
     );
+  });
+
+  /** The other half of the confirm: backing out is a real path, and it must leave
+   *  the conversation exactly where it was — no request, no row change. */
+  it('keeps the session when the delete confirm is cancelled', async () => {
+    const user = userEvent.setup();
+    renderStudio();
+
+    await openMenuOf(user, 'Defect pareto — W12');
+    await user.click(await screen.findByRole('menuitem', { name: 'Delete' }));
+    await user.click(await screen.findByRole('button', { name: 'Cancel' }));
+
+    expect(screen.getByRole('button', { name: 'Defect pareto — W12' })).toBeInTheDocument();
   });
 });

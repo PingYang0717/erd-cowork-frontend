@@ -136,10 +136,8 @@ const ArtifactsGallery: React.FC = () => {
     <div className={styles.page}>
       <div className={styles.header}>
         <div>
-          <h1 className={styles.title}>Artifacts</h1>
-          <p className={styles.subtitle}>
-            Every Artifact eRD Cowork has produced — click to open it.
-          </p>
+          <h1 className={styles.title}>{t.galleryHeader.title}</h1>
+          <p className={styles.subtitle}>{t.galleryHeader.subtitle}</p>
         </div>
         <Dropdown
           trigger={['click']}
@@ -156,26 +154,26 @@ const ArtifactsGallery: React.FC = () => {
 
       <div className={styles.filters}>
         <FilterPill
-          label="All"
+          label={t.galleryHeader.filterAll}
           count={artifacts.length}
           active={category === 'all'}
           onClick={() => setCategory('all')}
         />
         <FilterPill
-          label="Yours"
+          label={t.galleryHeader.filterYours}
           count={counts.yours}
           active={category === 'yours'}
           onClick={() => setCategory('yours')}
         />
         <FilterPill
-          label="Shared to me"
+          label={t.galleryHeader.filterShared}
           count={counts.shared}
           active={category === 'shared'}
           onClick={() => setCategory('shared')}
         />
         {counts.pinned > 0 && (
           <FilterPill
-            label="Pinned"
+            label={t.galleryHeader.filterPinned}
             count={counts.pinned}
             active={category === 'pinned'}
             onClick={() => setCategory('pinned')}

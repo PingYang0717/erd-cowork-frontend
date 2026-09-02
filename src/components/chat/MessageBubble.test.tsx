@@ -93,7 +93,7 @@ describe('MessageBubble', () => {
 
     rerender(<MessageBubble sender="AI" text="Done." steps={[step()]} />);
 
-    const recap = screen.getByRole('button', { name: 'Worked through 1 steps' });
+    const recap = screen.getByRole('button', { name: 'Worked through 1 step' });
     expect(screen.queryByText('Scanning lots')).not.toBeInTheDocument();
     await userEvent.click(recap);
     expect(screen.getByText('Scanning lots')).toBeInTheDocument();

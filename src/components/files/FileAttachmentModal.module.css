@@ -186,3 +186,9 @@
   cursor: default;
   opacity: 0.55;
 }
+
+.processingNote {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: var(--erd-color-text-secondary);
+}

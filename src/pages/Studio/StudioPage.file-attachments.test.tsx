@@ -97,9 +97,9 @@ describe('File attachments', () => {
   });
 
   /** Removing a file is a write to the same set the next question would be answered
-   *  against. Until it lands, the composer is shut: a message sent in that window
+   *  against. Until it lands, SENDING is shut — typing is not: a message sent in that window
    *  describes a set of files that is already changing under it. */
-  it('shuts the composer while a file is being removed, and opens it again after', async () => {
+  it('blocks sending — but not typing — while a file is being removed', async () => {
     const user = userEvent.setup();
     let releaseDelete: (() => void) | undefined;
     server.use(
@@ -125,11 +125,18 @@ describe('File attachments', () => {
     await user.click(
       within(composerAttachments()).getByRole('button', { name: /^Remove lots\.csv/ }),
     );
-    await waitFor(() => expect(composer).toBeDisabled());
-    expect(screen.getByRole('button', { name: 'Send message' })).toBeDisabled();
+    // Typing stays open — a gigabyte upload locks the box for minutes otherwise.
+    // Only SENDING waits for the file set to settle, and the notice says why.
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Send message' })).toBeDisabled(),
+    );
+    expect(composer).toBeEnabled();
+    expect(
+      screen.getByText('Files are still being processed — sending resumes once they finish'),
+    ).toBeInTheDocument();
 
     releaseDelete?.();
-    await waitFor(() => expect(composer).toBeEnabled());
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Send message' })).toBeEnabled());
   });
 
   it('attaches a file via click-to-browse and shows it as a chip in the composer', async () => {

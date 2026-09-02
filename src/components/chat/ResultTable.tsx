@@ -98,7 +98,7 @@ const ResultTable: React.FC<ResultTableProps> = ({ table }) => {
           ),
         }}
       />
-      {table.truncated && <p className={styles.truncated}>{t.chat.truncatedRows(200)}</p>}
+      {table.truncated && <p className={styles.truncated}>{t.chat.truncated}</p>}
     </div>
   );
 };

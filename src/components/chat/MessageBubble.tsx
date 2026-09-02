@@ -189,7 +189,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
             persisted: it belongs to this connection, not to the conversation
             (ADR-0003). */}
         {thinking && (
-          <CollapsiblePanel label="Thinking">
+          <CollapsiblePanel label={t.chat.thinking}>
             <p className={styles.thinkingBody}>{thinking}</p>
           </CollapsiblePanel>
         )}
@@ -239,14 +239,14 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
               <AppstoreOutlined aria-hidden className={styles.artifactChipIcon} />
               <span className={styles.artifactChipTitle}>{artifact.title}</span>
               <span className={styles.artifactChipHint}>
-                {artifactShown ? 'shown right →' : 'show right →'}
+                {artifactShown ? t.chat.shownRight : t.chat.showRight}
               </span>
             </button>
           ) : (
             <div className={styles.artifactChip}>
               <AppstoreOutlined aria-hidden className={styles.artifactChipIcon} />
               <span className={styles.artifactChipTitle}>{artifact.title}</span>
-              <span className={styles.artifactChipHint}>shown right →</span>
+              <span className={styles.artifactChipHint}>{t.chat.shownRight}</span>
             </div>
           ))}
         {/* The source is only fetchable once the run has stopped writing it; while it is

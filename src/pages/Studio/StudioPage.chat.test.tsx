@@ -112,11 +112,15 @@ describe('Chat composer', () => {
     expect(textbox).toHaveValue('統計製程');
   });
 
-  it('shows the data-source chip alongside the theme toggle in the thread header', () => {
+  /** The mockup hard-coded "Inline DB · N5 line" here — a claim about what the
+   *  conversation reads that the Connectors panel could flatly contradict. The header
+   *  now carries identity and toggles only; what a session draws on is shown where it
+   *  is decided. */
+  it('keeps the thread header to identity and toggles — no hardcoded data-source claim', () => {
     renderStudio();
 
     const header = screen.getByRole('banner', { name: 'Thread header' });
-    expect(within(header).getByText('Inline DB · N5 line')).toBeInTheDocument();
+    expect(within(header).queryByText(/Inline DB/)).not.toBeInTheDocument();
     expect(
       within(header).getByRole('button', { name: /Switch to (dark|light) mode/ }),
     ).toBeInTheDocument();
