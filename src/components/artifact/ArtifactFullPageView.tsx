@@ -11,6 +11,7 @@ import React, { Suspense, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import ErrorBoundary from '@/components/common/ErrorBoundary';
+import LanguageToggle from '@/components/common/LanguageToggle';
 import ThemeToggle from '@/components/common/ThemeToggle';
 import Tooltip from '@/components/common/Tooltip';
 import { artifactContentQueryKey, useArtifactContent } from '@/hooks/useArtifactContent';
@@ -143,6 +144,7 @@ const ArtifactFullPageView: React.FC<ArtifactFullPageViewProps> = ({ artifactId 
             <ExportOutlined aria-hidden />
           </button>
         </Tooltip>
+        <LanguageToggle />
         <ThemeToggle />
       </div>
       <div className={styles.body}>
