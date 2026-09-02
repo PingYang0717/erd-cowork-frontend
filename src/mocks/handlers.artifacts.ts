@@ -171,7 +171,7 @@ export const artifactHandlers = [
    *  direction and the client cannot act on a stale reading of its own. */
   // One endpoint, no body: the backend decides the direction and answers with the
   // Artifact, whose `pinnedAt` is what the client reads the new state from.
-  http.post('/api/artifacts/:id/pin', ({ params }) => {
+  http.patch('/api/artifacts/:id/pin', ({ params }) => {
     const all = artifacts.read();
     const existing = all.find((artifact) => artifact.id === params.id);
     if (!existing) {
@@ -196,11 +196,24 @@ export const artifactHandlers = [
   /** 發布 / 取消發布 — split by method, and the timestamp is the server's to write. */
   // Publishing carries the title the Artifact goes on the shelf under.
   http.post('/api/artifacts/:id/publish', async ({ params, request }) => {
+    const all = artifacts.read();
+    const existing = all.find((artifact) => artifact.id === params.id);
+    if (!existing) {
+      return new HttpResponse(null, { status: 404 });
+    }
     const { title } = (await request.json()) as { title?: string };
-    return updateArtifact(params.id, {
-      publishedAt: new Date().toISOString(),
-      ...(title ? { title } : {}),
-    });
+    const publishedAt = new Date().toISOString();
+    artifacts.write(
+      all.map((artifact) =>
+        artifact.id === params.id
+          ? { ...artifact, publishedAt, ...(title ? { title } : {}) }
+          : artifact,
+      ),
+    );
+    // Answers with what the call settled, not with the whole Artifact — and names its
+    // subject `artifactId`, not `id`. Kept faithful on purpose: a mock that answered with
+    // a full DTO would let a client reading `id` pass here and fail in production.
+    return HttpResponse.json({ artifactId: existing.id, publishedAt });
   }),
 
   // Unpublish, not delete: the Artifact goes on living in the conversation that produced
