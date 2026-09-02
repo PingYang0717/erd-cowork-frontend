@@ -3,6 +3,7 @@ import { http, HttpResponse } from 'msw';
 import { DRAFT_SESSION_TITLE } from '@/constants/messages';
 import type { Session } from '@/types/api/session';
 
+import { currentUser } from './currentUser';
 import { sessionFiles, toFileDto } from './handlers.files';
 import { messages, toMessageDto } from './handlers.messages';
 import { createPersistedResource } from './persistedResource';
@@ -142,7 +143,7 @@ export const sessionHandlers = [
     return HttpResponse.json({ sessionId: updated.id, title: updated.title });
   }),
 
-  http.post('/api/sessions/:sessionId/pin', ({ params }) => {
+  http.patch('/api/sessions/:sessionId/pin', ({ params }) => {
     const all = sessions.read();
     const session = all.find((stored) => stored.id === params.sessionId);
     if (!session) {
@@ -152,14 +153,17 @@ export const sessionHandlers = [
     sessions.write(
       all.map((stored) => (stored.id === session.id ? { ...stored, pinnedAt } : stored)),
     );
-    // Answers with no body on purpose: the real endpoint's response shape has never
-    // been confirmed, and nothing reads it. Inventing one here would let a client that
-    // reads it pass in tests and fail in production — which is exactly how the artifact
-    // pin bug shipped.
-    return new HttpResponse(null, { status: 200 });
+    // Answers with what the toggle settled, not with the whole Session — and names its
+    // subject `sessionId`, not `id`.
+    return HttpResponse.json({
+      sessionId: session.id,
+      pinnedAt,
+      owner: currentUser.id,
+      isOwn: true,
+    });
   }),
 
-  http.delete('/api/sessions/:sessionId', ({ params }) => {
+  http.patch('/api/sessions/:sessionId/soft-delete', ({ params }) => {
     sessions.write(sessions.read().filter((stored) => stored.id !== params.sessionId));
     messages.write(messages.read().filter((message) => message.sessionId !== params.sessionId));
     sessionFiles.write(sessionFiles.read().filter((file) => file.sessionId !== params.sessionId));
