@@ -138,7 +138,7 @@ describe('Per-version Artifact publishing', () => {
     );
     await screen.findByRole('button', { name: '發布 Artifact' });
 
-    await user.click(await screen.findByRole('button', { name: '切換產出' }));
+    await user.click(await screen.findByRole('button', { name: '切換 Artifact' }));
     const items = await screen.findAllByRole('menuitem');
     expect(items.length).toBeGreaterThan(1);
     for (const item of items) {
@@ -181,12 +181,12 @@ describe('Per-version Artifact publishing', () => {
     await screen.findByRole('button', { name: '發布 Artifact' });
 
     // Switch back to the seeded, already-published first output: the chip returns.
-    await user.click(await screen.findByRole('button', { name: '切換產出' }));
+    await user.click(await screen.findByRole('button', { name: '切換 Artifact' }));
     await user.click((await screen.findAllByRole('menuitem')).at(-1) as HTMLElement);
     expect(await screen.findByText('已發布')).toBeInTheDocument();
 
     // And the newer output is still unpublished when switching to it again.
-    await user.click(await screen.findByRole('button', { name: '切換產出' }));
+    await user.click(await screen.findByRole('button', { name: '切換 Artifact' }));
     await user.click((await screen.findAllByRole('menuitem'))[0]);
     expect(await screen.findByRole('button', { name: '發布 Artifact' })).toBeInTheDocument();
   });

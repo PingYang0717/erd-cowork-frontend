@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { http } from 'msw';
 import { beforeEach, describe, expect, it } from 'vitest';
 
+import { zhTW } from '@/i18n/zhTW';
 import { server } from '@/mocks/server';
 import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
 import { useStudioLayoutStore } from '@/stores/useStudioLayoutStore';
@@ -44,7 +45,7 @@ describe('Artifact version switcher', () => {
 
     // Switching back to the first output re-renders the iframe with its HTML. The menu
     // is newest-first, so the earlier output is the last row.
-    await user.click(screen.getByRole('button', { name: '切換產出' }));
+    await user.click(screen.getByRole('button', { name: '切換 Artifact' }));
     await user.click((await screen.findAllByRole('menuitem')).at(-1) as HTMLElement);
     await expect.poll(artifactSrcdoc).toContain('· v1');
   });
@@ -74,7 +75,7 @@ describe('Artifact version switcher', () => {
     const fetchesForBoth = contentFetches;
 
     // Back to the first output: same document, already in hand.
-    await user.click(screen.getByRole('button', { name: '切換產出' }));
+    await user.click(screen.getByRole('button', { name: '切換 Artifact' }));
     await user.click((await screen.findAllByRole('menuitem')).at(-1) as HTMLElement);
     await expect.poll(artifactSrcdoc).toContain('· v1');
 
@@ -96,10 +97,10 @@ describe('Artifact version switcher', () => {
     );
     await screen.findByRole('button', { name: '發布 Artifact' });
 
-    await user.click(screen.getByRole('button', { name: '切換產出' }));
+    await user.click(screen.getByRole('button', { name: '切換 Artifact' }));
 
     const menu = await screen.findByRole('menu');
-    expect(within(menu).getByText('此對話的產出 · 共 2 個，可切換後再發布')).toBeInTheDocument();
+    expect(within(menu).getByText(zhTW.artifact.versionMenuTitle(2))).toBeInTheDocument();
 
     // Newest first: the fresh output leads, the seeded one is last.
     const rows = within(menu).getAllByRole('menuitem');

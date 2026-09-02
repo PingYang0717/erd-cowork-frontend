@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { beforeEach, describe, expect, it } from 'vitest';
 
+import { zhTW } from '@/i18n/zhTW';
 import { server } from '@/mocks/server';
 import { useRepairOfferStore } from '@/stores/useRepairOfferStore';
 import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
@@ -55,11 +56,11 @@ describe('Artifact repair', () => {
     renderStudio();
 
     const iframe = await runAnalysis(user);
-    expect(screen.queryByText(/偵測到儀表板執行錯誤/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/偵測到 Artifact 執行錯誤/)).not.toBeInTheDocument();
 
     reportRuntimeError(iframe, "Cannot read properties of undefined (reading 'series')");
 
-    expect(await screen.findByText('⚠ 偵測到儀表板執行錯誤（1 個）')).toBeInTheDocument();
+    expect(await screen.findByText(zhTW.repair.detected(1))).toBeInTheDocument();
     expect(
       screen.getByText("Cannot read properties of undefined (reading 'series')"),
     ).toBeInTheDocument();
@@ -68,7 +69,7 @@ describe('Artifact repair', () => {
 
     // The offer clears once the repair lands, and the artifact is served again.
     await screen.findByTitle('Artifact preview');
-    expect(screen.queryByText(/偵測到儀表板執行錯誤/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/偵測到 Artifact 執行錯誤/)).not.toBeInTheDocument();
   });
 
   it('stops offering once the user has dismissed it for that artifact', async () => {
@@ -78,13 +79,13 @@ describe('Artifact repair', () => {
     const iframe = await runAnalysis(user);
 
     reportRuntimeError(iframe, 'boom');
-    await screen.findByText('⚠ 偵測到儀表板執行錯誤（1 個）');
+    await screen.findByText(zhTW.repair.detected(1));
 
     await user.click(screen.getByRole('button', { name: '忽略' }));
-    expect(screen.queryByText(/偵測到儀表板執行錯誤/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/偵測到 Artifact 執行錯誤/)).not.toBeInTheDocument();
 
     reportRuntimeError(iframe, 'boom again');
-    expect(screen.queryByText(/偵測到儀表板執行錯誤/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/偵測到 Artifact 執行錯誤/)).not.toBeInTheDocument();
   });
 
   it('says so when a repair produced nothing, and lets the user try again', async () => {
@@ -100,7 +101,7 @@ describe('Artifact repair', () => {
 
     const iframe = await runAnalysis(user);
     reportRuntimeError(iframe, 'boom');
-    await screen.findByText('⚠ 偵測到儀表板執行錯誤（1 個）');
+    await screen.findByText(zhTW.repair.detected(1));
 
     await user.click(screen.getByRole('button', { name: '修復' }));
 
@@ -124,11 +125,11 @@ describe('Artifact repair', () => {
 
     const iframe = await runAnalysis(user);
     reportRuntimeError(iframe, 'boom');
-    await screen.findByText('⚠ 偵測到儀表板執行錯誤（1 個）');
+    await screen.findByText(zhTW.repair.detected(1));
 
     await user.click(screen.getByRole('button', { name: '修復' }));
 
-    expect(await screen.findByText('檔案已過期，無法修復此儀表板')).toBeInTheDocument();
+    expect(await screen.findByText(zhTW.repair.filesExpired)).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: '再試一次' })).not.toBeInTheDocument();
   });
 
@@ -138,10 +139,12 @@ describe('Artifact repair', () => {
 
     const iframe = await runAnalysis(user);
     reportRuntimeError(iframe, 'boom');
-    await screen.findByText('⚠ 偵測到儀表板執行錯誤（1 個）');
+    await screen.findByText(zhTW.repair.detected(1));
 
     await user.click(await screen.findByRole('button', { name: 'New chat' }));
 
-    await waitFor(() => expect(screen.queryByText(/偵測到儀表板執行錯誤/)).not.toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.queryByText(/偵測到 Artifact 執行錯誤/)).not.toBeInTheDocument(),
+    );
   });
 });

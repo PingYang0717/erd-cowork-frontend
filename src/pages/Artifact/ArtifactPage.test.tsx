@@ -45,7 +45,7 @@ describe('Artifact full-page view', () => {
     expect(iframe.getAttribute('srcdoc')).toContain('SPC analysis — Vt (gate CD)');
     // No version switcher (there is no session to derive versions from), and no error
     // screen standing in for the whole page.
-    expect(screen.queryByRole('button', { name: '切換產出' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '切換 Artifact' })).not.toBeInTheDocument();
     expect(screen.queryByText(/載入失敗/)).not.toBeInTheDocument();
   });
 
@@ -95,7 +95,7 @@ describe('Artifact full-page view', () => {
     // Versions derive from the artifact's session history: session-1 seeds one
     // artifact-bearing message, so artifact-1 is its v1 (and its only version).
     // Switching between versions is covered in the Studio panel's suite.
-    await user.click(await screen.findByRole('button', { name: '切換產出' }));
+    await user.click(await screen.findByRole('button', { name: '切換 Artifact' }));
     const items = await screen.findAllByRole('menuitem');
     expect(items).toHaveLength(1);
     expect(items[0]).toHaveTextContent('SPC analysis — Vt (gate CD)');
@@ -110,7 +110,7 @@ describe('Artifact full-page view', () => {
     const header = screen.getByLabelText('Shared to me');
     expect(within(header).getByText('Alice Wu')).toBeInTheDocument();
     expect(within(header).getByText('Shared to me')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: '切換產出' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '切換 Artifact' })).not.toBeInTheDocument();
   });
 
   it('offers Share, Refresh, and Open-in-new-tab in the toolbar', async () => {

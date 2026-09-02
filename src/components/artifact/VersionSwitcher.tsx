@@ -53,7 +53,7 @@ const VersionSwitcher: React.FC<VersionSwitcherProps> = ({ versions, activeVersi
         <button
           type="button"
           className={styles.versionTrigger}
-          aria-label="切換產出"
+          aria-label="切換 Artifact"
           aria-haspopup="menu"
           aria-expanded={isOpen}
           onClick={() => setIsOpen((v) => !v)}
