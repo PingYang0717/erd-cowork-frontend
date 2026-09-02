@@ -2,9 +2,11 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { deleteSession, renameSession, toggleSessionPin } from '@/api/sessionApi';
 import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
+import type { Artifact } from '@/types/api/index';
 import type { Session } from '@/types/api/session';
 
 import { useActionErrorToast } from './useActionErrorToast';
+import { artifactsQueryKey } from './useArtifacts';
 import { sessionDetailQueryKey } from './useSessionDetail';
 import { sessionsQueryKey } from './useSessions';
 
@@ -14,8 +16,26 @@ export function useRenameSession() {
 
   return useMutation({
     mutationFn: ({ id, title }: { id: string; title: string }) => renameSession(id, title),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: sessionsQueryKey });
+    onSuccess: (_result, { id, title }) => {
+      // `exact`, or the list key — a prefix of every detail key — drags a refetch of
+      // whatever session is open along with it, for a rename that cannot have touched
+      // that session's messages. The renamed session's own detail does carry the title,
+      // so that one key is invalidated by name: stale-marking an unmounted query costs
+      // nothing, and a mounted one is exactly the case that needs the new title.
+      queryClient.invalidateQueries({ queryKey: sessionsQueryKey, exact: true });
+      queryClient.invalidateQueries({ queryKey: sessionDetailQueryKey(id) });
+
+      // An Artifact carries its session's name, denormalised, so the Gallery can say
+      // where a card came from without fetching the session list. That copy has to be
+      // corrected here — and it will not fix itself on a remount, because the rail's
+      // badge keeps the artifacts list mounted on every page. Rewritten in place rather
+      // than refetched: the new name is already in hand, and the list is otherwise
+      // untouched by a rename.
+      queryClient.setQueryData<Artifact[]>(artifactsQueryKey, (previous) =>
+        previous?.map((artifact) =>
+          artifact.sessionId === id ? { ...artifact, sessionTitle: title } : artifact,
+        ),
+      );
     },
     onError: toastError,
   });
@@ -30,7 +50,10 @@ export function useToggleSessionPin() {
   return useMutation({
     mutationFn: (id: string) => toggleSessionPin(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: sessionsQueryKey });
+      // `exact`: pinnedAt lives on the list's Session rows and nowhere in a detail, so
+      // there is nothing for the prefix cascade to deliver — only the open session's
+      // messages re-downloaded for no reason.
+      queryClient.invalidateQueries({ queryKey: sessionsQueryKey, exact: true });
     },
     onError: toastError,
   });
@@ -64,7 +87,9 @@ export function useDeleteSession() {
       // lands on the id again renders a deleted conversation. Removed after the
       // selection moves off it, so nothing is reading it at the moment it goes.
       queryClient.removeQueries({ queryKey: sessionDetailQueryKey(deletedId) });
-      queryClient.invalidateQueries({ queryKey: sessionsQueryKey });
+      // `exact`: the landing effect opens the next session, and mounting it is what
+      // fetches its detail — the cascade would refetch every OTHER mounted detail too.
+      queryClient.invalidateQueries({ queryKey: sessionsQueryKey, exact: true });
     },
     onError: toastError,
   });

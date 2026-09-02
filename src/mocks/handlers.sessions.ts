@@ -150,7 +150,11 @@ export const sessionHandlers = [
     sessions.write(
       all.map((stored) => (stored.id === session.id ? { ...stored, pinnedAt } : stored)),
     );
-    return HttpResponse.json({ id: session.id, pinnedAt });
+    // Answers with no body on purpose: the real endpoint's response shape has never
+    // been confirmed, and nothing reads it. Inventing one here would let a client that
+    // reads it pass in tests and fail in production — which is exactly how the artifact
+    // pin bug shipped.
+    return new HttpResponse(null, { status: 200 });
   }),
 
   http.delete('/api/sessions/:sessionId', ({ params }) => {

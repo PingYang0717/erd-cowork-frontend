@@ -16,7 +16,11 @@ export function useSessionDetail(sessionId: string) {
     queryFn: () => getSession(sessionId),
     // A draft session exists only in this cache until its first message upserts it
     // server-side (ADR-0005). A background refetch would 404 and tear the thread down,
-    // so nothing here goes stale on its own — every mutation path invalidates the key.
+    // so nothing here goes stale on its own. Every mutation that can change a detail
+    // invalidates the key it changed BY NAME (send/upload/data-source/rename) — list
+    // mutations deliberately do not cascade here, since `['sessions']` is this key's
+    // prefix and a non-exact invalidate would re-download the open thread for a rename
+    // of some other session (see useSessionMutations).
     staleTime: Infinity,
   });
 }
