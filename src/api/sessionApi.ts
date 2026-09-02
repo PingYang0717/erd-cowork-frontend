@@ -6,11 +6,22 @@ export const listSessions = () => apiClient.get<Session[]>('/sessions');
 
 export const getSession = (id: string) => apiClient.get<SessionDetail>(`/sessions/${id}`);
 
-/** Renames a session. The answer is `unknown` for the same reason as the pin: unconfirmed
- *  and unread. The new title is already in hand from the argument, so nothing here needs
- *  the response. */
+/** What a rename answers with. Like the artifact endpoints, it names its subject
+ *  `sessionId` rather than `id`, and carries only what the call settled. */
+export interface SessionRenameResult {
+  sessionId: string;
+  title: string;
+}
+
+/** Renames a session. Its own path rather than a PATCH on the session itself: the
+ *  endpoint does one named thing, and a body of `{ title }` on `/sessions/{id}` would
+ *  read as a general edit that happens to carry a title.
+ *
+ *  No caller reads the answer — the new title arrived as the argument, so the cache is
+ *  rewritten from that. It is typed anyway, so the next person to reach for it sees the
+ *  real shape rather than assuming a `Session`. */
 export const renameSession = (id: string, title: string) =>
-  apiClient.patch<unknown>(`/sessions/${id}`, { title });
+  apiClient.patch<SessionRenameResult>(`/sessions/${id}/rename`, { title });
 
 /** Toggles the pin: no body, the backend decides the direction and stamps the time.
  *
