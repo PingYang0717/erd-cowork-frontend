@@ -13,7 +13,7 @@ import ArtifactsGalleryPage from './ArtifactsGalleryPage';
 
 /** One Artifact in the fixed contract's shape, for the tests that need to state their
  *  own data rather than take the seeded three. */
-function artifactDto(over: Partial<Artifact> & Pick<Artifact, 'id' | 'title'>): Artifact {
+const artifactDto = (over: Partial<Artifact> & Pick<Artifact, 'id' | 'title'>): Artifact => {
   return {
     version: 1,
     sessionId: 'session-1',
@@ -28,16 +28,16 @@ function artifactDto(over: Partial<Artifact> & Pick<Artifact, 'id' | 'title'>): 
     hasPersonalCopy: false,
     ...over,
   };
-}
+};
 
-function renderGalleryPage() {
+const renderGalleryPage = () => {
   return render(
     <MemoryRouter>
       <ArtifactsGalleryPage />
     </MemoryRouter>,
     { wrapper: appWrapper({ retry: true }) },
   );
-}
+};
 
 describe('Artifacts gallery', () => {
   afterEach(() => {
@@ -105,12 +105,12 @@ describe('Artifacts gallery', () => {
     renderGalleryPage();
     await screen.findByRole('button', { name: 'SPC analysis — Vt (gate CD)' });
 
-    function orderedCardNames() {
+    const orderedCardNames = () => {
       const list = screen.getByRole('list', { name: 'Artifacts' });
       return within(list)
         .getAllByRole('listitem')
         .map((item) => within(item).getAllByRole('button')[0].textContent);
-    }
+    };
 
     await user.click(screen.getByRole('button', { name: /Sort:/ }));
     await user.click(screen.getByRole('menuitem', { name: /Name A→Z/ }));

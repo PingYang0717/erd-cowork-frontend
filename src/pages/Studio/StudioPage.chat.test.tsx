@@ -16,19 +16,19 @@ const SUGGESTED_PROMPTS = [
   'CP Test status',
 ];
 
-async function selectASession(user: ReturnType<typeof userEvent.setup>) {
+const selectASession = async (user: ReturnType<typeof userEvent.setup>) => {
   await user.click(await screen.findByRole('button', { name: 'New chat' }));
   await screen.findByRole('button', { name: 'New analysis' });
   await waitForComposer();
-}
+};
 
 /** Clicks a suggested prompt and waits for the whole scripted run to land in the thread.
  *  The mock backend streams the run and closes; there is no timer to advance. */
-async function runScenario(user: ReturnType<typeof userEvent.setup>, label: string) {
+const runScenario = async (user: ReturnType<typeof userEvent.setup>, label: string) => {
   await user.click(screen.getByRole('button', { name: label }));
   await answerAnalysisConditions(user);
   return screen.findByRole('button', { name: /^Worked through \d+ steps$/ });
-}
+};
 
 describe('Chat composer', () => {
   beforeEach(() => {

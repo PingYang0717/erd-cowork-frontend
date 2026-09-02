@@ -8,7 +8,7 @@ import { appWrapper } from '@/test/appHarness';
 
 import ConnectorsPanel from './ConnectorsPanel';
 
-function renderPanel(sessionId = 'session-1', seedDraft = false) {
+const renderPanel = (sessionId = 'session-1', seedDraft = false) => {
   const queryClient = new QueryClient();
   if (seedDraft) {
     // What openDraft() does: a draft's thread reads this shell until a write persists
@@ -29,20 +29,20 @@ function renderPanel(sessionId = 'session-1', seedDraft = false) {
     </Suspense>,
     { wrapper: appWrapper({ queryClient }) },
   );
-}
+};
 
 /** Presses Submit and waits for the write to land. The button goes back to disabled once
  *  the refetched session matches the draft, which is the panel's own signal that there is
  *  nothing left unsaved — steadier than watching for the dialog, which this harness never
  *  closes (its `onClose` is a no-op). */
-async function submitSelection(user: ReturnType<typeof userEvent.setup>) {
+const submitSelection = async (user: ReturnType<typeof userEvent.setup>) => {
   await user.click(screen.getByRole('button', { name: 'Submit' }));
   await waitFor(() => expect(screen.getByRole('button', { name: 'Submit' })).toBeDisabled());
-}
+};
 
-function selectedSources() {
+const selectedSources = () => {
   return screen.getByRole('dialog').querySelector('[class*="selectedChips"]') as HTMLElement;
-}
+};
 
 /** A data source is attached to a conversation, not to the user: the write goes to
  *  PATCH/DELETE /sessions/{id}/data-source, and what a fresh mount reads back is the

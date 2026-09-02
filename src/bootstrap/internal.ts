@@ -8,10 +8,10 @@ const impls = import.meta.glob<InternalBootstrap>('./internal.impl.ts');
 
 /** internal 環境的啟動初始化(例如 SSO 決定 X-User-Id);預設環境無實作檔時為 no-op。
  *  loaders 參數僅供測試注入,正式路徑一律走上面的 glob 結果。 */
-export async function initInternalRuntime(
+export const initInternalRuntime = async (
   loaders: Record<string, () => Promise<InternalBootstrap>> = impls,
-): Promise<void> {
+): Promise<void> => {
   const load = loaders['./internal.impl.ts'];
   if (!load) return;
   await (await load()).initialize();
-}
+};

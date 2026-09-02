@@ -4,23 +4,23 @@ import { injectCspMeta } from './artifactCsp';
 
 const ORIGIN = 'https://erd.example.com';
 
-function policyOf(html: string): string {
+const policyOf = (html: string): string => {
   const match = /<meta http-equiv="Content-Security-Policy" content="([^"]+)">/.exec(html);
   return match ? match[1] : '';
-}
+};
 
 /** Parses the injected document the way a browser would, and reports where the policy
  *  actually landed. String matching cannot answer this: a `<meta>` sitting inside a
  *  comment or a JS string literal still matches a regex, but the document it produces
  *  has no policy at all. */
-function parsedPolicy(html: string): { inHead: boolean; isFirstInHead: boolean } {
+const parsedPolicy = (html: string): { inHead: boolean; isFirstInHead: boolean } => {
   const doc = new DOMParser().parseFromString(html, 'text/html');
   const meta = doc.head.querySelector('meta[http-equiv="Content-Security-Policy"]');
   return {
     inHead: meta !== null,
     isFirstInHead: meta !== null && doc.head.firstElementChild === meta,
   };
-}
+};
 
 describe('injectCspMeta', () => {
   it('puts the policy first inside <head>, before anything the document loads', () => {

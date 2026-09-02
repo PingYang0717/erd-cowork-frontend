@@ -8,10 +8,10 @@ const API_BASE = '/api';
 /** Hand-built multipart POST: the mock's parser is exercised against browser-real wire
  *  bytes constructed independently of `fileApi` (and of the test-env FormData shim in
  *  test/formDataWire.ts) — an independent source of truth for the wire format. */
-async function postMultipart(
+const postMultipart = async (
   sessionId: string,
   files: { name: string; sizeBytes: number; type?: string }[],
-): Promise<UploadedFileInfo[]> {
+): Promise<UploadedFileInfo[]> => {
   const boundary = `----erdCoworkTest${Math.random().toString(16).slice(2)}`;
   const encoder = new TextEncoder();
   const chunks: Uint8Array[] = [];
@@ -41,13 +41,13 @@ async function postMultipart(
   });
   if (!response.ok) throw new Error(`upload failed: ${response.status}`);
   return (await response.json()) as UploadedFileInfo[];
-}
+};
 
-async function sessionFiles(sessionId: string): Promise<UploadedFileInfo[]> {
+const sessionFiles = async (sessionId: string): Promise<UploadedFileInfo[]> => {
   const response = await fetch(`${API_BASE}/sessions/${sessionId}`);
   const detail = (await response.json()) as SessionDetail;
   return detail.files;
-}
+};
 
 /** Files live on the session per the backend contract: multipart POST, delete by id,
  *  and the list rides inside SessionDetail. */

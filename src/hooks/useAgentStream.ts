@@ -72,7 +72,7 @@ const initialState: AgentStreamState = {
 
 /** A step is identified by its `stepKey`: a later event for the same key is a status
  *  transition, not a new step, and must not move it in the list. */
-function upsertStep(steps: StepItem[], incoming: StepItem): StepItem[] {
+const upsertStep = (steps: StepItem[], incoming: StepItem): StepItem[] => {
   const existingIndex = steps.findIndex((step) => step.stepKey === incoming.stepKey);
 
   if (existingIndex === -1) {
@@ -80,9 +80,9 @@ function upsertStep(steps: StepItem[], incoming: StepItem): StepItem[] {
   }
 
   return steps.map((step, index) => (index === existingIndex ? incoming : step));
-}
+};
 
-function reducer(state: AgentStreamState, action: Action): AgentStreamState {
+const reducer = (state: AgentStreamState, action: Action): AgentStreamState => {
   switch (action.type) {
     case 'START':
       return { ...initialState, isStreaming: true, startedAt: action.startedAt };
@@ -178,14 +178,16 @@ function reducer(state: AgentStreamState, action: Action): AgentStreamState {
     default:
       return state;
   }
-}
+};
 
-export function useAgentStream(sessionId: string): {
+export const useAgentStream = (
+  sessionId: string,
+): {
   state: AgentStreamState;
   send(input: SendInput): Promise<void>;
   stop(): void;
   reset(): void;
-} {
+} => {
   const [state, dispatch] = useReducer(reducer, initialState);
   const queryClient = useQueryClient();
   const controllerRef = useRef<AbortController | null>(null);
@@ -297,4 +299,4 @@ export function useAgentStream(sessionId: string): {
   }, []);
 
   return { state, send, stop, reset };
-}
+};

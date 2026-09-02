@@ -36,12 +36,12 @@ const CollapsedSessionRail: React.FC<CollapsedSessionRailProps> = ({ onExpand })
     createAndNavigate,
   } = useSessionGroups();
 
-  function handleSelectSession(id: string) {
+  const handleSelectSession = (id: string) => {
     selectAndNavigate(id);
     setHistoryOpen(false);
-  }
+  };
 
-  function toggleHistory() {
+  const toggleHistory = () => {
     if (!historyOpen) {
       const rect = historyButtonRef.current?.getBoundingClientRect();
       if (rect) {
@@ -49,7 +49,7 @@ const CollapsedSessionRail: React.FC<CollapsedSessionRailProps> = ({ onExpand })
       }
     }
     setHistoryOpen((v) => !v);
-  }
+  };
 
   return (
     <div className={styles.rail}>

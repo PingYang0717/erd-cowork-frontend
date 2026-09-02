@@ -10,9 +10,9 @@ import { useStudioLayoutStore } from '@/stores/useStudioLayoutStore';
 import { useThemeStore } from '@/stores/useThemeStore';
 import { renderStudio } from '@/test/renderStudio';
 
-function artifactSrcdoc() {
+const artifactSrcdoc = () => {
   return (screen.getByTitle('Artifact preview') as HTMLIFrameElement).getAttribute('srcdoc');
-}
+};
 
 /** Versions are derived from the session's artifact-bearing messages (cowork master's
  *  model): every regenerate is a chat turn that yields a new artifact, and that

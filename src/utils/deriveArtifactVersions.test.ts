@@ -4,7 +4,7 @@ import type { Message } from '@/types/api';
 
 import { deriveArtifactVersions } from './deriveArtifactVersions';
 
-function message(overrides: Partial<Message>): Message {
+const message = (overrides: Partial<Message>): Message => {
   return {
     id: crypto.randomUUID(),
     sender: 'AI',
@@ -16,7 +16,7 @@ function message(overrides: Partial<Message>): Message {
     questionsJson: null,
     ...overrides,
   };
-}
+};
 
 describe('deriveArtifactVersions', () => {
   it('lists artifact-bearing messages in arrival order, skipping messages without artifacts', () => {

@@ -9,7 +9,7 @@ import { describeActionError } from '@/utils/describeLoadError';
  *
  *  `message.error?.` — outside `AppProviders` (component tests) `useApp` returns an empty
  *  object, and a missing toast is better than a crashed test. */
-export function useActionErrorToast() {
+export const useActionErrorToast = () => {
   const { message } = App.useApp();
   return (error: unknown) => message.error?.(describeActionError(error));
-}
+};

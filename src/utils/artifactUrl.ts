@@ -8,11 +8,11 @@
  *  factory in `app/router.tsx` — and the `/#/` assertions in `artifactUrl.test.ts`. */
 
 /** The in-app route, for `navigate()` and `<Route path>` — no `#`, React Router owns it. */
-export function artifactRoute(artifactId: string): string {
+export const artifactRoute = (artifactId: string): string => {
   return `/cowork/artifact/${artifactId}`;
-}
+};
 
 /** A full URL that survives leaving the app: pasted into a chat, opened in a new tab. */
-export function artifactHref(artifactId: string): string {
+export const artifactHref = (artifactId: string): string => {
   return `${window.location.origin}/#${artifactRoute(artifactId)}`;
-}
+};

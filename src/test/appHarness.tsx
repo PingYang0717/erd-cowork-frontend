@@ -20,7 +20,7 @@ interface AppWrapperOptions {
   queryClient?: QueryClient;
 }
 
-export function appWrapper({ retry = false, queryClient: given }: AppWrapperOptions = {}) {
+export const appWrapper = ({ retry = false, queryClient: given }: AppWrapperOptions = {}) => {
   const queryClient = given ?? new QueryClient({ defaultOptions: { queries: { retry } } });
   return function AppHarness({ children }: { children: ReactNode }): ReactElement {
     return (
@@ -29,4 +29,4 @@ export function appWrapper({ retry = false, queryClient: given }: AppWrapperOpti
       </QueryClientProvider>
     );
   };
-}
+};

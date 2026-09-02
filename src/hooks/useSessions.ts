@@ -4,9 +4,9 @@ import { listSessions } from '@/api/sessionApi';
 
 export const sessionsQueryKey = ['sessions'] as const;
 
-export function useSessions() {
+export const useSessions = () => {
   return useSuspenseQuery({
     queryKey: sessionsQueryKey,
     queryFn: listSessions,
   });
-}
+};

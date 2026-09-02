@@ -9,12 +9,12 @@ import { useLanguageStore } from '@/stores/useLanguageStore';
 
 import ErrorBoundary from './ErrorBoundary';
 
-function Explode({ shouldThrow }: { shouldThrow: boolean }) {
+const Explode = ({ shouldThrow }: { shouldThrow: boolean }) => {
   if (shouldThrow) {
     throw new Error('連線中斷');
   }
   return <p>載入完成</p>;
-}
+};
 
 describe('ErrorBoundary', () => {
   it('shows what failed instead of taking the page down with it', () => {
@@ -35,9 +35,9 @@ describe('ErrorBoundary', () => {
   it('names an unreachable backend instead of showing axios’s "Network Error"', () => {
     vi.spyOn(console, 'error').mockImplementation(() => {});
 
-    function ExplodeOffline(): never {
+    const ExplodeOffline = (): never => {
       throw new AxiosError('Network Error', 'ERR_NETWORK');
-    }
+    };
 
     render(
       <ErrorBoundary>
@@ -57,9 +57,9 @@ describe('ErrorBoundary', () => {
     // Whatever went wrong is fixed between the failure and the retry, so the retry is
     // what makes the subtree render again.
     let broken = true;
-    function Subject() {
+    const Subject = () => {
       return <Explode shouldThrow={broken} />;
-    }
+    };
 
     render(
       <ErrorBoundary>

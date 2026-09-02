@@ -5,9 +5,9 @@ import { server } from '@/mocks/server';
 
 import { uploadFiles, type UploadProgress } from './fileApi';
 
-function csv(name: string, sizeBytes: number): File {
+const csv = (name: string, sizeBytes: number): File => {
   return new File([new Uint8Array(sizeBytes)], name, { type: 'text/csv' });
-}
+};
 
 /** A CSV here runs to gigabytes; an upload with no reported progress is a frozen screen. */
 describe('fileApi.uploadFiles progress', () => {

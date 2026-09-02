@@ -35,7 +35,7 @@ const ALLOWED: Record<string, string[]> = {
 
 const SRC = join(__dirname, '..');
 
-function tsxFilesUnder(dir: string): string[] {
+const tsxFilesUnder = (dir: string): string[] => {
   return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
     const path = join(dir, entry.name);
     if (entry.isDirectory()) {
@@ -43,7 +43,7 @@ function tsxFilesUnder(dir: string): string[] {
     }
     return entry.name.endsWith('.tsx') && !entry.name.includes('.test.') ? [path] : [];
   });
-}
+};
 
 /** A JSX text node that looks like an English sentence fragment: starts with a letter
  *  and contains at least one lowercase word of 2+ letters. Punctuation-only nodes,
@@ -54,7 +54,7 @@ const JSX_TEXT = />\s*([A-Z][^<>{}]*[a-z]{2}[^<>{}]*)</g;
  *  it (DataBoundary, ResizeHandle) route it to `aria-label`, which is exempt. */
 const ATTR_TEXT = /(?:label:\s*|placeholder=)["']([A-Z][^"']*[a-z]{2}[^"']*)["']/g;
 
-function violationsIn(source: string, relative: string): string[] {
+const violationsIn = (source: string, relative: string): string[] => {
   const allowed = ALLOWED[relative] ?? [];
   const found: string[] = [];
   for (const pattern of [JSX_TEXT, ATTR_TEXT]) {
@@ -69,7 +69,7 @@ function violationsIn(source: string, relative: string): string[] {
     }
   }
   return found;
-}
+};
 
 describe('UI copy goes through the dictionary', () => {
   it('finds no bare English literals in components and pages', () => {

@@ -38,14 +38,14 @@ vi.mock('@/components/chat/MessageList', async () => {
 });
 
 /** One drag = 20 mousemoves, the number a real ~300ms drag emits at 60fps. */
-function drag(handleName: string, steps = 20) {
+const drag = (handleName: string, steps = 20) => {
   const handle = screen.getByRole('separator', { name: handleName });
   fireEvent.pointerDown(handle, { clientX: 500 });
   for (let step = 0; step < steps; step += 1) {
     fireEvent.pointerMove(window, { clientX: 500 + step, buttons: 1 });
   }
   fireEvent.pointerUp(window);
-}
+};
 
 describe('divider drag does not re-render the panes', () => {
   beforeEach(() => {
@@ -57,7 +57,7 @@ describe('divider drag does not re-render the panes', () => {
 
   /** Drives the Studio into the state the bug happens in: a thread with messages and
    *  an artifact in the right pane. Empty panes have nothing to re-render. */
-  async function openAThreadWithAnArtifact() {
+  const openAThreadWithAnArtifact = async () => {
     const user = userEvent.setup();
     renderStudio();
     await user.click(await screen.findByRole('button', { name: 'New chat' }));
@@ -67,7 +67,7 @@ describe('divider drag does not re-render the panes', () => {
     await answerAnalysisConditions(user);
     await screen.findByRole('button', { name: /^Worked through \d+ steps$/ });
     await screen.findByTitle('Artifact preview');
-  }
+  };
 
   it('the probe is wired — a rendered pane increments it', async () => {
     await openAThreadWithAnArtifact();

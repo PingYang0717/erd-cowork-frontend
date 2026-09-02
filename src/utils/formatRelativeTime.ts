@@ -14,7 +14,7 @@ const DAY_MS = 24 * HOUR_MS;
  *  Past seven days it falls back to an absolute date, and that date now carries the
  *  year when it is not the current one: without it a session from last September and
  *  one from this September read identically in the rail. */
-export function formatRelativeTime(isoString: string, now: Date = new Date()): string {
+export const formatRelativeTime = (isoString: string, now: Date = new Date()): string => {
   const t = getTranslations().time;
   const then = new Date(isoString);
   const diffMs = now.getTime() - then.getTime();
@@ -42,4 +42,4 @@ export function formatRelativeTime(isoString: string, now: Date = new Date()): s
   return then.getFullYear() === now.getFullYear()
     ? t.monthDay(then.getMonth(), then.getDate())
     : t.monthDayYear(then.getMonth(), then.getDate(), then.getFullYear());
-}
+};

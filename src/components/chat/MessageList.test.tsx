@@ -33,7 +33,7 @@ const liveRun = (overrides: Partial<LiveRun> = {}): LiveRun => ({
   ...overrides,
 });
 
-function renderList(live: LiveRun | null = null, optimisticUserText: string | null = null) {
+const renderList = (live: LiveRun | null = null, optimisticUserText: string | null = null) => {
   return render(
     <MessageList
       messages={[message('m1', 'USER', 'Run SPC'), message('m2', 'AI', 'Done.')]}
@@ -43,14 +43,14 @@ function renderList(live: LiveRun | null = null, optimisticUserText: string | nu
       onAnswer={() => {}}
     />,
   );
-}
+};
 
 /** jsdom reports zero for every scroll metric, so the box is given a real geometry:
  *  1000px of content in a 200px viewport. */
-function giveGeometry(log: HTMLElement) {
+const giveGeometry = (log: HTMLElement) => {
   Object.defineProperty(log, 'scrollHeight', { value: 1000, configurable: true });
   Object.defineProperty(log, 'clientHeight', { value: 200, configurable: true });
-}
+};
 
 describe('MessageList auto-scroll', () => {
   beforeEach(() => {

@@ -7,7 +7,7 @@ import styles from './Tooltip.module.css';
 
 /** jsdom gives every element a zero rect, so the trigger's distance from the top of the
  *  viewport has to be stated for the flip to be exercised at all. */
-function placeTriggerAt(topPx: number) {
+const placeTriggerAt = (topPx: number) => {
   vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({
     top: topPx,
     bottom: topPx + 32,
@@ -19,7 +19,7 @@ function placeTriggerAt(topPx: number) {
     y: topPx,
     toJSON: () => ({}),
   });
-}
+};
 
 describe('Tooltip', () => {
   it('opens above the trigger when there is room', async () => {

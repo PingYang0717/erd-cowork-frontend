@@ -20,10 +20,10 @@ import { formatBytes } from '@/utils/formatBytes';
 
 import styles from './FileAttachmentModal.module.css';
 
-function fileExtension(fileName: string) {
+const fileExtension = (fileName: string) => {
   const dot = fileName.lastIndexOf('.');
   return dot === -1 ? '' : fileName.slice(dot + 1).toLowerCase();
-}
+};
 
 // The mockup's file rows color the icon by type: csv = primary,
 // xlsx/xls = success.

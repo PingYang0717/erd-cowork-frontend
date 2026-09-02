@@ -8,13 +8,13 @@ import { appWrapper } from '@/test/appHarness';
 import { useAgentStream } from './useAgentStream';
 
 /** The hook now owns the post-run invalidation, so it needs a QueryClient around it. */
-function renderAgentStream(sessionId = 'session-1') {
+const renderAgentStream = (sessionId = 'session-1') => {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return {
     queryClient,
     ...renderHook(() => useAgentStream(sessionId), { wrapper: appWrapper({ queryClient }) }),
   };
-}
+};
 
 describe('useAgentStream', () => {
   it('accumulates TOKEN deltas into the live reply text while streaming', async () => {

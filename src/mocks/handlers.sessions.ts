@@ -45,7 +45,7 @@ export const sessionDataSources = createPersistedResource<{
 /** Creates the session if this client has never sent to it before, and stamps its
  *  last activity either way. Mirrors ChatSession implementing Persistable<String>:
  *  the backend upserts on send rather than exposing a create endpoint. */
-export function upsertSession(sessionId: string): void {
+export const upsertSession = (sessionId: string): void => {
   const all = sessions.read();
   const existing = all.find((session) => session.id === sessionId);
   const now = new Date().toISOString();
@@ -61,7 +61,7 @@ export function upsertSession(sessionId: string): void {
     ...all,
     { id: sessionId, title: DRAFT_SESSION_TITLE, pinnedAt: null, updatedAt: now },
   ]);
-}
+};
 
 export const sessionHandlers = [
   http.get('/api/sessions', () => {

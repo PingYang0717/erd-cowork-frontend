@@ -5,10 +5,10 @@ import type { QuestionAnswer, QuestionField, QuestionForm } from '@/types/api/ag
  *  ChatPanel sends. Values map to their option labels so the sentence reads the way the
  *  form did; the structured `{ answers, inReplyTo }` wire is on the backend feedback
  *  list, not in the contract. */
-export function composeAnswerText(
+export const composeAnswerText = (
   form: QuestionForm,
   answers: Record<string, QuestionAnswer>,
-): string {
+): string => {
   const parts: string[] = [];
 
   for (const field of form.fields) {
@@ -22,16 +22,16 @@ export function composeAnswerText(
   }
 
   return parts.join('；');
-}
+};
 
-function isVisible(field: QuestionField, answers: Record<string, QuestionAnswer>): boolean {
+const isVisible = (field: QuestionField, answers: Record<string, QuestionAnswer>): boolean => {
   if (!field.visibleWhen) {
     return true;
   }
   return answers[field.visibleWhen.field] === field.visibleWhen.equals;
-}
+};
 
-function displayValue(field: QuestionField, answer: QuestionAnswer | undefined): string | null {
+const displayValue = (field: QuestionField, answer: QuestionAnswer | undefined): string | null => {
   if (answer === undefined || answer === false || answer === '') {
     return null;
   }
@@ -44,8 +44,8 @@ function displayValue(field: QuestionField, answer: QuestionAnswer | undefined):
     return null;
   }
   return values.map((value) => optionLabel(field, value)).join('、');
-}
+};
 
-function optionLabel(field: QuestionField, value: string): string {
+const optionLabel = (field: QuestionField, value: string): string => {
   return field.options?.find((option) => option.value === value)?.label ?? value;
-}
+};

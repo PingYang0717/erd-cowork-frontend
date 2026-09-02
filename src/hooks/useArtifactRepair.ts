@@ -13,7 +13,7 @@ const isFilesExpired = (error: unknown): boolean => errorCode(error) === 'FILES_
 /** Asks the agent to rebuild an artifact that threw, then reloads it.
  *  A repair that produced no improvement is reported, not swallowed: the user decides
  *  whether to try again. */
-export function useArtifactRepair() {
+export const useArtifactRepair = () => {
   const queryClient = useQueryClient();
   const setStatus = useRepairOfferStore((store) => store.setStatus);
   const resolve = useRepairOfferStore((store) => store.resolve);
@@ -47,4 +47,4 @@ export function useArtifactRepair() {
     },
     [queryClient, setStatus, resolve, bumpArtifactReload],
   );
-}
+};

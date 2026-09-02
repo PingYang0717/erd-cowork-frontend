@@ -27,7 +27,7 @@ const asOptions = (values: string[]) => values.map((value) => ({ value, label: v
 /** Data type is the one field whose choices are not fixed by the Scenario: it lists the
  *  connectors that are actually connected right now (ADR-0004). With none connected the
  *  mockup still offers Inline, so the form is never a dead end. */
-function dataTypeField(connectors: Connector[]): QuestionField {
+const dataTypeField = (connectors: Connector[]): QuestionField => {
   const connected = connectors.filter((connector) => connector.status === 'connected');
   const names = connected.length > 0 ? connected.map((connector) => connector.name) : ['Inline'];
 
@@ -39,9 +39,9 @@ function dataTypeField(connectors: Connector[]): QuestionField {
     options: asOptions(names),
     hint: '可多選,只顯示已連線的來源。',
   };
-}
+};
 
-function spcConditions(connectors: Connector[]): QuestionForm {
+const spcConditions = (connectors: Connector[]): QuestionForm => {
   return {
     formKey: 'spc-conditions',
     title: '分析條件',
@@ -69,9 +69,9 @@ function spcConditions(connectors: Connector[]): QuestionForm {
     disabledHint: '請先選 part id、time range、data type',
     summaryLabel: '分析條件',
   };
-}
+};
 
-function cpTestConditions(): QuestionForm {
+const cpTestConditions = (): QuestionForm => {
   return {
     formKey: 'cptest-conditions',
     title: '分析條件',
@@ -114,14 +114,14 @@ function cpTestConditions(): QuestionForm {
     disabledHint: '請先選角色與時間區間',
     summaryLabel: '分析條件',
   };
-}
+};
 
 /** The reask a Scenario opens with, or null when it runs straight away.
  *  Daily monitor needs nothing from the user — it is the whole-line morning report. */
-export function openingQuestion(
+export const openingQuestion = (
   scenarioKey: ScenarioKey,
   connectors: Connector[],
-): QuestionForm | null {
+): QuestionForm | null => {
   if (scenarioKey === 'spc' || scenarioKey === 'inline') {
     return spcConditions(connectors);
   }
@@ -129,12 +129,12 @@ export function openingQuestion(
     return cpTestConditions();
   }
   return null;
-}
+};
 
 /** The reask an SPC run raises mid-flight: the scan found more DC items than are worth
  *  charting in one go, so the user picks which to see first
  *  (eRDWorkspace20260819.html:10290-10312, :83224-83480). */
-export function dcItemQuestion(dcItems: DcItem[], rowsPerItem: number): QuestionForm {
+export const dcItemQuestion = (dcItems: DcItem[], rowsPerItem: number): QuestionForm => {
   const total = dcItems.length;
   const rows = (total * rowsPerItem).toLocaleString('en-US');
 
@@ -166,15 +166,15 @@ export function dcItemQuestion(dcItems: DcItem[], rowsPerItem: number): Question
     disabledHint: '至少選一項',
     summaryLabel: 'DC item',
   };
-}
+};
 
 /** The wire truth for a QUESTION event: the backend sends only a flat Question[].
  *  The mock derives it from the rich form it also rides along as an extension, so
  *  the event stays verbatim-compatible with a real backend's. */
-export function flattenQuestionForm(form: QuestionForm): Question[] {
+export const flattenQuestionForm = (form: QuestionForm): Question[] => {
   return form.fields.map((field) => ({
     text: field.label,
     options: (field.options ?? []).map((option) => option.label),
     multiSelect: field.kind === 'multi' || field.kind === 'dcitem',
   }));
-}
+};

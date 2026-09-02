@@ -4,11 +4,11 @@ import type { AgentEvent } from '@/types/api/agentEvent';
 
 import { createSseParser } from './sseParser';
 
-function collect() {
+const collect = () => {
   const events: AgentEvent[] = [];
   const parser = createSseParser((event) => events.push(event));
   return { events, parser };
-}
+};
 
 describe('SSE parser', () => {
   it('emits one agent event for a complete data block', () => {

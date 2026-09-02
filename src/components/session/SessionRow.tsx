@@ -76,7 +76,7 @@ const SessionRow: React.FC<SessionRowProps> = ({ session, isSelected, isDraft, o
     },
   ];
 
-  function handleMenuClick(key: string) {
+  const handleMenuClick = (key: string) => {
     dispatchMenuAction(key, {
       pin: () => toggleSessionPin.mutate(session.id),
       rename: () => {
@@ -93,19 +93,19 @@ const SessionRow: React.FC<SessionRowProps> = ({ session, isSelected, isDraft, o
           onConfirm: () => deleteSession.mutate(session.id),
         }),
     });
-  }
+  };
 
-  function commitRename() {
+  const commitRename = () => {
     const title = renameDraft.trim();
     setIsRenaming(false);
     if (title && title !== session.title) {
       renameSession.mutate({ id: session.id, title });
     }
-  }
+  };
 
-  function cancelRename() {
+  const cancelRename = () => {
     setIsRenaming(false);
-  }
+  };
 
   if (isRenaming) {
     return (

@@ -11,18 +11,18 @@ import { useStudioLayoutStore } from '@/stores/useStudioLayoutStore';
 import { renderStudio, waitForComposer } from '@/test/renderStudio';
 import { answerAnalysisConditions } from '@/test/studioRun';
 
-async function runAnalysis(user: ReturnType<typeof userEvent.setup>) {
+const runAnalysis = async (user: ReturnType<typeof userEvent.setup>) => {
   await user.click(await screen.findByRole('button', { name: 'New chat' }));
   await screen.findByRole('button', { name: 'New analysis' });
   await waitForComposer();
   await user.click(screen.getByRole('button', { name: 'SPC analysis' }));
   await answerAnalysisConditions(user);
   return (await screen.findByTitle('Artifact preview')) as HTMLIFrameElement;
-}
+};
 
 /** jsdom does not run scripts inside an iframe's srcdoc, so the collector the artifact
  *  ships cannot fire on its own. This is the message it would post. */
-function reportRuntimeError(iframe: HTMLIFrameElement, message: string) {
+const reportRuntimeError = (iframe: HTMLIFrameElement, message: string) => {
   act(() => {
     window.dispatchEvent(
       new MessageEvent('message', {
@@ -31,7 +31,7 @@ function reportRuntimeError(iframe: HTMLIFrameElement, message: string) {
       }),
     );
   });
-}
+};
 
 describe('Artifact repair', () => {
   beforeEach(() => {

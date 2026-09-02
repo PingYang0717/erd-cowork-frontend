@@ -9,16 +9,16 @@ import { mockAgentStream } from '@/test/agentStream';
 import { renderStudio, waitForComposer } from '@/test/renderStudio';
 import { answerAnalysisConditions } from '@/test/studioRun';
 
-async function selectASession(user: ReturnType<typeof userEvent.setup>) {
+const selectASession = async (user: ReturnType<typeof userEvent.setup>) => {
   await user.click(await screen.findByRole('button', { name: 'New chat' }));
   await screen.findByRole('button', { name: 'New analysis' });
   await waitForComposer();
-}
+};
 
-async function startAnalysis(user: ReturnType<typeof userEvent.setup>) {
+const startAnalysis = async (user: ReturnType<typeof userEvent.setup>) => {
   await selectASession(user);
   await user.click(screen.getByRole('button', { name: 'SPC analysis' }));
-}
+};
 
 describe('Streaming a run in the Studio', () => {
   beforeEach(() => {

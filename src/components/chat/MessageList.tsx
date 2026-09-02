@@ -13,7 +13,7 @@ import type { Answers } from './QuestionFormCard';
 /** What the current run has produced so far. Null once nothing is streaming. */
 /** The wire carries steps as the backend's JSON string; a malformed one renders as no
  *  recap rather than a broken thread. */
-function parseSteps(stepsJson: string | null): StepItem[] {
+const parseSteps = (stepsJson: string | null): StepItem[] => {
   if (!stepsJson) {
     return [];
   }
@@ -23,11 +23,11 @@ function parseSteps(stepsJson: string | null): StepItem[] {
   } catch {
     return [];
   }
-}
+};
 
 /** The reask a past turn asked, lifted into the same form the live one renders. Answers
  *  were never persisted, so it comes back read-only. */
-function parseQuestion(questionsJson: string | null): QuestionForm | null {
+const parseQuestion = (questionsJson: string | null): QuestionForm | null => {
   if (!questionsJson) {
     return null;
   }
@@ -40,7 +40,7 @@ function parseQuestion(questionsJson: string | null): QuestionForm | null {
   } catch {
     return null;
   }
-}
+};
 
 interface MessageListProps {
   messages: Message[];

@@ -75,7 +75,7 @@ const ArtifactCard: React.FC<ArtifactCardProps> = ({ artifact, onOpen }) => {
    *  action can speak from — and it used to say nothing either way: an awaited-nowhere
    *  promise, success indistinguishable from a clipboard refusal. `message.*?.` —
    *  outside AppProviders (component tests) `useApp` returns an empty object. */
-  async function copyLink() {
+  const copyLink = async () => {
     try {
       await navigator.clipboard.writeText(artifactHref(artifact.id));
       message.success?.(t.gallery.linkCopied);
@@ -84,9 +84,9 @@ const ArtifactCard: React.FC<ArtifactCardProps> = ({ artifact, onOpen }) => {
       // and "the backend is not ready" would send the user to the wrong place.
       message.error?.(t.gallery.linkCopyFailed);
     }
-  }
+  };
 
-  function handleMenuClick(key: string) {
+  const handleMenuClick = (key: string) => {
     dispatchMenuAction(key, {
       pin: () => toggleArtifactPin.mutate(artifact.id),
       copyLink: () => void copyLink(),
@@ -101,7 +101,7 @@ const ArtifactCard: React.FC<ArtifactCardProps> = ({ artifact, onOpen }) => {
           onConfirm: () => unpublishArtifact.mutate(artifact.id),
         }),
     });
-  }
+  };
 
   return (
     <div className={styles.card} role="listitem">
