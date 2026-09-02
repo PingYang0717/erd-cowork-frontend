@@ -22,6 +22,15 @@ const VersionSwitcher: React.FC<VersionSwitcherProps> = ({ versions, activeVersi
   const t = useTranslations();
   const [isOpen, setIsOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const itemRefs = useRef<(HTMLButtonElement | null)[]>([]);
+
+  /** Closing by keyboard must put the reader back where they were: in a three-pane
+   *  layout, focus dropped to <body> is a position lost entirely (A-2). */
+  const closeAndRefocus = () => {
+    setIsOpen(false);
+    triggerRef.current?.focus();
+  };
 
   useEffect(() => {
     if (!isOpen) {
@@ -32,18 +41,60 @@ const VersionSwitcher: React.FC<VersionSwitcherProps> = ({ versions, activeVersi
         setIsOpen(false);
       }
     };
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        setIsOpen(false);
-      }
-    };
     document.addEventListener('pointerdown', onPointerDown);
-    document.addEventListener('keydown', onKeyDown);
     return () => {
       document.removeEventListener('pointerdown', onPointerDown);
-      document.removeEventListener('keydown', onKeyDown);
     };
   }, [isOpen]);
+
+  // Opening a menu moves focus into it — onto the current version, so arrow keys
+  // start from where the user actually is rather than from the top.
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+    const currentIndex = itemRefs.current.findIndex(
+      (item) => item?.getAttribute('aria-current') === 'true',
+    );
+    (itemRefs.current[currentIndex === -1 ? 0 : currentIndex] ?? itemRefs.current[0])?.focus();
+  }, [isOpen]);
+
+  /** The menu-button keyboard contract: arrows move (wrapping), Home/End jump,
+   *  Escape closes and restores focus, Tab closes and lets focus move on. */
+  const handleMenuKeyDown = (event: React.KeyboardEvent) => {
+    const items = itemRefs.current.filter((item): item is HTMLButtonElement => item !== null);
+    const activeIndex = items.findIndex((item) => item === document.activeElement);
+    const focusAt = (index: number) => items[(index + items.length) % items.length]?.focus();
+
+    switch (event.key) {
+      case 'ArrowDown':
+        event.preventDefault();
+        focusAt(activeIndex + 1);
+        break;
+      case 'ArrowUp':
+        event.preventDefault();
+        focusAt(activeIndex - 1);
+        break;
+      case 'Home':
+        event.preventDefault();
+        focusAt(0);
+        break;
+      case 'End':
+        event.preventDefault();
+        focusAt(items.length - 1);
+        break;
+      case 'Escape':
+        event.preventDefault();
+        closeAndRefocus();
+        break;
+      case 'Tab':
+        // Standard menu behaviour: Tab dismisses and focus moves on naturally.
+        setIsOpen(false);
+        break;
+      default:
+        break;
+    }
+  };
 
   const newestFirst = [...versions].reverse();
 
@@ -51,6 +102,7 @@ const VersionSwitcher: React.FC<VersionSwitcherProps> = ({ versions, activeVersi
     <div ref={rootRef} className={styles.versionSwitcher}>
       <Tooltip content={t.artifact.switchVersion}>
         <button
+          ref={triggerRef}
           type="button"
           className={styles.versionTrigger}
           aria-label="Switch Artifact"
@@ -67,41 +119,51 @@ const VersionSwitcher: React.FC<VersionSwitcherProps> = ({ versions, activeVersi
         </button>
       </Tooltip>
       {isOpen && (
-        <div role="menu" className={styles.versionMenu}>
+        // The header sits inside the popup but OUTSIDE the element carrying
+        // role="menu": a menu's children may only be items, and the title div was
+        // an illegal child that some readers skip the whole menu over (A-2).
+        <div className={styles.versionMenu}>
           <div className={styles.versionMenuHeader}>
             {t.artifact.versionMenuTitle(versions.length)}
           </div>
-          {newestFirst.map((v) => {
-            const isCurrent = v.artifactId === activeVersion?.artifactId;
-            return (
-              <button
-                key={v.artifactId}
-                type="button"
-                role="menuitem"
-                aria-current={isCurrent ? 'true' : undefined}
-                className={
-                  isCurrent
-                    ? `${styles.versionMenuItem} ${styles.versionMenuItemCurrent}`
-                    : styles.versionMenuItem
-                }
-                onClick={() => {
-                  onSelect(v.artifactId);
-                  setIsOpen(false);
-                }}
-              >
-                {v.version !== undefined && (
-                  <span className={styles.versionMenuItemN}>v{v.version}</span>
-                )}
-                <span className={styles.versionMenuItemLabel}>{v.title}</span>
-                <span className={styles.versionMenuItemTime}>
-                  {v.createdAt ? formatRelativeTime(v.createdAt) : ''}
-                </span>
-                {v.publishedAt != null && (
-                  <CheckOutlined aria-label="Published" className={styles.versionMenuItemCheck} />
-                )}
-              </button>
-            );
-          })}
+          {/* The keydown handler implements the menu keyboard contract; focus lives
+              on the menuitem buttons inside, never on this wrapper. */}
+          <div role="menu" aria-label="Switch Artifact" onKeyDown={handleMenuKeyDown}>
+            {newestFirst.map((v, index) => {
+              const isCurrent = v.artifactId === activeVersion?.artifactId;
+              return (
+                <button
+                  key={v.artifactId}
+                  ref={(element) => {
+                    itemRefs.current[index] = element;
+                  }}
+                  type="button"
+                  role="menuitem"
+                  aria-current={isCurrent ? 'true' : undefined}
+                  className={
+                    isCurrent
+                      ? `${styles.versionMenuItem} ${styles.versionMenuItemCurrent}`
+                      : styles.versionMenuItem
+                  }
+                  onClick={() => {
+                    onSelect(v.artifactId);
+                    closeAndRefocus();
+                  }}
+                >
+                  {v.version !== undefined && (
+                    <span className={styles.versionMenuItemN}>v{v.version}</span>
+                  )}
+                  <span className={styles.versionMenuItemLabel}>{v.title}</span>
+                  <span className={styles.versionMenuItemTime}>
+                    {v.createdAt ? formatRelativeTime(v.createdAt) : ''}
+                  </span>
+                  {v.publishedAt != null && (
+                    <CheckOutlined aria-label="Published" className={styles.versionMenuItemCheck} />
+                  )}
+                </button>
+              );
+            })}
+          </div>
         </div>
       )}
     </div>

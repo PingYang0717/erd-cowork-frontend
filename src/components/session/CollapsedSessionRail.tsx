@@ -5,7 +5,7 @@ import {
   MenuUnfoldOutlined,
   PlusOutlined,
 } from '@ant-design/icons';
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useLocation, useNavigate } from 'react-router-dom';
 
@@ -26,6 +26,7 @@ const CollapsedSessionRail: React.FC<CollapsedSessionRailProps> = ({ onExpand })
   const [historyOpen, setHistoryOpen] = useState(false);
   const [flyoutPosition, setFlyoutPosition] = useState({ top: 0, left: 0 });
   const historyButtonRef = useRef<HTMLButtonElement>(null);
+  const flyoutRef = useRef<HTMLDivElement>(null);
 
   const {
     pinned,
@@ -38,7 +39,51 @@ const CollapsedSessionRail: React.FC<CollapsedSessionRailProps> = ({ onExpand })
 
   const handleSelectSession = (id: string) => {
     selectAndNavigate(id);
+    closeHistory();
+  };
+
+  /** Closing must hand focus back to the button that opened it — a dialog that
+   *  drops focus to <body> loses the keyboard user's place entirely (A-6). */
+  const closeHistory = () => {
     setHistoryOpen(false);
+    historyButtonRef.current?.focus();
+  };
+
+  // A dialog receives focus when it opens; without this the keyboard user is still
+  // standing on the button behind the backdrop (A-6). Syncing focus — an external
+  // system — is what useEffect is for.
+  useEffect(() => {
+    if (historyOpen) {
+      flyoutRef.current?.focus();
+    }
+  }, [historyOpen]);
+
+  /** The dialog keyboard contract: Escape closes and restores focus; Tab cycles
+   *  within rather than escaping into the page behind the backdrop (A-6). */
+  const handleFlyoutKeyDown = (event: React.KeyboardEvent) => {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      closeHistory();
+      return;
+    }
+    if (event.key !== 'Tab') {
+      return;
+    }
+    const focusable = flyoutRef.current?.querySelectorAll<HTMLElement>(
+      'button, [href], input, [tabindex]:not([tabindex="-1"])',
+    );
+    if (!focusable || focusable.length === 0) {
+      return;
+    }
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
   };
 
   const toggleHistory = () => {
@@ -108,12 +153,18 @@ const CollapsedSessionRail: React.FC<CollapsedSessionRailProps> = ({ onExpand })
         {historyOpen &&
           createPortal(
             <>
-              <div className={styles.flyoutBackdrop} onClick={() => setHistoryOpen(false)} />
+              {/* Pointer-only click-catcher; the keyboard path is Escape on the
+                  dialog itself. Hidden from the tree — it is not content. */}
+              <div aria-hidden="true" className={styles.flyoutBackdrop} onClick={closeHistory} />
               <div
+                ref={flyoutRef}
                 className={styles.flyout}
                 role="dialog"
+                aria-modal="true"
                 aria-label="Chat history"
+                tabIndex={-1}
                 style={{ top: flyoutPosition.top, left: flyoutPosition.left }}
+                onKeyDown={handleFlyoutKeyDown}
               >
                 <div className={styles.flyoutHeader}>
                   <HistoryOutlined aria-hidden className={styles.flyoutHeaderIcon} />
