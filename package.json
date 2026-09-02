@@ -5,10 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b tsconfig.app.json && vite build",
     "preview": "vite preview",
     "lint": "oxlint && eslint .",
     "test": "vitest run",
+    "typecheck": "tsc -b",
     "test:watch": "vitest",
     "prepare": "husky",
     "lint:fix": "oxlint --fix && eslint --fix ."
