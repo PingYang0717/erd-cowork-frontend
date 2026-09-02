@@ -26,5 +26,9 @@
     }
   },
   "include": ["src"],
-  "exclude": ["src/test", "src/**/*.test.ts", "src/**/*.test.tsx"]
+  // `src/mocks` is test-only (ADR-0006 — the app never talks to a mock at runtime), and
+  // it imports `msw`, a devDependency. Left in, a production typecheck could not run
+  // without the test tooling installed: CI failed on "Cannot find module 'msw'" while
+  // building code that does not use it. `tsconfig.test.json` still covers it.
+  "exclude": ["src/test", "src/mocks", "src/**/*.test.ts", "src/**/*.test.tsx"]
 }

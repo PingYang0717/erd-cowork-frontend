@@ -18,7 +18,3 @@ pnpm-debug.log*
 # OS
 .DS_Store
 Thumbs.db
-
-# msw regenerates this on install; nothing registers it (ADR-0006 — no runtime
-# mock), and public/ ships verbatim, so it must not come back in by accident.
-public/mockServiceWorker.js
