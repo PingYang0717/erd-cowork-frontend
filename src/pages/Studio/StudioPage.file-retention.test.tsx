@@ -46,7 +46,7 @@ describe('File retention', () => {
 
     const chips = await screen.findByRole('list', { name: 'Attached files' });
     expect(within(chips).getByText(/lot-genealogy\.csv/)).toBeInTheDocument();
-    expect(within(chips).getByText('已過期')).toBeInTheDocument();
+    expect(within(chips).getByText('Expired')).toBeInTheDocument();
   });
 
   it('says how long files are kept, and why this one is gone', async () => {
@@ -54,8 +54,8 @@ describe('File retention', () => {
     renderStudio();
 
     const notice = await screen.findByRole('alert');
-    expect(notice).toHaveTextContent(/30 天/);
-    expect(notice).toHaveTextContent(/移除/);
+    expect(notice).toHaveTextContent(/30 days/);
+    expect(notice).toHaveTextContent(/Remove/);
   });
 
   it('blocks sending until the expired file is cleared', async () => {

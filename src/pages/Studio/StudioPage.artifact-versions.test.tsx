@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { http } from 'msw';
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { zhTW } from '@/i18n/zhTW';
+import { en } from '@/i18n/en';
 import { server } from '@/mocks/server';
 import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
 import { useStudioLayoutStore } from '@/stores/useStudioLayoutStore';
@@ -95,12 +95,12 @@ describe('Artifact version switcher', () => {
       await screen.findByRole('textbox', { name: 'Message' }),
       'Regenerate the dashboard.{Enter}',
     );
-    await screen.findByRole('button', { name: '發布 Artifact' });
+    await screen.findByRole('button', { name: 'Publish Artifact' });
 
     await user.click(screen.getByRole('button', { name: 'Switch Artifact' }));
 
     const menu = await screen.findByRole('menu');
-    expect(within(menu).getByText(zhTW.artifact.versionMenuTitle(2))).toBeInTheDocument();
+    expect(within(menu).getByText(en.artifact.versionMenuTitle(2))).toBeInTheDocument();
 
     // Newest first: the fresh output leads, the seeded one is last.
     const rows = within(menu).getAllByRole('menuitem');

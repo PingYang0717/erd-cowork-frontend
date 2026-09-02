@@ -1,7 +1,7 @@
 import { AxiosError, AxiosHeaders } from 'axios';
 import { describe, expect, it } from 'vitest';
 
-import { zhTW } from '@/i18n/zhTW';
+import { en } from '@/i18n/en';
 
 import { describeLoadError } from './describeLoadError';
 
@@ -14,15 +14,15 @@ function axiosError(code: string, response?: AxiosError['response']) {
 describe('describeLoadError', () => {
   it('names an unreachable backend rather than repeating "Network Error"', () => {
     expect(describeLoadError(axiosError('ERR_NETWORK'))).toEqual({
-      heading: zhTW.errors.offlineHeading,
-      detail: zhTW.errors.offlineDetail,
+      heading: en.errors.offlineHeading,
+      detail: en.errors.offlineDetail,
     });
   });
 
   /** `apiClient` sets no timeout (ADR-0007), so ECONNABORTED is an aborted request rather
    *  than a slow one. Either way nothing came back, so it reads the same to the user. */
   it('treats an aborted request the same as an unreachable backend', () => {
-    expect(describeLoadError(axiosError('ECONNABORTED')).heading).toBe(zhTW.errors.offlineHeading);
+    expect(describeLoadError(axiosError('ECONNABORTED')).heading).toBe(en.errors.offlineHeading);
   });
 
   /** An answered request used to be shown axios's own sentence — `Request failed with
@@ -38,8 +38,8 @@ describe('describeLoadError', () => {
       config: { headers: new AxiosHeaders() },
     });
     expect(describeLoadError(answered)).toEqual({
-      heading: zhTW.errors.loadFailedHeading,
-      detail: zhTW.errors.loadFailedDetail(500),
+      heading: en.errors.loadFailedHeading,
+      detail: en.errors.loadFailedDetail(500),
     });
   });
 
@@ -47,7 +47,7 @@ describe('describeLoadError', () => {
    *  only thing that says what went wrong. */
   it('passes a plain render error straight through', () => {
     expect(describeLoadError(new Error('boom'))).toEqual({
-      heading: zhTW.errors.loadFailedHeading,
+      heading: en.errors.loadFailedHeading,
       detail: 'boom',
     });
   });

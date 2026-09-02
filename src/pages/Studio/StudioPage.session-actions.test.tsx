@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { zhTW } from '@/i18n/zhTW';
+import { en } from '@/i18n/en';
 import { server } from '@/mocks/server';
 import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
 import { useStudioLayoutStore } from '@/stores/useStudioLayoutStore';
@@ -54,7 +54,7 @@ describe('Session row actions', () => {
     await openMenuOf(user, 'Defect pareto — W12');
     await user.click(await screen.findByRole('menuitem', { name: /Delete/ }));
 
-    expect(await screen.findByText(zhTW.errors.notReady)).toBeInTheDocument();
+    expect(await screen.findByText(en.errors.notReady)).toBeInTheDocument();
     // The row stays: a delete that failed did not happen.
     expect(screen.getByRole('button', { name: 'Defect pareto — W12' })).toBeInTheDocument();
   });

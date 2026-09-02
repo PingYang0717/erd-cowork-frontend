@@ -44,6 +44,6 @@ describe('Unpublishing an Artifact from the Gallery', () => {
     expect(frame.getAttribute('srcdoc')).toContain('SPC analysis');
 
     // And it is offered for publishing again, since it is no longer published.
-    expect(await screen.findByRole('button', { name: '發布 Artifact' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Publish Artifact' })).toBeInTheDocument();
   });
 });

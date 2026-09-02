@@ -32,7 +32,7 @@ describe('planFileAdditions', () => {
     expect(plan.error).toBe('');
   });
 
-  it('rejects unsupported extensions with the Chinese error, without blocking later files', () => {
+  it('rejects unsupported extensions with the dictionary error, without blocking later files', () => {
     const plan = planFileAdditions(
       [],
       [
@@ -42,7 +42,7 @@ describe('planFileAdditions', () => {
     );
 
     expect(plan.accepted.map((file) => file.name)).toEqual(['lots.csv']);
-    expect(plan.error).toBe('僅支援 .csv / .xlsx');
+    expect(plan.error).toBe('Only .csv / .xlsx are supported');
   });
 
   it('caps the total at 5 files', () => {
@@ -52,7 +52,7 @@ describe('planFileAdditions', () => {
     );
 
     expect(plan.accepted).toHaveLength(5);
-    expect(plan.error).toBe('最多 5 個檔案');
+    expect(plan.error).toBe('Up to 5 files');
   });
 
   it('rejects a file that would push the total over 5 GB', () => {
@@ -62,6 +62,6 @@ describe('planFileAdditions', () => {
     );
 
     expect(plan.accepted).toHaveLength(0);
-    expect(plan.error).toBe('總計上限 5 GB');
+    expect(plan.error).toBe('5 GB in total');
   });
 });

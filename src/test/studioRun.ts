@@ -53,13 +53,13 @@ export async function answerAnalysisConditions(user: User): Promise<void> {
  *  that asks. Publishing takes a title now — the Gallery reads a card by it, so it is
  *  written at that moment rather than inherited from the run. */
 export async function publishArtifactAs(user: User, title?: string): Promise<void> {
-  await user.click(await screen.findByRole('button', { name: '發布 Artifact' }));
-  const nameField = await screen.findByLabelText('名稱');
+  await user.click(await screen.findByRole('button', { name: 'Publish Artifact' }));
+  const nameField = await screen.findByLabelText('Name');
   if (title !== undefined) {
     await user.clear(nameField);
     await user.type(nameField, title);
   }
   // The dialog's own confirm, not the panel button that opened it — that one reads
   // 發布 Artifact.
-  await user.click(screen.getByRole('button', { name: /^發布$/ }));
+  await user.click(screen.getByRole('button', { name: /^Publish$/ }));
 }

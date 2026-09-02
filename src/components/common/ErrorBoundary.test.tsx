@@ -5,7 +5,6 @@ import { act } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { en } from '@/i18n/en';
-import { zhTW } from '@/i18n/zhTW';
 import { useLanguageStore } from '@/stores/useLanguageStore';
 
 import ErrorBoundary from './ErrorBoundary';
@@ -27,7 +26,7 @@ describe('ErrorBoundary', () => {
       </ErrorBoundary>,
     );
 
-    expect(screen.getByRole('alert')).toHaveTextContent('這個區塊載入失敗');
+    expect(screen.getByRole('alert')).toHaveTextContent('This section failed to load');
     expect(screen.getByText('連線中斷')).toBeInTheDocument();
   });
 
@@ -46,9 +45,9 @@ describe('ErrorBoundary', () => {
       </ErrorBoundary>,
     );
 
-    expect(screen.getByRole('alert')).toHaveTextContent('無法連線到後端服務');
+    expect(screen.getByRole('alert')).toHaveTextContent('Cannot reach the backend');
     expect(screen.queryByText('Network Error')).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: '重試' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument();
   });
 
   it('remounts the subtree when the user retries', async () => {
@@ -70,7 +69,7 @@ describe('ErrorBoundary', () => {
     expect(screen.getByRole('alert')).toBeInTheDocument();
 
     broken = false;
-    await user.click(screen.getByRole('button', { name: '重試' }));
+    await user.click(screen.getByRole('button', { name: 'Retry' }));
 
     expect(screen.getByText('載入完成')).toBeInTheDocument();
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
@@ -93,17 +92,17 @@ describe('ErrorBoundary', () => {
    *  left the old words there until something remounted it. */
   it('follows a language change while the error is on screen', async () => {
     vi.spyOn(console, 'error').mockImplementation(() => {});
-    useLanguageStore.setState({ language: 'zh-TW' });
+    // The suite is pinned to English (setup.ts); the switch under test goes the
+    // other way, to the app's own default.
     render(
       <ErrorBoundary>
         <Explode shouldThrow />
       </ErrorBoundary>,
     );
-    expect(screen.getByRole('button', { name: zhTW.common.retry })).toBeInTheDocument();
-
-    act(() => useLanguageStore.setState({ language: 'en' }));
-
     expect(screen.getByRole('button', { name: en.common.retry })).toBeInTheDocument();
-    useLanguageStore.setState({ language: 'zh-TW' });
+
+    act(() => useLanguageStore.setState({ language: 'zh-TW' }));
+
+    expect(screen.getByRole('button', { name: '重試' })).toBeInTheDocument();
   });
 });

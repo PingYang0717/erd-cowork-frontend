@@ -60,7 +60,7 @@ describe('Streaming a run in the Studio', () => {
     await startAnalysis(user);
 
     const panel = await screen.findByRole('status', { name: 'eRD AI is working' });
-    expect(within(panel).getByText(/處理中/)).toBeInTheDocument();
+    expect(within(panel).getByText(/is working/)).toBeInTheDocument();
 
     // The label above stays the speaker's name while the run is going.
     expect(screen.getByText('eRD AI')).toBeInTheDocument();
@@ -69,7 +69,7 @@ describe('Streaming a run in the Studio', () => {
     act(() => stream.close());
 
     // And the panel's claim goes with the panel when the run ends.
-    await waitFor(() => expect(screen.queryByText(/處理中/)).not.toBeInTheDocument());
+    await waitFor(() => expect(screen.queryByText(/is working/)).not.toBeInTheDocument());
   });
 
   it('shows the reply building up token by token while the run is still going', async () => {
@@ -157,7 +157,7 @@ describe('Streaming a run in the Studio', () => {
       expect(screen.queryByRole('status', { name: 'eRD AI is working' })).not.toBeInTheDocument(),
     );
     expect(screen.getByText('Recomputed control limits.')).toBeInTheDocument();
-    expect(screen.getByText('eRD AI · 已停止')).toBeInTheDocument();
+    expect(screen.getByText('eRD AI · stopped')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Send message' })).toBeInTheDocument();
   });
 
@@ -172,7 +172,9 @@ describe('Streaming a run in the Studio', () => {
 
     act(() => stream.disconnect());
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('⚠ 連線中斷，請重新送出一次');
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      '⚠ Connection lost — please send again',
+    );
     expect(screen.queryByRole('status', { name: 'eRD AI is working' })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Send message' })).toBeInTheDocument();
   });
@@ -189,7 +191,7 @@ describe('Streaming a run in the Studio', () => {
     act(() => stream.push({ type: 'CODE', delta: '></div>' }));
 
     // The label says the source is still being written (cowork's wording).
-    const toggle = await screen.findByRole('button', { name: '產生中的 HTML' });
+    const toggle = await screen.findByRole('button', { name: 'HTML being written' });
     expect(toggle).toHaveAttribute('aria-expanded', 'false');
 
     await user.click(toggle);
@@ -223,7 +225,7 @@ describe('Streaming a run in the Studio', () => {
     expect(within(table).getByRole('cell', { name: '0.361' })).toBeInTheDocument();
     // A null cell renders empty rather than as the word "null".
     expect(within(table).queryByRole('cell', { name: 'null' })).not.toBeInTheDocument();
-    expect(screen.getByText('(前 200 列)')).toBeInTheDocument();
+    expect(screen.getByText('(first 200 rows)')).toBeInTheDocument();
   });
 
   // Runs against the scripted mock backend rather than a hand-driven stream: this is a
@@ -597,7 +599,7 @@ describe('Streaming a run in the Studio', () => {
       await screen.findByText('分析條件');
 
       expect(screen.getByText('可多選,只顯示已連線的來源。')).toBeInTheDocument();
-      await user.click(screen.getByRole('button', { name: '管理連線' }));
+      await user.click(screen.getByRole('button', { name: 'Manage connections' }));
 
       expect(await screen.findByRole('dialog', { name: 'Connectors' })).toBeInTheDocument();
     });
@@ -781,7 +783,7 @@ describe('Streaming a run in the Studio', () => {
 
       await user.click(within(items).getByRole('button', { name: /Vt \(gate CD\)/ }));
       expect(screen.getByRole('button', { name: '先產生這 1 項' })).toBeEnabled();
-      expect(screen.getByText('已選 1 項')).toBeInTheDocument();
+      expect(screen.getByText('1 selected')).toBeInTheDocument();
 
       await user.click(screen.getByRole('button', { name: '先產生這 1 項' }));
 

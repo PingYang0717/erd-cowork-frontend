@@ -21,7 +21,7 @@ describe('Artifact panel toolbar', () => {
 
     await user.click(await screen.findByRole('button', { name: 'SPC — Vt (gate CD)' }));
 
-    expect(await screen.findByText('已發布')).toBeInTheDocument();
+    expect(await screen.findByText('Published')).toBeInTheDocument();
     expect(await screen.findByRole('button', { name: 'Share artifact' })).toBeEnabled();
   });
 
@@ -56,7 +56,7 @@ describe('Artifact panel toolbar', () => {
 
     await user.hover(reload);
     const tip = await screen.findByRole('tooltip');
-    expect(tip).toHaveTextContent('重新整理');
+    expect(tip).toHaveTextContent('Reload');
 
     await user.unhover(reload);
     await waitFor(() => expect(screen.queryByRole('tooltip')).not.toBeInTheDocument());
@@ -79,7 +79,7 @@ describe('Artifact panel toolbar', () => {
       await screen.findByRole('textbox', { name: 'Message' }),
       'Regenerate the dashboard.{Enter}',
     );
-    await screen.findByRole('button', { name: '發布 Artifact' });
+    await screen.findByRole('button', { name: 'Publish Artifact' });
 
     await user.click(await screen.findByRole('button', { name: 'Switch Artifact' }));
     await expect.poll(() => screen.getAllByRole('menuitem')).toHaveLength(2);

@@ -44,7 +44,7 @@ describe('Artifact full-page view', () => {
     // No version switcher (there is no session to derive versions from), and no error
     // screen standing in for the whole page.
     expect(screen.queryByRole('button', { name: 'Switch Artifact' })).not.toBeInTheDocument();
-    expect(screen.queryByText(/載入失敗/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/failed to load/)).not.toBeInTheDocument();
   });
 
   it('renders the correct seeded Artifact when navigated to directly, with no prior session context', async () => {
@@ -127,7 +127,7 @@ describe('Artifact full-page view', () => {
 
     const openInNewTab = screen.getByRole('button', { name: 'Open artifact in new tab' });
     await user.hover(openInNewTab);
-    expect(await screen.findByRole('tooltip')).toHaveTextContent('在新分頁開啟預覽');
+    expect(await screen.findByRole('tooltip')).toHaveTextContent('Open preview in a new tab');
     await user.unhover(openInNewTab);
 
     await user.click(openInNewTab);
