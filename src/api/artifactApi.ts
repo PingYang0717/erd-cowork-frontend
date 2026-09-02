@@ -43,9 +43,13 @@ export const toggleArtifactPin = (id: string) =>
  *  a card by it, so it is the user's to write rather than the run's to inherit.
  *
  *  The two directions are split by method rather than a body flag, and the backend stamps
- *  `publishedAt` itself: the client never sends a time it believes it is. */
+ *  `publishedAt` itself: the client never sends a time it believes it is.
+ *
+ *  The answer is `unknown` because nobody has confirmed it is an `Artifact` and no caller
+ *  reads it — the list is refetched instead. A guessed type here is worse than none: it
+ *  invites the next reader to skip that refetch and merge a shape that may not exist. */
 export const publishArtifact = (id: string, title: string) =>
-  apiClient.post<Artifact>(`/artifacts/${id}/publish`, { title });
+  apiClient.post<unknown>(`/artifacts/${id}/publish`, { title });
 
 /** Takes an Artifact off the shelf — the reverse of `publishArtifact`, on the same path.
  *
@@ -69,6 +73,12 @@ export const listArtifactShares = async (id: string): Promise<DirectoryEntry[]> 
 
 /** Changes the share list by delta. PATCH with what to add and what to remove, rather
  *  than PUT with the whole list: sending the list would make two people editing the same
- *  Artifact overwrite each other, the second one silently undoing the first. */
+ *  Artifact overwrite each other, the second one silently undoing the first.
+ *
+ *  The answer is `unknown`, not `DirectoryEntry[]`. It was typed as the list once, and it
+ *  is not always one — which is why the caller narrows before using it. Under the old
+ *  type that narrowing read as dead code inviting deletion, and deleting it writes a
+ *  non-list into the cache the dialog maps over. `unknown` makes the check the compiler's
+ *  business rather than a comment's. */
 export const updateArtifactShares = (id: string, update: ArtifactShareUpdate) =>
-  apiClient.patch<DirectoryEntry[]>(`/artifacts/${id}/share`, update);
+  apiClient.patch<unknown>(`/artifacts/${id}/share`, update);
