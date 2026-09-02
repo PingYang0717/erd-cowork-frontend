@@ -73,6 +73,9 @@ const StudioShell: React.FC = () => {
       {!isSessionRailCollapsed && (
         <ResizeHandle
           label="Resize session rail"
+          value={sessionRailWidth}
+          min={SESSION_RAIL_MIN_WIDTH}
+          max={SESSION_RAIL_MAX_WIDTH}
           onDragStart={onDragStart}
           onDrag={onDrag}
           onDragEnd={onDragEnd}

@@ -69,4 +69,25 @@ describe('Tooltip', () => {
 
     await waitFor(() => expect(screen.queryByRole('tooltip')).not.toBeInTheDocument());
   });
+
+  /** Focus shows the tip immediately — the 0.35s delay is a pointer affordance, and a
+   *  keyboard user has already committed to the control (A-5). The open tip is wired
+   *  to the trigger with aria-describedby, which is what makes it announced at all. */
+  it('shows on focus without the hover delay, and describes the trigger', async () => {
+    const user = userEvent.setup();
+    placeTriggerAt(400);
+    render(
+      <Tooltip content="重新整理">
+        <button type="button">R</button>
+      </Tooltip>,
+    );
+
+    await user.tab();
+
+    const trigger = screen.getByRole('button', { name: 'R' });
+    expect(trigger).toHaveFocus();
+    const tip = screen.getByRole('tooltip');
+    expect(trigger).toHaveAttribute('aria-describedby', tip.id);
+    expect(trigger).toHaveAccessibleDescription('重新整理');
+  });
 });

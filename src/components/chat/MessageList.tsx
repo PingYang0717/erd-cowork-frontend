@@ -143,6 +143,12 @@ const MessageList: React.FC<MessageListProps> = ({
     <div
       ref={containerRef}
       role="log"
+      // Silenced explicitly: role="log" implies aria-live="polite", and the streaming
+      // bubble lives inside it — every token rewrote the paragraph, so a screen reader
+      // re-read the ever-longer reply once per token, and a session switch read the
+      // whole history back as "additions". The finished reply is announced once,
+      // from the dedicated status region in ThreadView (A-1).
+      aria-live="off"
       aria-label="Messages"
       className={styles.thread}
       onScroll={handleScroll}

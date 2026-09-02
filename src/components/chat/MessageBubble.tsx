@@ -162,8 +162,16 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
         {/* The live region exists for as long as the run does, not only once it has
             something to say: a run that has started but reported nothing yet is still
             what a screen reader needs announced. */}
+        {/* aria-atomic="false" overrides role="status"'s implicit atomic=true: each
+            arriving step row is announced on its own, instead of the whole panel
+            being re-read every time a step is appended (A-3). */}
         {streaming && (
-          <div role="status" aria-label="eRD AI is working" className={styles.workingSteps}>
+          <div
+            role="status"
+            aria-atomic="false"
+            aria-label="eRD AI is working"
+            className={styles.workingSteps}
+          >
             {/* The run says it is running from inside the step panel, where the steps it
                 is producing appear — rather than from the label above, which names who is
                 speaking and should read the same whether or not they are mid-sentence. */}

@@ -163,7 +163,10 @@ describe('Scenario matching', () => {
 
       await runScenario(user, label);
 
-      expect(screen.getByText(replyMatch)).toBeInTheDocument();
+      // Scoped to the thread: the sr-only announcement region (A-1) holds the same text.
+      expect(
+        within(screen.getByRole('log', { name: 'Messages' })).getByText(replyMatch),
+      ).toBeInTheDocument();
       const chip = screen.getByText('shown right →').closest('div') as HTMLElement;
       expect(within(chip).getByText(artifactName)).toBeInTheDocument();
       expect(screen.queryByRole('status', { name: 'eRD AI is working' })).not.toBeInTheDocument();
@@ -258,7 +261,10 @@ describe('Scenario matching', () => {
       await screen.findByRole('button', { name: /^Worked through \d+ steps$/ });
 
       expect(screen.getByText(text)).toBeInTheDocument();
-      expect(screen.getByText(replyMatch)).toBeInTheDocument();
+      // Scoped to the thread: the sr-only announcement region (A-1) holds the same text.
+      expect(
+        within(screen.getByRole('log', { name: 'Messages' })).getByText(replyMatch),
+      ).toBeInTheDocument();
       const chip = screen.getByText('shown right →').closest('div') as HTMLElement;
       expect(within(chip).getByText(artifactName)).toBeInTheDocument();
       expect(screen.queryByRole('status', { name: 'eRD AI is working' })).not.toBeInTheDocument();

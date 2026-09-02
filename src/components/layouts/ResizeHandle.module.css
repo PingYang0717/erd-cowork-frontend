@@ -22,3 +22,12 @@
 .dragging .line {
   background: var(--erd-color-primary, #1677ff);
 }
+
+/* 鍵盤聚焦時把 1px 線亮成主色,與 hover/拖曳同一語彙(A-4)。 */
+.handle:focus-visible {
+  outline: none;
+}
+
+.handle:focus-visible .line {
+  background: var(--erd-color-primary);
+}

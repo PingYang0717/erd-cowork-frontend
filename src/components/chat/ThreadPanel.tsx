@@ -104,13 +104,20 @@ const ThreadView: React.FC<ThreadViewProps> = ({ sessionId }) => {
   // now carries it. Comparing lengths, not text, is what makes sending the same words
   // twice in a row show two bubbles (an equal last-history text would falsely suppress).
   const [pending, setPending] = useState<{ text: string; atLength: number } | null>(null);
+  /** What the screen reader hears when a run finishes: the complete reply, once. The
+   *  thread itself is aria-live="off" (every token used to be re-read; A-1), so this
+   *  sr-only region is the one place a finished answer is announced from. */
+  const [announcement, setAnnouncement] = useState('');
   const prevStreamingRef = useRef(false);
   useEffect(() => {
     if (prevStreamingRef.current && !state.isStreaming) {
       setPending(null);
+      setAnnouncement(state.liveText || state.answer || '');
     }
     prevStreamingRef.current = state.isStreaming;
-  }, [state.isStreaming]);
+    // liveText/answer are stable once streaming has ended; the transition guard makes
+    // the extra runs their presence in deps causes no-ops.
+  }, [state.isStreaming, state.liveText, state.answer]);
   const repairOffer = useRepairOfferStore((store) => store.offer);
   const dismissRepair = useRepairOfferStore((store) => store.dismiss);
   const resetRepair = useRepairOfferStore((store) => store.reset);
@@ -234,6 +241,12 @@ const ThreadView: React.FC<ThreadViewProps> = ({ sessionId }) => {
           isStreaming={state.isStreaming}
           onStop={stop}
         />
+      </div>
+      {/* Visually hidden, never displayed: the announcement channel for a finished
+          reply. Its content is set once per run, so the reader hears the whole
+          answer exactly once instead of once per token. */}
+      <div role="status" aria-label="Latest reply" className={styles.srOnly}>
+        {announcement}
       </div>
     </>
   );
