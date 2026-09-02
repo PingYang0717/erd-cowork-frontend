@@ -2,7 +2,7 @@ import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
-import { INTERRUPTED_TEXTS, REPAIR_RECORD_PREFIXES } from '@/constants/messages';
+import { INTERRUPTED_TEXTS, REPAIR_RECORD_PREFIXES } from '@/constants/wireStrings';
 import type { StepItem, TableResult } from '@/types/api';
 
 import MessageBubble, { type LiveRun } from './MessageBubble';

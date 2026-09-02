@@ -24,6 +24,7 @@ import React, { type ReactNode, useMemo, useState } from 'react';
 import { useAddConnector, useSetSessionDataSource } from '@/hooks/useConnectorMutations';
 import { useConnectors } from '@/hooks/useConnectors';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
+import { useTranslations } from '@/i18n/useTranslations';
 import type { Connector, ConnectorStatus } from '@/types/api';
 import { selectConnected } from '@/utils/connectorSelectors';
 
@@ -93,6 +94,7 @@ interface ConnectorsPanelProps {
 }
 
 const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ sessionId, open, onClose }) => {
+  const t = useTranslations();
   const sessionConnectors = useConnectors(sessionId);
   const setDataSource = useSetSessionDataSource(sessionId);
   const addConnector = useAddConnector();
@@ -214,7 +216,7 @@ const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ sessionId, open, onCl
           <span className={styles.footerCount}>
             Showing {visibleConnectors.length} of {connectors.length}
           </span>
-          <Button onClick={onClose}>取消</Button>
+          <Button onClick={onClose}>{t.common.cancel}</Button>
           <Button
             type="primary"
             loading={setDataSource.isPending}

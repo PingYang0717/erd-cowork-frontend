@@ -1,8 +1,9 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { http } from 'msw';
+import { http, HttpResponse } from 'msw';
 import { beforeEach, describe, expect, it } from 'vitest';
 
+import { zhTW } from '@/i18n/zhTW';
 import { server } from '@/mocks/server';
 import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
 import { useStudioLayoutStore } from '@/stores/useStudioLayoutStore';
@@ -20,6 +21,42 @@ describe('Session row actions', () => {
   beforeEach(() => {
     useStudioLayoutStore.setState(useStudioLayoutStore.getInitialState());
     useSessionSelectionStore.setState(useSessionSelectionStore.getInitialState());
+  });
+
+  /** Every mutation in the app hangs its failure on `onError: toastError`, and until the
+   *  shared harness carried `AntdApp` none of them could be asserted: `App.useApp()`
+   *  answers with an empty object outside it, so `message.error?.()` did nothing and a
+   *  passing test would have proved nothing. The backend's own wording is what the user
+   *  reads — it is how an endpoint says it is not there yet (ADR-0006). */
+  it('tells the user what the backend said when a write fails', async () => {
+    const user = userEvent.setup();
+    server.use(
+      http.patch('/api/sessions/:id/pin', () =>
+        HttpResponse.json({ code: 'E_PIN', message: '釘選失敗:配額已滿' }, { status: 400 }),
+      ),
+    );
+    renderStudio();
+
+    await openMenuOf(user, 'Defect pareto — W12');
+    await user.click(await screen.findByRole('menuitem', { name: /Pin/ }));
+
+    expect(await screen.findByText('釘選失敗:配額已滿')).toBeInTheDocument();
+  });
+
+  /** A backend that answers with nothing readable still has to say something. */
+  it('falls back to a plain message when the failure carries none', async () => {
+    const user = userEvent.setup();
+    server.use(
+      http.patch('/api/sessions/:id/soft-delete', () => new HttpResponse(null, { status: 500 })),
+    );
+    renderStudio();
+
+    await openMenuOf(user, 'Defect pareto — W12');
+    await user.click(await screen.findByRole('menuitem', { name: /Delete/ }));
+
+    expect(await screen.findByText(zhTW.errors.notReady)).toBeInTheDocument();
+    // The row stays: a delete that failed did not happen.
+    expect(screen.getByRole('button', { name: 'Defect pareto — W12' })).toBeInTheDocument();
   });
 
   it('renames a session through the menu, and the row shows the new name', async () => {

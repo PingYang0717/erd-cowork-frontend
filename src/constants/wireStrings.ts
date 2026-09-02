@@ -1,3 +1,15 @@
+/** Strings the backend owns, kept here to be compared against — not copy.
+ *
+ *  Every value below is matched byte for byte against something the backend persisted,
+ *  so translating one does not change what the user reads: it stops the match, and the
+ *  thing that depended on it silently stops happening. An interrupted reply would no
+ *  longer be recognised as interrupted.
+ *
+ *  The file is named for the wire rather than for messages on purpose. It used to be
+ *  `messages.ts`, which reads like a home for UI copy — and once `src/i18n/` exists next
+ *  to it, that name is an invitation to move these into the dictionary. The UI copy this
+ *  app owns lives there; nothing here is translatable.
+ */
 /** Default title for a draft session, shown until the first question renames it.
  *  MUST match the backend's SessionGuard.DEFAULT_SESSION_TITLE. */
 export const DRAFT_SESSION_TITLE = 'New analysis' as const;

@@ -10,6 +10,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { useArtifacts } from '@/hooks/useArtifacts';
+import { useTranslations } from '@/i18n/useTranslations';
 import { usePublishCoachStore } from '@/stores/usePublishCoachStore';
 import type { Artifact } from '@/types/api';
 import { artifactRoute } from '@/utils/artifactUrl';
@@ -21,16 +22,21 @@ type FilterCategory = 'all' | 'yours' | 'shared' | 'pinned';
 type SortKey = 'pinned' | 'recent' | 'name';
 
 const SORT_OPTIONS = [
-  { key: 'pinned', label: '釘選優先', icon: <PushpinOutlined aria-hidden /> },
-  { key: 'recent', label: '最近建立', icon: <ClockCircleOutlined aria-hidden /> },
-  { key: 'name', label: '名稱 A→Z', icon: <SortAscendingOutlined aria-hidden /> },
-];
+  { key: 'pinned', labelKey: 'sortPinned', icon: <PushpinOutlined aria-hidden /> },
+  { key: 'recent', labelKey: 'sortRecent', icon: <ClockCircleOutlined aria-hidden /> },
+  { key: 'name', labelKey: 'sortName', icon: <SortAscendingOutlined aria-hidden /> },
+] as const;
 
-const EMPTY_MESSAGES: Record<FilterCategory, string> = {
-  all: '目前還沒有 Artifact。',
-  yours: '你還沒有生成任何 Artifact。',
-  shared: '目前沒有分享給你的 Artifact。',
-  pinned: '你還沒有釘選任何 Artifact。',
+/** Which line the empty grid shows, by key rather than by copy — the copy itself lives
+ *  in the dictionary so it can change language without this table knowing. */
+const EMPTY_MESSAGE_KEYS: Record<
+  FilterCategory,
+  'emptyAll' | 'emptyYours' | 'emptyShared' | 'emptyPinned'
+> = {
+  all: 'emptyAll',
+  yours: 'emptyYours',
+  shared: 'emptyShared',
+  pinned: 'emptyPinned',
 };
 
 // An Artifact shared to the user more than once arrives as repeated rows for
@@ -79,6 +85,7 @@ function sortArtifacts(artifacts: Artifact[], sort: SortKey) {
 }
 
 const ArtifactsGallery: React.FC = () => {
+  const t = useTranslations();
   // The coach highlight on the rail is asking the user to come here; arriving is what it
   // was asking for, so this is where it ends — whichever way they got here, the toast's
   // shortcut or the rail entry itself.
@@ -119,7 +126,7 @@ const ArtifactsGallery: React.FC = () => {
     label: (
       <span className={styles.sortMenuItem}>
         {option.icon}
-        <span className={styles.sortMenuItemLabel}>{option.label}</span>
+        <span className={styles.sortMenuItemLabel}>{t.gallery[option.labelKey]}</span>
         {option.key === sort && <CheckOutlined aria-hidden />}
       </span>
     ),
@@ -140,8 +147,8 @@ const ArtifactsGallery: React.FC = () => {
         >
           <button type="button" className={styles.sortTrigger}>
             <SortAscendingOutlined aria-hidden />
-            <span>排序:</span>
-            <span className={styles.sortTriggerValue}>{activeSortOption.label}</span>
+            <span>{t.gallery.sortLabel}</span>
+            <span className={styles.sortTriggerValue}>{t.gallery[activeSortOption.labelKey]}</span>
             <DownOutlined aria-hidden className={styles.sortTriggerChevron} />
           </button>
         </Dropdown>
@@ -187,7 +194,7 @@ const ArtifactsGallery: React.FC = () => {
           ))}
         </div>
       ) : (
-        <div className={styles.empty}>{EMPTY_MESSAGES[category]}</div>
+        <div className={styles.empty}>{t.gallery[EMPTY_MESSAGE_KEYS[category]]}</div>
       )}
     </div>
   );

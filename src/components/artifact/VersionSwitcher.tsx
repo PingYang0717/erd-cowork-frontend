@@ -2,6 +2,7 @@ import { CheckOutlined, DownOutlined, HistoryOutlined } from '@ant-design/icons'
 import React, { useEffect, useRef, useState } from 'react';
 
 import Tooltip from '@/components/common/Tooltip';
+import { useTranslations } from '@/i18n/useTranslations';
 import type { ArtifactVersion } from '@/types/api';
 import { formatRelativeTime } from '@/utils/formatRelativeTime';
 
@@ -18,6 +19,7 @@ interface VersionSwitcherProps {
 }
 
 const VersionSwitcher: React.FC<VersionSwitcherProps> = ({ versions, activeVersion, onSelect }) => {
+  const t = useTranslations();
   const [isOpen, setIsOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
 
@@ -47,11 +49,11 @@ const VersionSwitcher: React.FC<VersionSwitcherProps> = ({ versions, activeVersi
 
   return (
     <div ref={rootRef} className={styles.versionSwitcher}>
-      <Tooltip content="切換產出">
+      <Tooltip content={t.artifact.switchVersion}>
         <button
           type="button"
           className={styles.versionTrigger}
-          aria-label="切換產出"
+          aria-label="Switch Artifact"
           aria-haspopup="menu"
           aria-expanded={isOpen}
           onClick={() => setIsOpen((v) => !v)}
@@ -67,7 +69,7 @@ const VersionSwitcher: React.FC<VersionSwitcherProps> = ({ versions, activeVersi
       {isOpen && (
         <div role="menu" className={styles.versionMenu}>
           <div className={styles.versionMenuHeader}>
-            此對話的產出 · 共 {versions.length} 個，可切換後再發布
+            {t.artifact.versionMenuTitle(versions.length)}
           </div>
           {newestFirst.map((v) => {
             const isCurrent = v.artifactId === activeVersion?.artifactId;
@@ -95,7 +97,7 @@ const VersionSwitcher: React.FC<VersionSwitcherProps> = ({ versions, activeVersi
                   {v.createdAt ? formatRelativeTime(v.createdAt) : ''}
                 </span>
                 {v.publishedAt != null && (
-                  <CheckOutlined aria-label="已發布" className={styles.versionMenuItemCheck} />
+                  <CheckOutlined aria-label="Published" className={styles.versionMenuItemCheck} />
                 )}
               </button>
             );

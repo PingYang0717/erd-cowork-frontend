@@ -2,6 +2,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useReducer, useRef } from 'react';
 
 import { AgentStreamHttpError, type SendMessageArgs, streamAgentMessage } from '@/api/agentApi';
+import { getTranslations } from '@/i18n/useTranslations';
 import type { AgentEvent, QuestionForm, StepItem, TableResult } from '@/types/api/agentEvent';
 import { liftQuestions } from '@/utils/liftQuestions';
 
@@ -47,7 +48,9 @@ type Action =
 const NETWORK_ERROR_CODE = 'NETWORK_ERROR';
 // English to match every other string on this surface; the mockup's Chinese copy is
 // confined to the clarification forms.
-const NETWORK_ERROR_MESSAGE = '⚠ 連線中斷，請重新送出一次';
+/** Read where it is used rather than at module load: the language can change while the
+ *  app is open, and a constant captured on import would keep the first one forever. */
+const networkErrorMessage = () => getTranslations().chat.networkError;
 
 const initialState: AgentStreamState = {
   isStreaming: false,
@@ -165,7 +168,7 @@ function reducer(state: AgentStreamState, action: Action): AgentStreamState {
         isStreaming: false,
         durationMs: action.durationMs,
         networkError: true,
-        error: { code: NETWORK_ERROR_CODE, message: NETWORK_ERROR_MESSAGE },
+        error: { code: NETWORK_ERROR_CODE, message: networkErrorMessage() },
       };
 
     case 'DONE':

@@ -18,8 +18,11 @@ interface DirectorySearchResponse {
  *
  *  The envelope is unwrapped here so nothing downstream has to know about it — and read
  *  defensively, because a body without `content` (an error rendered as JSON, a shape
- *  change) has to come out as "no results" rather than as something the picker will try
- *  to iterate. */
+ *  change) must not reach the picker's `for…of`.
+ *
+ *  It raises rather than answering with an empty list. "No such person" is a real answer
+ *  and a useful one; a broken response wearing that answer sends the user off to re-check
+ *  a spelling that was never the problem. */
 export const searchDirectory = async (
   keyword: string,
   signal?: AbortSignal,
@@ -28,5 +31,8 @@ export const searchDirectory = async (
     params: { keyword },
     signal,
   });
-  return Array.isArray(body?.content) ? body.content : [];
+  if (!Array.isArray(body?.content)) {
+    throw new Error('The directory search came back without a `content` list.');
+  }
+  return body.content;
 };

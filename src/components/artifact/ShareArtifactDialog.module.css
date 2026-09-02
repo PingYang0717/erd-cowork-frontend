@@ -101,3 +101,11 @@
   gap: 8px;
   margin-top: 8px;
 }
+
+/* Same position and size as `.hint` — it replaces it rather than pushing it aside, so
+   the section does not change height depending on whether the read succeeded. */
+.error {
+  margin-top: 6px;
+  font-size: 11px;
+  color: var(--ant-color-error, #ff4d4f);
+}

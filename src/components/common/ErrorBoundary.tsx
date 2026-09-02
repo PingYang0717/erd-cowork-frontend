@@ -1,5 +1,6 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
 
+import { useTranslations } from '@/i18n/useTranslations';
 import { describeLoadError } from '@/utils/describeLoadError';
 
 import styles from './ErrorBoundary.module.css';
@@ -48,18 +49,28 @@ class ErrorBoundary extends Component<Props, State> {
       return fallback(error, this.retry);
     }
 
-    const { heading, detail } = describeLoadError(error);
-
-    return (
-      <div role="alert" className={styles.panel}>
-        <p className={styles.heading}>{heading}</p>
-        <p className={styles.message}>{detail}</p>
-        <button type="button" className={styles.retry} onClick={this.retry}>
-          重試
-        </button>
-      </div>
-    );
+    return <ErrorPanel error={error} onRetry={this.retry} />;
   }
 }
+
+/** The default panel, as a function component so it can subscribe to the language.
+ *
+ *  A class cannot: reading the copy from `getTranslations()` inside `render` gave the
+ *  right words on first paint and then kept them — switching language while an error was
+ *  on screen left the panel in the old one until something remounted it. */
+const ErrorPanel: React.FC<{ error: Error; onRetry: () => void }> = ({ error, onRetry }) => {
+  const t = useTranslations();
+  const { heading, detail } = describeLoadError(error, t.errors);
+
+  return (
+    <div role="alert" className={styles.panel}>
+      <p className={styles.heading}>{heading}</p>
+      <p className={styles.message}>{detail}</p>
+      <button type="button" className={styles.retry} onClick={onRetry}>
+        {t.common.retry}
+      </button>
+    </div>
+  );
+};
 
 export default ErrorBoundary;
