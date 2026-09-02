@@ -132,11 +132,11 @@ Escape 後焦點掉回 `<body>`,三欄版面裡等於位置全失;`:67` 標題 d
 是 `div onClick`(鍵盤無法關)。**啟用 jsx-a11y 會抓到這一條**
 （`no-static-element-interactions` / `click-events-have-key-events`）。
 
-### A-8 unpublish 確認框(2026-08-31 新增)
+### A-8 unpublish 確認框(2026-08-31 新增)— ✅ 已實作(2026-09-03)
 
-`ArtifactCard` 用 antd `Modal.confirm` 說明「會收回所有收件者的存取權」。antd 的
-confirm 有自己的焦點處理,但**這是一個破壞性動作的確認**,值得檢查焦點是否落在較安全
-的「保留」而非 danger 的「取消發布」上。
+原文描述的 `Modal.confirm` 當時**並未實作**,這條記錄讀起來像已完成待檢查——
+2026-09-03 起才真的存在:`useConfirmDestructive` 統一 danger 確認,
+`autoFocusButton: 'cancel'`(焦點落在安全側),Session 刪除與 Artifact 下架共用。
 
 ### A-7 次要
 
