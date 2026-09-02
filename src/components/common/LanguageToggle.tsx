@@ -5,17 +5,14 @@ import React from 'react';
 import { type Language, useLanguageStore } from '@/stores/useLanguageStore';
 
 const NEXT: Record<Language, Language> = { 'zh-TW': 'en', en: 'zh-TW' };
-/** What the button shows: the language it would switch *to*, which is what the user is
- *  looking for. Showing the current one reads as a label and gives no reason to press. */
-const NEXT_LABEL: Record<Language, string> = { 'zh-TW': 'EN', en: '中' };
 
-/** Sits beside ThemeToggle: language and theme are the same kind of thing — a preference
- *  of whoever is using this browser, belonging to no conversation — so they are found in
- *  the same place.
+/** Sits beside ThemeToggle and matches it: a circular text button carrying one icon.
  *
- *  The label and the accessible name stay untranslated on purpose. A control for choosing
- *  a language has to be legible to someone who cannot read the language it is currently
- *  in, which is exactly the person reaching for it.
+ *  Unlike the theme's sun and moon, there is no icon pair that reads as "Chinese" and
+ *  "English", so the glyph stays put and the accessible name carries the destination.
+ *  That name is the one thing here that is not translated — a control for choosing a
+ *  language has to be legible to someone who cannot read the language it is currently in,
+ *  which is exactly the person reaching for it.
  */
 const LanguageToggle: React.FC = () => {
   const language = useLanguageStore((state) => state.language);
@@ -29,9 +26,7 @@ const LanguageToggle: React.FC = () => {
       title="Switch language / 切換語言"
       aria-label={language === 'zh-TW' ? 'Switch to English' : '切換為中文'}
       icon={<TranslationOutlined />}
-    >
-      {NEXT_LABEL[language]}
-    </Button>
+    />
   );
 };
 
