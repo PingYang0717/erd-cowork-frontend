@@ -54,7 +54,9 @@ _Avoid_: Repair（Reload 不重產，Repair 是錯誤驅動的重產）。「重
 
 **Artifact**:
 一次 Scenario 執行後產生的分析成果，形式是一段完整的 HTML（dashboard 或 slides），在 Studio 右側以 sandboxed iframe 呈現；可被命名、釘選、發布、分享、切版本。
-_Avoid_: Dashboard, Report, Output（這些是 Artifact 的呈現型態，不是這個概念本身）
+_Avoid_: Dashboard, Report, Output、**產出**、**儀表板**（這些是 Artifact 的呈現型態，不是這個概念本身）
+
+介面文案一律寫 `Artifact`，中英文皆然。「產出」曾在版本選單與 Artifact 面板裡通用了一段時間——那是 Output 的中文，這一列本來就禁止了它，只是沒人把中文寫法對上英文。「儀表板」更危險：`Artifact.type` 不在契約裡，前端根本無從得知它是 dashboard 還是 slides，寫下去就是斷言一件查不到的事。
 
 **發布（Publish）**:
 把一個 Artifact 開放給自己以外的人使用。Scenario 跑完產出的是**只有自己看得到的**成果，發布是那道把它交出去的動作；未發布的 Artifact 不能分享。

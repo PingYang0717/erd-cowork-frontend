@@ -49,11 +49,14 @@ export const zhTW = {
     reload: '重新整理',
     openInNewTab: '在新分頁開啟預覽',
     /** Shown for any failure to load the document, which is why it hedges. */
-    missing: '這個 Artifact 已不存在,可能已被刪除。請從上方選單挑選其他產出。',
+    missing: '這個 Artifact 已不存在,可能已被刪除。請從上方選單挑選其他 Artifact。',
     publishedToast: '已發布 — 已加入左側 Artifacts 清單。',
     goToArtifacts: '前往 Artifacts',
-    switchVersion: '切換產出',
-    versionMenuTitle: (count: number) => `此對話的產出 · 共 ${count} 個，可切換後再發布`,
+    /** Artifact, not 產出. The version menu deliberately avoids 「版本」 — these are
+     *  siblings, not a chain (artifact-model-decisions Q2) — but that decision was about
+     *  not implying a lineage, not about coining a second name for the thing itself. */
+    switchVersion: '切換 Artifact',
+    versionMenuTitle: (count: number) => `此對話的 Artifact · 共 ${count} 個，可切換後再發布`,
   },
 
   publishDialog: {
@@ -99,11 +102,16 @@ export const zhTW = {
   },
 
   repair: {
-    detected: (count: number) => `⚠ 偵測到儀表板執行錯誤（${count} 個）`,
+    /** Artifact rather than 儀表板: `Artifact.type` is not in the contract, so this
+     *  client cannot know whether the thing that threw is a dashboard or a deck. The
+     *  backend's own repair records still say 儀表板 and land in the same thread — a
+     *  wording gap noted for the backend, and better than asserting a kind we do not
+     *  have. */
+    detected: (count: number) => `⚠ 偵測到 Artifact 執行錯誤（${count} 個）`,
     repair: '修復',
     ignore: '忽略',
     repairing: '修復中，請稍候…',
-    filesExpired: '檔案已過期，無法修復此儀表板',
+    filesExpired: '檔案已過期，無法修復此 Artifact',
     failed: '修復未成功',
     tryAgain: '再試一次',
   },
