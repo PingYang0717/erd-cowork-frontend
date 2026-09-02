@@ -187,7 +187,7 @@ describe('Artifacts gallery', () => {
           ? HttpResponse.json([artifactDto({ id: 'artifact-1', title: name })])
           : new HttpResponse(null, { status: 500 });
       }),
-      http.post('/api/artifacts/:id/pin', () =>
+      http.patch('/api/artifacts/:id/pin', () =>
         HttpResponse.json(
           artifactDto({ id: 'artifact-1', title: name, pinnedAt: '2026-09-01T00:00:00.000Z' }),
         ),
@@ -208,8 +208,8 @@ describe('Artifacts gallery', () => {
   it('turns the Shared badge on once the Artifact has recipients', async () => {
     const user = userEvent.setup();
     server.use(
-      http.get('/api/artifacts/:id/share', () => HttpResponse.json([])),
-      http.patch('/api/artifacts/:id/share', () =>
+      http.get('/api/artifacts/:id/shares', () => HttpResponse.json([])),
+      http.patch('/api/artifacts/:id/shares', () =>
         HttpResponse.json([
           { type: 'ORG', orgId: 'INTD-1', orgName: '整合技術一課', orgLevel: 'SECTION' },
         ]),
@@ -237,7 +237,7 @@ describe('Artifacts gallery', () => {
    *  should go over the wire. The rail's badge keeps the artifacts list mounted on every
    *  page, which made the follow-up invalidate this pins down cost one full list
    *  download per pin, from anywhere in the app. */
-  it('pinning costs one POST and no list re-download', async () => {
+  it('pinning costs one PATCH and no list re-download', async () => {
     let listFetches = 0;
     server.use(
       // Counting tap: returning undefined falls through to the real handler.
@@ -268,7 +268,7 @@ describe('Artifacts gallery', () => {
       http.get('/api/artifacts', () =>
         HttpResponse.json([artifactDto({ id: 'artifact-1', title: name })]),
       ),
-      http.post('/api/artifacts/:id/pin', () =>
+      http.patch('/api/artifacts/:id/pin', () =>
         HttpResponse.json({
           artifactId: 'artifact-1',
           pinnedAt: '2026-09-02T00:00:00.000Z',
@@ -303,7 +303,7 @@ describe('Artifacts gallery', () => {
           : new HttpResponse(null, { status: 500 });
       }),
       // A partial answer: the pin state and the id, and nothing else.
-      http.post('/api/artifacts/:id/pin', () =>
+      http.patch('/api/artifacts/:id/pin', () =>
         HttpResponse.json({ id: 'artifact-1', pinnedAt: '2026-09-01T00:00:00.000Z' }),
       ),
     );

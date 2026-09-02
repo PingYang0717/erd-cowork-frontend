@@ -34,9 +34,12 @@ export interface ArtifactPinResult {
 /** Toggles the pin. One endpoint and no body: the backend decides the direction, and the
  *  answer carries the `pinnedAt` that resulted — which is what the button reads its new
  *  state from. Asserting a direction from state the client read a while ago would be
- *  guessing at what the server already knows. */
+ *  guessing at what the server already knows.
+ *
+ *  PATCH, not POST: the call edits one field of something that already exists rather than
+ *  creating anything. */
 export const toggleArtifactPin = (id: string) =>
-  apiClient.post<ArtifactPinResult>(`/artifacts/${id}/pin`);
+  apiClient.patch<ArtifactPinResult>(`/artifacts/${id}/pin`);
 
 /** Publishing is what makes an Artifact available to other people — and what sharing
  *  rests on. It carries the title the Artifact goes on the shelf under: the Gallery names
@@ -45,11 +48,18 @@ export const toggleArtifactPin = (id: string) =>
  *  The two directions are split by method rather than a body flag, and the backend stamps
  *  `publishedAt` itself: the client never sends a time it believes it is.
  *
- *  The answer is `unknown` because nobody has confirmed it is an `Artifact` and no caller
- *  reads it — the list is refetched instead. A guessed type here is worse than none: it
- *  invites the next reader to skip that refetch and merge a shape that may not exist. */
+ *  Like the pin, the answer names its subject `artifactId` rather than `id`, and carries
+ *  only what the call settled. No caller reads it — the list is refetched, because
+ *  publishing is what puts a card on the Gallery's shelf and the shelf is worth re-reading
+ *  whole. It is typed anyway so that the next person to reach for it sees the real shape
+ *  instead of guessing at an `Artifact`. */
+export interface ArtifactPublishResult {
+  artifactId: string;
+  publishedAt: string | null;
+}
+
 export const publishArtifact = (id: string, title: string) =>
-  apiClient.post<unknown>(`/artifacts/${id}/publish`, { title });
+  apiClient.post<ArtifactPublishResult>(`/artifacts/${id}/publish`, { title });
 
 /** Takes an Artifact off the shelf — the reverse of `publishArtifact`, on the same path.
  *
@@ -67,7 +77,7 @@ export const unpublishArtifact = (id: string) => apiClient.delete<void>(`/artifa
  *  Narrowed rather than trusted: a body that is not a list has to come out as "nobody
  *  yet", not as something the dialog will try to map over. */
 export const listArtifactShares = async (id: string): Promise<DirectoryEntry[]> => {
-  const body = await apiClient.get<DirectoryEntry[]>(`/artifacts/${id}/share`);
+  const body = await apiClient.get<DirectoryEntry[]>(`/artifacts/${id}/shares`);
   return Array.isArray(body) ? body : [];
 };
 
@@ -81,4 +91,4 @@ export const listArtifactShares = async (id: string): Promise<DirectoryEntry[]> 
  *  non-list into the cache the dialog maps over. `unknown` makes the check the compiler's
  *  business rather than a comment's. */
 export const updateArtifactShares = (id: string, update: ArtifactShareUpdate) =>
-  apiClient.patch<unknown>(`/artifacts/${id}/share`, update);
+  apiClient.patch<unknown>(`/artifacts/${id}/shares`, update);

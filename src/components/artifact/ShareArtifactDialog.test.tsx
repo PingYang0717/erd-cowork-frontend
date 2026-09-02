@@ -61,12 +61,12 @@ describe('Sharing an Artifact: picking recipients', () => {
     const user = userEvent.setup();
     let shareReads = 0;
     server.use(
-      http.get('/api/artifacts/:id/share', () => {
+      http.get('/api/artifacts/:id/shares', () => {
         shareReads += 1;
         return HttpResponse.json([]);
       }),
       // Not an array — the shape that cannot be written into the cache directly.
-      http.patch('/api/artifacts/:id/share', () => HttpResponse.json({ ok: true })),
+      http.patch('/api/artifacts/:id/shares', () => HttpResponse.json({ ok: true })),
     );
     const { onClose } = renderDialog();
 
@@ -128,7 +128,7 @@ describe('Sharing an Artifact: picking recipients', () => {
   it('survives a share list that is not an array', async () => {
     const user = userEvent.setup();
     server.use(
-      http.get('/api/artifacts/:id/share', () => HttpResponse.json({ message: 'unexpected' })),
+      http.get('/api/artifacts/:id/shares', () => HttpResponse.json({ message: 'unexpected' })),
     );
     renderDialog();
 
@@ -146,7 +146,7 @@ describe('Sharing an Artifact: picking recipients', () => {
   it('closes once the change has been saved', async () => {
     const user = userEvent.setup();
     const { onClose } = renderDialog();
-    server.use(http.patch('/api/artifacts/:id/share', () => HttpResponse.json({ shares: [] })));
+    server.use(http.patch('/api/artifacts/:id/shares', () => HttpResponse.json({ shares: [] })));
 
     const field = screen.getByRole('combobox');
     await user.click(field);
@@ -191,7 +191,7 @@ describe('Sharing an Artifact: picking recipients', () => {
     const user = userEvent.setup();
     let body: unknown;
     server.use(
-      http.patch('/api/artifacts/:id/share', async ({ request }) => {
+      http.patch('/api/artifacts/:id/shares', async ({ request }) => {
         body = await request.json();
         return HttpResponse.json([]);
       }),
@@ -219,12 +219,12 @@ describe('Sharing an Artifact: picking recipients', () => {
     const user = userEvent.setup();
     let body: unknown;
     server.use(
-      http.get('/api/artifacts/:id/share', () =>
+      http.get('/api/artifacts/:id/shares', () =>
         HttpResponse.json([
           { type: 'ORG', orgId: 'INTD-1', orgName: '整合技術一課', orgLevel: 'SECTION' },
         ]),
       ),
-      http.patch('/api/artifacts/:id/share', async ({ request }) => {
+      http.patch('/api/artifacts/:id/shares', async ({ request }) => {
         body = await request.json();
         return HttpResponse.json([]);
       }),
