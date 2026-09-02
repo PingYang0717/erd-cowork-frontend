@@ -45,7 +45,7 @@ describe('Artifact version switcher', () => {
 
     // Switching back to the first output re-renders the iframe with its HTML. The menu
     // is newest-first, so the earlier output is the last row.
-    await user.click(screen.getByRole('button', { name: '切換 Artifact' }));
+    await user.click(screen.getByRole('button', { name: 'Switch Artifact' }));
     await user.click((await screen.findAllByRole('menuitem')).at(-1) as HTMLElement);
     await expect.poll(artifactSrcdoc).toContain('· v1');
   });
@@ -75,7 +75,7 @@ describe('Artifact version switcher', () => {
     const fetchesForBoth = contentFetches;
 
     // Back to the first output: same document, already in hand.
-    await user.click(screen.getByRole('button', { name: '切換 Artifact' }));
+    await user.click(screen.getByRole('button', { name: 'Switch Artifact' }));
     await user.click((await screen.findAllByRole('menuitem')).at(-1) as HTMLElement);
     await expect.poll(artifactSrcdoc).toContain('· v1');
 
@@ -97,7 +97,7 @@ describe('Artifact version switcher', () => {
     );
     await screen.findByRole('button', { name: '發布 Artifact' });
 
-    await user.click(screen.getByRole('button', { name: '切換 Artifact' }));
+    await user.click(screen.getByRole('button', { name: 'Switch Artifact' }));
 
     const menu = await screen.findByRole('menu');
     expect(within(menu).getByText(zhTW.artifact.versionMenuTitle(2))).toBeInTheDocument();
@@ -110,8 +110,8 @@ describe('Artifact version switcher', () => {
     expect(seededRow).not.toHaveAttribute('aria-current', 'true');
 
     // The published seeded output carries the green check; the fresh one does not.
-    expect(within(seededRow).getByLabelText('已發布')).toBeInTheDocument();
-    expect(within(current).queryByLabelText('已發布')).not.toBeInTheDocument();
+    expect(within(seededRow).getByLabelText('Published')).toBeInTheDocument();
+    expect(within(current).queryByLabelText('Published')).not.toBeInTheDocument();
 
     // The seeded output's timestamp (2026-08-20) renders in its row; the relative
     // format shows a weekday within a week of "now", the date beyond that.

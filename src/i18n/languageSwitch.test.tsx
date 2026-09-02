@@ -1,4 +1,3 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
@@ -8,34 +7,21 @@ import ShareArtifactDialog from '@/components/artifact/ShareArtifactDialog';
 import LanguageToggle from '@/components/common/LanguageToggle';
 import { server } from '@/mocks/server';
 import { useLanguageStore } from '@/stores/useLanguageStore';
-import type { Artifact } from '@/types/api';
+import { appWrapper } from '@/test/appHarness';
+import { artifactFixture } from '@/test/artifactFixture';
 
 import { en } from './en';
 import { zhTW } from './zhTW';
 
-const artifact = {
-  id: 'artifact-1',
-  version: 1,
-  sessionId: 'session-1',
-  sessionTitle: 'SPC — Vt (gate CD)',
-  title: 'SPC analysis — Vt (gate CD)',
-  createdAt: '2026-08-20T09:15:00.000Z',
-  pinnedAt: null,
-  publishedAt: '2026-08-20T09:20:00.000Z',
-  owner: 'user-1',
-  ownerDisplay: 'You',
-  isOwn: true,
-  isShared: false,
-  hasPersonalCopy: false,
-} satisfies Artifact;
+const artifact = artifactFixture();
 
 function renderDialogWithToggle() {
-  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
-    <QueryClientProvider client={queryClient}>
+    <>
       <LanguageToggle />
       <ShareArtifactDialog open onClose={vi.fn()} artifact={artifact} />
-    </QueryClientProvider>,
+    </>,
+    { wrapper: appWrapper() },
   );
 }
 

@@ -1,4 +1,3 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
@@ -8,6 +7,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { server } from '@/mocks/server';
 import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
 import { useStudioLayoutStore } from '@/stores/useStudioLayoutStore';
+import { appWrapper } from '@/test/appHarness';
 import { renderStudio } from '@/test/renderStudio';
 
 // Reload simulation: vi.resetModules() + a fresh import gives a fresh
@@ -18,17 +18,15 @@ async function renderReloadedStudioPage() {
   vi.resetModules();
   const { default: ReloadedStudioShell } = await import('@/components/layouts/StudioShell');
   const { default: ReloadedStudioPage } = await import('./StudioPage');
-  const queryClient = new QueryClient();
   return render(
-    <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={['/cowork']}>
-        <Routes>
-          <Route path="/cowork" element={<ReloadedStudioShell />}>
-            <Route index element={<ReloadedStudioPage />} />
-          </Route>
-        </Routes>
-      </MemoryRouter>
-    </QueryClientProvider>,
+    <MemoryRouter initialEntries={['/cowork']}>
+      <Routes>
+        <Route path="/cowork" element={<ReloadedStudioShell />}>
+          <Route index element={<ReloadedStudioPage />} />
+        </Route>
+      </Routes>
+    </MemoryRouter>,
+    { wrapper: appWrapper({ retry: true }) },
   );
 }
 

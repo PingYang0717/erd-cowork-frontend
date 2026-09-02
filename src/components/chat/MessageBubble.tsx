@@ -36,7 +36,8 @@ export type LiveRun = Pick<
   | 'artifact'
   | 'startedAt'
 >;
-import { getTranslations, useTranslations } from '@/i18n/useTranslations';
+import { useTranslations } from '@/i18n/useTranslations';
+import type { Translations } from '@/i18n/zhTW';
 
 import ReplyText from './ReplyText';
 import ResultTable from './ResultTable';
@@ -155,7 +156,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
     <div className={styles.aiRow}>
       <div className={styles.aiLabel}>
         <ThunderboltFilled aria-hidden className={styles.aiLabelIcon} />
-        {agentLabel(stopped)}
+        {agentLabel(stopped, t.chat)}
       </div>
       <div className={styles.aiBubble}>
         {/* The live region exists for as long as the run does, not only once it has
@@ -290,8 +291,10 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
  *
  *  A stop is likewise reported inside (⏹ 已停止生成, cowork's wording) — the label carries
  *  it too because a stopped turn has no live panel left to say it from. */
-function agentLabel(stopped: boolean): string {
-  const t = getTranslations().chat;
+/** Takes the copy rather than reaching for it. Reading the language here worked only
+ *  because the one caller subscribes to it — move this into a memoised child and the
+ *  label would freeze on whatever language was current when it mounted, silently. */
+function agentLabel(stopped: boolean, t: Translations['chat']): string {
   return stopped ? t.agentStopped : t.agentName;
 }
 

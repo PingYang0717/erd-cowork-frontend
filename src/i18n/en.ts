@@ -113,6 +113,8 @@ export const en: Translations = {
     offlineHeading: 'Cannot reach the backend',
     offlineDetail: 'Check that the service is running, then retry.',
     loadFailedHeading: 'This section failed to load',
+    loadFailedDetail: (status: number) =>
+      `The server answered ${status}. Please try again shortly.`,
     offlineAction: 'Cannot reach the backend. Check that the service is running, then retry.',
     notReady: 'The backend is not ready yet. Please try again shortly.',
   },

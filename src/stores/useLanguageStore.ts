@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
 
+import { LANGUAGE_STORAGE_KEY } from '@/constants/storage';
+
 export type Language = 'zh-TW' | 'en';
 
 interface LanguageState {
@@ -25,7 +27,7 @@ export const useLanguageStore = create<LanguageState>()(
         language: 'zh-TW',
         setLanguage: (language) => set({ language }, false, 'setLanguage'),
       }),
-      { name: 'language-storage' },
+      { name: LANGUAGE_STORAGE_KEY },
     ),
     { name: 'Language' },
   ),

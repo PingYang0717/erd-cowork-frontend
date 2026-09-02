@@ -131,6 +131,10 @@ export const zhTW = {
     offlineHeading: '無法連線到後端服務',
     offlineDetail: '請確認服務已啟動後重試。',
     loadFailedHeading: '這個區塊載入失敗',
+    /** The detail line under it. Takes the status code because that is the one piece of
+     *  a failure worth showing — the rest of what axios says is its own wording, in its
+     *  own language, about its own internals. */
+    loadFailedDetail: (status: number) => `伺服器回應 ${status},請稍後重試。`,
     /** Actions get one sentence rather than a heading and a detail — a toast has no room
      *  for two. */
     offlineAction: '無法連線到後端服務，請確認服務已啟動後重試。',

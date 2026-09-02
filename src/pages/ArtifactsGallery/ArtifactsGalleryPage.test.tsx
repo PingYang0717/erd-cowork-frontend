@@ -1,4 +1,3 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
@@ -7,6 +6,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { server } from '@/mocks/server';
 import ArtifactPage from '@/pages/Artifact/ArtifactPage';
+import { appWrapper } from '@/test/appHarness';
 import type { Artifact } from '@/types/api';
 
 import ArtifactsGalleryPage from './ArtifactsGalleryPage';
@@ -31,13 +31,11 @@ function artifactDto(over: Partial<Artifact> & Pick<Artifact, 'id' | 'title'>): 
 }
 
 function renderGalleryPage() {
-  const queryClient = new QueryClient();
   return render(
-    <QueryClientProvider client={queryClient}>
-      <MemoryRouter>
-        <ArtifactsGalleryPage />
-      </MemoryRouter>
-    </QueryClientProvider>,
+    <MemoryRouter>
+      <ArtifactsGalleryPage />
+    </MemoryRouter>,
+    { wrapper: appWrapper({ retry: true }) },
   );
 }
 
@@ -483,16 +481,14 @@ describe('Artifacts gallery', () => {
 
   it('opens an Artifact in the full-page view when its card is clicked', async () => {
     const user = userEvent.setup();
-    const queryClient = new QueryClient();
     render(
-      <QueryClientProvider client={queryClient}>
-        <MemoryRouter initialEntries={['/cowork/artifacts']}>
-          <Routes>
-            <Route path="/cowork/artifacts" element={<ArtifactsGalleryPage />} />
-            <Route path="/cowork/artifact/:artifactId" element={<ArtifactPage />} />
-          </Routes>
-        </MemoryRouter>
-      </QueryClientProvider>,
+      <MemoryRouter initialEntries={['/cowork/artifacts']}>
+        <Routes>
+          <Route path="/cowork/artifacts" element={<ArtifactsGalleryPage />} />
+          <Route path="/cowork/artifact/:artifactId" element={<ArtifactPage />} />
+        </Routes>
+      </MemoryRouter>,
+      { wrapper: appWrapper({ retry: true }) },
     );
     await screen.findByRole('button', { name: 'SPC analysis — Vt (gate CD)' });
 

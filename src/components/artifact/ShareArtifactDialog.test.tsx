@@ -1,40 +1,23 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
-import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { zhTW } from '@/i18n/zhTW';
 import { server } from '@/mocks/server';
-import type { Artifact } from '@/types/api';
+import { appWrapper } from '@/test/appHarness';
+import { artifactFixture } from '@/test/artifactFixture';
 
 import ShareArtifactDialog from './ShareArtifactDialog';
 
-const artifact: Artifact = {
-  id: 'artifact-1',
-  version: 1,
-  sessionId: 'session-1',
-  sessionTitle: 'SPC — Vt (gate CD)',
-  title: 'SPC analysis — Vt (gate CD)',
-  createdAt: '2026-08-20T09:15:00.000Z',
-  pinnedAt: null,
-  publishedAt: '2026-08-20T09:20:00.000Z',
-  owner: 'user-1',
-  ownerDisplay: 'You',
-  isOwn: true,
-  isShared: false,
-  hasPersonalCopy: false,
-};
+const artifact = artifactFixture();
 
 function renderDialog(onClose = vi.fn()) {
-  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  const wrapper = ({ children }: { children: ReactNode }) => (
-    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-  );
   return {
     onClose,
-    ...render(<ShareArtifactDialog open onClose={onClose} artifact={artifact} />, { wrapper }),
+    ...render(<ShareArtifactDialog open onClose={onClose} artifact={artifact} />, {
+      wrapper: appWrapper(),
+    }),
   };
 }
 

@@ -26,7 +26,7 @@ interface ShareArtifactDialogProps {
 }
 
 const ShareArtifactDialog: React.FC<ShareArtifactDialogProps> = ({ open, onClose, artifact }) => {
-  const t = useTranslations().share;
+  const t = useTranslations();
   const { shares, isLoading, isUnavailable } = useArtifactShares(artifact.id, open);
   const updateShares = useUpdateArtifactShares();
   const [recipients, setRecipients] = useState<DirectoryEntry[]>([]);
@@ -98,13 +98,13 @@ const ShareArtifactDialog: React.FC<ShareArtifactDialogProps> = ({ open, onClose
     <Modal
       open={open}
       onCancel={handleClose}
-      title={t.title}
+      title={t.share.title}
       width={460}
       footer={null}
       destroyOnHidden
     >
-      <p className={styles.subtitle}>{t.subtitle}</p>
-      <div className={styles.infoCard} aria-label="Artifact 資訊">
+      <p className={styles.subtitle}>{t.share.subtitle}</p>
+      <div className={styles.infoCard} aria-label="Artifact details">
         <span className={styles.infoCardIcon} aria-hidden>
           <FundOutlined />
         </span>
@@ -117,13 +117,13 @@ const ShareArtifactDialog: React.FC<ShareArtifactDialogProps> = ({ open, onClose
         {artifact.publishedAt !== null && (
           <span className={styles.infoCardGeneratedChip}>
             <CheckOutlined aria-hidden />
-            {t.published}
+            {t.share.published}
           </span>
         )}
       </div>
 
       <div className={styles.section}>
-        <div className={styles.sectionLabel}>{t.recipientsLabel}</div>
+        <div className={styles.sectionLabel}>{t.share.recipientsLabel}</div>
         <RecipientSelect
           value={chosen}
           loading={isLoading}
@@ -134,7 +134,7 @@ const ShareArtifactDialog: React.FC<ShareArtifactDialogProps> = ({ open, onClose
             could read is not an edit the user meant to make. Submit stays pressable —
             it is also the way out, and an unchanged list sends an empty delta. */}
         <div className={isUnavailable ? styles.error : styles.hint}>
-          {isUnavailable ? t.unavailable : t.recipientsHint}
+          {isUnavailable ? t.share.unavailable : t.share.recipientsHint}
         </div>
       </div>
 
@@ -142,7 +142,7 @@ const ShareArtifactDialog: React.FC<ShareArtifactDialogProps> = ({ open, onClose
           reward for pressing a button — someone who opened this dialog only to copy it
           should not have to change the recipient list first. */}
       <div className={styles.section}>
-        <div className={styles.sectionLabel}>{t.linkLabel}</div>
+        <div className={styles.sectionLabel}>{t.share.linkLabel}</div>
         <div className={styles.linkRow}>
           <Input readOnly prefix={<LinkOutlined aria-hidden />} value={shareUrl} />
           {/* Secondary, not primary: a dialog has one button that finishes the job, and
@@ -154,13 +154,13 @@ const ShareArtifactDialog: React.FC<ShareArtifactDialogProps> = ({ open, onClose
             icon={copied ? <CheckOutlined aria-hidden /> : <CopyOutlined aria-hidden />}
             onClick={handleCopy}
           >
-            {copied ? t.copied : t.copy}
+            {copied ? t.share.copied : t.share.copy}
           </Button>
         </div>
         {/* Styled as a hint, not as the green success banner it used to be: the link is
             here from the moment the dialog opens, so a panel announcing that something
             succeeded would be claiming it before anything had happened. */}
-        <div className={styles.hint}>{t.linkHint}</div>
+        <div className={styles.hint}>{t.share.linkHint}</div>
       </div>
 
       <div className={styles.actions}>
@@ -175,7 +175,7 @@ const ShareArtifactDialog: React.FC<ShareArtifactDialogProps> = ({ open, onClose
           loading={updateShares.isPending}
           onClick={handleConfirm}
         >
-          {t.submit}
+          {t.share.submit}
         </Button>
       </div>
     </Modal>
@@ -204,7 +204,7 @@ const RecipientSelect: React.FC<RecipientSelectProps> = ({
   disabled,
   onChange,
 }) => {
-  const t = useTranslations().share;
+  const t = useTranslations();
   const [keyword, setKeyword] = useState('');
   const { entries, isSearching, isError, enabled } = useDirectorySearch(useDebouncedValue(keyword));
 
@@ -261,16 +261,16 @@ const RecipientSelect: React.FC<RecipientSelectProps> = ({
       options={options}
       notFoundContent={
         isSearching
-          ? t.searching
+          ? t.share.searching
           : isError
             ? // Before "no match": a failed search wearing that answer sends the user
               // off to re-check a spelling that was never the problem.
-              t.searchFailed
+              t.share.searchFailed
             : enabled
-              ? t.noMatch
-              : t.minChars(DIRECTORY_SEARCH_MIN_LENGTH)
+              ? t.share.noMatch
+              : t.share.minChars(DIRECTORY_SEARCH_MIN_LENGTH)
       }
-      placeholder={t.searchPlaceholder(DIRECTORY_SEARCH_MIN_LENGTH)}
+      placeholder={t.share.searchPlaceholder(DIRECTORY_SEARCH_MIN_LENGTH)}
       style={{ width: '100%' }}
     />
   );

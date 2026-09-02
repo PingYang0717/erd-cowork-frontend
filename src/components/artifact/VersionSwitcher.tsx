@@ -53,7 +53,7 @@ const VersionSwitcher: React.FC<VersionSwitcherProps> = ({ versions, activeVersi
         <button
           type="button"
           className={styles.versionTrigger}
-          aria-label="切換 Artifact"
+          aria-label="Switch Artifact"
           aria-haspopup="menu"
           aria-expanded={isOpen}
           onClick={() => setIsOpen((v) => !v)}
@@ -97,7 +97,7 @@ const VersionSwitcher: React.FC<VersionSwitcherProps> = ({ versions, activeVersi
                   {v.createdAt ? formatRelativeTime(v.createdAt) : ''}
                 </span>
                 {v.publishedAt != null && (
-                  <CheckOutlined aria-label="已發布" className={styles.versionMenuItemCheck} />
+                  <CheckOutlined aria-label="Published" className={styles.versionMenuItemCheck} />
                 )}
               </button>
             );
