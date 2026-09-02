@@ -640,7 +640,7 @@ describe('Streaming a run in the Studio', () => {
       const partIds = screen.getByRole('group', { name: 'Part ID' });
       expect(within(partIds).getByRole('button', { name: 'PT-07' })).toBeInTheDocument();
 
-      await user.type(screen.getByRole('textbox', { name: '搜尋 Part ID' }), 'PT-01');
+      await user.type(screen.getByRole('textbox', { name: 'Search Part ID' }), 'PT-01');
 
       // Filtering is debounced, so the narrowed list arrives a beat after the keystrokes.
       await waitFor(() =>
@@ -774,7 +774,7 @@ describe('Streaming a run in the Studio', () => {
         /0\.28 – 0\.34 V/,
       );
 
-      await user.type(screen.getByRole('textbox', { name: '搜尋 DC item' }), 'Vt');
+      await user.type(screen.getByRole('textbox', { name: 'Search DC item' }), 'Vt');
       await waitFor(() =>
         expect(within(items).queryByRole('button', { name: /Idsat/ })).not.toBeInTheDocument(),
       );

@@ -1,7 +1,12 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { AxiosError } from 'axios';
+import { act } from 'react';
 import { describe, expect, it, vi } from 'vitest';
+
+import { en } from '@/i18n/en';
+import { zhTW } from '@/i18n/zhTW';
+import { useLanguageStore } from '@/stores/useLanguageStore';
 
 import ErrorBoundary from './ErrorBoundary';
 
@@ -81,5 +86,24 @@ describe('ErrorBoundary', () => {
     );
 
     expect(screen.getByText('壞掉了：連線中斷')).toBeInTheDocument();
+  });
+
+  /** The panel used to read the language once, when it first painted: it was rendered by
+   *  a class, and a class cannot subscribe. Switching language with an error on screen
+   *  left the old words there until something remounted it. */
+  it('follows a language change while the error is on screen', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    useLanguageStore.setState({ language: 'zh-TW' });
+    render(
+      <ErrorBoundary>
+        <Explode shouldThrow />
+      </ErrorBoundary>,
+    );
+    expect(screen.getByRole('button', { name: zhTW.common.retry })).toBeInTheDocument();
+
+    act(() => useLanguageStore.setState({ language: 'en' }));
+
+    expect(screen.getByRole('button', { name: en.common.retry })).toBeInTheDocument();
+    useLanguageStore.setState({ language: 'zh-TW' });
   });
 });

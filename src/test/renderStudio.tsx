@@ -1,10 +1,11 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 
 import StudioShell from '@/components/layouts/StudioShell';
 import ArtifactsGalleryPage from '@/pages/ArtifactsGallery/ArtifactsGalleryPage';
 import StudioPage from '@/pages/Studio/StudioPage';
+
+import { appWrapper } from './appHarness';
 
 interface RenderStudioOptions {
   /** Passed to the QueryClient. Suites that assert a "not found" state set this to
@@ -18,20 +19,22 @@ interface RenderStudioOptions {
  *  StudioShell, the route's shared parent (`app/router.tsx`). Mirroring that nesting is
  *  what makes the rendered tree match production — a test that rendered StudioPage alone
  *  would have no rail to click. The artifacts route is included because publishing
- *  navigates there. */
+ *  navigates there.
+ *
+ *  The providers come from `appWrapper`, which carries `AntdApp` as well as the query
+ *  client — without it `useActionErrorToast` is a no-op and no mutation failure can be
+ *  asserted from here. */
 export function renderStudio({ retry = true }: RenderStudioOptions = {}) {
-  const queryClient = new QueryClient({ defaultOptions: { queries: { retry } } });
   return render(
-    <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={['/cowork']}>
-        <Routes>
-          <Route path="/cowork" element={<StudioShell />}>
-            <Route index element={<StudioPage />} />
-            <Route path="artifacts" element={<ArtifactsGalleryPage />} />
-          </Route>
-        </Routes>
-      </MemoryRouter>
-    </QueryClientProvider>,
+    <MemoryRouter initialEntries={['/cowork']}>
+      <Routes>
+        <Route path="/cowork" element={<StudioShell />}>
+          <Route index element={<StudioPage />} />
+          <Route path="artifacts" element={<ArtifactsGalleryPage />} />
+        </Route>
+      </Routes>
+    </MemoryRouter>,
+    { wrapper: appWrapper({ retry }) },
   );
 }
 

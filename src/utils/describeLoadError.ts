@@ -1,6 +1,7 @@
 import axios from 'axios';
 
 import { getTranslations } from '@/i18n/useTranslations';
+import type { Translations } from '@/i18n/zhTW';
 
 /**
  * What to tell the user about a failed load.
@@ -14,10 +15,18 @@ import { getTranslations } from '@/i18n/useTranslations';
  * long" — it is an aborted request. Both land here as a response-less AxiosError and both
  * are, from the user's side, the same thing: nothing came back.
  */
-export function describeLoadError(error: Error): { heading: string; detail: string } {
-  const t = getTranslations().errors;
+export function describeLoadError(
+  error: Error,
+  t: Translations['errors'] = getTranslations().errors,
+): { heading: string; detail: string } {
   if (axios.isAxiosError(error) && error.response === undefined) {
     return { heading: t.offlineHeading, detail: t.offlineDetail };
+  }
+  // The status code is worth showing; axios's own sentence around it is not. It arrives
+  // as `Request failed with status code 500` — English whatever the interface is set to,
+  // and about axios rather than about what the user should do next.
+  if (axios.isAxiosError(error) && error.response !== undefined) {
+    return { heading: t.loadFailedHeading, detail: t.loadFailedDetail(error.response.status) };
   }
   return { heading: t.loadFailedHeading, detail: error.message };
 }

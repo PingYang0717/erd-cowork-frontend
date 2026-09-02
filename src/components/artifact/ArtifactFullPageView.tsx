@@ -13,7 +13,6 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import ErrorBoundary from '@/components/common/ErrorBoundary';
 import LanguageToggle from '@/components/common/LanguageToggle';
 import ThemeToggle from '@/components/common/ThemeToggle';
-import Tooltip from '@/components/common/Tooltip';
 import { artifactContentQueryKey, useArtifactContent } from '@/hooks/useArtifactContent';
 import { useArtifacts } from '@/hooks/useArtifacts';
 import { useSessionDetail } from '@/hooks/useSessionDetail';
@@ -24,6 +23,7 @@ import { deriveArtifactVersions } from '@/utils/deriveArtifactVersions';
 
 import ArtifactFrame from './ArtifactFrame';
 import styles from './ArtifactFullPageView.module.css';
+import ArtifactToolbarButton, { ARTIFACT_TOOLBAR_LABELS } from './ArtifactToolbarButton';
 import ShareArtifactDialog from './ShareArtifactDialog';
 import VersionSwitcher from './VersionSwitcher';
 
@@ -104,48 +104,37 @@ const ArtifactFullPageView: React.FC<ArtifactFullPageViewProps> = ({ artifactId 
           )}
         </div>
 
-        <Tooltip content={t.artifact.share}>
-          <button
-            type="button"
-            className={styles.shareButton}
-            aria-label="Share artifact"
-            onClick={() => setIsShareOpen(true)}
-          >
-            <ShareAltOutlined aria-hidden />
-          </button>
-        </Tooltip>
-        <Tooltip content={t.artifact.reload}>
-          <button
-            type="button"
-            className={styles.iconButton}
-            aria-label="Refresh artifact"
-            onClick={() => {
-              if (displayedArtifactId !== undefined) {
-                queryClient.invalidateQueries({
-                  queryKey: artifactContentQueryKey(displayedArtifactId),
-                });
-              }
-            }}
-          >
-            <ReloadOutlined aria-hidden />
-          </button>
-        </Tooltip>
-        <Tooltip content={t.artifact.openInNewTab}>
-          <button
-            type="button"
-            className={styles.iconButton}
-            aria-label="Open artifact in new tab"
-            onClick={() => {
-              // The toolbar only renders alongside a displayed artifact, but the type
-              // cannot see that — and opening a tab at /undefined would be silent.
-              if (displayedArtifactId !== undefined) {
-                window.open(artifactHref(displayedArtifactId), '_blank', 'noopener,noreferrer');
-              }
-            }}
-          >
-            <ExportOutlined aria-hidden />
-          </button>
-        </Tooltip>
+        <ArtifactToolbarButton
+          tooltip={t.artifact.share}
+          label={ARTIFACT_TOOLBAR_LABELS.share}
+          icon={<ShareAltOutlined aria-hidden />}
+          className={styles.shareButton}
+          onClick={() => setIsShareOpen(true)}
+        />
+        <ArtifactToolbarButton
+          tooltip={t.artifact.reload}
+          label={ARTIFACT_TOOLBAR_LABELS.reload}
+          icon={<ReloadOutlined aria-hidden />}
+          onClick={() => {
+            if (displayedArtifactId !== undefined) {
+              queryClient.invalidateQueries({
+                queryKey: artifactContentQueryKey(displayedArtifactId),
+              });
+            }
+          }}
+        />
+        <ArtifactToolbarButton
+          tooltip={t.artifact.openInNewTab}
+          label={ARTIFACT_TOOLBAR_LABELS.openInNewTab}
+          icon={<ExportOutlined aria-hidden />}
+          onClick={() => {
+            // The toolbar only renders alongside a displayed artifact, but the type
+            // cannot see that — and opening a tab at /undefined would be silent.
+            if (displayedArtifactId !== undefined) {
+              window.open(artifactHref(displayedArtifactId), '_blank', 'noopener,noreferrer');
+            }
+          }}
+        />
         <LanguageToggle />
         <ThemeToggle />
       </div>

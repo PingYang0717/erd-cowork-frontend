@@ -1,6 +1,8 @@
 import { AxiosError, AxiosHeaders } from 'axios';
 import { describe, expect, it } from 'vitest';
 
+import { zhTW } from '@/i18n/zhTW';
+
 import { describeLoadError } from './describeLoadError';
 
 function axiosError(code: string, response?: AxiosError['response']) {
@@ -12,18 +14,22 @@ function axiosError(code: string, response?: AxiosError['response']) {
 describe('describeLoadError', () => {
   it('names an unreachable backend rather than repeating "Network Error"', () => {
     expect(describeLoadError(axiosError('ERR_NETWORK'))).toEqual({
-      heading: '無法連線到後端服務',
-      detail: '請確認服務已啟動後重試。',
+      heading: zhTW.errors.offlineHeading,
+      detail: zhTW.errors.offlineDetail,
     });
   });
 
   /** `apiClient` sets no timeout (ADR-0007), so ECONNABORTED is an aborted request rather
    *  than a slow one. Either way nothing came back, so it reads the same to the user. */
   it('treats an aborted request the same as an unreachable backend', () => {
-    expect(describeLoadError(axiosError('ECONNABORTED')).heading).toBe('無法連線到後端服務');
+    expect(describeLoadError(axiosError('ECONNABORTED')).heading).toBe(zhTW.errors.offlineHeading);
   });
 
-  it('leaves an answered request to its own message — the backend replied, so the error is real', () => {
+  /** An answered request used to be shown axios's own sentence — `Request failed with
+   *  status code 500`. That is English whatever the interface is set to, and it describes
+   *  axios rather than what the reader should do. The status code is the part worth
+   *  keeping; the sentence around it is ours to write. */
+  it('states the status the backend answered with, in the language on screen', () => {
     const answered = axiosError('ERR_BAD_REQUEST', {
       status: 500,
       statusText: 'Internal Server Error',
@@ -32,14 +38,16 @@ describe('describeLoadError', () => {
       config: { headers: new AxiosHeaders() },
     });
     expect(describeLoadError(answered)).toEqual({
-      heading: '這個區塊載入失敗',
-      detail: 'Network Error',
+      heading: zhTW.errors.loadFailedHeading,
+      detail: zhTW.errors.loadFailedDetail(500),
     });
   });
 
+  /** A render error is not a request: there is no status to name, and its message is the
+   *  only thing that says what went wrong. */
   it('passes a plain render error straight through', () => {
     expect(describeLoadError(new Error('boom'))).toEqual({
-      heading: '這個區塊載入失敗',
+      heading: zhTW.errors.loadFailedHeading,
       detail: 'boom',
     });
   });

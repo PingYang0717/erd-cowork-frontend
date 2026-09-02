@@ -206,7 +206,7 @@ const QuestionFormCard: React.FC<QuestionFormCardProps> = ({
 
             {isSearchable && (
               <input
-                aria-label={`搜尋 ${field.label}`}
+                aria-label={`Search ${field.label}`}
                 placeholder={field.placeholder}
                 value={searches[field.key] ?? ''}
                 className={styles.searchInput}

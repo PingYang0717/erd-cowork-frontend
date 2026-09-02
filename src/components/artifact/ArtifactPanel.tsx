@@ -23,6 +23,7 @@ import { deriveArtifactVersions } from '@/utils/deriveArtifactVersions';
 
 import ArtifactFrame from './ArtifactFrame';
 import styles from './ArtifactPanel.module.css';
+import ArtifactToolbarButton, { ARTIFACT_TOOLBAR_LABELS } from './ArtifactToolbarButton';
 import PublishArtifactDialog from './PublishArtifactDialog';
 import ShareArtifactDialog from './ShareArtifactDialog';
 import VersionSwitcher from './VersionSwitcher';
@@ -221,29 +222,21 @@ const ArtifactPanelContent: React.FC<ArtifactPanelContentProps> = ({
             <ShareAltOutlined aria-hidden />
           </button>
         </Tooltip>
-        <Tooltip content={t.artifact.reload}>
-          <button
-            type="button"
-            className={styles.iconButton}
-            aria-label="Reload artifact"
-            // Mid-run the version on screen is still being written; remounting now would
-            // present a half-finished document as the result.
-            disabled={isRunStreaming}
-            onClick={bumpArtifactReload}
-          >
-            <ReloadOutlined aria-hidden />
-          </button>
-        </Tooltip>
-        <Tooltip content={t.artifact.openInNewTab}>
-          <button
-            type="button"
-            className={styles.iconButton}
-            aria-label="Open artifact in new tab"
-            onClick={() => window.open(artifactHref(artifactId), '_blank', 'noopener,noreferrer')}
-          >
-            <ExportOutlined aria-hidden />
-          </button>
-        </Tooltip>
+        <ArtifactToolbarButton
+          tooltip={t.artifact.reload}
+          label={ARTIFACT_TOOLBAR_LABELS.reload}
+          icon={<ReloadOutlined aria-hidden />}
+          // Mid-run the version on screen is still being written; remounting now would
+          // present a half-finished document as the result.
+          disabled={isRunStreaming}
+          onClick={bumpArtifactReload}
+        />
+        <ArtifactToolbarButton
+          tooltip={t.artifact.openInNewTab}
+          label={ARTIFACT_TOOLBAR_LABELS.openInNewTab}
+          icon={<ExportOutlined aria-hidden />}
+          onClick={() => window.open(artifactHref(artifactId), '_blank', 'noopener,noreferrer')}
+        />
       </div>
       <div className={styles.frameWrapper}>
         {/* The header above stays whatever happens here. An Artifact that has been
@@ -304,7 +297,7 @@ const PublishedToast: React.FC = () => {
   }
 
   return (
-    <div role="status" aria-label="Artifact 已發布" className={styles.publishedToast}>
+    <div role="status" aria-label="Artifact published" className={styles.publishedToast}>
       <span className={styles.publishedToastText}>{t.artifact.publishedToast}</span>
       <button
         type="button"
