@@ -24,33 +24,27 @@ export function useToggleArtifactPin() {
 
   return useMutation({
     mutationFn: (id: string) => toggleArtifactPin(id),
-    onSuccess: (updated, id) => {
-      // The row is found by the id we asked about, not by one read back out of the
-      // answer. A response that omits `id` — or wraps it — matched nothing, so the merge
-      // silently rewrote no row at all and the button never moved. We already know which
-      // Artifact was toggled: it is the argument.
-      //
-      // Merged onto the cached row rather than written over it, because nothing promises
-      // the answer carries every field, and a row that silently loses one is a row the UI
-      // then reads wrongly. Whatever the response does bring wins; the rest stays.
-      //
-      // `pinnedAt` is read defensively for the same reason: if the answer does not carry
-      // it, flip the local value rather than leave the row unchanged — the request
-      // succeeded, so the state did change, and showing the old one would be a lie.
+    onSuccess: (result, id) => {
+      // The answer is not an Artifact — it names its subject `artifactId`, not `id`, and
+      // carries only what the toggle settled. So the fields it does bring are applied by
+      // name rather than spread: spreading would have put a stray `artifactId` on the
+      // row, and matching on `result.id` (which does not exist) found nothing at all,
+      // which is why the button used to sit still after a successful pin.
       queryClient.setQueryData<Artifact[]>(artifactsQueryKey, (previous) =>
-        previous?.map((artifact) => {
-          if (artifact.id !== id) {
-            return artifact;
-          }
-          const merged = { ...artifact, ...updated, id };
-          return updated?.pinnedAt === undefined
-            ? { ...merged, pinnedAt: artifact.pinnedAt === null ? new Date().toISOString() : null }
-            : merged;
-        }),
+        previous?.map((artifact) =>
+          artifact.id === id
+            ? {
+                ...artifact,
+                pinnedAt: result.pinnedAt,
+                owner: result.owner,
+                isOwn: result.isOwn,
+              }
+            : artifact,
+        ),
       );
-      // No invalidate to follow it: the merge above already holds everything the toggle
-      // changed, and the rail's badge keeps this list mounted on every page — a refetch
-      // here was one full list download per pin, anywhere in the app.
+      // No invalidate to follow it: the answer holds everything the toggle changed, and
+      // the rail's badge keeps this list mounted on every page — a refetch here was one
+      // full list download per pin, anywhere in the app.
     },
     onError: toastError,
   });

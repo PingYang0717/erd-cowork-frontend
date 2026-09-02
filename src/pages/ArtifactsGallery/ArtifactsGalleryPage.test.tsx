@@ -258,10 +258,10 @@ describe('Artifacts gallery', () => {
     expect(listFetches).toBe(fetchesBeforePin);
   });
 
-  /** The row to update is found by the id that was asked about, not by one read back out
-   *  of the answer. A response without `id` matched nothing, so the merge rewrote no row
-   *  and the button never moved — the request succeeded and the screen said otherwise. */
-  it('updates the card even when the toggle answers without an id', async () => {
+  /** The pin endpoint answers with `artifactId`, not `id` — so the row to update is
+   *  found by the id that was asked about. Matching on the answer's `id` found nothing at
+   *  all, and the merge rewrote no row: the request succeeded and the button sat still. */
+  it('updates the card from a response that names its subject artifactId', async () => {
     const user = userEvent.setup();
     const name = 'SPC analysis — Vt (gate CD)';
     server.use(
@@ -269,27 +269,13 @@ describe('Artifacts gallery', () => {
         HttpResponse.json([artifactDto({ id: 'artifact-1', title: name })]),
       ),
       http.post('/api/artifacts/:id/pin', () =>
-        HttpResponse.json({ pinnedAt: '2026-09-02T00:00:00.000Z' }),
+        HttpResponse.json({
+          artifactId: 'artifact-1',
+          pinnedAt: '2026-09-02T00:00:00.000Z',
+          owner: 'u-001',
+          isOwn: true,
+        }),
       ),
-    );
-    renderGalleryPage();
-    await screen.findByRole('button', { name: `Pin ${name}` });
-
-    await user.click(screen.getByRole('button', { name: `Pin ${name}` }));
-
-    expect(await screen.findByRole('button', { name: `Unpin ${name}` })).toBeInTheDocument();
-  });
-
-  /** Even an answer with nothing in it at all still moved the pin: the request succeeded,
-   *  so the state changed, and leaving the button where it was would be a lie. */
-  it('flips the pin locally when the toggle answers with no pin state', async () => {
-    const user = userEvent.setup();
-    const name = 'SPC analysis — Vt (gate CD)';
-    server.use(
-      http.get('/api/artifacts', () =>
-        HttpResponse.json([artifactDto({ id: 'artifact-1', title: name })]),
-      ),
-      http.post('/api/artifacts/:id/pin', () => HttpResponse.json({})),
     );
     renderGalleryPage();
     await screen.findByRole('button', { name: `Pin ${name}` });
