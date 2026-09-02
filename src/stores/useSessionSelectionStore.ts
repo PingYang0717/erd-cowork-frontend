@@ -22,9 +22,22 @@ export const useSessionSelectionStore = create<SessionSelectionState>()(
     (set) => ({
       selectedSessionId: null,
       draftStartedAt: null,
-      // 選走別的 session 就等於放棄這個草稿——它沒有任何東西需要保存。
+      // 選走**別的** session 就等於放棄這個草稿——它沒有任何東西需要保存。選到草稿
+      // 自己則不是離開它:草稿的存在是從「這個選擇後端沒聽過」推導出來的,所以無條件
+      // 清掉時間戳,等於使用者一點自己那一列,那一列就消失。
+      //
+      // 反過來那一半(選別的 session 就清掉)沒有測試守著,而且守不住:useSessionGroups
+      // 還要求選中的 id 不在 sessions 清單裡,選了真實 session 之後那一條就先為假,所以
+      // 時間戳殘不殘留都看不出差別。這裡仍然清掉是為了讓 state 自洽,不是畫面在依賴它。
       selectSession: (id) =>
-        set({ selectedSessionId: id, draftStartedAt: null }, false, 'selectSession'),
+        set(
+          (state) => ({
+            selectedSessionId: id,
+            draftStartedAt: id === state.selectedSessionId ? state.draftStartedAt : null,
+          }),
+          false,
+          'selectSession',
+        ),
       startDraft: (id, startedAt) =>
         set({ selectedSessionId: id, draftStartedAt: startedAt }, false, 'startDraft'),
       clearSelection: () =>

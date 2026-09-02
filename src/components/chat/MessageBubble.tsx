@@ -8,7 +8,7 @@ import React, { useDeferredValue, useMemo } from 'react';
 
 import { INTERRUPTED_TEXTS, REPAIR_RECORD_PREFIXES } from '@/constants/messages';
 import type { AgentStreamState } from '@/hooks/useAgentStream';
-import type { QuestionForm, StepItem } from '@/types/api/index';
+import type { QuestionForm, StepItem } from '@/types/api';
 import { splitAnswerByTableMarkers } from '@/utils/tableMarkers';
 
 import CollapsiblePanel from './CollapsiblePanel';

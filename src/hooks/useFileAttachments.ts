@@ -11,6 +11,7 @@ export {
   ACCEPTED_FILE_EXTENSIONS,
   MAX_ATTACHMENT_COUNT,
   MAX_ATTACHMENT_TOTAL_BYTES,
+  MAX_ATTACHMENT_TOTAL_LABEL,
 } from '@/utils/uploadValidation';
 
 /** Session-level attachments per the backend contract: files live on the session

@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { useActiveRunStore } from '@/stores/useActiveRunStore';
-import type { Message } from '@/types/api/index';
+import type { Message } from '@/types/api';
 
 import MessageList, { type LiveRun } from './MessageList';
 

@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
-import type { TableResult } from '@/types/api/index';
+import type { TableResult } from '@/types/api';
 
 import ResultTable from './ResultTable';
 

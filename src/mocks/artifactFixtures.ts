@@ -1,4 +1,4 @@
-import type { ScenarioKey } from '@/types/api/index';
+import type { ScenarioKey } from '@/types/api';
 
 /** Which document the mock builds. It left the wire contract when `kind` did — the
  *  backend will reintroduce it as `type` — but the fixtures still need to know whether

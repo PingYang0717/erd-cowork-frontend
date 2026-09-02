@@ -8,8 +8,12 @@
 import { Button, Modal, Progress } from 'antd';
 import React, { useRef } from 'react';
 
-import { ACCEPT_ATTRIBUTE, MAX_ATTACHMENT_COUNT } from '@/hooks/useFileAttachments';
-import type { UploadedFileInfo } from '@/types/api/index';
+import {
+  ACCEPT_ATTRIBUTE,
+  MAX_ATTACHMENT_COUNT,
+  MAX_ATTACHMENT_TOTAL_LABEL,
+} from '@/hooks/useFileAttachments';
+import type { UploadedFileInfo } from '@/types/api';
 import { formatBytes } from '@/utils/formatBytes';
 
 import styles from './FileAttachmentModal.module.css';
@@ -134,7 +138,7 @@ const FileAttachmentModal: React.FC<FileAttachmentModalProps> = ({
           <span className={styles.dropzoneLink}>點擊選擇</span> 或把檔案拖拉到這裡
         </div>
         <div className={styles.dropzoneHint}>
-          最多 {MAX_ATTACHMENT_COUNT} 個檔案 · 總計上限 5 GB
+          最多 {MAX_ATTACHMENT_COUNT} 個檔案 · 總計上限 {MAX_ATTACHMENT_TOTAL_LABEL}
         </div>
       </div>
 

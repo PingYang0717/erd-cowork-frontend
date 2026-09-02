@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { useConnectorsPanelStore } from '@/stores/useConnectorsPanelStore';
-import type { QuestionAnswer, QuestionField, QuestionForm } from '@/types/api/index';
+import type { QuestionAnswer, QuestionField, QuestionForm } from '@/types/api';
 
 import styles from './QuestionFormCard.module.css';
 
