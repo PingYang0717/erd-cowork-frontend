@@ -18,6 +18,11 @@ import {
 
 import styles from './ShareArtifactDialog.module.css';
 
+/** Exported so the tests name the same string the dialog shows, rather than a copy of it
+ *  that could drift. */
+export const SHARES_UNAVAILABLE = '讀不到目前的分享對象,請稍後再試。';
+export const SEARCH_FAILED = '搜尋失敗,請稍後再試';
+
 interface ShareArtifactDialogProps {
   open: boolean;
   onClose: () => void;
@@ -25,7 +30,7 @@ interface ShareArtifactDialogProps {
 }
 
 const ShareArtifactDialog: React.FC<ShareArtifactDialogProps> = ({ open, onClose, artifact }) => {
-  const { shares, isLoading } = useArtifactShares(artifact.id, open);
+  const { shares, isLoading, isUnavailable } = useArtifactShares(artifact.id, open);
   const updateShares = useUpdateArtifactShares();
   const [recipients, setRecipients] = useState<DirectoryEntry[]>([]);
   const [copied, setCopied] = useState(false);
@@ -83,11 +88,13 @@ const ShareArtifactDialog: React.FC<ShareArtifactDialogProps> = ({ open, onClose
   async function handleCopy() {
     try {
       await navigator.clipboard.writeText(shareUrl);
+      // Inside the try: the tick and the wording are the only confirmation a copy gets,
+      // and they used to appear whether or not anything reached the clipboard. The link
+      // stays visible and selectable in the field for copying by hand.
+      setCopied(true);
     } catch {
-      // clipboard may be unavailable (e.g. insecure context); the link is
-      // still visible and selectable in the input for manual copying
+      // Nothing to add — the field is right there, and it still holds the link.
     }
-    setCopied(true);
   }
 
   return (
@@ -120,9 +127,19 @@ const ShareArtifactDialog: React.FC<ShareArtifactDialogProps> = ({ open, onClose
 
       <div className={styles.section}>
         <div className={styles.sectionLabel}>分享對象</div>
-        <RecipientSelect value={chosen} loading={isLoading} onChange={handleChoose} />
-        <div className={styles.hint}>
-          可混選部門(A10INTD1-1)、課別(INTD-1)與人員(CHXXGHYC · 鄭凱宇)
+        <RecipientSelect
+          value={chosen}
+          loading={isLoading}
+          disabled={isUnavailable}
+          onChange={handleChoose}
+        />
+        {/* Editing is closed rather than the dialog: a delta built on a baseline nobody
+            could read is not an edit the user meant to make. Submit stays pressable —
+            it is also the way out, and an unchanged list sends an empty delta. */}
+        <div className={isUnavailable ? styles.error : styles.hint}>
+          {isUnavailable
+            ? SHARES_UNAVAILABLE
+            : '可混選部門(A10INTD1-1)、課別(INTD-1)與人員(CHXXGHYC · 鄭凱宇)'}
         </div>
       </div>
 
@@ -178,6 +195,8 @@ interface RecipientSelectProps {
   value: DirectoryEntry[];
   /** True while the existing share list is still being read. */
   loading: boolean;
+  /** The existing list could not be read, so there is no baseline to edit against. */
+  disabled: boolean;
   onChange: (entries: DirectoryEntry[]) => void;
 }
 
@@ -186,9 +205,14 @@ interface RecipientSelectProps {
  *  the key is long enough to narrow anything (`filterOption={false}` hands matching to
  *  the backend), and what the user picked has to survive the options list changing under
  *  it — so chosen entries are remembered here and merged back into the options. */
-const RecipientSelect: React.FC<RecipientSelectProps> = ({ value, loading, onChange }) => {
+const RecipientSelect: React.FC<RecipientSelectProps> = ({
+  value,
+  loading,
+  disabled,
+  onChange,
+}) => {
   const [keyword, setKeyword] = useState('');
-  const { entries, isSearching, enabled } = useDirectorySearch(useDebouncedValue(keyword));
+  const { entries, isSearching, isError, enabled } = useDirectorySearch(useDebouncedValue(keyword));
 
   // Every option the field can currently show: what the search just returned, plus
   // everything already chosen. The chosen ones have to stay in the list — a value with no
@@ -237,15 +261,20 @@ const RecipientSelect: React.FC<RecipientSelectProps> = ({ value, loading, onCha
         onSearch: setKeyword,
       }}
       loading={isSearching || loading}
+      disabled={disabled}
       value={value.map(directoryEntryKey)}
       onChange={handleChange}
       options={options}
       notFoundContent={
         isSearching
           ? '搜尋中…'
-          : enabled
-            ? '找不到符合的對象'
-            : `請至少輸入 ${DIRECTORY_SEARCH_MIN_LENGTH} 個字元`
+          : isError
+            ? // Before "no match": a failed search wearing that answer sends the user
+              // off to re-check a spelling that was never the problem.
+              SEARCH_FAILED
+            : enabled
+              ? '找不到符合的對象'
+              : `請至少輸入 ${DIRECTORY_SEARCH_MIN_LENGTH} 個字元`
       }
       placeholder={`輸入 ${DIRECTORY_SEARCH_MIN_LENGTH} 個字元以上搜尋部門 / 課別 或 NT account · 姓名`}
       style={{ width: '100%' }}

@@ -74,11 +74,18 @@ export const unpublishArtifact = (id: string) => apiClient.delete<void>(`/artifa
  *
  *  Rows come back in the same shape the directory search returns, so a recipient already
  *  on the list reads with its name rather than as a bare id — no mapping in between.
- *  Narrowed rather than trusted: a body that is not a list has to come out as "nobody
- *  yet", not as something the dialog will try to map over. */
+ *
+ *  Narrowed rather than trusted — but a body that is not a list raises rather than coming
+ *  back as an empty one. "The list could not be read" and "this Artifact is shared with
+ *  nobody" are different facts, and the second is the one a user would act on: it says an
+ *  Artifact is private while the Gallery card beside it may still be showing a Shared
+ *  badge from the same data. Failing here lets the dialog tell them which it is. */
 export const listArtifactShares = async (id: string): Promise<DirectoryEntry[]> => {
-  const body = await apiClient.get<DirectoryEntry[]>(`/artifacts/${id}/shares`);
-  return Array.isArray(body) ? body : [];
+  const body = await apiClient.get<unknown>(`/artifacts/${id}/shares`);
+  if (!Array.isArray(body)) {
+    throw new Error('The share list came back in a shape this client cannot read.');
+  }
+  return body as DirectoryEntry[];
 };
 
 /** Changes the share list by delta. PATCH with what to add and what to remove, rather
