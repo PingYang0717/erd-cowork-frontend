@@ -14,11 +14,17 @@ export function artifactSharesQueryKey(artifactId: string) {
  *  nobody asked to see.
  */
 export function useArtifactShares(artifactId: string, enabled: boolean) {
-  const { data, isFetching } = useQuery({
+  const { data, isFetching, isError } = useQuery({
     queryKey: artifactSharesQueryKey(artifactId),
     queryFn: () => listArtifactShares(artifactId),
     enabled,
   });
 
-  return { shares: data ?? [], isLoading: enabled && isFetching };
+  return {
+    shares: data ?? [],
+    isLoading: enabled && isFetching,
+    /** The list could not be read — the request failed, or it answered in a shape this
+     *  client does not understand. Distinct from an empty list, which is an answer. */
+    isUnavailable: isError,
+  };
 }
