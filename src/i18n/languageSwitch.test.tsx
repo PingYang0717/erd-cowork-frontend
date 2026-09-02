@@ -65,6 +65,22 @@ describe('Switching the interface language', () => {
     expect(await screen.findByText(zhTW.share.subtitle)).toBeInTheDocument();
   });
 
+  /** The glyph names the destination, matching the theme button beside it — which shows
+   *  a sun while the app is dark. Showing the current language instead would read as a
+   *  label and give no reason to press. */
+  it('shows the language it switches to, not the one in use', async () => {
+    const user = userEvent.setup();
+    server.use(http.get('/api/artifacts/:id/shares', () => HttpResponse.json([])));
+    renderDialogWithToggle();
+
+    const toggle = screen.getByRole('button', { name: 'Switch to English' });
+    expect(toggle).toHaveTextContent('EN');
+
+    await user.click(toggle);
+
+    expect(screen.getByRole('button', { name: '切換為中文' })).toHaveTextContent('中');
+  });
+
   /** A string that takes a value is a function in both dictionaries, so the two are free
    *  to put the value where their own grammar wants it. This checks the English one is
    *  actually written that way rather than repeating the Chinese sentence. */
