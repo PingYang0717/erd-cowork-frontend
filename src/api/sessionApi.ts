@@ -6,11 +6,6 @@ export const listSessions = () => apiClient.get<Session[]>('/sessions');
 
 export const getSession = (id: string) => apiClient.get<SessionDetail>(`/sessions/${id}`);
 
-/** Mock-only. The real backend has no POST /sessions — a session is created by the first
- *  message that names it, so "New chat" opens a client-side draft instead (ADR-0005).
- *  Kept because the mock still answers it. */
-export const createSession = () => apiClient.post<Session>('/sessions', {});
-
 /** Renames a session. The answer is `unknown` for the same reason as the pin: unconfirmed
  *  and unread. The new title is already in hand from the argument, so nothing here needs
  *  the response. */
