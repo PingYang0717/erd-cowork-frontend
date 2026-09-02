@@ -22,11 +22,21 @@ export const getArtifactRawHtml = (artifactId: string, signal?: AbortSignal) =>
     signal,
   });
 
+/** What the pin endpoint answers with. Not an `Artifact`: it names the subject
+ *  `artifactId` rather than `id`, and carries only what the toggle settled. */
+export interface ArtifactPinResult {
+  artifactId: string;
+  pinnedAt: string | null;
+  owner: string;
+  isOwn: boolean;
+}
+
 /** Toggles the pin. One endpoint and no body: the backend decides the direction, and the
- *  Artifact it answers with carries the `pinnedAt` that resulted — which is what the
- *  button reads its new state from. Asserting a direction from state the client read a
- *  while ago would be guessing at what the server already knows. */
-export const toggleArtifactPin = (id: string) => apiClient.post<Artifact>(`/artifacts/${id}/pin`);
+ *  answer carries the `pinnedAt` that resulted — which is what the button reads its new
+ *  state from. Asserting a direction from state the client read a while ago would be
+ *  guessing at what the server already knows. */
+export const toggleArtifactPin = (id: string) =>
+  apiClient.post<ArtifactPinResult>(`/artifacts/${id}/pin`);
 
 /** Publishing is what makes an Artifact available to other people — and what sharing
  *  rests on. It carries the title the Artifact goes on the shelf under: the Gallery names
