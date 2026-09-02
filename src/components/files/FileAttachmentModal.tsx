@@ -9,7 +9,7 @@ import { Button, Modal, Progress } from 'antd';
 import React, { useRef } from 'react';
 
 import { ACCEPT_ATTRIBUTE, MAX_ATTACHMENT_COUNT } from '@/hooks/useFileAttachments';
-import type { UploadedFileInfo } from '@/types/api/index';
+import type { UploadedFileInfo } from '@/types/api';
 import { formatBytes } from '@/utils/formatBytes';
 
 import styles from './FileAttachmentModal.module.css';

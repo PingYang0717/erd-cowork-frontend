@@ -1,7 +1,7 @@
 import React, { type ReactNode, useEffect, useMemo, useRef } from 'react';
 
 import { useActiveRunStore } from '@/stores/useActiveRunStore';
-import type { Message, QuestionForm, StepItem } from '@/types/api/index';
+import type { Message, QuestionForm, StepItem } from '@/types/api';
 import { liftQuestions } from '@/utils/liftQuestions';
 
 import MessageBubble, { type LiveRun } from './MessageBubble';

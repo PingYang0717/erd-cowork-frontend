@@ -1,7 +1,7 @@
 import { Table, type TableColumnsType } from 'antd';
 import React, { useMemo } from 'react';
 
-import type { TableCellValue, TableResult } from '@/types/api/index';
+import type { TableCellValue, TableResult } from '@/types/api';
 
 import styles from './ResultTable.module.css';
 

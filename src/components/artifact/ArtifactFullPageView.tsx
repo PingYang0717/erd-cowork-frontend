@@ -16,7 +16,7 @@ import Tooltip from '@/components/common/Tooltip';
 import { artifactContentQueryKey, useArtifactContent } from '@/hooks/useArtifactContent';
 import { useArtifacts } from '@/hooks/useArtifacts';
 import { useSessionDetail } from '@/hooks/useSessionDetail';
-import type { Artifact, ArtifactVersion } from '@/types/api/index';
+import type { Artifact, ArtifactVersion } from '@/types/api';
 import { artifactHref } from '@/utils/artifactUrl';
 import { deriveArtifactVersions } from '@/utils/deriveArtifactVersions';
 

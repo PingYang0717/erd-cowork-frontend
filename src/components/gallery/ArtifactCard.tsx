@@ -13,7 +13,7 @@ import React, { useState } from 'react';
 
 import ShareArtifactDialog from '@/components/artifact/ShareArtifactDialog';
 import { useToggleArtifactPin, useUnpublishArtifact } from '@/hooks/useArtifactMutations';
-import type { Artifact } from '@/types/api/index';
+import type { Artifact } from '@/types/api';
 import { artifactHref } from '@/utils/artifactUrl';
 import { dispatchMenuAction } from '@/utils/dispatchMenuAction';
 import { formatRelativeTime } from '@/utils/formatRelativeTime';

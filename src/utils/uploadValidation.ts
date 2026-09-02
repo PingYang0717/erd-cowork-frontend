@@ -1,4 +1,4 @@
-import type { UploadedFileInfo } from '@/types/api/index';
+import type { UploadedFileInfo } from '@/types/api';
 
 export const MAX_ATTACHMENT_COUNT = 5;
 export const MAX_ATTACHMENT_TOTAL_BYTES = 5 * 1024 * 1024 * 1024;

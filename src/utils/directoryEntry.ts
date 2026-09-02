@@ -1,4 +1,4 @@
-import type { DirectoryEntry, ShareTarget } from '@/types/api/index';
+import type { DirectoryEntry, ShareTarget } from '@/types/api';
 
 /** What identifies a row: an employee by NT account, an organisation by its id. Also the
  *  option value the picker uses, so the two kinds cannot collide on a shared number. */

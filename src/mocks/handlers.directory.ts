@@ -1,7 +1,7 @@
 import { http, HttpResponse } from 'msw';
 
 import { DIRECTORY_SEARCH_MIN_LENGTH } from '@/api/directoryApi';
-import type { DirectoryEntry } from '@/types/api/index';
+import type { DirectoryEntry } from '@/types/api';
 import { directoryEntryMatches } from '@/utils/directoryEntry';
 
 const ORGS: DirectoryEntry[] = [

@@ -1,4 +1,4 @@
-import type { TableResult } from '@/types/api/index';
+import type { TableResult } from '@/types/api';
 
 /** Matches `[[table:tbl_abc123]]` — the backend's display-level marker, the same
  *  convention as the legacy `[[step:]]` one: it says where a table belongs in the

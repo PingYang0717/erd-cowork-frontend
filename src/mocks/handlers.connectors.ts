@@ -1,6 +1,6 @@
 import { http, HttpResponse } from 'msw';
 
-import type { Connector } from '@/types/api/index';
+import type { Connector } from '@/types/api';
 
 /** The catalogue of known data sources: what exists and whether the user may reach it.
  *  Which of these a given conversation is drawing on lives on the session

@@ -6,7 +6,7 @@ import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { server } from '@/mocks/server';
-import type { Artifact } from '@/types/api/index';
+import type { Artifact } from '@/types/api';
 
 import ShareArtifactDialog from './ShareArtifactDialog';
 
