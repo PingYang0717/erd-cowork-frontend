@@ -201,6 +201,38 @@ describe('Artifacts gallery', () => {
     expect(await screen.findByRole('button', { name: `Unpin ${name}` })).toBeInTheDocument();
   });
 
+  /** The card's Shared badge reads `isShared`, and sharing is what turns it on. The
+   *  update endpoint answers with the new recipient list, so the flag is derived from
+   *  that answer rather than refetched — this is what checks the derivation reaches the
+   *  card. */
+  it('turns the Shared badge on once the Artifact has recipients', async () => {
+    const user = userEvent.setup();
+    server.use(
+      http.get('/api/artifacts/:id/share', () => HttpResponse.json([])),
+      http.patch('/api/artifacts/:id/share', () =>
+        HttpResponse.json([
+          { type: 'ORG', orgId: 'INTD-1', orgName: '整合技術一課', orgLevel: 'SECTION' },
+        ]),
+      ),
+    );
+    renderGalleryPage();
+    const name = 'SPC analysis — Vt (gate CD)';
+    const card = () =>
+      screen.getByRole('button', { name }).closest('[role="listitem"]') as HTMLElement;
+    await screen.findByRole('button', { name });
+    expect(card()).not.toHaveTextContent('Shared');
+
+    await user.click(screen.getByRole('button', { name: `More actions for ${name}` }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Share' }));
+    const field = await screen.findByRole('combobox');
+    await user.click(field);
+    await user.type(field, 'INTD-1');
+    await user.click(await screen.findByTitle(/整合技術一課/, {}, { timeout: 3000 }));
+    await user.click(screen.getByRole('button', { name: 'Submit' }));
+
+    await waitFor(() => expect(card()).toHaveTextContent('Shared'));
+  });
+
   /** The toggle's answer, merged into the cache, is the whole change — so nothing else
    *  should go over the wire. The rail's badge keeps the artifacts list mounted on every
    *  page, which made the follow-up invalidate this pins down cost one full list

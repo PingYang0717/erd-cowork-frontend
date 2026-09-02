@@ -53,6 +53,27 @@ async function selected(): Promise<string[]> {
 }
 
 describe('Sharing an Artifact: picking recipients', () => {
+  /** The param is named on the wire, so a rename on either side has to be caught here:
+   *  a backend that does not recognise it does not fail — it answers as if nothing was
+   *  asked, which reads as "no such person" rather than as a broken request. */
+  it('sends the typed text as `keyword`', async () => {
+    const user = userEvent.setup();
+    let sent: URL | undefined;
+    server.use(
+      http.get('/api/hr/employeesAndOrgs', ({ request }) => {
+        sent = new URL(request.url);
+        return HttpResponse.json({ content: [] });
+      }),
+    );
+    renderDialog();
+
+    const field = screen.getByRole('combobox');
+    await user.click(field);
+    await user.type(field, 'CHXXGHYC');
+
+    await waitFor(() => expect(sent?.searchParams.get('keyword')).toBe('CHXXGHYC'));
+  });
+
   /** The link is the Artifact's address, not something sharing produces — someone who
    *  opened this dialog only to copy it should not have to edit the recipient list first.
    *  It used to appear only after a successful share. */
