@@ -189,6 +189,10 @@ export function useAgentStream(sessionId: string): {
   const [state, dispatch] = useReducer(reducer, initialState);
   const queryClient = useQueryClient();
   const controllerRef = useRef<AbortController | null>(null);
+  // The two delayed refetches an aborted run schedules (below). Kept so unmount can
+  // clear them — without this they outlived the hook and fired invalidates against
+  // the global queryClient up to 1.6s after the thread was gone.
+  const abortRefetchTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   // True only while the async generator is still delivering events. `stop` reads it to
   // tell a real mid-stream interruption from a click that lands in the finishing window
   // (after the last event, while the history refetch runs before DONE) — where the
@@ -210,6 +214,9 @@ export function useAgentStream(sessionId: string): {
   useEffect(
     () => () => {
       controllerRef.current?.abort();
+      for (const timer of abortRefetchTimersRef.current) {
+        clearTimeout(timer);
+      }
     },
     [],
   );
@@ -239,12 +246,16 @@ export function useAgentStream(sessionId: string): {
         // instead of racing it now.
         if (isCanceled(error)) {
           dispatch({ type: 'DONE', durationMs: Date.now() - startedAt });
-          setTimeout(() => {
-            void invalidateSessionData();
+          abortRefetchTimersRef.current.push(
             setTimeout(() => {
               void invalidateSessionData();
-            }, 800);
-          }, 800);
+              abortRefetchTimersRef.current.push(
+                setTimeout(() => {
+                  void invalidateSessionData();
+                }, 800),
+              );
+            }, 800),
+          );
           return;
         }
 

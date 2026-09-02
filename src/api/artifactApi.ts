@@ -44,7 +44,7 @@ export const getArtifactContent = (artifactId: string, reloadNonce: number) =>
 /** The artifact's source before assembly (text/plain). Read by the chat bubble's
  *  "view HTML" panel, and the text a later turn iterates from. */
 export const getArtifactRawHtml = (artifactId: string, signal?: AbortSignal) =>
-  apiClient.get<string>(`/artifacts/${artifactId}/raw`, {
+  apiClient.get<string>(`/artifacts/${encodeURIComponent(artifactId)}/raw`, {
     responseType: 'text',
     signal,
   });

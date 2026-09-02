@@ -116,7 +116,12 @@ describe('StudioPage three-pane layout', () => {
     expect(rail.style.width).toBe('270px');
   });
 
-  it('keeps panel widths as session-only state that resets on reload, per architecture.md', async () => {
+  /** A layout someone dragged into shape is a preference, like the theme beside it —
+   *  losing it on every reload made the drag pointless. (The previous version of this
+   *  test asserted reset-on-reload "per architecture.md"; that document never actually
+   *  recorded such a decision, and the store persists now, same key discipline as
+   *  theme/language: constants/storage.ts.) */
+  it('keeps panel widths across a reload — a dragged layout is a preference', async () => {
     renderStudio();
 
     fireEvent.pointerDown(screen.getByRole('separator', { name: 'Resize session rail' }), {
@@ -129,7 +134,7 @@ describe('StudioPage three-pane layout', () => {
     await renderReloadedStudioPage();
 
     expect(screen.getAllByRole('navigation', { name: 'Session list' })[1].style.width).toBe(
-      '270px',
+      '330px',
     );
   });
 });

@@ -91,23 +91,26 @@ export function useSessionGroups() {
   // /cowork/artifacts or /cowork/schedule silently updates the store with
   // nothing visibly changing, since the Outlet there isn't showing the
   // thread at all.
-  function selectAndNavigate(id: string) {
-    selectSession(id);
-    navigate('/cowork');
-  }
+  const selectAndNavigate = useCallback(
+    (id: string) => {
+      selectSession(id);
+      navigate('/cowork');
+    },
+    [selectSession, navigate],
+  );
 
   /** Opens a draft session. The backend has no POST /sessions — the id is this client's
    *  to invent, and the first message upserts it (ADR-0005). Pressing New chat while a
    *  draft is already open does nothing but bring it into view: seeding a second shell
    *  would leave the first orphaned in the cache. */
-  function createAndNavigate() {
+  const createAndNavigate = useCallback(() => {
     if (isDraftActive) {
       navigate('/cowork');
       return;
     }
     openDraft();
     navigate('/cowork');
-  }
+  }, [isDraftActive, navigate, openDraft]);
 
   return {
     pinned,
