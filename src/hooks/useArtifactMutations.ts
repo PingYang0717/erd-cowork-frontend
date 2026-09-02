@@ -6,9 +6,7 @@ import {
   unpublishArtifact,
   updateArtifactShares,
 } from '@/api/artifactApi';
-import { DIRECTORY_ENTRY } from '@/api/directoryApi';
-import { readArray } from '@/api/responseContract';
-import type { Artifact, ArtifactShareUpdate, DirectoryEntry } from '@/types/api';
+import type { Artifact, ArtifactShareUpdate } from '@/types/api';
 
 import { useActionErrorToast } from './useActionErrorToast';
 import { artifactsQueryKey } from './useArtifacts';
@@ -88,22 +86,16 @@ export const useUpdateArtifactShares = () => {
       updateArtifactShares(id, update),
     onSuccess: (result, { id }) => {
       // The PATCH answers with the new share list, so refetching it right back would be
-      // asking for what is already in hand. Read *attempted*, not demanded: this
-      // response is genuinely allowed to be something else (a 204, an envelope), and
-      // that is a fall-back-to-refetch, not a failure to toast — which is why the
-      // contract read happens here in a try rather than in the api module.
-      let shares: DirectoryEntry[] | null;
-      try {
-        shares = readArray(result, { ...DIRECTORY_ENTRY, label: 'the updated share list' });
-      } catch {
-        shares = null;
-      }
-      if (shares !== null) {
-        queryClient.setQueryData(artifactSharesQueryKey(id), shares);
+      // asking for what is already in hand. Guarded, because a body that is not a list
+      // (an envelope, an error rendered as JSON) must fall back to a refetch rather than
+      // be written into the cache as-is.
+      if (Array.isArray(result)) {
+        queryClient.setQueryData(artifactSharesQueryKey(id), result);
         // `isShared` lives on the Artifact row, and the list in hand is what decides it.
-        const isShared = shares.length > 0;
         queryClient.setQueryData<Artifact[]>(artifactsQueryKey, (previous) =>
-          previous?.map((artifact) => (artifact.id === id ? { ...artifact, isShared } : artifact)),
+          previous?.map((artifact) =>
+            artifact.id === id ? { ...artifact, isShared: result.length > 0 } : artifact,
+          ),
         );
       } else {
         // `refetchType: 'none'` — mark it stale, do not go and get it now. Submitting

@@ -1,34 +1,8 @@
 import type { Artifact, ArtifactShareUpdate, DirectoryEntry } from '@/types/api';
 
 import { apiClient } from './apiClient';
-import { DIRECTORY_ENTRY } from './directoryApi';
-import { asArray, asObject, type Contract } from './responseContract';
 
-/** What the list promises per row (ADR-0013). The flags fall back to their deny/plain
- *  state — a card that under-claims is recoverable, one that over-claims is not — while
- *  identity, timestamps and `version` are required: inventing "v1" for what might be v7
- *  would assert a thing the client cannot know (the same reasoning that keeps
- *  `Artifact.type` out of the contract entirely). */
-const ARTIFACT: Contract<Artifact> = {
-  label: 'the Artifact list',
-  fields: {
-    id: { kind: 'string' },
-    title: { kind: 'string' },
-    version: { kind: 'number' },
-    sessionId: { kind: 'string' },
-    sessionTitle: { kind: 'string', fallback: '' },
-    pinnedAt: { kind: 'string', nullable: true, fallback: null },
-    publishedAt: { kind: 'string', nullable: true, fallback: null },
-    createdAt: { kind: 'string' },
-    owner: { kind: 'string' },
-    ownerDisplay: { kind: 'string' },
-    isOwn: { kind: 'boolean', fallback: false },
-    isShared: { kind: 'boolean', fallback: false },
-    hasPersonalCopy: { kind: 'boolean', fallback: false },
-  },
-};
-
-export const listArtifacts = () => apiClient.get('/artifacts').then(asArray(ARTIFACT));
+export const listArtifacts = () => apiClient.get<Artifact[]>('/artifacts');
 
 /** The backend returns the artifact's HTML as text/html directly. `responseType` is
  *  explicit so a document that happens to parse as JSON still arrives as text. `r` is a
@@ -62,27 +36,6 @@ export interface ArtifactPinResult {
   isOwn?: boolean;
 }
 
-/** The one mutation response that gets a contract: unlike its siblings (session pin,
- *  rename, publish — whose answers nobody reads), this answer is written into the
- *  artifacts cache. Unchecked, a missing `isOwn` arrived as undefined — falsy — and
- *  the user's own Artifact turned into "shared to me": wrong Gallery shelf, Share
- *  locked, half the menu gone, and the dirt lived in the cache until the next full
- *  refetch.
- *
- *  Required is only what an answer cannot be without: `pinnedAt`, the toggle's
- *  outcome. The rest are optional and kind-checked when present — the cache MERGES
- *  them (see useToggleArtifactPin), so an answer that carries less leaves the row's
- *  own values standing instead of overwriting them with undefined. */
-const ARTIFACT_PIN_RESULT: Contract<ArtifactPinResult> = {
-  label: 'the pin result',
-  fields: {
-    artifactId: { kind: 'string', optional: true },
-    pinnedAt: { kind: 'string', nullable: true },
-    owner: { kind: 'string', optional: true },
-    isOwn: { kind: 'boolean', optional: true },
-  },
-};
-
 /** Toggles the pin. One endpoint and no body: the backend decides the direction, and the
  *  answer carries the `pinnedAt` that resulted — which is what the button reads its new
  *  state from. Asserting a direction from state the client read a while ago would be
@@ -91,7 +44,7 @@ const ARTIFACT_PIN_RESULT: Contract<ArtifactPinResult> = {
  *  PATCH, not POST: the call edits one field of something that already exists rather than
  *  creating anything. */
 export const toggleArtifactPin = (id: string) =>
-  apiClient.patch(`/artifacts/${id}/pin`).then(asObject(ARTIFACT_PIN_RESULT));
+  apiClient.patch<ArtifactPinResult>(`/artifacts/${id}/pin`);
 
 /** Publishing is what makes an Artifact available to other people — and what sharing
  *  rests on. It carries the title the Artifact goes on the shelf under: the Gallery names
@@ -132,10 +85,13 @@ export const unpublishArtifact = (id: string) => apiClient.delete<void>(`/artifa
  *  nobody" are different facts, and the second is the one a user would act on: it says an
  *  Artifact is private while the Gallery card beside it may still be showing a Shared
  *  badge from the same data. Failing here lets the dialog tell them which it is. */
-export const listArtifactShares = (id: string): Promise<DirectoryEntry[]> =>
-  apiClient
-    .get(`/artifacts/${id}/shares`)
-    .then(asArray({ ...DIRECTORY_ENTRY, label: 'the share list' }));
+export const listArtifactShares = async (id: string): Promise<DirectoryEntry[]> => {
+  const body = await apiClient.get<unknown>(`/artifacts/${id}/shares`);
+  if (!Array.isArray(body)) {
+    throw new Error('The share list came back in a shape this client cannot read.');
+  }
+  return body as DirectoryEntry[];
+};
 
 /** Changes the share list by delta. PATCH with what to add and what to remove, rather
  *  than PUT with the whole list: sending the list would make two people editing the same
@@ -158,15 +114,10 @@ export interface BrowserJsError {
   col: number;
 }
 
-const REPAIR_RESULT: Contract<{ repaired: boolean }> = {
-  label: 'the repair result',
-  fields: { repaired: { kind: 'boolean' } },
-};
-
 /** Asks the agent to rebuild an Artifact whose HTML threw while running. The answer
  *  is one honest boolean: a repair that produced no improvement says so rather than
  *  being reported as success. */
 export const repairArtifact = (id: string, errors: BrowserJsError[]) =>
-  apiClient
-    .post(`/artifacts/${encodeURIComponent(id)}/repair`, { errors })
-    .then(asObject(REPAIR_RESULT));
+  apiClient.post<{ repaired: boolean }>(`/artifacts/${encodeURIComponent(id)}/repair`, {
+    errors,
+  });
