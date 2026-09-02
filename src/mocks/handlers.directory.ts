@@ -24,12 +24,13 @@ const EMPLOYEES: DirectoryEntry[] = [
 const DIRECTORY = [...ORGS, ...EMPLOYEES];
 
 export const directoryHandlers = [
-  // The real endpoint searches the HR directory; here the same fixed roster is filtered
-  // on the text the picker would show, so the wire shape and the minimum-key rule are
-  // what a test exercises.
+  // The real endpoint searches the HR directory; here the same fixed roster is filtered,
+  // so the wire shape and the minimum-length rule are what a test exercises. Reading the
+  // param by name is deliberate: a rename on either side should fail loudly here rather
+  // than silently return the whole roster.
   http.get('/api/hr/employeesAndOrgs', ({ request }) => {
-    const key = new URL(request.url).searchParams.get('key')?.trim() ?? '';
-    if (key.length < DIRECTORY_SEARCH_MIN_LENGTH) {
+    const keyword = new URL(request.url).searchParams.get('keyword')?.trim() ?? '';
+    if (keyword.length < DIRECTORY_SEARCH_MIN_LENGTH) {
       return HttpResponse.json({ content: [] });
     }
     // Matched on every field, the same way the picker narrows — a roster searchable only
@@ -37,7 +38,7 @@ export const directoryHandlers = [
     // Enveloped in `content` like the real endpoint, or the unwrapping is never
     // exercised.
     return HttpResponse.json({
-      content: DIRECTORY.filter((entry) => directoryEntryMatches(entry, key)),
+      content: DIRECTORY.filter((entry) => directoryEntryMatches(entry, keyword)),
     });
   }),
 ];

@@ -12,8 +12,8 @@ interface DirectorySearchResponse {
   content?: DirectoryEntry[];
 }
 
-/** Searches people and org units by a free-text key (department code, section code, NT
- *  account or name). A search rather than a full listing: the directory is the whole
+/** Searches people and org units by a free-text keyword (department code, section code,
+ *  NT account or name). A search rather than a full listing: the directory is the whole
  *  organisation, which is far too large to send and filter client-side.
  *
  *  The envelope is unwrapped here so nothing downstream has to know about it — and read
@@ -21,11 +21,11 @@ interface DirectorySearchResponse {
  *  change) has to come out as "no results" rather than as something the picker will try
  *  to iterate. */
 export const searchDirectory = async (
-  key: string,
+  keyword: string,
   signal?: AbortSignal,
 ): Promise<DirectoryEntry[]> => {
   const body = await apiClient.get<DirectorySearchResponse>('/hr/employeesAndOrgs', {
-    params: { key },
+    params: { keyword },
     signal,
   });
   return Array.isArray(body?.content) ? body.content : [];
