@@ -2,6 +2,7 @@ import { InfoCircleOutlined, SendOutlined } from '@ant-design/icons';
 import React, { useState } from 'react';
 
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
+import { useTranslations } from '@/i18n/useTranslations';
 import { useConnectorsPanelStore } from '@/stores/useConnectorsPanelStore';
 import type { QuestionAnswer, QuestionField, QuestionForm } from '@/types/api';
 
@@ -104,6 +105,7 @@ interface DataTypeHintProps {
 }
 
 const DataTypeHint: React.FC<DataTypeHintProps> = ({ hint }) => {
+  const t = useTranslations();
   const openConnectors = useConnectorsPanelStore((store) => store.open);
 
   return (
@@ -111,7 +113,7 @@ const DataTypeHint: React.FC<DataTypeHintProps> = ({ hint }) => {
       <InfoCircleOutlined aria-hidden />
       {hint}
       <button type="button" className={styles.manageLink} onClick={openConnectors}>
-        管理連線
+        {t.chat.manageConnections}
       </button>
     </p>
   );
@@ -134,6 +136,7 @@ const QuestionFormCard: React.FC<QuestionFormCardProps> = ({
   onSubmit,
   disabled = false,
 }) => {
+  const t = useTranslations();
   const [answers, setAnswers] = useState<Answers>({});
   const [searches, setSearches] = useState<Record<string, string>>({});
   // One debounce for the whole card: only one field is ever searchable at a time.
@@ -259,7 +262,7 @@ const QuestionFormCard: React.FC<QuestionFormCardProps> = ({
             {submitLabel}
           </button>
           <span className={styles.disabledHint}>
-            {canSubmit ? `已選 ${selectedCount} 項` : form.disabledHint}
+            {canSubmit ? t.chat.selectedCount(selectedCount) : form.disabledHint}
           </span>
         </div>
       )}

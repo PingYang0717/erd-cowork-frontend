@@ -2,6 +2,7 @@ import { CodeOutlined, DownOutlined, UpOutlined } from '@ant-design/icons';
 import React, { useEffect, useRef, useState } from 'react';
 
 import { getArtifactRawHtml } from '@/api/artifactApi';
+import { useTranslations } from '@/i18n/useTranslations';
 
 import styles from './HtmlCodePanel.module.css';
 
@@ -28,6 +29,7 @@ interface FetchOutcome {
  *  itself is cowork's: code glyph on the left, chevron on the right, and the label
  *  says whether the source is still being written (ADR-0002). */
 const HtmlCodePanel: React.FC<HtmlCodePanelProps> = ({ code, artifactId, autoScroll = false }) => {
+  const t = useTranslations();
   const [isExpanded, setIsExpanded] = useState(false);
   const [outcome, setOutcome] = useState<FetchOutcome | null>(null);
   const codeRef = useRef<HTMLPreElement>(null);
@@ -68,7 +70,7 @@ const HtmlCodePanel: React.FC<HtmlCodePanelProps> = ({ code, artifactId, autoScr
   const shownCode = hasLiveCode ? code : resolved?.status === 'ok' ? resolved.code : null;
   const isLoading = !hasLiveCode && artifactId !== undefined && resolved === null;
   // cowork's three labels: writing, written this run, fetchable from a past turn.
-  const label = hasLiveCode ? (autoScroll ? '產生中的 HTML' : 'HTML') : '查看 HTML';
+  const label = hasLiveCode ? (autoScroll ? t.chat.htmlLive : t.chat.htmlLabel) : t.chat.viewHtml;
 
   return (
     <div className={styles.panel}>
@@ -92,10 +94,8 @@ const HtmlCodePanel: React.FC<HtmlCodePanelProps> = ({ code, artifactId, autoScr
       </button>
       {isExpanded && (
         <div className={styles.body}>
-          {isLoading && <p className={styles.note}>載入中…</p>}
-          {resolved?.status === 'error' && (
-            <p className={styles.note}>此版本無原始碼可檢視（無法載入）</p>
-          )}
+          {isLoading && <p className={styles.note}>{t.chat.loading}</p>}
+          {resolved?.status === 'error' && <p className={styles.note}>{t.chat.noSource}</p>}
           {shownCode !== null && (
             <pre ref={codeRef} className={styles.code}>
               {shownCode}

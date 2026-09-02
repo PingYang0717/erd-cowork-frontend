@@ -1,6 +1,7 @@
 ﻿import { CloseOutlined, FileExcelOutlined, FileTextOutlined } from '@ant-design/icons';
 import React from 'react';
 
+import { useTranslations } from '@/i18n/useTranslations';
 import type { UploadedFileInfo } from '@/types/api';
 import { formatBytes } from '@/utils/formatBytes';
 
@@ -12,6 +13,7 @@ interface AttachmentChipProps {
 }
 
 const AttachmentChip: React.FC<AttachmentChipProps> = ({ upload, onRemove }) => {
+  const t = useTranslations();
   const isSpreadsheet = /\.(xlsx|xls)$/i.test(upload.name);
 
   // The backend deletes the contents once retention lapses but keeps the row, so the
@@ -21,7 +23,7 @@ const AttachmentChip: React.FC<AttachmentChipProps> = ({ upload, onRemove }) => 
       {isSpreadsheet ? <FileExcelOutlined aria-hidden /> : <FileTextOutlined aria-hidden />}
       <span className={styles.name}>{upload.name}</span>
       {upload.expired ? (
-        <span className={styles.expiredBadge}>已過期</span>
+        <span className={styles.expiredBadge}>{t.files.expired}</span>
       ) : (
         <span className={styles.size}>{formatBytes(upload.sizeBytes)}</span>
       )}

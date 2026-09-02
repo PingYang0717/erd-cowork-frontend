@@ -13,6 +13,7 @@ import { useArtifactContent } from '@/hooks/useArtifactContent';
 import { usePublishArtifact } from '@/hooks/useArtifactMutations';
 import { useArtifacts } from '@/hooks/useArtifacts';
 import { useSessionDetail } from '@/hooks/useSessionDetail';
+import { useTranslations } from '@/i18n/useTranslations';
 import { useActiveRunStore } from '@/stores/useActiveRunStore';
 import { usePublishCoachStore } from '@/stores/usePublishCoachStore';
 import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
@@ -123,6 +124,7 @@ const ArtifactPanelContent: React.FC<ArtifactPanelContentProps> = ({
   activeVersion,
   onSelectVersion,
 }) => {
+  const t = useTranslations();
   const [isShareOpen, setIsShareOpen] = useState(false);
   const [isPublishOpen, setIsPublishOpen] = useState(false);
   const reloadNonce = useActiveRunStore((s) => s.artifactReloadNonce);
@@ -186,10 +188,10 @@ const ArtifactPanelContent: React.FC<ArtifactPanelContentProps> = ({
         {isPublished ? (
           // Unpublishing lives on the Artifact management page, not here — this chip
           // states the fact rather than offering to undo it.
-          <Tooltip content="此版本已發布，其他人可以使用">
+          <Tooltip content={t.artifact.publishedTooltip}>
             <span className={styles.publishedBadge}>
               <CheckOutlined aria-hidden />
-              已發布
+              {t.artifact.published}
             </span>
           </Tooltip>
         ) : (
@@ -199,14 +201,14 @@ const ArtifactPanelContent: React.FC<ArtifactPanelContentProps> = ({
             disabled={publishArtifact.isPending}
             onClick={() => setIsPublishOpen(true)}
           >
-            發布 Artifact
+            {t.artifact.publish}
           </button>
         )}
         {/* Sharing rests on publication: a recipient's access is access to a published
             Artifact. Kept visible rather than hidden so the relationship is something
             the user can see, not something they discover. */}
         <Tooltip
-          content={isPublished ? '分享' : '發布後才能分享'}
+          content={isPublished ? t.artifact.share : t.artifact.shareBlocked}
           wrapperClassName={styles.shareButtonSlot}
         >
           <button
@@ -219,7 +221,7 @@ const ArtifactPanelContent: React.FC<ArtifactPanelContentProps> = ({
             <ShareAltOutlined aria-hidden />
           </button>
         </Tooltip>
-        <Tooltip content="重新整理">
+        <Tooltip content={t.artifact.reload}>
           <button
             type="button"
             className={styles.iconButton}
@@ -232,7 +234,7 @@ const ArtifactPanelContent: React.FC<ArtifactPanelContentProps> = ({
             <ReloadOutlined aria-hidden />
           </button>
         </Tooltip>
-        <Tooltip content="在新分頁開啟預覽">
+        <Tooltip content={t.artifact.openInNewTab}>
           <button
             type="button"
             className={styles.iconButton}
@@ -253,7 +255,7 @@ const ArtifactPanelContent: React.FC<ArtifactPanelContentProps> = ({
           <ArtifactFrame key={`${artifactId}-${reloadNonce}`} html={data} artifactId={artifactId} />
         ) : isError ? (
           <p role="status" className={styles.frameNotice}>
-            這個 Artifact 已不存在,可能已被刪除。請從上方選單挑選其他產出。
+            {t.artifact.missing}
           </p>
         ) : null}
       </div>
@@ -292,6 +294,7 @@ const ArtifactPanelContent: React.FC<ArtifactPanelContentProps> = ({
 // offers a jump to the gallery. The rail's coach highlight shares its state
 // and both clear together on dismiss.
 const PublishedToast: React.FC = () => {
+  const t = useTranslations();
   const navigate = useNavigate();
   const isActive = usePublishCoachStore((s) => s.isActive);
   const dismiss = usePublishCoachStore((s) => s.dismiss);
@@ -302,7 +305,7 @@ const PublishedToast: React.FC = () => {
 
   return (
     <div role="status" aria-label="Artifact 已發布" className={styles.publishedToast}>
-      <span className={styles.publishedToastText}>已發布 — 已加入左側 Artifacts 清單。</span>
+      <span className={styles.publishedToastText}>{t.artifact.publishedToast}</span>
       <button
         type="button"
         className={styles.publishedToastPrimary}
@@ -311,10 +314,10 @@ const PublishedToast: React.FC = () => {
           navigate('/cowork/artifacts');
         }}
       >
-        前往 Artifacts
+        {t.artifact.goToArtifacts}
       </button>
       <button type="button" className={styles.publishedToastDismiss} onClick={dismiss}>
-        知道了
+        {t.common.gotIt}
       </button>
     </div>
   );

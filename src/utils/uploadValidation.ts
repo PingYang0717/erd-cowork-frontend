@@ -1,4 +1,5 @@
 import { BYTES_PER_GB } from '@/constants/bytes';
+import { getTranslations } from '@/i18n/useTranslations';
 import type { UploadedFileInfo } from '@/types/api';
 
 export const MAX_ATTACHMENT_COUNT = 5;
@@ -32,6 +33,7 @@ export function planFileAdditions<T extends FileLike>(
   existing: UploadedFileInfo[],
   incoming: Iterable<T>,
 ): { accepted: T[]; error: string } {
+  const t = getTranslations().files;
   const existingNames = new Set(existing.map((file) => file.name));
   let count = existing.length;
   let total = existing.reduce((sum, file) => sum + file.sizeBytes, 0);
@@ -44,17 +46,17 @@ export function planFileAdditions<T extends FileLike>(
       continue;
     }
     if (!hasAcceptedExtension(file.name)) {
-      if (!rejections.includes('僅支援 .csv / .xlsx')) {
-        rejections.push('僅支援 .csv / .xlsx');
+      if (!rejections.includes(t.onlySpreadsheets)) {
+        rejections.push(t.onlySpreadsheets);
       }
       continue;
     }
     if (count >= MAX_ATTACHMENT_COUNT) {
-      rejections.push(`最多 ${MAX_ATTACHMENT_COUNT} 個檔案`);
+      rejections.push(t.tooManyFiles(MAX_ATTACHMENT_COUNT));
       break;
     }
     if (total + file.size > MAX_ATTACHMENT_TOTAL_BYTES) {
-      rejections.push(`總計上限 ${MAX_ATTACHMENT_TOTAL_LABEL}`);
+      rejections.push(t.tooLarge(MAX_ATTACHMENT_TOTAL_LABEL));
       break;
     }
     accepted.push(file);

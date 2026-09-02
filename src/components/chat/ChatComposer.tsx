@@ -20,6 +20,7 @@ import { type SendInput } from '@/hooks/useAgentStream';
 import { useAppConfig } from '@/hooks/useAppConfig';
 import { useConnectors } from '@/hooks/useConnectors';
 import { useFileAttachments } from '@/hooks/useFileAttachments';
+import { useTranslations } from '@/i18n/useTranslations';
 import { useConnectorsPanelStore } from '@/stores/useConnectorsPanelStore';
 import { selectConnected } from '@/utils/connectorSelectors';
 import { dispatchMenuAction } from '@/utils/dispatchMenuAction';
@@ -72,6 +73,7 @@ const ChatComposer: React.FC<ChatComposerProps> = ({
   isStreaming,
   onStop,
 }) => {
+  const t = useTranslations();
   const [draft, setDraft] = useState('');
   const [fileModalOpen, setFileModalOpen] = useState(false);
   // An input method (注音, 拼音, かな) is mid-word for most of the time a Chinese or
@@ -122,8 +124,7 @@ const ChatComposer: React.FC<ChatComposerProps> = ({
     <div>
       {hasExpiredFiles && (
         <p role="alert" className={styles.retentionNotice}>
-          部分檔案已超過 {retentionDays} 天未活動，內容已被系統清除。請移除下方標示「已過期」的
-          檔案並重新上傳，即可繼續對話。
+          {t.chat.filesExpired(retentionDays)}
         </p>
       )}
       <div className={styles.suggestRow}>

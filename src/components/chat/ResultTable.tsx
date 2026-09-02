@@ -1,6 +1,7 @@
 import { Table, type TableColumnsType } from 'antd';
 import React, { useMemo } from 'react';
 
+import { useTranslations } from '@/i18n/useTranslations';
 import type { TableCellValue, TableResult } from '@/types/api';
 
 import styles from './ResultTable.module.css';
@@ -52,6 +53,7 @@ interface ResultTableProps {
  *  Rendering is cowork upstream's: an intent caption over an antd Table that paginates
  *  past 20 rows and scrolls sideways instead of widening the thread (ADR-0002). */
 const ResultTable: React.FC<ResultTableProps> = ({ table }) => {
+  const t = useTranslations();
   // The `?? []` fallbacks are defensive: the wire contract guarantees both fields, but
   // a contract violation (e.g. Jackson nulling a missing field upstream) must not crash
   // the live bubble. They live inside the memos so the deps are the wire fields
@@ -96,7 +98,7 @@ const ResultTable: React.FC<ResultTableProps> = ({ table }) => {
           ),
         }}
       />
-      {table.truncated && <p className={styles.truncated}>(前 200 列)</p>}
+      {table.truncated && <p className={styles.truncated}>{t.chat.truncatedRows(200)}</p>}
     </div>
   );
 };
