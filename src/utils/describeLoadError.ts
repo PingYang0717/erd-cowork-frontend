@@ -1,5 +1,4 @@
-import axios from 'axios';
-
+import { errorMessage, httpStatus, isOffline } from '@/api/apiError';
 import { getTranslations } from '@/i18n/useTranslations';
 import type { Translations } from '@/i18n/zhTW';
 
@@ -19,14 +18,15 @@ export function describeLoadError(
   error: Error,
   t: Translations['errors'] = getTranslations().errors,
 ): { heading: string; detail: string } {
-  if (axios.isAxiosError(error) && error.response === undefined) {
+  if (isOffline(error)) {
     return { heading: t.offlineHeading, detail: t.offlineDetail };
   }
   // The status code is worth showing; axios's own sentence around it is not. It arrives
   // as `Request failed with status code 500` — English whatever the interface is set to,
   // and about axios rather than about what the user should do next.
-  if (axios.isAxiosError(error) && error.response !== undefined) {
-    return { heading: t.loadFailedHeading, detail: t.loadFailedDetail(error.response.status) };
+  const status = httpStatus(error);
+  if (status !== null) {
+    return { heading: t.loadFailedHeading, detail: t.loadFailedDetail(status) };
   }
   return { heading: t.loadFailedHeading, detail: error.message };
 }
@@ -37,14 +37,12 @@ export function describeLoadError(
  *  up front, the error is how the user learns an endpoint has not landed. */
 export function describeActionError(error: unknown): string {
   const t = getTranslations().errors;
-  if (axios.isAxiosError(error)) {
-    if (error.response === undefined) {
-      return t.offlineAction;
-    }
-    const body = error.response.data as { message?: string } | undefined;
-    if (body?.message) {
-      return body.message;
-    }
+  if (isOffline(error)) {
+    return t.offlineAction;
+  }
+  const message = errorMessage(error);
+  if (message !== null) {
+    return message;
   }
   return t.notReady;
 }

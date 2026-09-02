@@ -2,6 +2,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useReducer, useRef } from 'react';
 
 import { AgentStreamHttpError, type SendMessageArgs, streamAgentMessage } from '@/api/agentApi';
+import { isCanceled } from '@/api/apiError';
 import { getTranslations } from '@/i18n/useTranslations';
 import type { AgentEvent, QuestionForm, StepItem, TableResult } from '@/types/api/agentEvent';
 import { liftQuestions } from '@/utils/liftQuestions';
@@ -236,7 +237,7 @@ export function useAgentStream(sessionId: string): {
         // and everything already streamed stays on screen. The backend persists an
         // aborted run asynchronously (doOnCancel), so refetch in two delayed stages
         // instead of racing it now.
-        if (error instanceof Error && error.name === 'AbortError') {
+        if (isCanceled(error)) {
           dispatch({ type: 'DONE', durationMs: Date.now() - startedAt });
           setTimeout(() => {
             void invalidateSessionData();

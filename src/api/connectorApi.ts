@@ -2,6 +2,7 @@ import { CONNECTOR_PREFS_STORAGE_KEY } from '@/constants/storage';
 import type { Connector } from '@/types/api';
 
 import { apiClient } from './apiClient';
+import { type Contract, readArray } from './responseContract';
 
 /** What this browser remembers about the user's own preferences.
  *
@@ -48,8 +49,24 @@ function writePrefs(prefs: ConnectorPrefs): void {
 /** What data sources exist and whether the user may reach them. The user's own custom
  *  additions are merged on top of what the backend serves. Whether a given conversation
  *  is drawing on one is the session's business (useConnectors joins the two). */
+/** `status` is required: it decides whether the row is even clickable, and a guessed
+ *  "available" on a source the user has no access to invites a click that can never
+ *  work. An unknown status value still renders — the panel's default branch reads
+ *  anything unrecognised as "not connected". */
+const CONNECTOR: Contract<Connector> = {
+  label: 'the connector catalogue',
+  fields: {
+    id: { kind: 'string' },
+    name: { kind: 'string' },
+    description: { kind: 'string', fallback: '' },
+    category: { kind: 'string', fallback: '' },
+    status: { kind: 'string' },
+    custom: { kind: 'boolean', optional: true },
+  },
+};
+
 export const listCatalogue = async (): Promise<Connector[]> => {
-  const catalogue = await apiClient.get<Connector[]>('/connectors');
+  const catalogue = readArray(await apiClient.get<unknown>('/connectors'), CONNECTOR);
   return [...catalogue, ...readPrefs().custom];
 };
 

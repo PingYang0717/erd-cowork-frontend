@@ -1,38 +1,45 @@
 import type { DirectoryEntry } from '@/types/api';
 
 import { apiClient } from './apiClient';
+import { type Contract, readArrayIn } from './responseContract';
 
 /** How many characters the user must type before a search is worth making. The
  *  directory is org-wide, so a one- or two-character key matches most of it — the
  *  request would be large, slow, and useless to read. */
 export const DIRECTORY_SEARCH_MIN_LENGTH = 3;
 
-/** The HR directory answers inside a `content` envelope rather than as a bare array. */
-interface DirectorySearchResponse {
-  content?: DirectoryEntry[];
-}
+/** One directory row. Every field is optional because that is the truth of the wire:
+ *  one shape carries both kinds (`ORG` / `EMPLOYEE`) and nothing guarantees the other
+ *  kind's fields are absent — only `type` is promised. Exported because the share
+ *  list (`GET /artifacts/{id}/shares`) answers in this same shape. */
+export const DIRECTORY_ENTRY: Contract<DirectoryEntry> = {
+  label: 'the directory entry',
+  fields: {
+    type: { kind: 'string' },
+    employeeName: { kind: 'string', optional: true },
+    employeeNt: { kind: 'string', optional: true },
+    employeeOrgName: { kind: 'string', optional: true },
+    orgName: { kind: 'string', optional: true },
+    orgId: { kind: 'string', optional: true },
+    orgLevel: { kind: 'string', optional: true },
+  },
+};
 
 /** Searches people and org units by a free-text keyword (department code, section code,
  *  NT account or name). A search rather than a full listing: the directory is the whole
  *  organisation, which is far too large to send and filter client-side.
  *
- *  The envelope is unwrapped here so nothing downstream has to know about it — and read
- *  defensively, because a body without `content` (an error rendered as JSON, a shape
- *  change) must not reach the picker's `for…of`.
- *
- *  It raises rather than answering with an empty list. "No such person" is a real answer
- *  and a useful one; a broken response wearing that answer sends the user off to re-check
- *  a spelling that was never the problem. */
+ *  The HR directory answers inside a `content` envelope rather than as a bare array;
+ *  `readArrayIn` unwraps it here so nothing downstream has to know about it — and
+ *  raises on a body without one (an error rendered as JSON, a shape change), because
+ *  "no such person" is a real answer and a useful one: a broken response wearing that
+ *  answer sends the user off to re-check a spelling that was never the problem. */
 export const searchDirectory = async (
   keyword: string,
   signal?: AbortSignal,
-): Promise<DirectoryEntry[]> => {
-  const body = await apiClient.get<DirectorySearchResponse>('/hr/employeesAndOrgs', {
-    params: { keyword },
-    signal,
-  });
-  if (!Array.isArray(body?.content)) {
-    throw new Error('The directory search came back without a `content` list.');
-  }
-  return body.content;
-};
+): Promise<DirectoryEntry[]> =>
+  readArrayIn(
+    await apiClient.get<unknown>('/hr/employeesAndOrgs', { params: { keyword }, signal }),
+    'content',
+    DIRECTORY_ENTRY,
+  );

@@ -1,4 +1,5 @@
 import { apiClient } from './apiClient';
+import { type Contract, readObject } from './responseContract';
 
 /** The limits the backend actually enforces. Published so the UI can state them rather
  *  than keep a second copy that drifts out of step with the server's. */
@@ -11,4 +12,19 @@ export interface AppConfig {
   singleFileLimits: Record<string, number>;
 }
 
-export const getConfig = () => apiClient.get<AppConfig>('/config');
+/** `retentionDays` is required — it goes verbatim into a sentence shown to the user
+ *  (the composer's retention notice), where a missing value once read as "over
+ *  undefined days". The rest are not read anywhere yet, so they fall back rather
+ *  than brick the app; revisit each fallback when a screen starts reading it. */
+const APP_CONFIG: Contract<AppConfig> = {
+  label: 'the app configuration',
+  fields: {
+    retentionDays: { kind: 'number' },
+    maxFiles: { kind: 'number', fallback: 0 },
+    maxSessionBytes: { kind: 'number', fallback: 0 },
+    singleFileLimits: { kind: 'object', fallback: {} },
+  },
+};
+
+export const getConfig = async () =>
+  readObject(await apiClient.get<unknown>('/config'), APP_CONFIG);

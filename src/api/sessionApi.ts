@@ -1,10 +1,60 @@
+import type { Message } from '@/types/api/message';
 import type { Session, SessionDetail } from '@/types/api/session';
 
 import { apiClient } from './apiClient';
+import { UPLOADED_FILE } from './fileApi';
+import { type Contract, readArray, readObject } from './responseContract';
 
-export const listSessions = () => apiClient.get<Session[]>('/sessions');
+/** What a list row promises (ADR-0013). `updatedAt` is required because the rail's
+ *  recency sort calls `.localeCompare` on it — a number here crashed the whole rail,
+ *  which is exactly the shape the kind check exists to stop. */
+const SESSION: Contract<Session> = {
+  label: 'the session list',
+  fields: {
+    id: { kind: 'string' },
+    title: { kind: 'string' },
+    pinnedAt: { kind: 'string', nullable: true, fallback: null },
+    updatedAt: { kind: 'string' },
+  },
+};
 
-export const getSession = (id: string) => apiClient.get<SessionDetail>(`/sessions/${id}`);
+/** `text` falls back to empty — a message with no prose still renders its steps and
+ *  Artifact chip, and `deriveArtifactVersions` slices it. `sender` is required: which
+ *  side a bubble sits on is not something to guess. */
+const MESSAGE: Contract<Message> = {
+  label: 'the message',
+  fields: {
+    id: { kind: 'string' },
+    sender: { kind: 'string' },
+    text: { kind: 'string', fallback: '' },
+    stepsJson: { kind: 'string', nullable: true, fallback: null },
+    artifactId: { kind: 'string', nullable: true, fallback: null },
+    createdAt: { kind: 'string' },
+    artifactTitle: { kind: 'string', nullable: true, fallback: null },
+    questionsJson: { kind: 'string', nullable: true, fallback: null },
+  },
+};
+
+/** `messages` is required — an absent list rendering as an empty thread would wear
+ *  "no messages yet" over a read that failed. `dataSourceIds` falls back to empty
+ *  because the backend has not shipped it (see the type's own note). */
+const SESSION_DETAIL: Contract<SessionDetail> = {
+  label: 'the conversation',
+  fields: {
+    id: { kind: 'string' },
+    title: { kind: 'string' },
+    createdAt: { kind: 'string' },
+    messages: { kind: 'array', of: MESSAGE },
+    files: { kind: 'array', of: UPLOADED_FILE, fallback: [] },
+    dataSourceIds: { kind: 'array', fallback: [] },
+  },
+};
+
+export const listSessions = async () =>
+  readArray(await apiClient.get<unknown>('/sessions'), SESSION);
+
+export const getSession = async (id: string) =>
+  readObject(await apiClient.get<unknown>(`/sessions/${id}`), SESSION_DETAIL);
 
 /** What a rename answers with. Like the artifact endpoints, it names its subject
  *  `sessionId` rather than `id`, and carries only what the call settled. */
