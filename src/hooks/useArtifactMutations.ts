@@ -24,20 +24,33 @@ export function useToggleArtifactPin() {
 
   return useMutation({
     mutationFn: (id: string) => toggleArtifactPin(id),
-    onSuccess: (updated) => {
-      // Merged onto the cached row, not written over it. The answer carries the pin
-      // state, but nothing promises it carries every other field — and a row that
-      // silently loses one is a row the UI then reads wrongly. Whatever the response
-      // does bring wins; the rest stays.
+    onSuccess: (updated, id) => {
+      // The row is found by the id we asked about, not by one read back out of the
+      // answer. A response that omits `id` — or wraps it — matched nothing, so the merge
+      // silently rewrote no row at all and the button never moved. We already know which
+      // Artifact was toggled: it is the argument.
+      //
+      // Merged onto the cached row rather than written over it, because nothing promises
+      // the answer carries every field, and a row that silently loses one is a row the UI
+      // then reads wrongly. Whatever the response does bring wins; the rest stays.
+      //
+      // `pinnedAt` is read defensively for the same reason: if the answer does not carry
+      // it, flip the local value rather than leave the row unchanged — the request
+      // succeeded, so the state did change, and showing the old one would be a lie.
       queryClient.setQueryData<Artifact[]>(artifactsQueryKey, (previous) =>
-        previous?.map((artifact) =>
-          artifact.id === updated.id ? { ...artifact, ...updated } : artifact,
-        ),
+        previous?.map((artifact) => {
+          if (artifact.id !== id) {
+            return artifact;
+          }
+          const merged = { ...artifact, ...updated, id };
+          return updated?.pinnedAt === undefined
+            ? { ...merged, pinnedAt: artifact.pinnedAt === null ? new Date().toISOString() : null }
+            : merged;
+        }),
       );
-      // No invalidate to follow it. The merge above already holds everything the toggle
-      // changed, so a list refetch would only re-download what was just written — with
-      // the rail's badge keeping useArtifacts mounted on every page, that was one full
-      // list per pin, anywhere in the app.
+      // No invalidate to follow it: the merge above already holds everything the toggle
+      // changed, and the rail's badge keeps this list mounted on every page — a refetch
+      // here was one full list download per pin, anywhere in the app.
     },
     onError: toastError,
   });
@@ -90,7 +103,15 @@ export function useUpdateArtifactShares() {
           ),
         );
       } else {
-        queryClient.invalidateQueries({ queryKey: artifactSharesQueryKey(id) });
+        // `refetchType: 'none'` — mark it stale, do not go and get it now. Submitting
+        // closes the dialog, but the close happens in the caller's own onSuccess, one
+        // step after this: a plain invalidate here caught the query while it was still
+        // mounted and fired a request for a list nobody was about to look at. Stale is
+        // enough — the dialog refetches when it is next opened.
+        queryClient.invalidateQueries({
+          queryKey: artifactSharesQueryKey(id),
+          refetchType: 'none',
+        });
         queryClient.invalidateQueries({ queryKey: artifactsQueryKey, exact: true });
       }
     },

@@ -53,6 +53,36 @@ async function selected(): Promise<string[]> {
 }
 
 describe('Sharing an Artifact: picking recipients', () => {
+  /** Submitting closes the dialog, so nothing is left to render the share list — asking
+   *  for it again on the way out is a request for something nobody is about to look at.
+   *  This holds even when the answer is not a list and the cache cannot be written from
+   *  it: stale is enough, and the next open fetches. */
+  it('does not re-read the share list on the way out', async () => {
+    const user = userEvent.setup();
+    let shareReads = 0;
+    server.use(
+      http.get('/api/artifacts/:id/share', () => {
+        shareReads += 1;
+        return HttpResponse.json([]);
+      }),
+      // Not an array — the shape that cannot be written into the cache directly.
+      http.patch('/api/artifacts/:id/share', () => HttpResponse.json({ ok: true })),
+    );
+    const { onClose } = renderDialog();
+
+    const field = screen.getByRole('combobox');
+    await user.click(field);
+    await user.type(field, 'CHXXGHYC');
+    await user.click(await screen.findByTitle(/鄭凱宇/, {}, { timeout: 3000 }));
+    await waitFor(() => expect(shareReads).toBeGreaterThan(0));
+    const readsBeforeSubmit = shareReads;
+
+    await user.click(screen.getByRole('button', { name: 'Submit' }));
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
+
+    expect(shareReads).toBe(readsBeforeSubmit);
+  });
+
   /** The param is named on the wire, so a rename on either side has to be caught here:
    *  a backend that does not recognise it does not fail — it answers as if nothing was
    *  asked, which reads as "no such person" rather than as a broken request. */
