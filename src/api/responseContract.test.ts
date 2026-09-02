@@ -1,6 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import {
+  asArray,
+  asArrayIn,
+  asObject,
   type Contract,
   readArray,
   readArrayIn,
@@ -112,5 +115,14 @@ describe('nested rows and envelopes', () => {
     expect(readArrayIn({ content: [{ id: 'a', count: 1 }] }, 'content', ROW)).toHaveLength(1);
     expect(() => readArrayIn({ other: [] }, 'content', ROW)).toThrowError(/not a list/);
     expect(() => readArrayIn(null, 'content', ROW)).toThrowError(/carrying `content`/);
+  });
+
+  it('curried forms read identically to their uncurried twins', async () => {
+    // The pipeline style endpoint modules use: fetch, then read through the contract.
+    await expect(Promise.resolve([{ id: 'a', count: 1 }]).then(asArray(ROW))).resolves.toEqual(
+      readArray([{ id: 'a', count: 1 }], ROW),
+    );
+    expect(asObject(ROW)({ id: 'a', count: 1 })).toEqual(readObject({ id: 'a', count: 1 }, ROW));
+    expect(asArrayIn('content', ROW)({ content: [{ id: 'a', count: 1 }] })).toHaveLength(1);
   });
 });

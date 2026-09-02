@@ -39,6 +39,20 @@
    `httpStatus` / `errorCode` / `errorMessage`):axios 與 fetch 對「取消」各有拼法
    (`CanceledError` / `AbortError`),同一個事實不該由每個呼叫端各記各的。
 
+## 呼叫端風格(2026-09-03 修訂)
+
+初版的呼叫端長這樣:`readArray(await apiClient.get<unknown>('/artifacts'), ARTIFACT)`
+——`<unknown>` 是誠實的,但 call site 讀起來繞、回傳型別藏在 contract 後面。改為
+curried 管線式,`apiClient` 的泛型預設 `unknown`:
+
+```ts
+export const listArtifacts = () => apiClient.get('/artifacts').then(asArray(ARTIFACT));
+```
+
+一行、無 unknown 註記、型別由 contract 推導。`readObject`/`readArray` 原樣保留,
+給 promise chain 之外的讀取用(agent stream 的拒絕 body、shares 的 hook 層嘗試性
+讀取)。
+
 ## 後果
 
 **得到**:形狀錯誤在 api 層邊界被攔下,帶著哪個讀取、哪個欄位的名字;可存活的
