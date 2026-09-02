@@ -7,7 +7,7 @@ import {
 } from '@ant-design/icons';
 import React, { useState } from 'react';
 
-import type { StepItem, StepStatus } from '@/types/api/index';
+import type { StepItem, StepStatus } from '@/types/api';
 
 import styles from './StepList.module.css';
 

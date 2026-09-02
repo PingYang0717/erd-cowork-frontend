@@ -1,4 +1,4 @@
-import type { ArtifactVersion, Message } from '@/types/api/index';
+import type { ArtifactVersion, Message } from '@/types/api';
 
 /** The Artifacts a session produced, in arrival order: every artifact-bearing message
  *  carries one. Each is an independent Artifact (iterating sends baseArtifactId and the

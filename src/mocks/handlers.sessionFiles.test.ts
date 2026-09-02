@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { deleteFile } from '@/api/fileApi';
-import type { Message, SessionDetail, UploadedFileInfo } from '@/types/api/index';
+import type { Message, SessionDetail, UploadedFileInfo } from '@/types/api';
 
 const API_BASE = '/api';
 

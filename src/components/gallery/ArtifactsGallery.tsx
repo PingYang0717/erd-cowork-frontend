@@ -11,7 +11,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { useArtifacts } from '@/hooks/useArtifacts';
 import { usePublishCoachStore } from '@/stores/usePublishCoachStore';
-import type { Artifact } from '@/types/api/index';
+import type { Artifact } from '@/types/api';
 import { artifactRoute } from '@/utils/artifactUrl';
 
 import ArtifactCard from './ArtifactCard';

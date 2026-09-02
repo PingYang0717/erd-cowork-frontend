@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { deleteSession, renameSession, toggleSessionPin } from '@/api/sessionApi';
 import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
-import type { Artifact } from '@/types/api/index';
+import type { Artifact } from '@/types/api';
 import type { Session } from '@/types/api/session';
 
 import { useActionErrorToast } from './useActionErrorToast';

@@ -2,7 +2,7 @@ import { useSuspenseQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
 import { listCatalogue } from '@/api/connectorApi';
-import type { Connector } from '@/types/api/index';
+import type { Connector } from '@/types/api';
 
 import { useSessionDetail } from './useSessionDetail';
 

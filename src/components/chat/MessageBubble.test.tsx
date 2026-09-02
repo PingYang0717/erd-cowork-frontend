@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
 import { INTERRUPTED_TEXTS, REPAIR_RECORD_PREFIXES } from '@/constants/messages';
-import type { StepItem, TableResult } from '@/types/api/index';
+import type { StepItem, TableResult } from '@/types/api';
 
 import MessageBubble, { type LiveRun } from './MessageBubble';
 
