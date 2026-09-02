@@ -2,6 +2,18 @@ import { API_BASE_URL, getAuthHeaders } from '@/api/apiClient';
 import type { AgentEvent } from '@/types/api/agentEvent';
 import { createSseParser } from '@/utils/sseParser';
 
+import { type Contract, readObject } from './responseContract';
+
+/** The `{ code, message }` body a refusal may carry. Both fall back to empty — the
+ *  status line is the only thing a refusal is guaranteed to have. */
+const REFUSAL_BODY: Contract<{ code: string; message: string }> = {
+  label: 'the agent stream refusal',
+  fields: {
+    code: { kind: 'string', fallback: '' },
+    message: { kind: 'string', fallback: '' },
+  },
+};
+
 /** A refusal the backend reported before the stream opened, carrying its own code so
  *  the UI can say something better than "request failed". */
 export class AgentStreamHttpError extends Error {
@@ -50,7 +62,7 @@ export async function* streamAgentMessage(
     let code = String(response.status);
     let message = 'Unknown error';
     try {
-      const body = (await response.json()) as { code?: string; message?: string };
+      const body = readObject(await response.json(), REFUSAL_BODY);
       if (body.code) {
         code = body.code;
       }
@@ -58,7 +70,7 @@ export async function* streamAgentMessage(
         message = body.message;
       }
     } catch {
-      // Not a JSON body — the status code alone is all we can report.
+      // Not a JSON body (or not an object) — the status code alone is all we can report.
     }
     throw new AgentStreamHttpError(code, message);
   }

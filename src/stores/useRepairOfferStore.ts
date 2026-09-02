@@ -1,11 +1,11 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 
-export interface BrowserJsError {
-  message: string;
-  line: number;
-  col: number;
-}
+import type { BrowserJsError } from '@/api/artifactApi';
+
+// Moved to the api layer — it is the repair endpoint's body shape — and re-exported
+// here so the panes that report and read offers keep one import for offer + error.
+export type { BrowserJsError } from '@/api/artifactApi';
 
 /** `files-expired` is terminal in a way `failed` is not: the data the artifact was built
  *  from has been deleted, so another attempt cannot succeed. */
