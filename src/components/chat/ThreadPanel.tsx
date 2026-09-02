@@ -2,6 +2,7 @@ import { DatabaseOutlined, ThunderboltFilled } from '@ant-design/icons';
 import React, { type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 
 import DataBoundary from '@/components/common/DataBoundary';
+import LanguageToggle from '@/components/common/LanguageToggle';
 import ThemeToggle from '@/components/common/ThemeToggle';
 import { type SendInput, useAgentStream } from '@/hooks/useAgentStream';
 import { useArtifactRepair } from '@/hooks/useArtifactRepair';
@@ -33,6 +34,7 @@ const ThreadHeader: React.FC = () => {
         <DatabaseOutlined aria-hidden />
         Inline DB · N5 line
       </span>
+      <LanguageToggle />
       <ThemeToggle />
     </header>
   );

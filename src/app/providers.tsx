@@ -1,7 +1,10 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { App as AntdApp, ConfigProvider } from 'antd';
+import enUS from 'antd/locale/en_US';
+import zhTW from 'antd/locale/zh_TW';
 import React, { type CSSProperties, type ReactNode } from 'react';
 
+import { useLanguageStore } from '@/stores/useLanguageStore';
 import { useThemeStore } from '@/stores/useThemeStore';
 import { buildAntdTheme } from '@/theme/antdTheme';
 import { THEME_TOKENS, themeCssText, type ThemeTokens } from '@/theme/tokens';
@@ -44,11 +47,16 @@ interface AppProvidersProps {
 
 const AppProviders: React.FC<AppProvidersProps> = ({ children }) => {
   const isDarkMode = useThemeStore((s) => s.isDarkMode);
+  // antd carries its own strings — the Select's empty state, Modal's OK/Cancel, the
+  // DatePicker's month names. Left on the default they would stay in one language while
+  // everything around them switched, which reads as a half-finished translation rather
+  // than as a choice.
+  const language = useLanguageStore((s) => s.language);
   const tokens = THEME_TOKENS[isDarkMode ? 'dark' : 'light'];
 
   return (
     <QueryClientProvider client={queryClient}>
-      <ConfigProvider theme={buildAntdTheme(isDarkMode)}>
+      <ConfigProvider locale={language === 'en' ? enUS : zhTW} theme={buildAntdTheme(isDarkMode)}>
         <AntdApp>
           <ThemedSurface tokens={tokens}>{children}</ThemedSurface>
         </AntdApp>

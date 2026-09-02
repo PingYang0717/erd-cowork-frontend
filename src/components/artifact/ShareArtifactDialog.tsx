@@ -7,6 +7,7 @@ import { useUpdateArtifactShares } from '@/hooks/useArtifactMutations';
 import { useArtifactShares } from '@/hooks/useArtifactShares';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { useDirectorySearch } from '@/hooks/useDirectorySearch';
+import { useTranslations } from '@/i18n/useTranslations';
 import type { Artifact, DirectoryEntry, ShareTarget } from '@/types/api';
 import { artifactHref } from '@/utils/artifactUrl';
 import {
@@ -18,11 +19,6 @@ import {
 
 import styles from './ShareArtifactDialog.module.css';
 
-/** Exported so the tests name the same string the dialog shows, rather than a copy of it
- *  that could drift. */
-export const SHARES_UNAVAILABLE = '讀不到目前的分享對象,請稍後再試。';
-export const SEARCH_FAILED = '搜尋失敗,請稍後再試';
-
 interface ShareArtifactDialogProps {
   open: boolean;
   onClose: () => void;
@@ -30,6 +26,7 @@ interface ShareArtifactDialogProps {
 }
 
 const ShareArtifactDialog: React.FC<ShareArtifactDialogProps> = ({ open, onClose, artifact }) => {
+  const t = useTranslations().share;
   const { shares, isLoading, isUnavailable } = useArtifactShares(artifact.id, open);
   const updateShares = useUpdateArtifactShares();
   const [recipients, setRecipients] = useState<DirectoryEntry[]>([]);
@@ -101,12 +98,12 @@ const ShareArtifactDialog: React.FC<ShareArtifactDialogProps> = ({ open, onClose
     <Modal
       open={open}
       onCancel={handleClose}
-      title="分享 Artifact"
+      title={t.title}
       width={460}
       footer={null}
       destroyOnHidden
     >
-      <p className={styles.subtitle}>Artifact 已發布,可分享給團隊檢視。</p>
+      <p className={styles.subtitle}>{t.subtitle}</p>
       <div className={styles.infoCard} aria-label="Artifact 資訊">
         <span className={styles.infoCardIcon} aria-hidden>
           <FundOutlined />
@@ -120,13 +117,13 @@ const ShareArtifactDialog: React.FC<ShareArtifactDialogProps> = ({ open, onClose
         {artifact.publishedAt !== null && (
           <span className={styles.infoCardGeneratedChip}>
             <CheckOutlined aria-hidden />
-            已發布
+            {t.published}
           </span>
         )}
       </div>
 
       <div className={styles.section}>
-        <div className={styles.sectionLabel}>分享對象</div>
+        <div className={styles.sectionLabel}>{t.recipientsLabel}</div>
         <RecipientSelect
           value={chosen}
           loading={isLoading}
@@ -137,9 +134,7 @@ const ShareArtifactDialog: React.FC<ShareArtifactDialogProps> = ({ open, onClose
             could read is not an edit the user meant to make. Submit stays pressable —
             it is also the way out, and an unchanged list sends an empty delta. */}
         <div className={isUnavailable ? styles.error : styles.hint}>
-          {isUnavailable
-            ? SHARES_UNAVAILABLE
-            : '可混選部門(A10INTD1-1)、課別(INTD-1)與人員(CHXXGHYC · 鄭凱宇)'}
+          {isUnavailable ? t.unavailable : t.recipientsHint}
         </div>
       </div>
 
@@ -147,7 +142,7 @@ const ShareArtifactDialog: React.FC<ShareArtifactDialogProps> = ({ open, onClose
           reward for pressing a button — someone who opened this dialog only to copy it
           should not have to change the recipient list first. */}
       <div className={styles.section}>
-        <div className={styles.sectionLabel}>分享連結</div>
+        <div className={styles.sectionLabel}>{t.linkLabel}</div>
         <div className={styles.linkRow}>
           <Input readOnly prefix={<LinkOutlined aria-hidden />} value={shareUrl} />
           {/* Secondary, not primary: a dialog has one button that finishes the job, and
@@ -159,15 +154,13 @@ const ShareArtifactDialog: React.FC<ShareArtifactDialogProps> = ({ open, onClose
             icon={copied ? <CheckOutlined aria-hidden /> : <CopyOutlined aria-hidden />}
             onClick={handleCopy}
           >
-            {copied ? '已複製' : '複製'}
+            {copied ? t.copied : t.copy}
           </Button>
         </div>
         {/* Styled as a hint, not as the green success banner it used to be: the link is
             here from the moment the dialog opens, so a panel announcing that something
             succeeded would be claiming it before anything had happened. */}
-        <div className={styles.hint}>
-          已加入左側 Artifacts 清單 — 可到 Artifacts 開啟或再次分享。
-        </div>
+        <div className={styles.hint}>{t.linkHint}</div>
       </div>
 
       <div className={styles.actions}>
@@ -182,7 +175,7 @@ const ShareArtifactDialog: React.FC<ShareArtifactDialogProps> = ({ open, onClose
           loading={updateShares.isPending}
           onClick={handleConfirm}
         >
-          Submit
+          {t.submit}
         </Button>
       </div>
     </Modal>
@@ -211,6 +204,7 @@ const RecipientSelect: React.FC<RecipientSelectProps> = ({
   disabled,
   onChange,
 }) => {
+  const t = useTranslations().share;
   const [keyword, setKeyword] = useState('');
   const { entries, isSearching, isError, enabled } = useDirectorySearch(useDebouncedValue(keyword));
 
@@ -267,16 +261,16 @@ const RecipientSelect: React.FC<RecipientSelectProps> = ({
       options={options}
       notFoundContent={
         isSearching
-          ? '搜尋中…'
+          ? t.searching
           : isError
             ? // Before "no match": a failed search wearing that answer sends the user
               // off to re-check a spelling that was never the problem.
-              SEARCH_FAILED
+              t.searchFailed
             : enabled
-              ? '找不到符合的對象'
-              : `請至少輸入 ${DIRECTORY_SEARCH_MIN_LENGTH} 個字元`
+              ? t.noMatch
+              : t.minChars(DIRECTORY_SEARCH_MIN_LENGTH)
       }
-      placeholder={`輸入 ${DIRECTORY_SEARCH_MIN_LENGTH} 個字元以上搜尋部門 / 課別 或 NT account · 姓名`}
+      placeholder={t.searchPlaceholder(DIRECTORY_SEARCH_MIN_LENGTH)}
       style={{ width: '100%' }}
     />
   );

@@ -5,10 +5,11 @@ import { http, HttpResponse } from 'msw';
 import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
+import { zhTW } from '@/i18n/zhTW';
 import { server } from '@/mocks/server';
 import type { Artifact } from '@/types/api';
 
-import ShareArtifactDialog, { SEARCH_FAILED, SHARES_UNAVAILABLE } from './ShareArtifactDialog';
+import ShareArtifactDialog from './ShareArtifactDialog';
 
 const artifact: Artifact = {
   id: 'artifact-1',
@@ -131,7 +132,7 @@ describe('Sharing an Artifact: picking recipients', () => {
     );
     renderDialog();
 
-    expect(await screen.findByText(SHARES_UNAVAILABLE)).toBeInTheDocument();
+    expect(await screen.findByText(zhTW.share.unavailable)).toBeInTheDocument();
     // Still standing, and still offering the way out every dialog needs.
     expect(screen.getByRole('button', { name: 'Submit' })).toBeEnabled();
   });
@@ -145,7 +146,7 @@ describe('Sharing an Artifact: picking recipients', () => {
     );
     renderDialog();
 
-    expect(await screen.findByText(SHARES_UNAVAILABLE)).toBeInTheDocument();
+    expect(await screen.findByText(zhTW.share.unavailable)).toBeInTheDocument();
     // Editing a list nobody can see would be building a delta on a baseline that is not
     // real; the picker is closed rather than the dialog.
     expect(screen.getByRole('combobox')).toBeDisabled();
@@ -283,7 +284,9 @@ describe('Sharing an Artifact: picking recipients', () => {
     await user.click(field);
     await user.type(field, 'CHXXGHYC');
 
-    expect(await screen.findByText(SEARCH_FAILED, {}, { timeout: 3000 })).toBeInTheDocument();
+    expect(
+      await screen.findByText(zhTW.share.searchFailed, {}, { timeout: 3000 }),
+    ).toBeInTheDocument();
   });
 
   it('says the search failed when the directory cannot be reached', async () => {
@@ -295,7 +298,9 @@ describe('Sharing an Artifact: picking recipients', () => {
     await user.click(field);
     await user.type(field, 'CHXXGHYC');
 
-    expect(await screen.findByText(SEARCH_FAILED, {}, { timeout: 3000 })).toBeInTheDocument();
+    expect(
+      await screen.findByText(zhTW.share.searchFailed, {}, { timeout: 3000 }),
+    ).toBeInTheDocument();
   });
 
   /** The tick and the wording are the only confirmation a copy gets, so they have to be

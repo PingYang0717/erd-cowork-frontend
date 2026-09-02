@@ -2,7 +2,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
-import { DRAFT_SESSION_TITLE } from '@/constants/messages';
+import { DRAFT_SESSION_TITLE } from '@/constants/wireStrings';
 import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
 import type { Session, SessionDetail } from '@/types/api/session';
 
