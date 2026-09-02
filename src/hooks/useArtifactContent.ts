@@ -9,9 +9,9 @@ import { getArtifactContent } from '@/api/artifactApi';
  *  them re-downloaded the full document for nothing — the HTML does not change when
  *  its metadata does. Content refetch has exactly two owners: the full-page Refresh
  *  button and a successful repair, both through this key. */
-export function artifactContentQueryKey(artifactId: string) {
+export const artifactContentQueryKey = (artifactId: string) => {
   return ['artifactContent', artifactId] as const;
-}
+};
 
 /** The rendered Artifact HTML.
  *
@@ -25,7 +25,7 @@ export function artifactContentQueryKey(artifactId: string) {
  *  `ArtifactFrame` keys its iframe on it too — remounts the document, which is the
  *  whole point of a Reload (ADR-0001).
  */
-export function useArtifactContent(artifactId: string | undefined, reloadNonce = 0) {
+export const useArtifactContent = (artifactId: string | undefined, reloadNonce = 0) => {
   return useQuery({
     queryKey: [...artifactContentQueryKey(artifactId as string), reloadNonce] as const,
     queryFn: () => getArtifactContent(artifactId as string, reloadNonce),
@@ -38,4 +38,4 @@ export function useArtifactContent(artifactId: string | undefined, reloadNonce =
     // overrides staleTime.
     staleTime: Infinity,
   });
-}
+};

@@ -21,7 +21,7 @@ interface ConnectorPrefs {
   custom: Connector[];
 }
 
-function readPrefs(): ConnectorPrefs {
+const readPrefs = (): ConnectorPrefs => {
   try {
     const raw = localStorage.getItem(CONNECTOR_PREFS_STORAGE_KEY);
     if (raw !== null) {
@@ -32,7 +32,7 @@ function readPrefs(): ConnectorPrefs {
     // A corrupt entry reads as "no preferences" and gets overwritten on the next write.
   }
   return { lastSelected: [], custom: [] };
-}
+};
 
 /** The combination to start a fresh conversation on. */
 export const readRememberedSelection = (): string[] => readPrefs().lastSelected;
@@ -42,9 +42,9 @@ export const rememberSelection = (connectorIds: string[]): void => {
   writePrefs({ ...readPrefs(), lastSelected: connectorIds });
 };
 
-function writePrefs(prefs: ConnectorPrefs): void {
+const writePrefs = (prefs: ConnectorPrefs): void => {
   localStorage.setItem(CONNECTOR_PREFS_STORAGE_KEY, JSON.stringify(prefs));
-}
+};
 
 /** What data sources exist and whether the user may reach them. The user's own custom
  *  additions are merged on top of what the backend serves. Whether a given conversation

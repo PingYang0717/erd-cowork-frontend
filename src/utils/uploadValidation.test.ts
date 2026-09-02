@@ -6,7 +6,7 @@ import { planFileAdditions } from './uploadValidation';
 
 const GB = 1024 * 1024 * 1024;
 
-function existingFile(name: string, sizeBytes: number): UploadedFileInfo {
+const existingFile = (name: string, sizeBytes: number): UploadedFileInfo => {
   return {
     id: name,
     name,
@@ -16,7 +16,7 @@ function existingFile(name: string, sizeBytes: number): UploadedFileInfo {
     rowCount: null,
     expired: false,
   };
-}
+};
 
 describe('planFileAdditions', () => {
   it('skips a duplicate by name — and says so instead of silently dropping it', () => {

@@ -4,9 +4,9 @@ import { listArtifacts } from '@/api/artifactApi';
 
 export const artifactsQueryKey = ['artifacts'] as const;
 
-export function useArtifacts() {
+export const useArtifacts = () => {
   return useSuspenseQuery({
     queryKey: artifactsQueryKey,
     queryFn: listArtifacts,
   });
-}
+};

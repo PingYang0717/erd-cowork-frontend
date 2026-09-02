@@ -15,7 +15,7 @@ import { zhTW } from './zhTW';
 
 const artifact = artifactFixture();
 
-function renderDialogWithToggle() {
+const renderDialogWithToggle = () => {
   return render(
     <>
       <LanguageToggle />
@@ -23,7 +23,7 @@ function renderDialogWithToggle() {
     </>,
     { wrapper: appWrapper() },
   );
-}
+};
 
 /** The switch itself, not the wording it produces. The rest of the suite is pinned to
  *  English (setup.ts) and asserts behaviour rather than language; these are the few

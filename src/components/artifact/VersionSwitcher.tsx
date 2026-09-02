@@ -27,16 +27,16 @@ const VersionSwitcher: React.FC<VersionSwitcherProps> = ({ versions, activeVersi
     if (!isOpen) {
       return;
     }
-    function onPointerDown(event: PointerEvent) {
+    const onPointerDown = (event: PointerEvent) => {
       if (rootRef.current && !rootRef.current.contains(event.target as Node)) {
         setIsOpen(false);
       }
-    }
-    function onKeyDown(event: KeyboardEvent) {
+    };
+    const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         setIsOpen(false);
       }
-    }
+    };
     document.addEventListener('pointerdown', onPointerDown);
     document.addEventListener('keydown', onKeyDown);
     return () => {

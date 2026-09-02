@@ -19,7 +19,7 @@ import { getTranslations } from '@/i18n/useTranslations';
 /** Session-level attachments per the backend contract: files live on the session
  *  (POST /sessions/{id}/files) and surface through SessionDetail.files. Count, size
  *  and extension limits are validated client-side before anything is uploaded. */
-export function useFileAttachments(sessionId: string) {
+export const useFileAttachments = (sessionId: string) => {
   const [error, setError] = useState('');
   /** The upload in flight, or null when nothing is uploading. A CSV here runs to
    *  gigabytes — without this the modal is frozen for minutes. Carries a phase, not
@@ -34,7 +34,7 @@ export function useFileAttachments(sessionId: string) {
   const { data: detail } = useSessionDetail(sessionId);
   const attachments = detail.files;
 
-  async function addFiles(files: Iterable<File>) {
+  const addFiles = async (files: Iterable<File>) => {
     const plan = planFileAdditions(attachments, files);
     setError(plan.error);
 
@@ -51,9 +51,9 @@ export function useFileAttachments(sessionId: string) {
     } finally {
       setUploadProgress(null);
     }
-  }
+  };
 
-  async function removeFile(fileId: string) {
+  const removeFile = async (fileId: string) => {
     setIsRemoving(true);
     try {
       await deleteFile(sessionId, fileId);
@@ -66,7 +66,7 @@ export function useFileAttachments(sessionId: string) {
     } finally {
       setIsRemoving(false);
     }
-  }
+  };
 
   return {
     attachments,
@@ -78,4 +78,4 @@ export function useFileAttachments(sessionId: string) {
     addFiles,
     removeFile,
   };
-}
+};

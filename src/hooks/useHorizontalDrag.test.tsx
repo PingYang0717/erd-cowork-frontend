@@ -6,7 +6,7 @@ import { useHorizontalDrag } from './useHorizontalDrag';
 
 /** Counts the mousemove/mouseup listeners currently attached to window, so a drag that
  *  fails to clean up shows as a rising number rather than as "feels laggy". */
-function trackWindowListeners() {
+const trackWindowListeners = () => {
   const live = { pointermove: 0, pointerup: 0 };
   const add = window.addEventListener.bind(window);
   const remove = window.removeEventListener.bind(window);
@@ -25,7 +25,7 @@ function trackWindowListeners() {
   }) as typeof window.removeEventListener);
 
   return live;
-}
+};
 
 const Harness: React.FC<{ onDrag: (deltaX: number) => void }> = ({ onDrag }) => {
   const { onPointerDown } = useHorizontalDrag({ onDrag });

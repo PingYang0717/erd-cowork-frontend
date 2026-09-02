@@ -8,11 +8,11 @@ import { useThemeStore } from '@/stores/useThemeStore';
 import { renderStudio, waitForComposer } from '@/test/renderStudio';
 import { answerAnalysisConditions, publishArtifactAs } from '@/test/studioRun';
 
-function artifactsNav() {
+const artifactsNav = () => {
   // Name starts with the label ("Artifacts" + badge count); the toast's
   // 前往 Artifacts button doesn't match the anchor.
   return screen.findByRole('button', { name: /^Artifacts/ });
-}
+};
 
 describe('Publish feedback: badge count, coach highlight, toast', () => {
   beforeEach(() => {

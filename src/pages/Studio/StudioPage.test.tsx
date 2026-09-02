@@ -14,7 +14,7 @@ import { renderStudio } from '@/test/renderStudio';
 // useStudioLayoutStore instance (module-scoped), so both StudioShell (rail
 // width) and StudioPage (thread width) must be re-imported together for the
 // "resets on reload" tests to exercise a genuinely fresh store.
-async function renderReloadedStudioPage() {
+const renderReloadedStudioPage = async () => {
   vi.resetModules();
   const { default: ReloadedStudioShell } = await import('@/components/layouts/StudioShell');
   const { default: ReloadedStudioPage } = await import('./StudioPage');
@@ -28,7 +28,7 @@ async function renderReloadedStudioPage() {
     </MemoryRouter>,
     { wrapper: appWrapper({ retry: true }) },
   );
-}
+};
 
 describe('StudioPage three-pane layout', () => {
   beforeEach(() => {

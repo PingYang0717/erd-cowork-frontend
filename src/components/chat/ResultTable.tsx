@@ -15,7 +15,7 @@ type ResultTableRecord = Record<string, TableCellValue> & { key: string };
 /** Trims float noise via significant digits (toPrecision(12)), not a fixed decimal
  *  position — a fixed position would corrupt large-magnitude values. Re-expands JS's
  *  exponent fallback. (Ported verbatim from cowork upstream, ADR-0002.) */
-function expandExponentialNotation(exponentialText: string): string {
+const expandExponentialNotation = (exponentialText: string): string => {
   const exponentMatch = /^(-?)(\d+)(?:\.(\d+))?e([+-]\d+)$/i.exec(exponentialText);
   if (!exponentMatch) return exponentialText;
   const [, sign, integerDigits, fractionDigits = '', exponentText] = exponentMatch;
@@ -28,9 +28,9 @@ function expandExponentialNotation(exponentialText: string): string {
     return `${sign}${digits}${'0'.repeat(decimalPointPosition - digits.length)}`;
   }
   return `${sign}${digits.slice(0, decimalPointPosition)}.${digits.slice(decimalPointPosition)}`;
-}
+};
 
-function formatCellValue(value: TableCellValue): string {
+const formatCellValue = (value: TableCellValue): string => {
   // A null cell is "no value", which reads as blank — not as "null".
   if (value === null) return '';
   if (typeof value === 'boolean') return value ? 'true' : 'false';
@@ -42,7 +42,7 @@ function formatCellValue(value: TableCellValue): string {
     return shortened.includes('e') ? expandExponentialNotation(shortened) : shortened;
   }
   return String(value);
-}
+};
 
 interface ResultTableProps {
   table: TableResult;

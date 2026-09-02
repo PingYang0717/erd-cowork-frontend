@@ -10,7 +10,7 @@ import { renderStudio } from '@/test/renderStudio';
 /** The backend deletes a session's files once they go untouched for the retention
  *  period. The row survives, flagged expired, and nothing the agent does can succeed
  *  until the user clears it. */
-function sessionWithAnExpiredFile() {
+const sessionWithAnExpiredFile = () => {
   server.use(
     http.get('/api/sessions/:sessionId', ({ params }) =>
       HttpResponse.json({
@@ -32,7 +32,7 @@ function sessionWithAnExpiredFile() {
       }),
     ),
   );
-}
+};
 
 describe('File retention', () => {
   beforeEach(() => {

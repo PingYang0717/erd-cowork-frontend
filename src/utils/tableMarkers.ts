@@ -20,10 +20,10 @@ export type AnswerSegment = AnswerTextSegment | AnswerTableSegment;
 /** Splits an answer on its `[[table:<tableId>]]` markers, resolving each id against the
  *  TABLE events the run produced. A marker whose table never arrived is dropped — the
  *  raw marker text must never reach the reader. */
-export function splitAnswerByTableMarkers(
+export const splitAnswerByTableMarkers = (
   text: string,
   tables: TableResult[] | undefined,
-): AnswerSegment[] {
+): AnswerSegment[] => {
   const tablesById = new Map((tables ?? []).map((table) => [table.tableId, table]));
   const segments: AnswerSegment[] = [];
   let cursor = 0;
@@ -47,12 +47,12 @@ export function splitAnswerByTableMarkers(
   pushText(segments, text.slice(cursor));
 
   return segments;
-}
+};
 
 /** Empty runs between two adjacent markers (or at either end) are not segments —
  *  rendering them would put a stray empty paragraph between tables. */
-function pushText(segments: AnswerSegment[], content: string): void {
+const pushText = (segments: AnswerSegment[], content: string): void => {
   if (content !== '') {
     segments.push({ type: 'text', content });
   }
-}
+};

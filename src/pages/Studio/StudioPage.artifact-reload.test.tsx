@@ -11,18 +11,18 @@ import { answerAnalysisConditions } from '@/test/studioRun';
 
 /** Starts a run over a driven stream and waits for it to put an artifact on screen,
  *  leaving the stream open so the panel is observable mid-run. */
-async function runSpcScenarioWithMockStream(
+const runSpcScenarioWithMockStream = async (
   user: ReturnType<typeof userEvent.setup>,
   stream: ReturnType<typeof mockAgentStream>,
-) {
+) => {
   await user.click(await screen.findByRole('button', { name: 'New chat' }));
   await screen.findByRole('textbox', { name: 'Message' });
   await user.click(screen.getByRole('button', { name: 'SPC analysis' }));
   act(() => stream.push({ type: 'ARTIFACT', artifactId: 'artifact-1', title: 'SPC analysis' }));
   await screen.findByTitle('Artifact preview');
-}
+};
 
-async function runSpcScenario(user: ReturnType<typeof userEvent.setup>) {
+const runSpcScenario = async (user: ReturnType<typeof userEvent.setup>) => {
   await user.click(await screen.findByRole('button', { name: 'New chat' }));
   await screen.findByRole('button', { name: 'New analysis' });
   await screen.findByRole('textbox', { name: 'Message' });
@@ -30,7 +30,7 @@ async function runSpcScenario(user: ReturnType<typeof userEvent.setup>) {
   await answerAnalysisConditions(user);
   await screen.findByRole('button', { name: /^Worked through \d+ steps$/ });
   return (await screen.findByTitle('Artifact preview')) as HTMLIFrameElement;
-}
+};
 
 /** Reload throws the artifact's document away and mounts a fresh one — the escape hatch
  *  for an artifact whose own script has wedged. It is NOT a Regenerate (no new version)

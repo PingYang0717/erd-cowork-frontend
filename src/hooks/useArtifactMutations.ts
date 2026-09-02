@@ -20,7 +20,7 @@ import { artifactSharesQueryKey } from './useArtifactShares';
  *  backend owns the direction, so its answer is the only thing that knows which way the
  *  pin went — waiting for a refetch to find out leaves the button showing the old state
  *  in the meantime, and shows the wrong one entirely if the refetch is slow or fails. */
-export function useToggleArtifactPin() {
+export const useToggleArtifactPin = () => {
   const queryClient = useQueryClient();
   const toastError = useActionErrorToast();
 
@@ -50,7 +50,7 @@ export function useToggleArtifactPin() {
     },
     onError: toastError,
   });
-}
+};
 
 /** Takes an Artifact off the Gallery's shelf.
  *
@@ -58,7 +58,7 @@ export function useToggleArtifactPin() {
  *  living in the conversation that produced it, its HTML is still fetchable, and a panel
  *  showing it stays right where it is. What ends is its listing — so the cached content
  *  and anything pointing at it are deliberately left alone. */
-export function useUnpublishArtifact() {
+export const useUnpublishArtifact = () => {
   const queryClient = useQueryClient();
   const toastError = useActionErrorToast();
 
@@ -75,10 +75,10 @@ export function useUnpublishArtifact() {
     },
     onError: toastError,
   });
-}
+};
 
 /** Applies a change to an Artifact's share list. */
-export function useUpdateArtifactShares() {
+export const useUpdateArtifactShares = () => {
   const queryClient = useQueryClient();
   const toastError = useActionErrorToast();
 
@@ -119,9 +119,9 @@ export function useUpdateArtifactShares() {
     },
     onError: toastError,
   });
-}
+};
 
-export function usePublishArtifact() {
+export const usePublishArtifact = () => {
   const queryClient = useQueryClient();
   const toastError = useActionErrorToast();
 
@@ -134,4 +134,4 @@ export function usePublishArtifact() {
     },
     onError: toastError,
   });
-}
+};

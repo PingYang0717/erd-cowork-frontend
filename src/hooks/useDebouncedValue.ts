@@ -9,7 +9,7 @@ export const SEARCH_DEBOUNCE_MS = 300;
  *  Filtering runs on the returned value while the input stays on the raw one, so typing
  *  never feels delayed — only the work behind it is.
  */
-export function useDebouncedValue<T>(value: T, delayMs: number = SEARCH_DEBOUNCE_MS): T {
+export const useDebouncedValue = <T>(value: T, delayMs: number = SEARCH_DEBOUNCE_MS): T => {
   const [settled, setSettled] = useState(value);
 
   useEffect(() => {
@@ -20,4 +20,4 @@ export function useDebouncedValue<T>(value: T, delayMs: number = SEARCH_DEBOUNCE
   }, [value, delayMs]);
 
   return settled;
-}
+};

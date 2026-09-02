@@ -54,7 +54,7 @@ interface RepairOfferState {
 }
 
 /** Pulls the next not-yet-dismissed offer from the queue as the new current offer. */
-function promoteNext(queue: QueuedOffer[], dismissed: string[]): Partial<RepairOfferState> {
+const promoteNext = (queue: QueuedOffer[], dismissed: string[]): Partial<RepairOfferState> => {
   const nextIndex = queue.findIndex((item) => !dismissed.includes(item.artifactId));
   if (nextIndex === -1) {
     return { offer: null, queue: [] };
@@ -64,7 +64,7 @@ function promoteNext(queue: QueuedOffer[], dismissed: string[]): Partial<RepairO
     offer: { artifactId: next.artifactId, errors: next.errors, status: 'pending' },
     queue: queue.slice(nextIndex + 1),
   };
-}
+};
 
 export const useRepairOfferStore = create<RepairOfferState>()(
   devtools(

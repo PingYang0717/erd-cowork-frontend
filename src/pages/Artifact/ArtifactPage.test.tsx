@@ -13,7 +13,7 @@ import { artifactHref } from '@/utils/artifactUrl';
 
 import ArtifactPage from './ArtifactPage';
 
-function renderArtifactPageAt(path: string) {
+const renderArtifactPageAt = (path: string) => {
   // Retries would hide the "not found" case behind exponential backoff, so
   // this suite's requests resolve/reject immediately.
   return render(
@@ -28,7 +28,7 @@ function renderArtifactPageAt(path: string) {
     </MemoryRouter>,
     { wrapper: appWrapper() },
   );
-}
+};
 
 describe('Artifact full-page view', () => {
   /** The version switcher reads the producing session, which may be gone — deleting a

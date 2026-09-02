@@ -114,18 +114,18 @@ const ChatComposer: React.FC<ChatComposerProps> = ({
 
   // Attachments do not travel with the message: they already live on the session
   // (uploaded on attach), and the mock snapshots them onto the sent message.
-  function send(question: string) {
+  const send = (question: string) => {
     onSend({ question });
-  }
+  };
 
-  function submitDraft() {
+  const submitDraft = () => {
     const text = draft.trim();
     if (!text || isBlocked) {
       return;
     }
     send(text);
     setDraft('');
-  }
+  };
 
   return (
     <div>

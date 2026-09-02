@@ -7,15 +7,15 @@ import { server } from '@/mocks/server';
 import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
 import { renderStudio } from '@/test/renderStudio';
 
-function recentGroup() {
+const recentGroup = () => {
   return within(screen.getByRole('region', { name: 'Recents sessions' }));
-}
+};
 
 /** The rail suspends on the session list; every case starts from a settled one. */
-async function openStudio() {
+const openStudio = async () => {
   renderStudio();
   await screen.findByRole('region', { name: 'Recents sessions' });
-}
+};
 
 /** The backend has no POST /sessions: a session is created by the first message that
  *  names it (ADR-0005). "New chat" therefore opens a draft that lives only in this

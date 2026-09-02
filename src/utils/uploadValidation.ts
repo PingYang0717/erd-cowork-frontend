@@ -16,10 +16,10 @@ export const MAX_ATTACHMENT_TOTAL_LABEL = `${MAX_ATTACHMENT_TOTAL_GB} GB`;
 export const ACCEPTED_FILE_EXTENSIONS = ['.csv', '.xlsx', '.xls'] as const;
 export const ACCEPT_ATTRIBUTE = ACCEPTED_FILE_EXTENSIONS.join(',');
 
-function hasAcceptedExtension(fileName: string) {
+const hasAcceptedExtension = (fileName: string) => {
   const lower = fileName.toLowerCase();
   return ACCEPTED_FILE_EXTENSIONS.some((ext) => lower.endsWith(ext));
-}
+};
 
 export interface FileLike {
   name: string;
@@ -29,10 +29,10 @@ export interface FileLike {
 /** Client-side pre-flight against the session's existing files: extension whitelist,
  *  dedupe by name, count and total-size caps. Stops at the first count/size violation;
  *  an unsupported extension only skips that file. */
-export function planFileAdditions<T extends FileLike>(
+export const planFileAdditions = <T extends FileLike>(
   existing: UploadedFileInfo[],
   incoming: Iterable<T>,
-): { accepted: T[]; error: string } {
+): { accepted: T[]; error: string } => {
   const t = getTranslations().files;
   const existingNames = new Set(existing.map((file) => file.name));
   let count = existing.length;
@@ -72,4 +72,4 @@ export function planFileAdditions<T extends FileLike>(
   }
 
   return { accepted, error: rejections.join(' · ') };
-}
+};

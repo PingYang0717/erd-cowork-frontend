@@ -4,7 +4,7 @@ import type { Artifact } from '@/types/api';
  *  that shares, publishes or renames one. Suites that need a different shape spread over
  *  it rather than restating all twelve fields, so a field added to the contract lands
  *  here once. */
-export function artifactFixture(overrides: Partial<Artifact> = {}): Artifact {
+export const artifactFixture = (overrides: Partial<Artifact> = {}): Artifact => {
   return {
     id: 'artifact-1',
     version: 1,
@@ -21,4 +21,4 @@ export function artifactFixture(overrides: Partial<Artifact> = {}): Artifact {
     hasPersonalCopy: false,
     ...overrides,
   };
-}
+};

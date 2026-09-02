@@ -51,17 +51,17 @@ const ShareArtifactDialog: React.FC<ShareArtifactDialogProps> = ({ open, onClose
   const [edited, setEdited] = useState(false);
   const chosen = edited ? recipients : alreadyShared;
 
-  function handleChoose(next: DirectoryEntry[]) {
+  const handleChoose = (next: DirectoryEntry[]) => {
     setEdited(true);
     setRecipients(next);
-  }
+  };
 
-  function handleClose() {
+  const handleClose = () => {
     setEdited(false);
     onClose();
-  }
+  };
 
-  function handleConfirm() {
+  const handleConfirm = () => {
     const before = alreadyShared.map(directoryShareTarget);
     const after = chosen.map(directoryShareTarget);
     const key = (target: ShareTarget) => `${target.type}:${target.id}`;
@@ -80,9 +80,9 @@ const ShareArtifactDialog: React.FC<ShareArtifactDialogProps> = ({ open, onClose
       // edited, and once it is saved there is nothing left here to do.
       { onSuccess: handleClose },
     );
-  }
+  };
 
-  async function handleCopy() {
+  const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(shareUrl);
       // Inside the try: the tick and the wording are the only confirmation a copy gets,
@@ -92,7 +92,7 @@ const ShareArtifactDialog: React.FC<ShareArtifactDialogProps> = ({ open, onClose
     } catch {
       // Nothing to add — the field is right there, and it still holds the link.
     }
-  }
+  };
 
   return (
     <Modal
@@ -224,7 +224,7 @@ const RecipientSelect: React.FC<RecipientSelectProps> = ({
     }));
   }, [entries, value]);
 
-  function handleChange(keys: string[]) {
+  const handleChange = (keys: string[]) => {
     // Resolve the keys back to entries. The caller works in entries, not keys: the share
     // payload needs each one's kind and id, which only the entry carries.
     const known = new Map([...value, ...entries].map((entry) => [directoryEntryKey(entry), entry]));
@@ -233,7 +233,7 @@ const RecipientSelect: React.FC<RecipientSelectProps> = ({
         .map((key) => known.get(key))
         .filter((entry): entry is DirectoryEntry => entry !== undefined),
     );
-  }
+  };
 
   return (
     <Select

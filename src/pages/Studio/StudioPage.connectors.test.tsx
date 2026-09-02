@@ -6,19 +6,19 @@ import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
 import { useStudioLayoutStore } from '@/stores/useStudioLayoutStore';
 import { renderStudio, waitForComposer } from '@/test/renderStudio';
 
-async function openConnectorsPanel(user: ReturnType<typeof userEvent.setup>) {
+const openConnectorsPanel = async (user: ReturnType<typeof userEvent.setup>) => {
   await user.click(screen.getByRole('button', { name: 'Attach files or connect a data source' }));
   await user.click(screen.getByRole('menuitem', { name: 'Connectors' }));
-}
+};
 
 // A session the backend already knows about, not a draft: connector state is what
 // these cases are about, and a draft would not survive the simulated reload below
 // (ADR-0005).
-async function selectASessionAndOpenConnectors(user: ReturnType<typeof userEvent.setup>) {
+const selectASessionAndOpenConnectors = async (user: ReturnType<typeof userEvent.setup>) => {
   await user.click(await screen.findByRole('button', { name: 'Defect pareto — W12' }));
   await waitForComposer();
   await openConnectorsPanel(user);
-}
+};
 
 describe('Connectors panel', () => {
   beforeEach(() => {

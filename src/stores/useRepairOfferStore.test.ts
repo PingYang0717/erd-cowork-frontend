@@ -4,9 +4,9 @@ import { type BrowserJsError, useRepairOfferStore } from './useRepairOfferStore'
 
 const err: BrowserJsError[] = [{ message: 'boom', line: 1, col: 1 }];
 
-function reset() {
+const reset = () => {
   useRepairOfferStore.setState({ offer: null, queue: [], dismissed: [] });
-}
+};
 
 describe('useRepairOfferStore', () => {
   beforeEach(reset);

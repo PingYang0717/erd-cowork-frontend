@@ -7,7 +7,7 @@
  *  `'self'` is useless here — a sandboxed document has an opaque origin that matches no
  *  source — so the host has to be the parent's origin, written out. */
 
-function buildPolicy(origin: string): string {
+const buildPolicy = (origin: string): string => {
   return [
     // Nothing loads unless a directive below says otherwise.
     "default-src 'none'",
@@ -19,7 +19,7 @@ function buildPolicy(origin: string): string {
     // business talking to anyone.
     "connect-src 'none'",
   ].join('; ');
-}
+};
 
 /** Returns `html` with the policy as the first element in `<head>`, so it is in force
  *  before the document loads anything.
@@ -38,7 +38,7 @@ function buildPolicy(origin: string): string {
  *
  *  Parsing here is the same parse the iframe will do, so the head we find is the head
  *  the browser will build — including any element it hoisted into it. */
-export function injectCspMeta(html: string, origin: string): string {
+export const injectCspMeta = (html: string, origin: string): string => {
   const doc = new DOMParser().parseFromString(html, 'text/html');
 
   const meta = doc.createElement('meta');
@@ -48,4 +48,4 @@ export function injectCspMeta(html: string, origin: string): string {
 
   const doctype = doc.doctype ? `<!DOCTYPE ${doc.doctype.name}>` : '';
   return doctype + doc.documentElement.outerHTML;
-}
+};

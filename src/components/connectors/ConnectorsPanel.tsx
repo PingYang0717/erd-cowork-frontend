@@ -50,16 +50,16 @@ type StatusFilter = 'All' | 'Connected' | 'Not Connected';
  *  user reads is looked up per key at render time. */
 const STATUS_FILTERS: StatusFilter[] = ['All', 'Connected', 'Not Connected'];
 
-function matchesFilter(connector: Connector, filter: StatusFilter): boolean {
+const matchesFilter = (connector: Connector, filter: StatusFilter): boolean => {
   if (filter === 'All') return true;
   return filter === 'Connected'
     ? connector.status === 'connected'
     : connector.status !== 'connected';
-}
+};
 
 /** Takes the copy rather than reaching for it, so the lookup stays a pure function
  *  of (status, pending, dictionary). */
-function statusMeta(status: ConnectorStatus, isPending: boolean, t: Translations['connectors']) {
+const statusMeta = (status: ConnectorStatus, isPending: boolean, t: Translations['connectors']) => {
   if (isPending) {
     return { label: t.statusConnecting, color: 'var(--erd-color-primary, #1677ff)' };
   }
@@ -73,9 +73,9 @@ function statusMeta(status: ConnectorStatus, isPending: boolean, t: Translations
     default:
       return { label: t.statusNotConnected, color: 'var(--erd-color-text-tertiary, #8c8c8c)' };
   }
-}
+};
 
-function toggleIcon(status: ConnectorStatus, isPending: boolean) {
+const toggleIcon = (status: ConnectorStatus, isPending: boolean) => {
   if (isPending) {
     return <LoadingOutlined aria-hidden />;
   }
@@ -89,7 +89,7 @@ function toggleIcon(status: ConnectorStatus, isPending: boolean) {
     default:
       return <PlusOutlined aria-hidden />;
   }
-}
+};
 
 interface ConnectorsPanelProps {
   /** Data sources attach per conversation, so the panel edits this session's set. */
@@ -160,7 +160,7 @@ const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ sessionId, open, onCl
           .includes(normalizedSearch)),
   );
 
-  function toggle(connector: Connector) {
+  const toggle = (connector: Connector) => {
     if (connector.status === 'no_access') {
       return;
     }
@@ -169,13 +169,13 @@ const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ sessionId, open, onCl
         ? previous.filter((id) => id !== connector.id)
         : [...previous, connector.id],
     );
-  }
+  };
 
   /** Writes the decision: one call per source that actually changed, then closes.
    *
    *  Sequential rather than parallel — each attach may upsert the session (ADR-0005), and
    *  firing them together would race several creations of the same one. */
-  async function submit() {
+  const submit = async () => {
     try {
       for (const id of draftIds.filter((id) => !attachedIds.includes(id))) {
         await setDataSource.mutateAsync({ id, attached: true });
@@ -189,9 +189,9 @@ const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ sessionId, open, onCl
       // nobody.
     }
     onClose();
-  }
+  };
 
-  function submitAddConnector() {
+  const submitAddConnector = () => {
     const name = addValue.trim();
     if (!name) return;
     // Adding one IS picking it, so it lands in the draft — and reaches the session with
@@ -200,7 +200,7 @@ const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ sessionId, open, onCl
       onSuccess: (id) => setDraftIds((previous) => [...previous, id]),
     });
     setAddValue('');
-  }
+  };
 
   return (
     <Modal

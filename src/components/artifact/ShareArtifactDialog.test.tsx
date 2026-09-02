@@ -12,21 +12,21 @@ import ShareArtifactDialog from './ShareArtifactDialog';
 
 const artifact = artifactFixture();
 
-function renderDialog(onClose = vi.fn()) {
+const renderDialog = (onClose = vi.fn()) => {
   return {
     onClose,
     ...render(<ShareArtifactDialog open onClose={onClose} artifact={artifact} />, {
       wrapper: appWrapper(),
     }),
   };
-}
+};
 
 /** Waits for a click on an option to have registered as a choice.
  *
  *  Reads the chosen tags, not the Submit button: Submit is always pressable now, so its
  *  state says nothing about whether the click landed — which is exactly the confusion an
  *  earlier version of these tests fell into. */
-async function selected(): Promise<string[]> {
+const selected = async (): Promise<string[]> => {
   return waitFor(() => {
     const tags = Array.from(document.querySelectorAll('.ant-select-selection-item')).map(
       (node) => node.getAttribute('title') ?? '',
@@ -34,7 +34,7 @@ async function selected(): Promise<string[]> {
     expect(tags.length).toBeGreaterThan(0);
     return tags;
   });
-}
+};
 
 describe('Sharing an Artifact: picking recipients', () => {
   /** Submitting closes the dialog, so nothing is left to render the share list — asking

@@ -10,7 +10,7 @@ import { artifactsQueryKey } from './useArtifacts';
 import { sessionDetailQueryKey } from './useSessionDetail';
 import { sessionsQueryKey } from './useSessions';
 
-export function useRenameSession() {
+export const useRenameSession = () => {
   const queryClient = useQueryClient();
   const toastError = useActionErrorToast();
 
@@ -39,11 +39,11 @@ export function useRenameSession() {
     },
     onError: toastError,
   });
-}
+};
 
 /** Toggle-style like the artifact pin: the backend decides the direction and stamps
  *  the time, so the call site sends nothing but the id. */
-export function useToggleSessionPin() {
+export const useToggleSessionPin = () => {
   const queryClient = useQueryClient();
   const toastError = useActionErrorToast();
 
@@ -57,9 +57,9 @@ export function useToggleSessionPin() {
     },
     onError: toastError,
   });
-}
+};
 
-export function useDeleteSession() {
+export const useDeleteSession = () => {
   const queryClient = useQueryClient();
   const toastError = useActionErrorToast();
   const clearSelection = useSessionSelectionStore((store) => store.clearSelection);
@@ -93,4 +93,4 @@ export function useDeleteSession() {
     },
     onError: toastError,
   });
-}
+};

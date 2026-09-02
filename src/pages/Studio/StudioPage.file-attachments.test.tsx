@@ -14,27 +14,27 @@ import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
 import { useStudioLayoutStore } from '@/stores/useStudioLayoutStore';
 import { renderStudio, waitForComposer } from '@/test/renderStudio';
 
-async function selectASessionAndOpenFileModal(user: ReturnType<typeof userEvent.setup>) {
+const selectASessionAndOpenFileModal = async (user: ReturnType<typeof userEvent.setup>) => {
   await user.click(await screen.findByRole('button', { name: 'New chat' }));
   await screen.findByRole('button', { name: 'New analysis' });
   await waitForComposer();
   await user.click(screen.getByRole('button', { name: 'Attach files or connect a data source' }));
   await user.click(screen.getByRole('menuitem', { name: 'Attach files' }));
   return screen.findByRole('dialog', { name: 'Attach files' });
-}
+};
 
 // The composer's own attachment chips render outside the (portal-rendered)
 // modal, so scoping to this list disambiguates them from the modal's copy
 // of the same chips without needing the modal to be closed first.
-function composerAttachments() {
+const composerAttachments = () => {
   return screen.getByRole('list', { name: 'Attached files' });
-}
+};
 
 // Real bytes, not a faked size property: uploads now travel as multipart form
 // data through the mock endpoint, which measures the actual part bytes.
-function fileOfSize(name: string, sizeBytes: number): File {
+const fileOfSize = (name: string, sizeBytes: number): File => {
   return new File([new Uint8Array(sizeBytes)], name, { type: 'text/csv' });
-}
+};
 
 describe('File attachments', () => {
   beforeEach(() => {

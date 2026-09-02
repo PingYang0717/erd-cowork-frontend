@@ -9,10 +9,10 @@ import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
 import { useStudioLayoutStore } from '@/stores/useStudioLayoutStore';
 import { renderStudio, waitForComposer } from '@/test/renderStudio';
 
-async function openMenuOf(user: ReturnType<typeof userEvent.setup>, title: string) {
+const openMenuOf = async (user: ReturnType<typeof userEvent.setup>, title: string) => {
   await screen.findByRole('button', { name: title });
   await user.click(screen.getByRole('button', { name: `More actions for ${title}` }));
-}
+};
 
 /** The three session writes go straight to the backend now — no disabled rows, no
  *  後端未支援 hints (the backend is here; an endpoint that is not answers with an

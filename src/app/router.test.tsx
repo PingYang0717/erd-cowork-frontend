@@ -10,12 +10,12 @@ import { describe, expect, it, vi } from 'vitest';
 // It is a hash router (ADR-0011), so the route goes in the fragment: pushing the bare
 // path would leave the router at `/` and every assertion below would fail on the wrong
 // screen rather than on the thing it is testing.
-async function renderAppAt(path: string) {
+const renderAppAt = async (path: string) => {
   window.history.pushState({}, '', `#${path}`);
   vi.resetModules();
   const { default: App } = await import('./App');
   return render(<App />);
-}
+};
 
 // Every test's vi.resetModules() forces a fresh re-evaluation of the entire
 // App module tree (antd, providers, all pages), which regularly pushes past

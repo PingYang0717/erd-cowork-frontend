@@ -5,11 +5,11 @@ import { en } from '@/i18n/en';
 
 import { describeLoadError } from './describeLoadError';
 
-function axiosError(code: string, response?: AxiosError['response']) {
+const axiosError = (code: string, response?: AxiosError['response']) => {
   const error = new AxiosError('Network Error', code);
   error.response = response;
   return error;
-}
+};
 
 describe('describeLoadError', () => {
   it('names an unreachable backend rather than repeating "Network Error"', () => {

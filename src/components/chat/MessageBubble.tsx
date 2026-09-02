@@ -77,12 +77,12 @@ export interface MessageBubbleProps {
 // step can also fail — hence the fourth state (ADR-0003).
 /** Messages the backend persists on its own behalf — an interrupted response, a repair
  *  outcome. They are records, not agent prose, so they never reach the Markdown renderer. */
-function systemRecordKind(text: string): 'interrupted' | 'repair' | null {
+const systemRecordKind = (text: string): 'interrupted' | 'repair' | null => {
   if (INTERRUPTED_TEXTS.includes(text)) {
     return 'interrupted';
   }
   return REPAIR_RECORD_PREFIXES.some((prefix) => text.startsWith(prefix)) ? 'repair' : null;
-}
+};
 
 /** One turn in the thread. History and the run in flight go through exactly this
  *  component: a turn that has just finished must look identical to the same turn read
@@ -294,9 +294,9 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
 /** Takes the copy rather than reaching for it. Reading the language here worked only
  *  because the one caller subscribes to it — move this into a memoised child and the
  *  label would freeze on whatever language was current when it mounted, silently. */
-function agentLabel(stopped: boolean, t: Translations['chat']): string {
+const agentLabel = (stopped: boolean, t: Translations['chat']): string => {
   return stopped ? t.agentStopped : t.agentName;
-}
+};
 
 /** The open turn's timer. The clock is read in the interval rather than during render —
  *  a render has to be able to run twice and say the same thing. */
