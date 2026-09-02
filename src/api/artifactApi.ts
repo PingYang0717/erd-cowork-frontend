@@ -50,13 +50,39 @@ export const getArtifactRawHtml = (artifactId: string, signal?: AbortSignal) =>
   });
 
 /** What the pin endpoint answers with. Not an `Artifact`: it names the subject
- *  `artifactId` rather than `id`, and carries only what the toggle settled. */
+ *  `artifactId` rather than `id`, and carries only what the toggle settled.
+ *
+ *  Only `pinnedAt` is required — it is the one thing a pin toggle can actually
+ *  change, and an answer without it says nothing. The rest are enrichments the
+ *  cache merges when present: optional in the type so the hook must handle their
+ *  absence, which is what "merged, not replaced" means. */
 export interface ArtifactPinResult {
-  artifactId: string;
+  artifactId?: string;
   pinnedAt: string | null;
-  owner: string;
-  isOwn: boolean;
+  owner?: string;
+  isOwn?: boolean;
 }
+
+/** The one mutation response that gets a contract: unlike its siblings (session pin,
+ *  rename, publish — whose answers nobody reads), this answer is written into the
+ *  artifacts cache. Unchecked, a missing `isOwn` arrived as undefined — falsy — and
+ *  the user's own Artifact turned into "shared to me": wrong Gallery shelf, Share
+ *  locked, half the menu gone, and the dirt lived in the cache until the next full
+ *  refetch.
+ *
+ *  Required is only what an answer cannot be without: `pinnedAt`, the toggle's
+ *  outcome. The rest are optional and kind-checked when present — the cache MERGES
+ *  them (see useToggleArtifactPin), so an answer that carries less leaves the row's
+ *  own values standing instead of overwriting them with undefined. */
+const ARTIFACT_PIN_RESULT: Contract<ArtifactPinResult> = {
+  label: 'the pin result',
+  fields: {
+    artifactId: { kind: 'string', optional: true },
+    pinnedAt: { kind: 'string', nullable: true },
+    owner: { kind: 'string', optional: true },
+    isOwn: { kind: 'boolean', optional: true },
+  },
+};
 
 /** Toggles the pin. One endpoint and no body: the backend decides the direction, and the
  *  answer carries the `pinnedAt` that resulted — which is what the button reads its new
@@ -65,8 +91,8 @@ export interface ArtifactPinResult {
  *
  *  PATCH, not POST: the call edits one field of something that already exists rather than
  *  creating anything. */
-export const toggleArtifactPin = (id: string) =>
-  apiClient.patch<ArtifactPinResult>(`/artifacts/${id}/pin`);
+export const toggleArtifactPin = async (id: string) =>
+  readObject(await apiClient.patch<unknown>(`/artifacts/${id}/pin`), ARTIFACT_PIN_RESULT);
 
 /** Publishing is what makes an Artifact available to other people — and what sharing
  *  rests on. It carries the title the Artifact goes on the shelf under: the Gallery names

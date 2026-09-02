@@ -312,6 +312,14 @@ describe('Artifacts gallery', () => {
 
     const unpin = await screen.findByRole('button', { name: `Unpin ${name}` });
     expect(unpin).toBeEnabled();
+
+    // The corruption this merge exists to stop: the partial answer carried no
+    // `isOwn`, and writing it anyway put undefined — falsy — on the row, turning the
+    // user's own Artifact into "shared to me": wrong shelf, owner menu gone. The
+    // omitted field has to leave the cached value standing.
+    // Delete only exists on an owned card — its presence IS the proof isOwn survived.
+    await user.click(screen.getByRole('button', { name: `More actions for ${name}` }));
+    expect(await screen.findByRole('menuitem', { name: 'Delete' })).toBeInTheDocument();
   });
 
   it("shows Pin, Copy Link, Share, and Delete in an owned card's more-actions menu", async () => {
