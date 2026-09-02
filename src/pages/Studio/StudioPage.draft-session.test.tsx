@@ -46,6 +46,23 @@ describe('New chat opens a client-side draft', () => {
     expect(await recentGroup().findByText('New analysis')).toBeInTheDocument();
   });
 
+  /** The draft is derived from "the selection the server has never heard of", and
+   *  selecting a session is what ends a draft — but selecting the draft's own row is not
+   *  leaving it. Without that distinction the row vanished the moment the user clicked
+   *  it, taking the conversation they were about to start with it. */
+  it('keeps the draft row when the user clicks it in the rail', async () => {
+    const user = userEvent.setup();
+    await openStudio();
+
+    await user.click(screen.getByRole('button', { name: 'New chat' }));
+    const draftRow = await recentGroup().findByText('New analysis');
+
+    await user.click(draftRow);
+
+    expect(recentGroup().getByText('New analysis')).toBeInTheDocument();
+    expect(await screen.findByRole('textbox', { name: 'Message' })).toBeInTheDocument();
+  });
+
   it('never asks the backend to create a session', async () => {
     let createCalls = 0;
     server.use(
