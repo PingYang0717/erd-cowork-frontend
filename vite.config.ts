@@ -27,6 +27,22 @@ export default defineConfig({
   },
   server: serverOptions,
   preview: serverOptions,
+  build: {
+    rollupOptions: {
+      output: {
+        // antd and its rc-* internals are ~830 kB and change only when the dependency
+        // does; app code changes every deploy. In one chunk together, every release
+        // invalidated all 1.17 MB for returning users. Split, the app chunk is 336 kB
+        // and the rest stays in cache.
+        //
+        // This also settles the two `antd/locale` bundles (17.5 kB measured): they live
+        // under node_modules/antd, so they land in the chunk that is already cached
+        // rather than being worth a lazy import of their own.
+        manualChunks: (id: string) =>
+          id.includes('node_modules/antd') || id.includes('node_modules/rc-') ? 'antd' : undefined,
+      },
+    },
+  },
   test: {
     environment: 'jsdom',
     // Four workers, measured 2026-08-28: serial took ~110s, 4 workers 30s — five green

@@ -48,7 +48,7 @@ describe('Publish feedback: badge count, coach highlight, toast', () => {
     expect(await within(await artifactsNav()).findByText('4')).toBeInTheDocument();
     expect(await artifactsNav()).toHaveAttribute('data-coach', 'true');
 
-    const toast = await screen.findByRole('status', { name: 'Artifact 已發布' });
+    const toast = await screen.findByRole('status', { name: 'Artifact published' });
     expect(within(toast).getByRole('button', { name: '前往 Artifacts' })).toBeInTheDocument();
     expect(within(toast).getByRole('button', { name: '知道了' })).toBeInTheDocument();
   });
@@ -89,9 +89,9 @@ describe('Publish feedback: badge count, coach highlight, toast', () => {
     await screen.findByRole('button', { name: '發布 Artifact' }, { timeout: 5000 });
     await publishArtifactAs(user);
 
-    const toast = await screen.findByRole('status', { name: 'Artifact 已發布' });
+    const toast = await screen.findByRole('status', { name: 'Artifact published' });
     await user.click(within(toast).getByRole('button', { name: '知道了' }));
-    expect(screen.queryByRole('status', { name: 'Artifact 已發布' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('status', { name: 'Artifact published' })).not.toBeInTheDocument();
     expect(await artifactsNav()).not.toHaveAttribute('data-coach');
 
     // Publish another version to bring the toast back, then navigate.
@@ -101,7 +101,7 @@ describe('Publish feedback: badge count, coach highlight, toast', () => {
     );
     await screen.findByRole('button', { name: '發布 Artifact' });
     await publishArtifactAs(user);
-    const toast2 = await screen.findByRole('status', { name: 'Artifact 已發布' });
+    const toast2 = await screen.findByRole('status', { name: 'Artifact published' });
     await user.click(within(toast2).getByRole('button', { name: '前往 Artifacts' }));
 
     expect(await screen.findByRole('heading', { name: 'Artifacts' })).toBeInTheDocument();

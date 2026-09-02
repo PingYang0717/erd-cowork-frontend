@@ -13,6 +13,7 @@ export {
   MAX_ATTACHMENT_TOTAL_BYTES,
   MAX_ATTACHMENT_TOTAL_LABEL,
 } from '@/utils/uploadValidation';
+import { getTranslations } from '@/i18n/useTranslations';
 
 /** Session-level attachments per the backend contract: files live on the session
  *  (POST /sessions/{id}/files) and surface through SessionDetail.files. Count, size
@@ -42,7 +43,7 @@ export function useFileAttachments(sessionId: string) {
       await uploadFiles(sessionId, plan.accepted, setUploadPercent);
       await queryClient.invalidateQueries({ queryKey: sessionDetailQueryKey(sessionId) });
     } catch {
-      setError('上傳失敗，請再試一次。');
+      setError(getTranslations().files.uploadFailed);
     } finally {
       setUploadPercent(null);
     }

@@ -1,6 +1,6 @@
 import { http, HttpResponse } from 'msw';
 
-import { DRAFT_SESSION_TITLE } from '@/constants/messages';
+import { DRAFT_SESSION_TITLE } from '@/constants/wireStrings';
 import type { Session } from '@/types/api/session';
 
 import { currentUser } from './currentUser';

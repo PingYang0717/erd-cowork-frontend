@@ -1,39 +1,23 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
-import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
+import { zhTW } from '@/i18n/zhTW';
 import { server } from '@/mocks/server';
-import type { Artifact } from '@/types/api';
+import { appWrapper } from '@/test/appHarness';
+import { artifactFixture } from '@/test/artifactFixture';
 
 import ShareArtifactDialog from './ShareArtifactDialog';
 
-const artifact: Artifact = {
-  id: 'artifact-1',
-  version: 1,
-  sessionId: 'session-1',
-  sessionTitle: 'SPC — Vt (gate CD)',
-  title: 'SPC analysis — Vt (gate CD)',
-  createdAt: '2026-08-20T09:15:00.000Z',
-  pinnedAt: null,
-  publishedAt: '2026-08-20T09:20:00.000Z',
-  owner: 'user-1',
-  ownerDisplay: 'You',
-  isOwn: true,
-  isShared: false,
-  hasPersonalCopy: false,
-};
+const artifact = artifactFixture();
 
 function renderDialog(onClose = vi.fn()) {
-  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  const wrapper = ({ children }: { children: ReactNode }) => (
-    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-  );
   return {
     onClose,
-    ...render(<ShareArtifactDialog open onClose={onClose} artifact={artifact} />, { wrapper }),
+    ...render(<ShareArtifactDialog open onClose={onClose} artifact={artifact} />, {
+      wrapper: appWrapper(),
+    }),
   };
 }
 
@@ -122,24 +106,33 @@ describe('Sharing an Artifact: picking recipients', () => {
     );
   });
 
-  /** The dialog maps over whatever the share list returns. A body that is not a list —
-   *  an error rendered as JSON, a shape change — must read as "nobody yet" rather than
-   *  taking the dialog down with it. */
-  it('survives a share list that is not an array', async () => {
-    const user = userEvent.setup();
+  /** A body that is not a list — an error rendered as JSON, a shape change — must not
+   *  take the dialog down. It must not read as "nobody yet" either: that is a different
+   *  fact, and the one the user would act on. */
+  it('says so when the share list comes back in a shape it cannot read', async () => {
     server.use(
       http.get('/api/artifacts/:id/shares', () => HttpResponse.json({ message: 'unexpected' })),
     );
     renderDialog();
 
-    // Driven past the point the bad body arrives and is rendered: searching and choosing
-    // both walk the list, so a dialog that survives this survived the body.
-    const field = await screen.findByRole('combobox');
-    await user.click(field);
-    await user.type(field, 'CHXXGHYC');
-    await user.click(await screen.findByTitle(/鄭凱宇/, {}, { timeout: 3000 }));
+    expect(await screen.findByText(zhTW.share.unavailable)).toBeInTheDocument();
+    // Still standing, and still offering the way out every dialog needs.
+    expect(screen.getByRole('button', { name: 'Submit' })).toBeEnabled();
+  });
 
-    expect(await selected()).toContainEqual(expect.stringContaining('鄭凱宇'));
+  /** The list failing to load and the list being empty are different facts, and the
+   *  Gallery card may be showing a Shared badge from the same data. Reading one as the
+   *  other tells the user an Artifact is private when it may be shared org-wide. */
+  it('says so when the share list cannot be fetched, and will not let it be edited', async () => {
+    server.use(
+      http.get('/api/artifacts/:id/shares', () => new HttpResponse(null, { status: 500 })),
+    );
+    renderDialog();
+
+    expect(await screen.findByText(zhTW.share.unavailable)).toBeInTheDocument();
+    // Editing a list nobody can see would be building a delta on a baseline that is not
+    // real; the picker is closed rather than the dialog.
+    expect(screen.getByRole('combobox')).toBeDisabled();
   });
 
   /** Submit is the only action here, and saving the list is the end of the dialog. */
@@ -253,13 +246,20 @@ describe('Sharing an Artifact: picking recipients', () => {
     );
   });
 
-  /** The picker walks the response with `for…of`. A body whose `content` is missing —
-   *  an error rendered as JSON, a shape change — used to reach that loop and throw
-   *  "entries is not iterable" over the whole dialog. */
-  it('survives a search response with no content array', async () => {
+  /** A body whose `content` is missing used to reach a `for…of` and throw "entries is
+   *  not iterable" over the whole dialog. It must not do that — and it must not come out
+   *  as "no match" either, which sends the user off to re-check a spelling that was
+   *  never the problem. */
+  it('says the search failed when the response has no content array', async () => {
     const user = userEvent.setup();
     server.use(
-      http.get('/api/hr/employeesAndOrgs', () => HttpResponse.json({ message: 'unexpected' })),
+      // `content` present but not a list. Chosen over an envelope with no `content` at
+      // all: that one comes back as `undefined`, which the query layer rejects on its
+      // own, so it would pass whether or not this client checked the shape. This is the
+      // body that reaches the picker's `for…of` when nothing checks.
+      http.get('/api/hr/employeesAndOrgs', () =>
+        HttpResponse.json({ content: { message: 'unexpected' } }),
+      ),
     );
     renderDialog();
 
@@ -267,7 +267,37 @@ describe('Sharing an Artifact: picking recipients', () => {
     await user.click(field);
     await user.type(field, 'CHXXGHYC');
 
-    expect(await screen.findByText('找不到符合的對象', {}, { timeout: 3000 })).toBeInTheDocument();
+    expect(
+      await screen.findByText(zhTW.share.searchFailed, {}, { timeout: 3000 }),
+    ).toBeInTheDocument();
+  });
+
+  it('says the search failed when the directory cannot be reached', async () => {
+    const user = userEvent.setup();
+    server.use(http.get('/api/hr/employeesAndOrgs', () => new HttpResponse(null, { status: 500 })));
+    renderDialog();
+
+    const field = screen.getByRole('combobox');
+    await user.click(field);
+    await user.type(field, 'CHXXGHYC');
+
+    expect(
+      await screen.findByText(zhTW.share.searchFailed, {}, { timeout: 3000 }),
+    ).toBeInTheDocument();
+  });
+
+  /** The tick and the wording are the only confirmation a copy gets, so they have to be
+   *  earned. `writeText` rejects whenever the page is not a secure context. */
+  it('does not claim the link was copied when the clipboard refused', async () => {
+    const user = userEvent.setup();
+    server.use(http.get('/api/artifacts/:id/shares', () => HttpResponse.json([])));
+    vi.spyOn(navigator.clipboard, 'writeText').mockRejectedValue(new Error('denied'));
+    renderDialog();
+
+    await user.click(await screen.findByRole('button', { name: /複製/ }));
+
+    expect(screen.getByRole('button', { name: /複製/ })).toHaveTextContent('複製');
+    expect(screen.queryByText('已複製')).not.toBeInTheDocument();
   });
 
   /** A recipient already chosen must not turn back into a bare id when the next search

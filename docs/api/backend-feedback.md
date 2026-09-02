@@ -28,7 +28,14 @@
 
 ## 低 — Artifact 週邊
 
-6. **`Artifact.type`**(`'dashboard' | 'slides'`):契約定版時暫時拿掉,後端尚未加回。
+0. **修復紀錄的用詞**(2026-09-02 新增):後端存下的修復紀錄前綴是「已修復**儀表板**執行
+   錯誤」/「**儀表板**執行錯誤自動修復未成功」。前端已改口說 Artifact——`Artifact.type`
+   不在契約裡,前端無從得知那個東西是 dashboard 還是 slides,寫「儀表板」是斷言一件查不到
+   的事。兩者會出現在同一段對話串裡,用詞因此不一致。後端若要跟上,改成「Artifact」即可;
+   注意那兩個字串是前端用來辨識訊息種類的比對值(`constants/wireStrings.ts` 的
+   `REPAIR_RECORD_PREFIXES`),改動要同步。
+
+1. **`Artifact.type`**(`'dashboard' | 'slides'`):契約定版時暫時拿掉,後端尚未加回。
    在它回來之前,Gallery 的縮圖與 Dash/Deck 標籤整個不顯示,而不是讓每張卡都預設成
    同一個錯答案。
 

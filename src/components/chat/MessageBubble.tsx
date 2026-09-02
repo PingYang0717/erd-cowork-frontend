@@ -6,7 +6,7 @@ import {
 } from '@ant-design/icons';
 import React, { useDeferredValue, useMemo } from 'react';
 
-import { INTERRUPTED_TEXTS, REPAIR_RECORD_PREFIXES } from '@/constants/messages';
+import { INTERRUPTED_TEXTS, REPAIR_RECORD_PREFIXES } from '@/constants/wireStrings';
 import type { AgentStreamState } from '@/hooks/useAgentStream';
 import type { QuestionForm, StepItem } from '@/types/api';
 import { splitAnswerByTableMarkers } from '@/utils/tableMarkers';
@@ -36,6 +36,9 @@ export type LiveRun = Pick<
   | 'artifact'
   | 'startedAt'
 >;
+import { useTranslations } from '@/i18n/useTranslations';
+import type { Translations } from '@/i18n/zhTW';
+
 import ReplyText from './ReplyText';
 import ResultTable from './ResultTable';
 
@@ -97,6 +100,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
   durationMs,
   live,
 }) => {
+  const t = useTranslations();
   // One source per field: a live run's own state, else the settled message's.
   const text = live ? live.liveText : (settledText ?? '');
   const steps = live ? live.steps : settledSteps;
@@ -152,7 +156,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
     <div className={styles.aiRow}>
       <div className={styles.aiLabel}>
         <ThunderboltFilled aria-hidden className={styles.aiLabelIcon} />
-        {agentLabel(stopped)}
+        {agentLabel(stopped, t.chat)}
       </div>
       <div className={styles.aiBubble}>
         {/* The live region exists for as long as the run does, not only once it has
@@ -165,7 +169,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
                 speaking and should read the same whether or not they are mid-sentence. */}
             <div className={styles.workingHeader}>
               <LoadingOutlined aria-hidden spin className={styles.workingHeaderIcon} />
-              eRD AI 處理中…
+              {t.chat.agentThinking}
             </div>
             {(steps ?? []).map((step) => (
               <StepRow key={step.stepKey} step={step} />
@@ -264,12 +268,12 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
         )}
         {!streaming && durationMs != null && <Elapsed ms={durationMs} />}
 
-        {stopped && <p className={styles.stateNote}>⏹ 已停止生成</p>}
+        {stopped && <p className={styles.stateNote}>{t.chat.stopped}</p>}
         {/* Still an alert: the run ended in a way the user has to act on, and the
             dedicated wording is what distinguishes it from a backend refusal. */}
         {networkError && (
           <p role="alert" className={styles.networkNote}>
-            ⚠ 連線中斷，請重新送出一次
+            {t.chat.networkError}
           </p>
         )}
         {error && !networkError && (
@@ -287,8 +291,11 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
  *
  *  A stop is likewise reported inside (⏹ 已停止生成, cowork's wording) — the label carries
  *  it too because a stopped turn has no live panel left to say it from. */
-function agentLabel(stopped: boolean): string {
-  return stopped ? 'eRD AI · 已停止' : 'eRD AI';
+/** Takes the copy rather than reaching for it. Reading the language here worked only
+ *  because the one caller subscribes to it — move this into a memoised child and the
+ *  label would freeze on whatever language was current when it mounted, silently. */
+function agentLabel(stopped: boolean, t: Translations['chat']): string {
+  return stopped ? t.agentStopped : t.agentName;
 }
 
 /** The open turn's timer. The clock is read in the interval rather than during render —

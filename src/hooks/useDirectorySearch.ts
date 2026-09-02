@@ -15,7 +15,7 @@ export function useDirectorySearch(key: string) {
   const trimmed = key.trim();
   const enabled = trimmed.length >= DIRECTORY_SEARCH_MIN_LENGTH;
 
-  const { data, isFetching } = useQuery({
+  const { data, isFetching, isError } = useQuery({
     queryKey: directorySearchQueryKey(trimmed),
     queryFn: ({ signal }) => searchDirectory(trimmed, signal),
     enabled,
@@ -23,10 +23,14 @@ export function useDirectorySearch(key: string) {
     staleTime: 5 * 60 * 1000,
   });
 
-  // Narrowed rather than trusted. A response that is not a list — an envelope, an error
-  // body rendered as JSON — would otherwise reach a `for…of` and throw "entries is not
-  // iterable" from inside the picker, which is exactly what happened.
-  const entries = Array.isArray(data) ? data : [];
-
-  return { entries, isSearching: enabled && isFetching, enabled };
+  // The shape is `searchDirectory`'s business — it owns the envelope, and it raises on a
+  // body it cannot read, so a bad response arrives here as an error rather than as an
+  // empty list. Narrowing again here would have swallowed that back into "no match".
+  return {
+    entries: data ?? [],
+    isSearching: enabled && isFetching,
+    /** The search could not be run. Distinct from "no match", which is an answer. */
+    isError,
+    enabled,
+  };
 }

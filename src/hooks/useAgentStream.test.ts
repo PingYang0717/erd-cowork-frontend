@@ -1,18 +1,19 @@
-﻿import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+﻿import { QueryClient } from '@tanstack/react-query';
 import { act, renderHook, waitFor } from '@testing-library/react';
-import { createElement, type ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { mockAgentStream, mockAgentStreamRejection } from '@/test/agentStream';
+import { appWrapper } from '@/test/appHarness';
 
 import { useAgentStream } from './useAgentStream';
 
 /** The hook now owns the post-run invalidation, so it needs a QueryClient around it. */
 function renderAgentStream(sessionId = 'session-1') {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  const wrapper = ({ children }: { children: ReactNode }) =>
-    createElement(QueryClientProvider, { client: queryClient }, children);
-  return { queryClient, ...renderHook(() => useAgentStream(sessionId), { wrapper }) };
+  return {
+    queryClient,
+    ...renderHook(() => useAgentStream(sessionId), { wrapper: appWrapper({ queryClient }) }),
+  };
 }
 
 describe('useAgentStream', () => {

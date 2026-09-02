@@ -9,8 +9,9 @@ import { getArtifactContent } from '@/api/artifactApi';
  *  them re-downloaded the full document for nothing — the HTML does not change when
  *  its metadata does. Content refetch has exactly two owners: the full-page Refresh
  *  button and a successful repair, both through this key. */
-export const artifactContentQueryKey = (artifactId: string) =>
-  ['artifactContent', artifactId] as const;
+export function artifactContentQueryKey(artifactId: string) {
+  return ['artifactContent', artifactId] as const;
+}
 
 /** The rendered Artifact HTML.
  *

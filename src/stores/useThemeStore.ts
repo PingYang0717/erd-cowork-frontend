@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
 
+import { THEME_STORAGE_KEY } from '@/constants/storage';
+
 interface ThemeState {
   isDarkMode: boolean;
   toggleTheme: () => void;
@@ -16,7 +18,7 @@ export const useThemeStore = create<ThemeState>()(
         toggleTheme: () =>
           set((state) => ({ isDarkMode: !state.isDarkMode }), false, 'toggleTheme'),
       }),
-      { name: 'theme-storage' },
+      { name: THEME_STORAGE_KEY },
     ),
     { name: 'Theme' },
   ),

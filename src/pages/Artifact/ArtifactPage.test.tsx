@@ -1,4 +1,3 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
@@ -9,6 +8,7 @@ import StudioShell from '@/components/layouts/StudioShell';
 import { server } from '@/mocks/server';
 import ArtifactsGalleryPage from '@/pages/ArtifactsGallery/ArtifactsGalleryPage';
 import StudioPage from '@/pages/Studio/StudioPage';
+import { appWrapper } from '@/test/appHarness';
 import { artifactHref } from '@/utils/artifactUrl';
 
 import ArtifactPage from './ArtifactPage';
@@ -16,19 +16,17 @@ import ArtifactPage from './ArtifactPage';
 function renderArtifactPageAt(path: string) {
   // Retries would hide the "not found" case behind exponential backoff, so
   // this suite's requests resolve/reject immediately.
-  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
-    <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={[path]}>
-        <Routes>
-          <Route path="/cowork" element={<StudioShell />}>
-            <Route index element={<StudioPage />} />
-            <Route path="artifacts" element={<ArtifactsGalleryPage />} />
-          </Route>
-          <Route path="/cowork/artifact/:artifactId" element={<ArtifactPage />} />
-        </Routes>
-      </MemoryRouter>
-    </QueryClientProvider>,
+    <MemoryRouter initialEntries={[path]}>
+      <Routes>
+        <Route path="/cowork" element={<StudioShell />}>
+          <Route index element={<StudioPage />} />
+          <Route path="artifacts" element={<ArtifactsGalleryPage />} />
+        </Route>
+        <Route path="/cowork/artifact/:artifactId" element={<ArtifactPage />} />
+      </Routes>
+    </MemoryRouter>,
+    { wrapper: appWrapper() },
   );
 }
 
@@ -45,7 +43,7 @@ describe('Artifact full-page view', () => {
     expect(iframe.getAttribute('srcdoc')).toContain('SPC analysis — Vt (gate CD)');
     // No version switcher (there is no session to derive versions from), and no error
     // screen standing in for the whole page.
-    expect(screen.queryByRole('button', { name: '切換產出' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Switch Artifact' })).not.toBeInTheDocument();
     expect(screen.queryByText(/載入失敗/)).not.toBeInTheDocument();
   });
 
@@ -95,7 +93,7 @@ describe('Artifact full-page view', () => {
     // Versions derive from the artifact's session history: session-1 seeds one
     // artifact-bearing message, so artifact-1 is its v1 (and its only version).
     // Switching between versions is covered in the Studio panel's suite.
-    await user.click(await screen.findByRole('button', { name: '切換產出' }));
+    await user.click(await screen.findByRole('button', { name: 'Switch Artifact' }));
     const items = await screen.findAllByRole('menuitem');
     expect(items).toHaveLength(1);
     expect(items[0]).toHaveTextContent('SPC analysis — Vt (gate CD)');
@@ -110,10 +108,10 @@ describe('Artifact full-page view', () => {
     const header = screen.getByLabelText('Shared to me');
     expect(within(header).getByText('Alice Wu')).toBeInTheDocument();
     expect(within(header).getByText('Shared to me')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: '切換產出' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Switch Artifact' })).not.toBeInTheDocument();
   });
 
-  it('offers Share, Refresh, and Open-in-new-tab in the toolbar', async () => {
+  it('offers Share, Reload, and Open-in-new-tab in the toolbar', async () => {
     const user = userEvent.setup();
     const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
     renderArtifactPageAt('/cowork/artifact/artifact-1');
@@ -124,7 +122,7 @@ describe('Artifact full-page view', () => {
     // backend's own answer, ready or not).
     expect(screen.getByRole('button', { name: 'Share artifact' })).toBeEnabled();
 
-    await user.click(screen.getByRole('button', { name: 'Refresh artifact' }));
+    await user.click(screen.getByRole('button', { name: 'Reload artifact' }));
     expect(await screen.findByTitle('Artifact preview')).toBeInTheDocument();
 
     const openInNewTab = screen.getByRole('button', { name: 'Open artifact in new tab' });
