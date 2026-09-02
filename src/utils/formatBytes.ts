@@ -12,5 +12,12 @@ export function formatBytes(bytes: number): string {
     value /= BYTES_PER_KB;
     unitIndex += 1;
   }
-  return `${value.toFixed(1)} ${UNITS[unitIndex]}`;
+  // `toLocaleString` on the number, not on what `toFixed` returns: `toFixed` hands back a
+  // string, and a string's `toLocaleString` is Object's — it gives the same string back,
+  // so chaining the two formats nothing. Passing the digit options here instead keeps the
+  // one decimal place and adds the reader's own grouping and decimal mark.
+  return `${value.toLocaleString(undefined, {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  })} ${UNITS[unitIndex]}`;
 }
