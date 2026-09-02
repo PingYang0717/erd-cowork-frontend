@@ -154,12 +154,13 @@ lineage 層(第 5 題)。
 
 ---
 
-## 8【待確認】分享端點的兩處拼寫
+## 8 ~~【待確認】分享端點的兩處拼寫~~ 已確認(2026-09-02)
 
-**路徑單複數。** 前端一律用 **`/artifacts/{id}/share`**(複數),與
-`/artifacts/{id}/publish`、`/artifacts/{id}/pin` 一致。規格討論時寫的是
-`/api/artifact/{id}/share`(單數),推測是筆誤,但若後端真的是單數請告知——這是一改就會
-全錯的那種差異。
+~~**路徑單複數。**~~ **已確認:資源段是 `artifacts`(複數),集合段是 `shares`(複數)**
+——`GET` / `PATCH /artifacts/{id}/shares`。前端已改,GET 與 PATCH 兩個方向、mock 與測試
+覆寫共 13 處一起換掉。
+
+它與同層的 `/publish`、`/pin` 不同形是有道理的:那兩個是動作,這個是一份收件者的集合。
 
 ~~**`shareTargetType` 還是 `sharesTargetType`?**~~ **已確認:一律單數**
 (`shareTargetType`),前端已收斂。

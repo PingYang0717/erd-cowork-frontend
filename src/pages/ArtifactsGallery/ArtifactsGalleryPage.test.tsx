@@ -208,8 +208,8 @@ describe('Artifacts gallery', () => {
   it('turns the Shared badge on once the Artifact has recipients', async () => {
     const user = userEvent.setup();
     server.use(
-      http.get('/api/artifacts/:id/share', () => HttpResponse.json([])),
-      http.patch('/api/artifacts/:id/share', () =>
+      http.get('/api/artifacts/:id/shares', () => HttpResponse.json([])),
+      http.patch('/api/artifacts/:id/shares', () =>
         HttpResponse.json([
           { type: 'ORG', orgId: 'INTD-1', orgName: '整合技術一課', orgLevel: 'SECTION' },
         ]),

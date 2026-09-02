@@ -258,11 +258,11 @@ export const artifactHandlers = [
   // Reading is what the dialog opens on; the change is a delta, so two people editing
   // the same Artifact add and remove their own recipients instead of the second one
   // silently reverting the first.
-  http.get('/api/artifacts/:id/share', ({ params }) =>
+  http.get('/api/artifacts/:id/shares', ({ params }) =>
     HttpResponse.json(sharesOf(params.id as string)),
   ),
 
-  http.patch('/api/artifacts/:id/share', async ({ params, request }) => {
+  http.patch('/api/artifacts/:id/shares', async ({ params, request }) => {
     const artifactId = params.id as string;
     const { add = [], remove = [] } = (await request.json()) as {
       add?: ShareTarget[];
