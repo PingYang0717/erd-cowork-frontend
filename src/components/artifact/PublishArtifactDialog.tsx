@@ -1,6 +1,8 @@
 import { Button, Input, Modal } from 'antd';
 import React, { useState } from 'react';
 
+import { useTranslations } from '@/i18n/useTranslations';
+
 import styles from './PublishArtifactDialog.module.css';
 
 interface PublishArtifactDialogProps {
@@ -26,6 +28,7 @@ const PublishArtifactDialog: React.FC<PublishArtifactDialogProps> = ({
   onCancel,
   onConfirm,
 }) => {
+  const t = useTranslations();
   const [title, setTitle] = useState(suggestedTitle);
   // Reset to the suggestion each time it opens: a title abandoned last time should not
   // come back as the default for a different Artifact.
@@ -43,29 +46,29 @@ const PublishArtifactDialog: React.FC<PublishArtifactDialogProps> = ({
     <Modal
       open={open}
       onCancel={onCancel}
-      title="發布 Artifact"
+      title={t.artifact.publish}
       width={420}
       footer={null}
       destroyOnHidden
     >
-      <p className={styles.subtitle}>發布後會出現在 Artifacts 清單,並可分享給團隊檢視。</p>
+      <p className={styles.subtitle}>{t.publishDialog.subtitle}</p>
       <div className={styles.field}>
         <label className={styles.label} htmlFor="publish-artifact-title">
-          名稱
+          {t.publishDialog.nameLabel}
         </label>
         <Input
           id="publish-artifact-title"
           value={title}
           maxLength={80}
-          placeholder="例如:8 月 A14 良率追蹤"
+          placeholder={t.publishDialog.namePlaceholder}
           onChange={(event) => setTitle(event.target.value)}
           onPressEnter={() => trimmed && onConfirm(trimmed)}
         />
-        <div className={styles.hint}>清單上就是用這個名稱找到它。</div>
+        <div className={styles.hint}>{t.publishDialog.nameHint}</div>
       </div>
       <div className={styles.actions}>
         <Button autoInsertSpace={false} onClick={onCancel}>
-          取消
+          {t.common.cancel}
         </Button>
         <Button
           type="primary"
@@ -74,7 +77,7 @@ const PublishArtifactDialog: React.FC<PublishArtifactDialogProps> = ({
           loading={isPublishing}
           onClick={() => onConfirm(trimmed)}
         >
-          發布
+          {t.publishDialog.publish}
         </Button>
       </div>
     </Modal>

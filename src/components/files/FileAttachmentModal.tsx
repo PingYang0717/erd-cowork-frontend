@@ -13,6 +13,7 @@ import {
   MAX_ATTACHMENT_COUNT,
   MAX_ATTACHMENT_TOTAL_LABEL,
 } from '@/hooks/useFileAttachments';
+import { useTranslations } from '@/i18n/useTranslations';
 import type { UploadedFileInfo } from '@/types/api';
 import { formatBytes } from '@/utils/formatBytes';
 
@@ -84,6 +85,7 @@ const FileAttachmentModal: React.FC<FileAttachmentModalProps> = ({
   onAddFiles,
   onRemoveFile,
 }) => {
+  const t = useTranslations();
   const inputRef = useRef<HTMLInputElement>(null);
   const totalBytes = attachments.reduce((sum, a) => sum + a.sizeBytes, 0);
   const isUploading = uploadPercent !== null;
@@ -135,10 +137,10 @@ const FileAttachmentModal: React.FC<FileAttachmentModalProps> = ({
       >
         <CloudUploadOutlined aria-hidden className={styles.dropzoneIcon} />
         <div>
-          <span className={styles.dropzoneLink}>點擊選擇</span> 或把檔案拖拉到這裡
+          <span className={styles.dropzoneLink}>{t.files.dropzoneLink}</span> {t.files.dropzoneRest}
         </div>
         <div className={styles.dropzoneHint}>
-          最多 {MAX_ATTACHMENT_COUNT} 個檔案 · 總計上限 {MAX_ATTACHMENT_TOTAL_LABEL}
+          {t.files.limits(MAX_ATTACHMENT_COUNT, MAX_ATTACHMENT_TOTAL_LABEL)}
         </div>
       </div>
 

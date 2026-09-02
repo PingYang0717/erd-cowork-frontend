@@ -1,6 +1,7 @@
 import { LoadingOutlined } from '@ant-design/icons';
 import React from 'react';
 
+import { useTranslations } from '@/i18n/useTranslations';
 import type { RepairOffer } from '@/stores/useRepairOfferStore';
 
 import styles from './RepairOfferCard.module.css';
@@ -17,22 +18,23 @@ interface RepairOfferCardProps {
  *  rather than the Artifact pane because repairing is something the agent does, and the
  *  thread is where the agent's work is. */
 const RepairOfferCard: React.FC<RepairOfferCardProps> = ({ offer, onConfirm, onDismiss }) => {
+  const t = useTranslations();
   const firstMessage = offer.errors[0]?.message ?? '';
   const shown =
     firstMessage.length > MAX_MESSAGE ? `${firstMessage.slice(0, MAX_MESSAGE)}…` : firstMessage;
 
   return (
     <div className={styles.card}>
-      <p className={styles.heading}>⚠ 偵測到儀表板執行錯誤（{offer.errors.length} 個）</p>
+      <p className={styles.heading}>{t.repair.detected(offer.errors.length)}</p>
       {shown && <p className={styles.message}>{shown}</p>}
 
       {offer.status === 'pending' && (
         <div className={styles.actions}>
           <button type="button" className={styles.confirm} onClick={onConfirm}>
-            修復
+            {t.repair.repair}
           </button>
           <button type="button" className={styles.dismiss} onClick={onDismiss}>
-            忽略
+            {t.repair.ignore}
           </button>
         </div>
       )}
@@ -40,27 +42,27 @@ const RepairOfferCard: React.FC<RepairOfferCardProps> = ({ offer, onConfirm, onD
       {offer.status === 'repairing' && (
         <p className={styles.progress}>
           <LoadingOutlined aria-hidden spin />
-          修復中，請稍候…
+          {t.repair.repairing}
         </p>
       )}
 
       {offer.status === 'files-expired' && (
         <div className={styles.actions}>
-          <span className={styles.failed}>檔案已過期，無法修復此儀表板</span>
+          <span className={styles.failed}>{t.repair.filesExpired}</span>
           <button type="button" className={styles.dismiss} onClick={onDismiss}>
-            知道了
+            {t.common.gotIt}
           </button>
         </div>
       )}
 
       {offer.status === 'failed' && (
         <div className={styles.actions}>
-          <span className={styles.failed}>修復未成功</span>
+          <span className={styles.failed}>{t.repair.failed}</span>
           <button type="button" className={styles.confirm} onClick={onConfirm}>
-            再試一次
+            {t.repair.tryAgain}
           </button>
           <button type="button" className={styles.dismiss} onClick={onDismiss}>
-            忽略
+            {t.repair.ignore}
           </button>
         </div>
       )}

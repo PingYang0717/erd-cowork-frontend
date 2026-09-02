@@ -15,3 +15,11 @@ export function useTranslations(): Translations {
   const language = useLanguageStore((state) => state.language);
   return DICTIONARIES[language] ?? zhTW;
 }
+
+/** The same copy, for code that is not a component — validators, error describers, the
+ *  stream's own messages. They are plain functions called at the moment something
+ *  happens, so they read the language then rather than subscribing to it: there is no
+ *  render to re-run, and the string they return is used immediately. */
+export function getTranslations(): Translations {
+  return DICTIONARIES[useLanguageStore.getState().language] ?? zhTW;
+}

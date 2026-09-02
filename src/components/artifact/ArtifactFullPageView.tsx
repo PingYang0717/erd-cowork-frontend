@@ -17,6 +17,7 @@ import Tooltip from '@/components/common/Tooltip';
 import { artifactContentQueryKey, useArtifactContent } from '@/hooks/useArtifactContent';
 import { useArtifacts } from '@/hooks/useArtifacts';
 import { useSessionDetail } from '@/hooks/useSessionDetail';
+import { useTranslations } from '@/i18n/useTranslations';
 import type { Artifact, ArtifactVersion } from '@/types/api';
 import { artifactHref } from '@/utils/artifactUrl';
 import { deriveArtifactVersions } from '@/utils/deriveArtifactVersions';
@@ -38,6 +39,7 @@ interface ArtifactFullPageViewProps {
 }
 
 const ArtifactFullPageView: React.FC<ArtifactFullPageViewProps> = ({ artifactId }) => {
+  const t = useTranslations();
   const navigate = useNavigate();
   const location = useLocation();
   const queryClient = useQueryClient();
@@ -102,7 +104,7 @@ const ArtifactFullPageView: React.FC<ArtifactFullPageViewProps> = ({ artifactId 
           )}
         </div>
 
-        <Tooltip content="分享">
+        <Tooltip content={t.artifact.share}>
           <button
             type="button"
             className={styles.shareButton}
@@ -112,7 +114,7 @@ const ArtifactFullPageView: React.FC<ArtifactFullPageViewProps> = ({ artifactId 
             <ShareAltOutlined aria-hidden />
           </button>
         </Tooltip>
-        <Tooltip content="重新整理">
+        <Tooltip content={t.artifact.reload}>
           <button
             type="button"
             className={styles.iconButton}
@@ -128,7 +130,7 @@ const ArtifactFullPageView: React.FC<ArtifactFullPageViewProps> = ({ artifactId 
             <ReloadOutlined aria-hidden />
           </button>
         </Tooltip>
-        <Tooltip content="在新分頁開啟預覽">
+        <Tooltip content={t.artifact.openInNewTab}>
           <button
             type="button"
             className={styles.iconButton}

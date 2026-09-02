@@ -1,3 +1,4 @@
+import { getTranslations } from '@/i18n/useTranslations';
 import type { Question, QuestionForm } from '@/types/api/agentEvent';
 
 /** Lifts the backend's flat question list into the form the UI renders.
@@ -8,9 +9,10 @@ import type { Question, QuestionForm } from '@/types/api/agentEvent';
  *  drive the full analysis-conditions forms has to send `QuestionForm` itself — that ask
  *  is on the backend feedback list. */
 export function liftQuestions(questions: Question[]): QuestionForm {
+  const t = getTranslations().chat;
   return {
     formKey: 'backend-question',
-    title: '分析條件',
+    title: t.questionTitle,
     fields: questions.map((question, index) => ({
       key: `q${index}`,
       label: question.text,
@@ -18,8 +20,8 @@ export function liftQuestions(questions: Question[]): QuestionForm {
       required: true,
       options: question.options.map((option) => ({ value: option, label: option })),
     })),
-    submitLabel: '送出',
-    disabledHint: '請先回答上面的問題',
-    summaryLabel: '分析條件',
+    submitLabel: t.questionSubmit,
+    disabledHint: t.questionDisabledHint,
+    summaryLabel: t.questionTitle,
   };
 }
