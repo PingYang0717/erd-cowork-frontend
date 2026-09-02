@@ -77,7 +77,7 @@ export const unpublishArtifact = (id: string) => apiClient.delete<void>(`/artifa
  *  Narrowed rather than trusted: a body that is not a list has to come out as "nobody
  *  yet", not as something the dialog will try to map over. */
 export const listArtifactShares = async (id: string): Promise<DirectoryEntry[]> => {
-  const body = await apiClient.get<DirectoryEntry[]>(`/artifacts/${id}/share`);
+  const body = await apiClient.get<DirectoryEntry[]>(`/artifacts/${id}/shares`);
   return Array.isArray(body) ? body : [];
 };
 
@@ -91,4 +91,4 @@ export const listArtifactShares = async (id: string): Promise<DirectoryEntry[]> 
  *  non-list into the cache the dialog maps over. `unknown` makes the check the compiler's
  *  business rather than a comment's. */
 export const updateArtifactShares = (id: string, update: ArtifactShareUpdate) =>
-  apiClient.patch<unknown>(`/artifacts/${id}/share`, update);
+  apiClient.patch<unknown>(`/artifacts/${id}/shares`, update);
