@@ -23,17 +23,32 @@ export interface SessionRenameResult {
 export const renameSession = (id: string, title: string) =>
   apiClient.patch<SessionRenameResult>(`/sessions/${id}/rename`, { title });
 
+/** What the pin endpoint answers with. Names its subject `sessionId` rather than `id`,
+ *  and carries only what the toggle settled.
+ *
+ *  `owner` and `isOwn` have no home on a `Session` — the list rows do not carry either.
+ *  So unlike the artifact pin, whose answer can be applied field by field onto the cached
+ *  row, there is nothing here to apply: the list is re-read instead. */
+export interface SessionPinResult {
+  sessionId: string;
+  pinnedAt: string | null;
+  owner: string;
+  isOwn: boolean;
+}
+
 /** Toggles the pin: no body, the backend decides the direction and stamps the time.
  *
- *  The answer is typed `unknown` because its shape has never been confirmed, and no
- *  caller reads it — the pin state comes from re-reading the list. It used to be typed
- *  `{ id, pinnedAt }`, which was a guess dressed as knowledge: the artifact pin endpoint,
- *  the one this was assumed to match, turned out to name its subject `artifactId`, and a
- *  client that trusted the guessed type silently updated nothing. Anyone wanting to skip
- *  the refetch here has to ask the backend for the real shape first, which is the point. */
-export const toggleSessionPin = (id: string) => apiClient.post<unknown>(`/sessions/${id}/pin`);
+ *  PATCH, not POST: it edits one field of something that already exists. */
+export const toggleSessionPin = (id: string) =>
+  apiClient.patch<SessionPinResult>(`/sessions/${id}/pin`);
 
-export const deleteSession = (id: string) => apiClient.delete<void>(`/sessions/${id}`);
+/** Removes a session from the user's list.
+ *
+ *  The backend soft-deletes — hence PATCH on `/soft-delete` rather than a DELETE on the
+ *  session: the row is marked, not destroyed, so the verb that reaches it is an edit. The
+ *  function keeps the name `deleteSession` because that is what the person clicking it is
+ *  doing; whether the backend can undo it later is not something the UI offers. */
+export const deleteSession = (id: string) => apiClient.patch<void>(`/sessions/${id}/soft-delete`);
 
 /** Attaches a data source to the session. PATCH rather than PUT: this adds one source to
  *  whatever is already attached, it does not replace the set. */
