@@ -10,6 +10,7 @@ import { createPortal } from 'react-dom';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import { useSessionGroups } from '@/hooks/useSessionGroups';
+import { useTranslations } from '@/i18n/useTranslations';
 
 import styles from './CollapsedSessionRail.module.css';
 import { SessionGroup } from './SessionList';
@@ -19,6 +20,7 @@ interface CollapsedSessionRailProps {
 }
 
 const CollapsedSessionRail: React.FC<CollapsedSessionRailProps> = ({ onExpand }) => {
+  const t = useTranslations();
   const navigate = useNavigate();
   const location = useLocation();
   const [historyOpen, setHistoryOpen] = useState(false);
@@ -115,7 +117,7 @@ const CollapsedSessionRail: React.FC<CollapsedSessionRailProps> = ({ onExpand })
               >
                 <div className={styles.flyoutHeader}>
                   <HistoryOutlined aria-hidden className={styles.flyoutHeaderIcon} />
-                  <span className={styles.flyoutHeaderTitle}>Chat history</span>
+                  <span className={styles.flyoutHeaderTitle}>{t.session.chatHistory}</span>
                   <button
                     type="button"
                     className={styles.flyoutNewChat}
@@ -128,13 +130,13 @@ const CollapsedSessionRail: React.FC<CollapsedSessionRailProps> = ({ onExpand })
                 </div>
                 <div className={styles.flyoutBody}>
                   <SessionGroup
-                    label="Pinned"
+                    label={t.session.pinned}
                     sessions={pinned}
                     selectedSessionId={selectedSessionId}
                     onSelect={handleSelectSession}
                   />
                   <SessionGroup
-                    label="Recents"
+                    label={t.session.recents}
                     sessions={recent}
                     selectedSessionId={selectedSessionId}
                     draftSessionId={draftSessionId}

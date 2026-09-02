@@ -8,11 +8,13 @@ import {
 import { Dropdown, Input } from 'antd';
 import React, { useState } from 'react';
 
+import { useConfirmDestructive } from '@/hooks/useConfirmDestructive';
 import {
   useDeleteSession,
   useRenameSession,
   useToggleSessionPin,
 } from '@/hooks/useSessionMutations';
+import { useTranslations } from '@/i18n/useTranslations';
 import type { Session } from '@/types/api/session';
 import { dispatchMenuAction } from '@/utils/dispatchMenuAction';
 import { formatRelativeTime } from '@/utils/formatRelativeTime';
@@ -38,6 +40,8 @@ interface SessionRowProps {
 }
 
 const SessionRow: React.FC<SessionRowProps> = ({ session, isSelected, isDraft, onSelect }) => {
+  const t = useTranslations();
+  const confirmDestructive = useConfirmDestructive();
   const toggleSessionPin = useToggleSessionPin();
   const renameSession = useRenameSession();
   const deleteSession = useDeleteSession();
@@ -54,19 +58,19 @@ const SessionRow: React.FC<SessionRowProps> = ({ session, isSelected, isDraft, o
   const menuItems = [
     {
       key: 'pin',
-      label: isPinned ? 'Unpin' : 'Pin',
+      label: isPinned ? t.session.unpin : t.session.pin,
       icon: isPinned ? <PushpinFilled aria-hidden /> : <PushpinOutlined aria-hidden />,
     },
     { type: 'divider' as const },
     {
       key: 'rename',
-      label: 'Rename',
+      label: t.session.rename,
       icon: <EditOutlined aria-hidden />,
     },
     { type: 'divider' as const },
     {
       key: 'delete',
-      label: 'Delete',
+      label: t.session.delete,
       danger: true,
       icon: <DeleteOutlined aria-hidden />,
     },
@@ -79,7 +83,15 @@ const SessionRow: React.FC<SessionRowProps> = ({ session, isSelected, isDraft, o
         setRenameDraft(session.title);
         setIsRenaming(true);
       },
-      delete: () => deleteSession.mutate(session.id),
+      // Confirmed first: one stray click on a menu row must not cost a whole
+      // conversation. There is no undo on this side of the soft-delete.
+      delete: () =>
+        confirmDestructive({
+          title: t.session.deleteConfirmTitle,
+          body: t.session.deleteConfirmBody(session.title),
+          confirmLabel: t.session.deleteConfirm,
+          onConfirm: () => deleteSession.mutate(session.id),
+        }),
     });
   }
 

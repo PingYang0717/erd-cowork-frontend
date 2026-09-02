@@ -344,6 +344,8 @@ describe('Artifacts gallery', () => {
       screen.getByRole('button', { name: 'More actions for SPC analysis — Vt (gate CD)' }),
     );
     await user.click(screen.getByRole('menuitem', { name: 'Delete' }));
+    // The destructive step now sits behind a confirm — click through it.
+    await user.click(await screen.findByRole('button', { name: 'Delete' }));
 
     await waitFor(() =>
       expect(

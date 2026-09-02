@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { App as AntdApp, ConfigProvider } from 'antd';
 import enUS from 'antd/locale/en_US';
 import zhTW from 'antd/locale/zh_TW';
-import React, { type CSSProperties, type ReactNode } from 'react';
+import React, { type CSSProperties, type ReactNode, useEffect } from 'react';
 
 import { useLanguageStore } from '@/stores/useLanguageStore';
 import { useThemeStore } from '@/stores/useThemeStore';
@@ -53,6 +53,14 @@ const AppProviders: React.FC<AppProvidersProps> = ({ children }) => {
   // than as a choice.
   const language = useLanguageStore((s) => s.language);
   const tokens = THEME_TOKENS[isDarkMode ? 'dark' : 'light'];
+
+  // Syncing an external system — the document element React does not own — is the
+  // one thing useEffect is for. index.html hard-codes zh-Hant; without this a
+  // screen reader keeps announcing English copy with a Chinese voice after the
+  // toggle, and the browser's translate/line-breaking rules stay wrong with it.
+  useEffect(() => {
+    document.documentElement.lang = language === 'en' ? 'en' : 'zh-Hant';
+  }, [language]);
 
   return (
     <QueryClientProvider client={queryClient}>

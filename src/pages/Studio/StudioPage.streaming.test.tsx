@@ -225,7 +225,7 @@ describe('Streaming a run in the Studio', () => {
     expect(within(table).getByRole('cell', { name: '0.361' })).toBeInTheDocument();
     // A null cell renders empty rather than as the word "null".
     expect(within(table).queryByRole('cell', { name: 'null' })).not.toBeInTheDocument();
-    expect(screen.getByText('(first 200 rows)')).toBeInTheDocument();
+    expect(screen.getByText('(results truncated)')).toBeInTheDocument();
   });
 
   // Runs against the scripted mock backend rather than a hand-driven stream: this is a

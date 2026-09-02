@@ -43,6 +43,12 @@ export function planFileAdditions<T extends FileLike>(
 
   for (const file of Array.from(incoming)) {
     if (existingNames.has(file.name)) {
+      // Said, not silently skipped: re-dragging the same file is usually an attempt
+      // to replace it, and "nothing happened" reads as the drop not working at all.
+      // The other three rejections all speak; this one was the only mute.
+      if (!rejections.includes(t.duplicateName)) {
+        rejections.push(t.duplicateName);
+      }
       continue;
     }
     if (!hasAcceptedExtension(file.name)) {

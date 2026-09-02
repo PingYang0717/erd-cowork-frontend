@@ -19,7 +19,7 @@ function existingFile(name: string, sizeBytes: number): UploadedFileInfo {
 }
 
 describe('planFileAdditions', () => {
-  it('accepts supported files and skips duplicates by name', () => {
+  it('skips a duplicate by name — and says so instead of silently dropping it', () => {
     const plan = planFileAdditions(
       [existingFile('a.csv', 100)],
       [
@@ -28,8 +28,10 @@ describe('planFileAdditions', () => {
       ],
     );
 
+    // Re-dragging the same file is usually an attempt to replace it; the message is
+    // what tells the user why nothing changed. The other file still goes through.
     expect(plan.accepted.map((file) => file.name)).toEqual(['b.xlsx']);
-    expect(plan.error).toBe('');
+    expect(plan.error).toBe('A file with the same name is already attached');
   });
 
   it('rejects unsupported extensions with the dictionary error, without blocking later files', () => {

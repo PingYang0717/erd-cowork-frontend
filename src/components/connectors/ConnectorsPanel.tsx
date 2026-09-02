@@ -25,6 +25,7 @@ import { useAddConnector, useSetSessionDataSource } from '@/hooks/useConnectorMu
 import { useConnectors } from '@/hooks/useConnectors';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { useTranslations } from '@/i18n/useTranslations';
+import type { Translations } from '@/i18n/zhTW';
 import type { Connector, ConnectorStatus } from '@/types/api';
 import { selectConnected } from '@/utils/connectorSelectors';
 
@@ -45,6 +46,8 @@ const CONNECTOR_ICONS: Record<string, ReactNode> = {
 
 type StatusFilter = 'All' | 'Connected' | 'Not Connected';
 
+/** Filter identity stays these English keys (tests and logic match on them); what the
+ *  user reads is looked up per key at render time. */
 const STATUS_FILTERS: StatusFilter[] = ['All', 'Connected', 'Not Connected'];
 
 function matchesFilter(connector: Connector, filter: StatusFilter): boolean {
@@ -54,19 +57,21 @@ function matchesFilter(connector: Connector, filter: StatusFilter): boolean {
     : connector.status !== 'connected';
 }
 
-function statusMeta(status: ConnectorStatus, isPending: boolean) {
+/** Takes the copy rather than reaching for it, so the lookup stays a pure function
+ *  of (status, pending, dictionary). */
+function statusMeta(status: ConnectorStatus, isPending: boolean, t: Translations['connectors']) {
   if (isPending) {
-    return { label: 'Connecting…', color: 'var(--erd-color-primary, #1677ff)' };
+    return { label: t.statusConnecting, color: 'var(--erd-color-primary, #1677ff)' };
   }
   switch (status) {
     case 'connected':
-      return { label: 'Connected', color: 'var(--erd-color-primary, #1677ff)' };
+      return { label: t.statusConnected, color: 'var(--erd-color-primary, #1677ff)' };
     case 'expired':
-      return { label: 'Token expired', color: 'var(--erd-color-warning, #faad14)' };
+      return { label: t.statusExpired, color: 'var(--erd-color-warning, #faad14)' };
     case 'no_access':
-      return { label: 'No access', color: 'var(--erd-color-text-tertiary, #8c8c8c)' };
+      return { label: t.statusNoAccess, color: 'var(--erd-color-text-tertiary, #8c8c8c)' };
     default:
-      return { label: 'Not connected', color: 'var(--erd-color-text-tertiary, #8c8c8c)' };
+      return { label: t.statusNotConnected, color: 'var(--erd-color-text-tertiary, #8c8c8c)' };
   }
 }
 
@@ -201,7 +206,7 @@ const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ sessionId, open, onCl
     <Modal
       open={open}
       onCancel={onClose}
-      title="Connectors"
+      title={t.connectors.title}
       width={720}
       styles={{
         body: {
@@ -214,7 +219,7 @@ const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ sessionId, open, onCl
       footer={
         <div className={styles.footer}>
           <span className={styles.footerCount}>
-            Showing {visibleConnectors.length} of {connectors.length}
+            {t.connectors.showing(visibleConnectors.length, connectors.length)}
           </span>
           <Button onClick={onClose}>{t.common.cancel}</Button>
           <Button
@@ -223,19 +228,17 @@ const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ sessionId, open, onCl
             disabled={!isDirty}
             onClick={() => void submit()}
           >
-            Submit
+            {t.connectors.submit}
           </Button>
         </div>
       }
     >
-      <p className={styles.subtitle}>
-        Connect eRD AI to your RD data sources · {connectedCount} of {connectors.length} connected.
-      </p>
+      <p className={styles.subtitle}>{t.connectors.subtitle(connectedCount, connectors.length)}</p>
 
       <div className={styles.selectedBox}>
         <div className={styles.selectedHeader}>
           <CheckCircleFilled aria-hidden className={styles.selectedHeaderIcon} />
-          <span className={styles.selectedHeaderLabel}>Selected sources</span>
+          <span className={styles.selectedHeaderLabel}>{t.connectors.selectedSources}</span>
           <span className={styles.badge}>{connectedCount}</span>
           {connectedCount > 0 && (
             <button
@@ -243,7 +246,7 @@ const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ sessionId, open, onCl
               className={styles.clearAll}
               onClick={() => connectedConnectors.forEach((c) => toggle(c))}
             >
-              Clear all
+              {t.connectors.clearAll}
             </button>
           )}
         </div>
@@ -266,9 +269,7 @@ const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ sessionId, open, onCl
               </span>
             ))
           ) : (
-            <span className={styles.selectedEmpty}>
-              No sources selected yet — connect one below.
-            </span>
+            <span className={styles.selectedEmpty}>{t.connectors.noneSelected}</span>
           )}
         </div>
       </div>
@@ -279,7 +280,7 @@ const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ sessionId, open, onCl
           className={styles.searchInput}
           variant="borderless"
           aria-label="Search data sources"
-          placeholder="Search data sources…"
+          placeholder={t.connectors.searchPlaceholder}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
@@ -304,7 +305,11 @@ const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ sessionId, open, onCl
             data-active={filter === statusFilter}
             onClick={() => setStatusFilter(filter)}
           >
-            {filter}
+            {filter === 'All'
+              ? t.connectors.filterAll
+              : filter === 'Connected'
+                ? t.connectors.filterConnected
+                : t.connectors.filterNotConnected}
             {filter !== 'All' && (
               <span className={styles.filterChipCount}>
                 {connectors.filter((c) => matchesFilter(c, filter)).length}
@@ -319,7 +324,7 @@ const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ sessionId, open, onCl
           visibleConnectors.map((connector) => {
             const isPending =
               setDataSource.isPending && setDataSource.variables?.id === connector.id;
-            const meta = statusMeta(connector.status, isPending);
+            const meta = statusMeta(connector.status, isPending, t.connectors);
             const isConnected = connector.status === 'connected';
             return (
               <li key={connector.id} className={styles.row} data-connected={isConnected}>
@@ -358,20 +363,20 @@ const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ sessionId, open, onCl
             );
           })
         ) : (
-          <li className={styles.empty}>No data sources match “{search}”.</li>
+          <li className={styles.empty}>{t.connectors.noMatch(search)}</li>
         )}
       </ul>
 
       <div className={styles.addRow}>
         <Input
           aria-label="Add a custom data source"
-          placeholder="Add a custom data source (e.g. My Team DB)…"
+          placeholder={t.connectors.addPlaceholder}
           value={addValue}
           onChange={(e) => setAddValue(e.target.value)}
           onPressEnter={submitAddConnector}
         />
         <Button icon={<PlusOutlined aria-hidden />} onClick={submitAddConnector}>
-          Add
+          {t.connectors.add}
         </Button>
       </div>
     </Modal>

@@ -109,6 +109,9 @@ describe('Artifact full-page view', () => {
     expect(within(header).getByText('Alice Wu')).toBeInTheDocument();
     expect(within(header).getByText('Shared to me')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Switch Artifact' })).not.toBeInTheDocument();
+    // A personal copy cannot be shared onward — sharing is the owner's act
+    // (CONTEXT.md). The button stays visible so the rule is seen, not discovered.
+    expect(screen.getByRole('button', { name: 'Share artifact' })).toBeDisabled();
   });
 
   it('offers Share, Reload, and Open-in-new-tab in the toolbar', async () => {
@@ -122,8 +125,13 @@ describe('Artifact full-page view', () => {
     // backend's own answer, ready or not).
     expect(screen.getByRole('button', { name: 'Share artifact' })).toBeEnabled();
 
+    // A Reload must REMOUNT the document, not merely refetch the same HTML — the
+    // string never changes, so React would leave a wedged iframe exactly where it
+    // was. A fresh element is the observable proof the document restarted (ADR-0001).
+    const frameBefore = screen.getByTitle('Artifact preview');
     await user.click(screen.getByRole('button', { name: 'Reload artifact' }));
-    expect(await screen.findByTitle('Artifact preview')).toBeInTheDocument();
+    const frameAfter = await screen.findByTitle('Artifact preview');
+    expect(frameAfter).not.toBe(frameBefore);
 
     const openInNewTab = screen.getByRole('button', { name: 'Open artifact in new tab' });
     await user.hover(openInNewTab);

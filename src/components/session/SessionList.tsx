@@ -11,6 +11,7 @@ import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import { useSessionGroups } from '@/hooks/useSessionGroups';
+import { useTranslations } from '@/i18n/useTranslations';
 import { usePublishCoachStore } from '@/stores/usePublishCoachStore';
 import type { Session } from '@/types/api/session';
 
@@ -84,6 +85,7 @@ interface SessionListProps {
 }
 
 const SessionList: React.FC<SessionListProps> = ({ onCollapse, artifactsCount }) => {
+  const t = useTranslations();
   const {
     pinned,
     recent,
@@ -106,7 +108,7 @@ const SessionList: React.FC<SessionListProps> = ({ onCollapse, artifactsCount })
           icon={<PlusOutlined aria-hidden />}
           onClick={createAndNavigate}
         >
-          New chat
+          {t.session.newChat}
         </Button>
         {onCollapse && (
           <Button
@@ -125,7 +127,7 @@ const SessionList: React.FC<SessionListProps> = ({ onCollapse, artifactsCount })
           onClick={() => navigate('/cowork/schedule')}
         >
           <ClockCircleOutlined aria-hidden />
-          <span className={styles.navShortcutLabel}>Schedule</span>
+          <span className={styles.navShortcutLabel}>{t.session.schedule}</span>
         </button>
         <button
           type="button"
@@ -135,24 +137,24 @@ const SessionList: React.FC<SessionListProps> = ({ onCollapse, artifactsCount })
           onClick={() => navigate('/cowork/artifacts')}
         >
           <AppstoreOutlined aria-hidden />
-          <span className={styles.navShortcutLabel}>Artifacts</span>
+          <span className={styles.navShortcutLabel}>{t.session.artifacts}</span>
           {artifactsCount != null && <span className={styles.countBadge}>{artifactsCount}</span>}
         </button>
       </nav>
       <div className={styles.scrollRegion} data-testid="session-scroll">
         <SessionGroup
-          label="Pinned"
+          label={t.session.pinned}
           sessions={pinned}
           selectedSessionId={selectedSessionId}
           onSelect={selectAndNavigate}
         />
         <SessionGroup
-          label="Recents"
+          label={t.session.recents}
           sessions={recent}
           selectedSessionId={selectedSessionId}
           draftSessionId={draftSessionId}
           onSelect={selectAndNavigate}
-          emptyFallback="No recent chats."
+          emptyFallback={t.session.noRecents}
         />
       </div>
     </div>

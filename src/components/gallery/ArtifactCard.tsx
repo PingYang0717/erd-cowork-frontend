@@ -8,11 +8,13 @@ import {
   ShareAltOutlined,
   UsergroupAddOutlined,
 } from '@ant-design/icons';
-import { Dropdown } from 'antd';
+import { App, Dropdown } from 'antd';
 import React, { useState } from 'react';
 
 import ShareArtifactDialog from '@/components/artifact/ShareArtifactDialog';
 import { useToggleArtifactPin, useUnpublishArtifact } from '@/hooks/useArtifactMutations';
+import { useConfirmDestructive } from '@/hooks/useConfirmDestructive';
+import { useTranslations } from '@/i18n/useTranslations';
 import type { Artifact } from '@/types/api';
 import { artifactHref } from '@/utils/artifactUrl';
 import { dispatchMenuAction } from '@/utils/dispatchMenuAction';
@@ -26,6 +28,9 @@ interface ArtifactCardProps {
 }
 
 const ArtifactCard: React.FC<ArtifactCardProps> = ({ artifact, onOpen }) => {
+  const t = useTranslations();
+  const { message } = App.useApp();
+  const confirmDestructive = useConfirmDestructive();
   const toggleArtifactPin = useToggleArtifactPin();
   const unpublishArtifact = useUnpublishArtifact();
   const [isShareOpen, setIsShareOpen] = useState(false);
@@ -42,13 +47,13 @@ const ArtifactCard: React.FC<ArtifactCardProps> = ({ artifact, onOpen }) => {
   const menuItems = [
     {
       key: 'pin',
-      label: isPinned ? 'Unpin' : 'Pin',
+      label: isPinned ? t.galleryHeader.unpin : t.galleryHeader.pin,
       icon: isPinned ? <PushpinFilled aria-hidden /> : <PushpinOutlined aria-hidden />,
     },
     ...(artifact.isOwn
       ? [
-          { key: 'copyLink', label: 'Copy link', icon: <CopyOutlined aria-hidden /> },
-          { key: 'share', label: 'Share', icon: <ShareAltOutlined aria-hidden /> },
+          { key: 'copyLink', label: t.galleryHeader.copyLink, icon: <CopyOutlined aria-hidden /> },
+          { key: 'share', label: t.galleryHeader.share, icon: <ShareAltOutlined aria-hidden /> },
           { type: 'divider' as const },
           {
             key: 'unpublish',
@@ -59,19 +64,42 @@ const ArtifactCard: React.FC<ArtifactCardProps> = ({ artifact, onOpen }) => {
             // `.erd-menu` (index.css), since a red row reads as a warning about where the
             // pointer is rather than about what the action does.
             danger: true,
-            label: 'Delete',
+            label: t.galleryHeader.delete,
             icon: <DeleteOutlined aria-hidden />,
           },
         ]
       : []),
   ];
 
+  /** The menu closes the moment it is clicked, so a toast is the only place this
+   *  action can speak from — and it used to say nothing either way: an awaited-nowhere
+   *  promise, success indistinguishable from a clipboard refusal. `message.*?.` —
+   *  outside AppProviders (component tests) `useApp` returns an empty object. */
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(artifactHref(artifact.id));
+      message.success?.(t.gallery.linkCopied);
+    } catch {
+      // Not describeActionError: the clipboard refusing is not a backend problem,
+      // and "the backend is not ready" would send the user to the wrong place.
+      message.error?.(t.gallery.linkCopyFailed);
+    }
+  }
+
   function handleMenuClick(key: string) {
     dispatchMenuAction(key, {
       pin: () => toggleArtifactPin.mutate(artifact.id),
-      copyLink: () => navigator.clipboard.writeText(artifactHref(artifact.id)),
+      copyLink: () => void copyLink(),
       share: () => setIsShareOpen(true),
-      unpublish: () => unpublishArtifact.mutate(artifact.id),
+      // Confirmed first: the consequence lands on other people — every recipient
+      // loses access — which is exactly the sentence the dialog makes the user read.
+      unpublish: () =>
+        confirmDestructive({
+          title: t.gallery.removeConfirmTitle,
+          body: t.gallery.removeConfirmBody(artifact.title),
+          confirmLabel: t.gallery.removeConfirm,
+          onConfirm: () => unpublishArtifact.mutate(artifact.id),
+        }),
     });
   }
 
@@ -82,7 +110,9 @@ const ArtifactCard: React.FC<ArtifactCardProps> = ({ artifact, onOpen }) => {
             returns as `type` once the backend adds it (types/api/artifact.ts). */}
         <span className={styles.thumbnail} aria-hidden="true" data-testid="artifact-thumbnail">
           <DashboardOutlined className={styles.thumbnailIcon} />
-          {isSharedToMe && <span className={styles.sharedToMeOverlay}>Shared to me</span>}
+          {isSharedToMe && (
+            <span className={styles.sharedToMeOverlay}>{t.galleryHeader.sharedToMe}</span>
+          )}
         </span>
         <span className={styles.body}>
           <span className={styles.titleRow}>
@@ -95,7 +125,9 @@ const ArtifactCard: React.FC<ArtifactCardProps> = ({ artifact, onOpen }) => {
           )}
           <span className={styles.metaRow} aria-hidden="true">
             <span className={styles.time}>{formatRelativeTime(artifact.createdAt)}</span>
-            {artifact.isShared && <span className={styles.sharedBadge}>Shared</span>}
+            {artifact.isShared && (
+              <span className={styles.sharedBadge}>{t.galleryHeader.sharedBadge}</span>
+            )}
             {isSharedToMe && (
               <span className={styles.sharedByBadge}>
                 <UsergroupAddOutlined /> {artifact.ownerDisplay}
