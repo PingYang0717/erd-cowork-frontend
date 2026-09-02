@@ -49,6 +49,11 @@ mapped type 保證兩邊不會漏——但保證不了 kind 標錯(`kind: 'strin
 欄位編譯得過),這靠 review。
 
 **明確不做的**:enum 值驗證(`status` 收到未知值由 UI 的 default 分支處理)、
-巢狀物件(只支援 `array of contract`)、mutation 回應的 contract(pin / rename
-的回應是逐欄位套用,尚未納入)。要推翻第 4 條(升級成 schema 函式庫)時,重寫
+巢狀物件(只支援 `array of contract`)。mutation 回應的判準(2026-09-03 修訂):
+**回應無人讀的不進 contract**(session pin / rename / publish——型別宣告在那裡
+的角色是文件,檢查沒人站在上面的值是儀式)、**會被寫進 cache 或決定畫面狀態的
+必須進**(artifact pin / repair 走 api 層 raise;shares 的回應合法地允許不是
+清單,故在 hook 層嘗試性讀取)。contract 的必要欄位也只收「用途上不能沒有」的:
+pin 只有 `pinnedAt` 必要,`owner`/`isOwn` optional 且 cache 端**合併**——回應少帶
+的欄位讓列上原值存活,而不是被 undefined 覆蓋。要推翻第 4 條(升級成 schema 函式庫)時,重寫
 的是全部 contract 宣告,不是呼叫端。
