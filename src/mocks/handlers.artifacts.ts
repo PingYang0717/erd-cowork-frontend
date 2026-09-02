@@ -172,9 +172,24 @@ export const artifactHandlers = [
   // One endpoint, no body: the backend decides the direction and answers with the
   // Artifact, whose `pinnedAt` is what the client reads the new state from.
   http.post('/api/artifacts/:id/pin', ({ params }) => {
-    const existing = artifacts.read().find((artifact) => artifact.id === params.id);
-    return updateArtifact(params.id, {
-      pinnedAt: existing?.pinnedAt == null ? new Date().toISOString() : null,
+    const all = artifacts.read();
+    const existing = all.find((artifact) => artifact.id === params.id);
+    if (!existing) {
+      return new HttpResponse(null, { status: 404 });
+    }
+    const pinnedAt = existing.pinnedAt == null ? new Date().toISOString() : null;
+    artifacts.write(
+      all.map((artifact) => (artifact.id === params.id ? { ...artifact, pinnedAt } : artifact)),
+    );
+    // Answers with what the toggle settled, not with the whole Artifact — and names its
+    // subject `artifactId`, not `id`. Kept faithful on purpose: a mock that answered
+    // with a full DTO would let a client reading `id` pass here and fail in production,
+    // which is exactly what happened.
+    return HttpResponse.json({
+      artifactId: existing.id,
+      pinnedAt,
+      owner: existing.ownerId,
+      isOwn: existing.ownerId === currentUser.id,
     });
   }),
 

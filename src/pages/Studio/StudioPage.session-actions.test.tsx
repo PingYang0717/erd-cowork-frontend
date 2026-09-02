@@ -1,7 +1,9 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { http } from 'msw';
 import { beforeEach, describe, expect, it } from 'vitest';
 
+import { server } from '@/mocks/server';
 import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
 import { useStudioLayoutStore } from '@/stores/useStudioLayoutStore';
 import { renderStudio, waitForComposer } from '@/test/renderStudio';
@@ -33,6 +35,62 @@ describe('Session row actions', () => {
 
     expect(await screen.findByRole('button', { name: 'Pareto — W13' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Defect pareto — W12' })).not.toBeInTheDocument();
+  });
+
+  /** `['sessions']` is a prefix of every detail key, so a non-exact invalidate after a
+   *  rename dragged a refetch of whatever session was OPEN along with it — the whole
+   *  thread re-downloaded because some other row changed its name. The mutations
+   *  invalidate exactly, and this counts the wire to keep them that way. */
+  it('renaming one session does not re-download the session that is open', async () => {
+    let openDetailFetches = 0;
+    server.use(
+      // Counting tap: returning undefined falls through to the real handler.
+      http.get('/api/sessions/session-1', () => {
+        openDetailFetches += 1;
+        return undefined;
+      }),
+    );
+    const user = userEvent.setup();
+    renderStudio();
+
+    // Open session-1, then rename session-2.
+    await user.click(await screen.findByRole('button', { name: 'SPC — Vt (gate CD)' }));
+    await waitForComposer();
+    const fetchesBeforeRename = openDetailFetches;
+
+    await openMenuOf(user, 'Defect pareto — W12');
+    await user.click(await screen.findByRole('menuitem', { name: 'Rename' }));
+    const input = await screen.findByRole('textbox', { name: 'Rename Defect pareto — W12' });
+    await user.clear(input);
+    await user.type(input, 'Pareto — W13{Enter}');
+    await screen.findByRole('button', { name: 'Pareto — W13' });
+
+    expect(openDetailFetches).toBe(fetchesBeforeRename);
+  });
+
+  /** An Artifact carries the name of the session that produced it, denormalised, so the
+   *  Gallery can say where a card came from without fetching the session list. Renaming
+   *  therefore has to reach that copy — and it cannot wait for a remount to fix itself,
+   *  because the rail's badge keeps the artifacts list mounted on every page. */
+  it('renaming a session updates the name its Artifacts carry', async () => {
+    const user = userEvent.setup();
+    renderStudio();
+    await screen.findByRole('button', { name: 'SPC — Vt (gate CD)' });
+
+    await openMenuOf(user, 'SPC — Vt (gate CD)');
+    await user.click(await screen.findByRole('menuitem', { name: 'Rename' }));
+    const input = await screen.findByRole('textbox', { name: 'Rename SPC — Vt (gate CD)' });
+    await user.clear(input);
+    await user.type(input, 'Vt tracking — Aug{Enter}');
+    await screen.findByRole('button', { name: 'Vt tracking — Aug' });
+
+    await user.click(screen.getByRole('button', { name: /^Artifacts/ }));
+    const card = (
+      await screen.findByRole('button', { name: 'SPC analysis — Vt (gate CD)' })
+    ).closest('[role="listitem"]') as HTMLElement;
+
+    expect(card).toHaveTextContent('Vt tracking — Aug');
+    expect(card).not.toHaveTextContent('SPC — Vt (gate CD)');
   });
 
   it('pins a recent session and finds it under Pinned', async () => {

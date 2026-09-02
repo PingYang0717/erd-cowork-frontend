@@ -24,17 +24,27 @@ export function useToggleArtifactPin() {
 
   return useMutation({
     mutationFn: (id: string) => toggleArtifactPin(id),
-    onSuccess: (updated) => {
-      // Merged onto the cached row, not written over it. The answer carries the pin
-      // state, but nothing promises it carries every other field — and a row that
-      // silently loses one is a row the UI then reads wrongly. Whatever the response
-      // does bring wins; the rest stays.
+    onSuccess: (result, id) => {
+      // The answer is not an Artifact — it names its subject `artifactId`, not `id`, and
+      // carries only what the toggle settled. So the fields it does bring are applied by
+      // name rather than spread: spreading would have put a stray `artifactId` on the
+      // row, and matching on `result.id` (which does not exist) found nothing at all,
+      // which is why the button used to sit still after a successful pin.
       queryClient.setQueryData<Artifact[]>(artifactsQueryKey, (previous) =>
         previous?.map((artifact) =>
-          artifact.id === updated.id ? { ...artifact, ...updated } : artifact,
+          artifact.id === id
+            ? {
+                ...artifact,
+                pinnedAt: result.pinnedAt,
+                owner: result.owner,
+                isOwn: result.isOwn,
+              }
+            : artifact,
         ),
       );
-      queryClient.invalidateQueries({ queryKey: artifactsQueryKey });
+      // No invalidate to follow it: the answer holds everything the toggle changed, and
+      // the rail's badge keeps this list mounted on every page — a refetch here was one
+      // full list download per pin, anywhere in the app.
     },
     onError: toastError,
   });
@@ -58,7 +68,8 @@ export function useUnpublishArtifact() {
       queryClient.setQueryData<Artifact[]>(artifactsQueryKey, (previous) =>
         previous?.filter((artifact) => artifact.id !== unpublishedId),
       );
-      queryClient.invalidateQueries({ queryKey: artifactsQueryKey });
+      // No invalidate: the filter above is the whole change — the row is gone, and a
+      // refetch would only confirm a list that was just made correct.
     },
     onError: toastError,
   });
@@ -72,10 +83,31 @@ export function useUpdateArtifactShares() {
   return useMutation({
     mutationFn: ({ id, update }: { id: string; update: ArtifactShareUpdate }) =>
       updateArtifactShares(id, update),
-    onSuccess: (_result, { id }) => {
-      queryClient.invalidateQueries({ queryKey: artifactSharesQueryKey(id) });
-      // `isShared` lives on the Artifact, so the list has to hear about it too.
-      queryClient.invalidateQueries({ queryKey: artifactsQueryKey });
+    onSuccess: (result, { id }) => {
+      // The PATCH answers with the new share list, so refetching it right back would be
+      // asking for what is already in hand. Guarded, because a body that is not a list
+      // (an envelope, an error rendered as JSON) must fall back to a refetch rather than
+      // be written into the cache as-is.
+      if (Array.isArray(result)) {
+        queryClient.setQueryData(artifactSharesQueryKey(id), result);
+        // `isShared` lives on the Artifact row, and the list in hand is what decides it.
+        queryClient.setQueryData<Artifact[]>(artifactsQueryKey, (previous) =>
+          previous?.map((artifact) =>
+            artifact.id === id ? { ...artifact, isShared: result.length > 0 } : artifact,
+          ),
+        );
+      } else {
+        // `refetchType: 'none'` — mark it stale, do not go and get it now. Submitting
+        // closes the dialog, but the close happens in the caller's own onSuccess, one
+        // step after this: a plain invalidate here caught the query while it was still
+        // mounted and fired a request for a list nobody was about to look at. Stale is
+        // enough — the dialog refetches when it is next opened.
+        queryClient.invalidateQueries({
+          queryKey: artifactSharesQueryKey(id),
+          refetchType: 'none',
+        });
+        queryClient.invalidateQueries({ queryKey: artifactsQueryKey, exact: true });
+      }
     },
     onError: toastError,
   });

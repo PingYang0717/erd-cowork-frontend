@@ -22,20 +22,34 @@ export const getArtifactRawHtml = (artifactId: string, signal?: AbortSignal) =>
     signal,
   });
 
+/** What the pin endpoint answers with. Not an `Artifact`: it names the subject
+ *  `artifactId` rather than `id`, and carries only what the toggle settled. */
+export interface ArtifactPinResult {
+  artifactId: string;
+  pinnedAt: string | null;
+  owner: string;
+  isOwn: boolean;
+}
+
 /** Toggles the pin. One endpoint and no body: the backend decides the direction, and the
- *  Artifact it answers with carries the `pinnedAt` that resulted — which is what the
- *  button reads its new state from. Asserting a direction from state the client read a
- *  while ago would be guessing at what the server already knows. */
-export const toggleArtifactPin = (id: string) => apiClient.post<Artifact>(`/artifacts/${id}/pin`);
+ *  answer carries the `pinnedAt` that resulted — which is what the button reads its new
+ *  state from. Asserting a direction from state the client read a while ago would be
+ *  guessing at what the server already knows. */
+export const toggleArtifactPin = (id: string) =>
+  apiClient.post<ArtifactPinResult>(`/artifacts/${id}/pin`);
 
 /** Publishing is what makes an Artifact available to other people — and what sharing
  *  rests on. It carries the title the Artifact goes on the shelf under: the Gallery names
  *  a card by it, so it is the user's to write rather than the run's to inherit.
  *
  *  The two directions are split by method rather than a body flag, and the backend stamps
- *  `publishedAt` itself: the client never sends a time it believes it is. */
+ *  `publishedAt` itself: the client never sends a time it believes it is.
+ *
+ *  The answer is `unknown` because nobody has confirmed it is an `Artifact` and no caller
+ *  reads it — the list is refetched instead. A guessed type here is worse than none: it
+ *  invites the next reader to skip that refetch and merge a shape that may not exist. */
 export const publishArtifact = (id: string, title: string) =>
-  apiClient.post<Artifact>(`/artifacts/${id}/publish`, { title });
+  apiClient.post<unknown>(`/artifacts/${id}/publish`, { title });
 
 /** Takes an Artifact off the shelf — the reverse of `publishArtifact`, on the same path.
  *
@@ -59,6 +73,12 @@ export const listArtifactShares = async (id: string): Promise<DirectoryEntry[]> 
 
 /** Changes the share list by delta. PATCH with what to add and what to remove, rather
  *  than PUT with the whole list: sending the list would make two people editing the same
- *  Artifact overwrite each other, the second one silently undoing the first. */
+ *  Artifact overwrite each other, the second one silently undoing the first.
+ *
+ *  The answer is `unknown`, not `DirectoryEntry[]`. It was typed as the list once, and it
+ *  is not always one — which is why the caller narrows before using it. Under the old
+ *  type that narrowing read as dead code inviting deletion, and deleting it writes a
+ *  non-list into the cache the dialog maps over. `unknown` makes the check the compiler's
+ *  business rather than a comment's. */
 export const updateArtifactShares = (id: string, update: ArtifactShareUpdate) =>
-  apiClient.patch<DirectoryEntry[]>(`/artifacts/${id}/share`, update);
+  apiClient.patch<unknown>(`/artifacts/${id}/share`, update);
