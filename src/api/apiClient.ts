@@ -35,7 +35,13 @@ export const getAuthHeaders = (): Record<string, string> => authHeaderProvider()
  *  registering interceptors, swapping the adapter in tests. Endpoint modules use
  *  `apiClient` below, which is typed for what the response interceptor actually
  *  returns. */
-export const httpClient = axios.create({ baseURL: '/api' });
+/** Where every request goes. Exported because the streaming endpoint reaches the network
+ *  through raw `fetch` (axios cannot surface a body incrementally) and so cannot inherit
+ *  this from the axios instance — with the prefix written out a second time there, moving
+ *  it here would have quietly left the stream pointing at the old one. */
+export const API_BASE_URL = '/api';
+
+export const httpClient = axios.create({ baseURL: API_BASE_URL });
 
 httpClient.interceptors.request.use((config) => {
   const headers = getAuthHeaders();

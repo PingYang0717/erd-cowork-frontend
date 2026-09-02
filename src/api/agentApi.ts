@@ -1,4 +1,4 @@
-import { getAuthHeaders } from '@/api/apiClient';
+import { API_BASE_URL, getAuthHeaders } from '@/api/apiClient';
 import type { AgentEvent } from '@/types/api/agentEvent';
 import { createSseParser } from '@/utils/sseParser';
 
@@ -32,7 +32,7 @@ export interface SendMessageArgs {
 export async function* streamAgentMessage(
   args: SendMessageArgs,
 ): AsyncGenerator<AgentEvent, void, void> {
-  const response = await fetch(`/api/sessions/${args.sessionId}/messages`, {
+  const response = await fetch(`${API_BASE_URL}/sessions/${args.sessionId}/messages`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
