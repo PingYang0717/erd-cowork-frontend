@@ -57,6 +57,22 @@ describe('Switching the interface language', () => {
     expect(await screen.findByText(zhTW.settings.theme)).toBeInTheDocument();
   });
 
+  /** The trigger opens a panel, and a reader has to hear that — the same contract
+   *  VersionSwitcher's trigger keeps (A-2). antd's Popover adds nothing to a custom
+   *  child, so the button carries the state itself. */
+  it('announces the popup and its open state on the trigger', async () => {
+    const user = userEvent.setup();
+    renderSettings();
+
+    const trigger = screen.getByRole('button', { name: 'Settings' });
+    expect(trigger).toHaveAttribute('aria-haspopup', 'dialog');
+    expect(trigger).toHaveAttribute('aria-expanded', 'false');
+
+    await user.click(trigger);
+
+    expect(trigger).toHaveAttribute('aria-expanded', 'true');
+  });
+
   /** Both languages are named, and the one in use is marked — a reader who cannot read
    *  the current interface still has to be able to find their own. A toggle showing only
    *  the destination could not do that. */
