@@ -208,6 +208,11 @@ const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ sessionId, open, onCl
       onCancel={onClose}
       title={t.connectors.title}
       width={720}
+      // The other three dialogs already do this; this one is rendered unconditionally by
+      // ChatComposer with `open` only hiding it, so without it the whole catalogue — the
+      // list, the filters, the search — stays in the document for the rest of the
+      // session and is re-rendered along with everything above it.
+      destroyOnHidden
       styles={{
         body: {
           display: 'flex',
