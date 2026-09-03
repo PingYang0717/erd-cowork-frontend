@@ -16,7 +16,7 @@ import ArtifactsGalleryPage from './ArtifactsGalleryPage';
  *  own data rather than take the seeded three. */
 const artifactDto = (over: Partial<Artifact> & Pick<Artifact, 'id' | 'title'>): Artifact => {
   return {
-    version: 1,
+    version: 'version 1',
     sessionId: 'session-1',
     sessionTitle: 'SPC — Vt (gate CD)',
     pinnedAt: null,
