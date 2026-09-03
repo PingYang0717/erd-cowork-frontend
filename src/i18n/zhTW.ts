@@ -61,6 +61,10 @@ export const zhTW = {
     switchVersion: '切換 Artifact',
     /** 個人副本不能再往下分享——分享只有原擁有者做得到(CONTEXT.md)。 */
     shareNotOwner: '只有原擁有者可以分享',
+    /** The full-page view's menu, which lists one Artifact's own versions rather than
+     *  a session's outputs. Those are different things and the count belongs to the
+     *  other one. */
+    ownVersionsTitle: '這個 Artifact 的版本',
     versionMenuTitle: (count: number) => `此對話的 Artifact · 共 ${count} 個，可切換後再發布`,
   },
 

@@ -45,6 +45,7 @@ export const en: Translations = {
     goToArtifacts: 'Go to Artifacts',
     switchVersion: 'Switch Artifact',
     shareNotOwner: 'Only the owner can share this Artifact',
+    ownVersionsTitle: 'Versions of this Artifact',
     versionMenuTitle: (count: number) =>
       `${count} Artifact${count === 1 ? '' : 's'} from this conversation · switch before publishing`,
   },

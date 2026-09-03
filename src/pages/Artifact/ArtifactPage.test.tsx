@@ -109,6 +109,15 @@ describe('Artifact full-page view', () => {
     await user.click(await screen.findByRole('button', { name: 'Switch Artifact' }));
     const items = await screen.findAllByRole('menuitem');
     expect(items).toHaveLength(1);
+
+    // Named for what it lists. It used to carry the Studio panel's heading — "N Artifacts
+    // from this conversation" — on a page with no conversation and nothing to switch to.
+    expect(screen.getByText(en.artifact.ownVersionsTitle)).toBeInTheDocument();
+
+    // No `vN` here. That number counts outputs within the session; under a heading about
+    // this Artifact's versions it would be read as "version N of this Artifact", which is
+    // a different thing and not one that exists yet (artifact-model-decisions Q2/Q6).
+    expect(within(items[0]).queryByText(/^v\d+$/)).not.toBeInTheDocument();
     expect(items[0]).toHaveTextContent('SPC analysis — Vt (gate CD)');
     expect(items[0]).toHaveAttribute('aria-current', 'true');
   });

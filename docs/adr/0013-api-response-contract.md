@@ -10,11 +10,15 @@
 `CanceledError`(axios)、另一個拼作 `AbortError`(fetch)——同一個事實,依傳輸
 各記各的。
 
-`apiError.ts` 提供五個判讀:`isOffline` / `isCanceled` / `httpStatus` /
+`apiError.ts` 提供六個判讀:`isOffline` / `isCanceled` / `isNotFound` / `httpStatus` /
 `errorCode` / `errorMessage`,認得 axios、raw fetch(agent stream)與後端自己的
 `{ code, message }` body 三種長相。取消判斷以 `name` 而非 `instanceof Error`——
 fetch 的 abort 是 DOMException,跨 realm(測試的 jsdom、瀏覽器的 frame)過不了
 instanceof,name 在哪裡都誠實。
+
+`isNotFound`(2026-09-04 新增)單獨挑出 404,因為只有它表示「這個東西不在了」。500、
+逾時、連不上都不說明存在與否——把它們一起說成「已刪除」,是講一件 client 無從知道的事,
+而使用者會照著行動:被告知刪除的人不會再去找一個其實還在的東西。
 
 ## 已撤回的:宣告式 response contract
 

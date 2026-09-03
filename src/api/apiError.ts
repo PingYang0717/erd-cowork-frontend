@@ -42,7 +42,7 @@ export const isCanceled = (error: unknown): boolean =>
  *  nothing about whether it exists — telling the reader it was deleted on the strength
  *  of those is stating something the client cannot know, and it is the kind of claim
  *  someone acts on by giving up looking for it. */
-export const isNotFoundError = (error: unknown): boolean => httpStatus(error) === 404;
+export const isNotFound = (error: unknown): boolean => httpStatus(error) === 404;
 
 /** The HTTP status the backend answered with, or null when there was no answer. */
 export const httpStatus = (error: unknown): number | null =>

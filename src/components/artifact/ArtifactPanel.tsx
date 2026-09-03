@@ -8,7 +8,7 @@ import {
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { isNotFoundError } from '@/api/apiError';
+import { isNotFound } from '@/api/apiError';
 import Tooltip from '@/components/common/Tooltip';
 import { useArtifactContent } from '@/hooks/useArtifactContent';
 import { usePublishArtifact } from '@/hooks/useArtifactMutations';
@@ -190,6 +190,10 @@ const ArtifactPanelContent: React.FC<ArtifactPanelContentProps> = ({
             versions={enrichedVersions}
             activeVersion={{ ...activeVersion, publishedAt: artifact?.publishedAt ?? null }}
             onSelect={onSelectVersion}
+            // What this session produced, counted — and the `vN` says how many outputs
+            // in each one is, which is what that number means here.
+            heading={t.artifact.versionMenuTitle(enrichedVersions.length)}
+            showOrdinal
           />
         )}
         {isPublished ? (
@@ -256,7 +260,7 @@ const ArtifactPanelContent: React.FC<ArtifactPanelContentProps> = ({
           <p role="status" className={styles.frameNotice}>
             {/* Same rule as the full-page view: gone is a 404, everything else is a
                 failure to load and must not be reported as a deletion. */}
-            {isNotFoundError(error) ? t.artifact.missing : t.artifact.loadFailed}
+            {isNotFound(error) ? t.artifact.missing : t.artifact.loadFailed}
           </p>
         ) : null}
       </div>

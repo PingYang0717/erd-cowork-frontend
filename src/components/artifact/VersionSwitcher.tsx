@@ -17,9 +17,23 @@ interface VersionSwitcherProps {
   versions: ArtifactVersion[];
   activeVersion: ArtifactVersion | undefined;
   onSelect: (id: string) => void;
+  /** What the menu is a list of. The Studio panel lists a session's outputs and counts
+   *  them; the full-page view lists one Artifact's own versions, where that count belongs
+   *  to something else entirely. */
+  heading: string;
+  /** Whether to mark each row with its `vN`. That number says how many outputs into the
+   *  session this one is — true of a session's list, and answering a question the
+   *  full-page menu is not asking (artifact-model-decisions Q2). */
+  showOrdinal: boolean;
 }
 
-const VersionSwitcher: React.FC<VersionSwitcherProps> = ({ versions, activeVersion, onSelect }) => {
+const VersionSwitcher: React.FC<VersionSwitcherProps> = ({
+  versions,
+  activeVersion,
+  onSelect,
+  heading,
+  showOrdinal,
+}) => {
   const t = useTranslations();
   const [isOpen, setIsOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -112,7 +126,7 @@ const VersionSwitcher: React.FC<VersionSwitcherProps> = ({ versions, activeVersi
           onClick={() => setIsOpen((v) => !v)}
         >
           <HistoryOutlined aria-hidden />
-          {artifactVersionLabel(activeVersion?.version) !== null && (
+          {showOrdinal && artifactVersionLabel(activeVersion?.version) !== null && (
             <span className={styles.versionTriggerN}>
               {artifactVersionLabel(activeVersion?.version)}
             </span>
@@ -126,9 +140,7 @@ const VersionSwitcher: React.FC<VersionSwitcherProps> = ({ versions, activeVersi
         // role="menu": a menu's children may only be items, and the title div was
         // an illegal child that some readers skip the whole menu over (A-2).
         <div className={styles.versionMenu}>
-          <div className={styles.versionMenuHeader}>
-            {t.artifact.versionMenuTitle(versions.length)}
-          </div>
+          <div className={styles.versionMenuHeader}>{heading}</div>
           {/* The keydown handler implements the menu keyboard contract; focus lives
               on the menuitem buttons inside, never on this wrapper. */}
           <div role="menu" aria-label="Switch Artifact" onKeyDown={handleMenuKeyDown}>
@@ -153,7 +165,7 @@ const VersionSwitcher: React.FC<VersionSwitcherProps> = ({ versions, activeVersi
                     closeAndRefocus();
                   }}
                 >
-                  {artifactVersionLabel(v.version) !== null && (
+                  {showOrdinal && artifactVersionLabel(v.version) !== null && (
                     <span className={styles.versionMenuItemN}>
                       {artifactVersionLabel(v.version)}
                     </span>
