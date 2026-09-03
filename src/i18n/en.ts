@@ -243,5 +243,8 @@ export const en: Translations = {
       `The server answered ${status}. Please try again shortly.`,
     offlineAction: 'Cannot reach the backend. Check that the service is running, then retry.',
     notReady: 'The backend is not ready yet. Please try again shortly.',
+    actionFailed: 'That did not go through. Please try again shortly.',
+    actionFailedWithStatus: (status: number) =>
+      `That did not go through (the server answered ${status}). Please try again shortly.`,
   },
 };

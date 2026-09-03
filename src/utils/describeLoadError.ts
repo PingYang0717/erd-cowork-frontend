@@ -2,6 +2,15 @@ import { errorMessage, httpStatus, isOffline } from '@/api/apiError';
 import { getTranslations } from '@/i18n/useTranslations';
 import type { Translations } from '@/i18n/zhTW';
 
+/** Whether the backend answered "this is not here" as opposed to failing to answer.
+ *
+ *  Only a 404 says the thing is gone. A 500, a timeout or an unreachable backend say
+ *  nothing about whether it exists — telling the reader it was deleted on the strength of
+ *  those is stating something the client cannot know, and it is the kind of claim someone
+ *  acts on by giving up looking for it.
+ */
+export const isNotFoundError = (error: unknown): boolean => httpStatus(error) === 404;
+
 /**
  * What to tell the user about a failed load.
  *
@@ -14,15 +23,6 @@ import type { Translations } from '@/i18n/zhTW';
  * long" — it is an aborted request. Both land here as a response-less AxiosError and both
  * are, from the user's side, the same thing: nothing came back.
  */
-/** Whether the backend answered "this is not here" as opposed to failing to answer.
- *
- *  Only a 404 says the thing is gone. A 500, a timeout or an unreachable backend say
- *  nothing about whether it exists — telling the reader it was deleted on the strength of
- *  those is stating something the client cannot know, and it is the kind of claim someone
- *  acts on by giving up looking for it.
- */
-export const isNotFoundError = (error: unknown): boolean => httpStatus(error) === 404;
-
 export const describeLoadError = (
   error: Error,
   t: Translations['errors'] = getTranslations().errors,
@@ -40,10 +40,18 @@ export const describeLoadError = (
   return { heading: t.loadFailedHeading, detail: error.message };
 };
 
-/** What to tell the user about a failed action (mutation). The backend's own
- *  `{ code, message }` wins; a backend that is not answering gets named; anything
- *  else falls back to "not ready yet" — per the decision that nothing is disabled
- *  up front, the error is how the user learns an endpoint has not landed. */
+/** What to tell the user about a failed action (mutation).
+ *
+ *  The backend's own `{ code, message }` wins — it knows what went wrong. A backend that
+ *  is not answering gets named. After that the status decides:
+ *
+ *  "Not ready yet" is only true of a status that means *no such endpoint*. It used to be
+ *  the catch-all, from the decision that nothing is disabled up front, so the error was
+ *  how a user learned an endpoint had not landed (ADR-0006). Every endpoint is connected
+ *  now, so a 500 or a 403 under that wording told the reader the feature was unbuilt when
+ *  what actually happened was a server error or a refusal — a specific claim on a generic
+ *  failure, and one they act on by waiting for something that is already there.
+ */
 export const describeActionError = (error: unknown): string => {
   const t = getTranslations().errors;
   if (isOffline(error)) {
@@ -53,5 +61,9 @@ export const describeActionError = (error: unknown): string => {
   if (message !== null) {
     return message;
   }
-  return t.notReady;
+  const status = httpStatus(error);
+  if (status === 404 || status === 501) {
+    return t.notReady;
+  }
+  return status === null ? t.actionFailed : t.actionFailedWithStatus(status);
 };

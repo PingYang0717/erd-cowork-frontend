@@ -281,6 +281,9 @@ export const zhTW = {
      *  for two. */
     offlineAction: '無法連線到後端服務，請確認服務已啟動後重試。',
     notReady: '後端尚未就緒，請稍後再試。',
+    /** The action failed and the backend said nothing readable about why. */
+    actionFailed: '操作失敗,請稍後再試。',
+    actionFailedWithStatus: (status: number) => `操作失敗(伺服器回應 ${status}),請稍後再試。`,
   },
 } as const;
 
