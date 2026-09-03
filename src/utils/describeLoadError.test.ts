@@ -43,6 +43,24 @@ describe('describeLoadError', () => {
     });
   });
 
+  /** The backend's own words win, the same rule describeActionError follows. Skipped
+   *  here, a load that failed with a reason attached was reported as a bare number —
+   *  `伺服器回應 403` where the backend had already written "no access to this session". */
+  it('shows the reason the backend gave, in preference to its status code', () => {
+    const refused = axiosError('ERR_BAD_REQUEST', {
+      status: 403,
+      statusText: 'Forbidden',
+      data: { message: '沒有這個 session 的存取權' },
+      headers: new AxiosHeaders(),
+      config: { headers: new AxiosHeaders() },
+    });
+
+    expect(describeLoadError(refused)).toEqual({
+      heading: en.errors.loadFailedHeading,
+      detail: '沒有這個 session 的存取權',
+    });
+  });
+
   /** A render error is not a request: there is no status to name, and its message is the
    *  only thing that says what went wrong. */
   it('passes a plain render error straight through', () => {
