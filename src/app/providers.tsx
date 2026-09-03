@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { App as AntdApp, ConfigProvider } from 'antd';
 import enUS from 'antd/locale/en_US';
 import zhTW from 'antd/locale/zh_TW';
-import React, { type CSSProperties, type ReactNode, useEffect } from 'react';
+import React, { type CSSProperties, type ReactNode, useEffect, useMemo } from 'react';
 
 import { useLanguageStore } from '@/stores/useLanguageStore';
 import { useThemeStore } from '@/stores/useThemeStore';
@@ -53,6 +53,11 @@ const AppProviders: React.FC<AppProvidersProps> = ({ children }) => {
   // than as a choice.
   const language = useLanguageStore((s) => s.language);
   const tokens = THEME_TOKENS[isDarkMode ? 'dark' : 'light'];
+  // Built once per theme, not once per render. antd caches its derived tokens and the
+  // CSS it generates against this object's identity, so handing it a fresh one — which
+  // `buildAntdTheme(isDarkMode)` inline did — throws that cache away for a value that
+  // only changes when the theme does.
+  const antdTheme = useMemo(() => buildAntdTheme(isDarkMode), [isDarkMode]);
 
   // Syncing an external system — the document element React does not own — is the
   // one thing useEffect is for. index.html hard-codes zh-Hant; without this a
@@ -64,7 +69,7 @@ const AppProviders: React.FC<AppProvidersProps> = ({ children }) => {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <ConfigProvider locale={language === 'en' ? enUS : zhTW} theme={buildAntdTheme(isDarkMode)}>
+      <ConfigProvider locale={language === 'en' ? enUS : zhTW} theme={antdTheme}>
         <AntdApp>
           <ThemedSurface tokens={tokens}>{children}</ThemedSurface>
         </AntdApp>
