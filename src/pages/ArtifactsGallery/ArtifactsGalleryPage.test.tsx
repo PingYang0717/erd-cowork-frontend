@@ -434,6 +434,13 @@ describe('Artifacts gallery', () => {
     // Shared-to-me cards carry the thumbnail overlay badge; owned ones don't.
     expect(within(dailyCard).getByText('Shared to me')).toBeInTheDocument();
     expect(within(spcCard).queryByText('Shared to me')).not.toBeInTheDocument();
+
+    // Two different facts, so two different icons: the badge says the Artifact reached
+    // you through a share (a group), the line under it says who sent it (one person).
+    // They were the wrong way round — the owner's name wore the group icon and the
+    // badge had none at all.
+    expect(dailyCard.querySelector('.anticon-usergroup-add')).toBeInTheDocument();
+    expect(dailyCard.querySelector('.anticon-user')).toBeInTheDocument();
   });
 
   // The badge is asserted from seeded data rather than by sharing here: the recipient
