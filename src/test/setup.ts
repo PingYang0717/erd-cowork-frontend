@@ -1,5 +1,6 @@
 // Seeds the anonymous user id BEFORE the mocks' module graph loads — fixtures capture
 // `currentUser.id` at module-load time. Side-effect import; must stay first.
+
 import './seedTestIdentity';
 import '@testing-library/jest-dom/vitest';
 
