@@ -17,6 +17,11 @@ const DAY_MS = 24 * HOUR_MS;
 export const formatRelativeTime = (isoString: string, now: Date = new Date()): string => {
   const t = getTranslations().time;
   const then = new Date(isoString);
+  // A timestamp that does not parse renders as nothing, not as "NaN 年 NaN 月" —
+  // the rail's time is a decoration, and a wrong-looking one reads as data corruption.
+  if (Number.isNaN(then.getTime())) {
+    return '';
+  }
   const diffMs = now.getTime() - then.getTime();
 
   if (diffMs < MINUTE_MS) {

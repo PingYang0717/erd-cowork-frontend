@@ -8,6 +8,7 @@ import {
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { isNotFound } from '@/api/apiError';
 import Tooltip from '@/components/common/Tooltip';
 import { useArtifactContent } from '@/hooks/useArtifactContent';
 import { usePublishArtifact } from '@/hooks/useArtifactMutations';
@@ -76,6 +77,10 @@ const ArtifactPanelView: React.FC<ArtifactPanelViewProps> = ({ sessionId }) => {
       {
         artifactId: streamedArtifact.artifactId,
         title: streamedArtifact.title,
+        // Next in the same message-order numbering: the history refetch has not landed
+        // yet, but this row will be exactly derived.length + 1 when it does. Without
+        // this the newest row sat unmarked for the seconds the run was still open.
+        version: derived.length + 1,
       },
     ];
   }, [detail.messages, streamedArtifact]);
@@ -130,7 +135,7 @@ const ArtifactPanelContent: React.FC<ArtifactPanelContentProps> = ({
   const reloadNonce = useActiveRunStore((s) => s.artifactReloadNonce);
   const bumpArtifactReload = useActiveRunStore((s) => s.bumpArtifactReload);
   const isRunStreaming = useActiveRunStore((s) => s.isRunStreaming);
-  const { data, isError } = useArtifactContent(artifactId, reloadNonce);
+  const { data, isError, error } = useArtifactContent(artifactId, reloadNonce);
   const { data: artifacts } = useArtifacts();
   const setDisplayedArtifactId = useActiveRunStore((s) => s.setDisplayedArtifactId);
   const artifact = artifacts?.find((a) => a.id === artifactId);
@@ -164,7 +169,9 @@ const ArtifactPanelContent: React.FC<ArtifactPanelContentProps> = ({
         return {
           ...version,
           title: listed?.title ?? version.title,
-          version: listed?.version,
+          // The backend's number when the list has caught up, the derived one until
+          // then — they agree, both counting artifact-bearing messages in order.
+          version: listed?.version ?? version.version,
           publishedAt: listed?.publishedAt,
         };
       }),
@@ -183,6 +190,10 @@ const ArtifactPanelContent: React.FC<ArtifactPanelContentProps> = ({
             versions={enrichedVersions}
             activeVersion={{ ...activeVersion, publishedAt: artifact?.publishedAt ?? null }}
             onSelect={onSelectVersion}
+            // What this session produced, counted — and the `vN` says how many outputs
+            // in each one is, which is what that number means here.
+            heading={t.artifact.versionMenuTitle(enrichedVersions.length)}
+            showOrdinal
           />
         )}
         {isPublished ? (
@@ -247,7 +258,9 @@ const ArtifactPanelContent: React.FC<ArtifactPanelContentProps> = ({
           <ArtifactFrame key={`${artifactId}-${reloadNonce}`} html={data} artifactId={artifactId} />
         ) : isError ? (
           <p role="status" className={styles.frameNotice}>
-            {t.artifact.missing}
+            {/* Same rule as the full-page view: gone is a 404, everything else is a
+                failure to load and must not be reported as a deletion. */}
+            {isNotFound(error) ? t.artifact.missing : t.artifact.loadFailed}
           </p>
         ) : null}
       </div>

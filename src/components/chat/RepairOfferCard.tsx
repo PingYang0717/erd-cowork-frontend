@@ -57,7 +57,10 @@ const RepairOfferCard: React.FC<RepairOfferCardProps> = ({ offer, onConfirm, onD
 
       {offer.status === 'failed' && (
         <div className={styles.actions}>
-          <span className={styles.failed}>{t.repair.failed}</span>
+          <span className={styles.failed}>
+            {t.repair.failed}
+            {offer.failureMessage !== undefined && ` — ${offer.failureMessage}`}
+          </span>
           <button type="button" className={styles.confirm} onClick={onConfirm}>
             {t.repair.tryAgain}
           </button>

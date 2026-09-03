@@ -1,7 +1,10 @@
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { http, HttpResponse } from 'msw';
 import { beforeEach, describe, expect, it } from 'vitest';
 
+import { en } from '@/i18n/en';
+import { server } from '@/mocks/server';
 import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
 import { useStudioLayoutStore } from '@/stores/useStudioLayoutStore';
 import { renderStudio, waitForComposer } from '@/test/renderStudio';
@@ -46,5 +49,22 @@ describe('Artifact panel', () => {
     expect(srcdoc).toContain("default-src 'none'");
     expect(srcdoc).toContain("connect-src 'none'");
     expect(srcdoc.indexOf('Content-Security-Policy')).toBeLessThan(srcdoc.indexOf('<title>'));
+  });
+
+  /** Only a 404 means gone. Reported as a deletion, a server error sends the reader off
+   *  to look for an Artifact that was never removed. */
+  it('says the load failed rather than deleted when the server errors', async () => {
+    const user = userEvent.setup();
+    server.use(http.get('/api/artifacts/:id', () => new HttpResponse(null, { status: 500 })));
+    // retry off: the assertion is about which message appears, not about waiting out
+    // exponential backoff first.
+    renderStudio({ retry: false });
+
+    await user.click(await screen.findByRole('button', { name: 'SPC — Vt (gate CD)' }));
+
+    expect(
+      await screen.findByText(en.artifact.loadFailed, {}, { timeout: 4000 }),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(en.artifact.missing)).not.toBeInTheDocument();
   });
 });

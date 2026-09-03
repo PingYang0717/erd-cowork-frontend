@@ -5,6 +5,8 @@
   gap: 6px;
   padding: 12px 0;
   width: 100%;
+  /* Full height so the settings tile has slack to be pushed into. */
+  height: 100%;
 }
 
 .divider {

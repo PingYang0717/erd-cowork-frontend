@@ -203,19 +203,20 @@ QUESTION 的線路承載是後端的扁平 `Question[]`（純字串選項、`mul
 
 **`Artifact` 定版（2026-08-27）**：
 
-| 欄位                         | 型別             | 說明                                                                   |
-| ---------------------------- | ---------------- | ---------------------------------------------------------------------- |
-| `id`                         | `string`         | uuid                                                                   |
-| `title`                      | `string`         | Artifact 標題                                                          |
-| `sessionId` / `sessionTitle` | `string`         | 產生它的 session 及其標題（標題為反正規化，卡片不必再查 session 清單） |
-| `pinnedAt`                   | `string \| null` | 釘選時間戳，未釘選為 `null`                                            |
-| `publishedAt`                | `string \| null` | 發布時間戳，未發布為 `null`                                            |
-| `createdAt`                  | `string`         |                                                                        |
-| `owner` / `ownerDisplay`     | `string`         | 擁有者 id 與顯示名                                                     |
-| `canPin` / `canShare`        | `boolean`        | 權限。`canShare` 僅 owner 且非副本為 true                              |
-| `isOwn`                      | `boolean`        | 是不是自己的。**「別人分享給我的」= `!isOwn`**                         |
-| `isShared`                   | `boolean`        | 這個 Artifact 是否已被分享出去（擁有者視角）                           |
-| `hasPersonalCopy`            | `boolean`        | 自己是否已有這個 Artifact 的個人副本                                   |
+| 欄位                         | 型別             | 說明                                                                                                                                                                   |
+| ---------------------------- | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`                         | `string`         | uuid                                                                                                                                                                   |
+| `title`                      | `string`         | Artifact 標題                                                                                                                                                          |
+| `version`                    | `number`         | 這份 Artifact 在它所屬 session 裡是第幾個做出來的(**不是**這份 Artifact 自己的第幾版——那個概念尚未設計,見 artifact-model-decisions Q2/Q6)。2026-09-03 與後端確認為數字 |
+| `sessionId` / `sessionTitle` | `string`         | 產生它的 session 及其標題（標題為反正規化，卡片不必再查 session 清單）                                                                                                 |
+| `pinnedAt`                   | `string \| null` | 釘選時間戳，未釘選為 `null`                                                                                                                                            |
+| `publishedAt`                | `string \| null` | 發布時間戳，未發布為 `null`                                                                                                                                            |
+| `createdAt`                  | `string`         |                                                                                                                                                                        |
+| `owner` / `ownerDisplay`     | `string`         | 擁有者 id 與顯示名                                                                                                                                                     |
+| `canPin` / `canShare`        | `boolean`        | 權限。`canShare` 僅 owner 且非副本為 true                                                                                                                              |
+| `isOwn`                      | `boolean`        | 是不是自己的。**「別人分享給我的」= `!isOwn`**                                                                                                                         |
+| `isShared`                   | `boolean`        | 這個 Artifact 是否已被分享出去（擁有者視角）                                                                                                                           |
+| `hasPersonalCopy`            | `boolean`        | 自己是否已有這個 Artifact 的個人副本                                                                                                                                   |
 
 **`kind`（dashboard / slides）不在定版裡**，之後會以 `type` 補上。在那之前 Gallery 沒有
 縮圖區分與 Dash/Deck 標籤——不是漏做,是不拿同一個猜測標在每張卡片上。

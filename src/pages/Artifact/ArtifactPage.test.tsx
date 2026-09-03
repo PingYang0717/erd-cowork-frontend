@@ -5,6 +5,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 
 import StudioShell from '@/components/layouts/StudioShell';
+import { en } from '@/i18n/en';
 import { server } from '@/mocks/server';
 import ArtifactsGalleryPage from '@/pages/ArtifactsGallery/ArtifactsGalleryPage';
 import StudioPage from '@/pages/Studio/StudioPage';
@@ -41,9 +42,10 @@ describe('Artifact full-page view', () => {
 
     const iframe = (await screen.findByTitle('Artifact preview')) as HTMLIFrameElement;
     expect(iframe.getAttribute('srcdoc')).toContain('SPC analysis — Vt (gate CD)');
-    // No version switcher (there is no session to derive versions from), and no error
-    // screen standing in for the whole page.
-    expect(screen.queryByRole('button', { name: 'Switch Artifact' })).not.toBeInTheDocument();
+    // The switcher is unaffected: it reads the Artifact it was handed, not the session
+    // that produced it. It used to fetch the session, so a deleted one removed the menu
+    // from a page whose Artifact was perfectly fetchable.
+    expect(await screen.findByRole('button', { name: 'Switch Artifact' })).toBeInTheDocument();
     expect(screen.queryByText(/failed to load/)).not.toBeInTheDocument();
   });
 
@@ -53,6 +55,16 @@ describe('Artifact full-page view', () => {
     const iframe = (await screen.findByTitle('Artifact preview')) as HTMLIFrameElement;
     expect(iframe.getAttribute('sandbox')).toBe('allow-scripts');
     expect(iframe.getAttribute('srcdoc')).toContain('SPC analysis — Vt (gate CD)');
+  });
+
+  /** Only a 404 means gone. A 500 says nothing about whether the Artifact exists, and
+   *  a reader told it was deleted stops looking for something that is still there. */
+  it('says the load failed, not that the Artifact is gone, when the server errors', async () => {
+    server.use(http.get('/api/artifacts/:id', () => new HttpResponse(null, { status: 500 })));
+    renderArtifactPageAt('/cowork/artifact/artifact-1');
+
+    expect(await screen.findByText(en.artifact.loadFailed)).toBeInTheDocument();
+    expect(screen.queryByText(en.studio.artifactNotFound)).not.toBeInTheDocument();
   });
 
   it('shows a not-found message when the Artifact id does not exist', async () => {
@@ -90,12 +102,22 @@ describe('Artifact full-page view', () => {
 
     await screen.findByTitle('Artifact preview');
 
-    // Versions derive from the artifact's session history: session-1 seeds one
-    // artifact-bearing message, so artifact-1 is its v1 (and its only version).
-    // Switching between versions is covered in the Studio panel's suite.
+    // Only this Artifact. Its siblings from the same conversation are not its versions
+    // (artifact-model-decisions Q1) — the Studio panel lists those, because there the
+    // conversation is the context; here the reader arrived at one Artifact from the
+    // Gallery. Real versions (Q6) are not built yet.
     await user.click(await screen.findByRole('button', { name: 'Switch Artifact' }));
     const items = await screen.findAllByRole('menuitem');
     expect(items).toHaveLength(1);
+
+    // Named for what it lists. It used to carry the Studio panel's heading — "N Artifacts
+    // from this conversation" — on a page with no conversation and nothing to switch to.
+    expect(screen.getByText(en.artifact.ownVersionsTitle)).toBeInTheDocument();
+
+    // No `vN` here. That number counts outputs within the session; under a heading about
+    // this Artifact's versions it would be read as "version N of this Artifact", which is
+    // a different thing and not one that exists yet (artifact-model-decisions Q2/Q6).
+    expect(within(items[0]).queryByText(/^v\d+$/)).not.toBeInTheDocument();
     expect(items[0]).toHaveTextContent('SPC analysis — Vt (gate CD)');
     expect(items[0]).toHaveAttribute('aria-current', 'true');
   });
@@ -149,5 +171,16 @@ describe('Artifact full-page view', () => {
     expect(artifactHref('artifact-1')).toContain('/#/');
 
     openSpy.mockRestore();
+  });
+
+  /** A shared-link recipient can land here with the backend down, facing an error card
+   *  in a language they may not read. The card carries the settings entry (ErrorPanel),
+   *  so the language exit survives the very failure that hid every other entry. */
+  it('keeps a Settings entry on the failure card when the artifacts list cannot load', async () => {
+    server.use(http.get('/api/artifacts', () => new HttpResponse(null, { status: 500 })));
+    renderArtifactPageAt('/cowork/artifact/artifact-1');
+
+    expect(await screen.findByText(en.errors.loadFailedHeading)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Settings' })).toBeInTheDocument();
   });
 });

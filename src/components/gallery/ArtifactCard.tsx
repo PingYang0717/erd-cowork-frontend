@@ -7,6 +7,7 @@ import {
   PushpinOutlined,
   ShareAltOutlined,
   UsergroupAddOutlined,
+  UserOutlined,
 } from '@ant-design/icons';
 import { App, Dropdown } from 'antd';
 import React, { useState } from 'react';
@@ -111,7 +112,10 @@ const ArtifactCard: React.FC<ArtifactCardProps> = ({ artifact, onOpen }) => {
         <span className={styles.thumbnail} aria-hidden="true" data-testid="artifact-thumbnail">
           <DashboardOutlined className={styles.thumbnailIcon} />
           {isSharedToMe && (
-            <span className={styles.sharedToMeOverlay}>{t.galleryHeader.sharedToMe}</span>
+            <span className={styles.sharedToMeOverlay}>
+              <UsergroupAddOutlined />
+              {t.galleryHeader.sharedToMe}
+            </span>
           )}
         </span>
         <span className={styles.body}>
@@ -130,7 +134,7 @@ const ArtifactCard: React.FC<ArtifactCardProps> = ({ artifact, onOpen }) => {
             )}
             {isSharedToMe && (
               <span className={styles.sharedByBadge}>
-                <UsergroupAddOutlined /> {artifact.ownerDisplay}
+                <UserOutlined /> {artifact.ownerDisplay}
               </span>
             )}
           </span>

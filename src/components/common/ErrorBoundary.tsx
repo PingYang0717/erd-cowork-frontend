@@ -4,11 +4,17 @@ import { useTranslations } from '@/i18n/useTranslations';
 import { describeLoadError } from '@/utils/describeLoadError';
 
 import styles from './ErrorBoundary.module.css';
+import SettingsMenu from './SettingsMenu';
 
 interface Props {
   children: ReactNode;
   /** Shown instead of the default panel. Receives a retry that remounts the subtree. */
   fallback?: (error: Error, retry: () => void) => ReactNode;
+  /** Runs before the remount a retry causes. DataBoundary passes TanStack's reset
+   *  through here: without it, a suspense query re-throws its CACHED error the moment
+   *  the subtree remounts — the card flashed back instantly and Retry recovered
+   *  nothing, which a probe against a failing endpoint confirmed. */
+  onRetry?: () => void;
 }
 
 interface State {
@@ -34,6 +40,9 @@ class ErrorBoundary extends Component<Props, State> {
   }
 
   private readonly retry = (): void => {
+    // Order matters: reset the query error state first, then remount — remounting
+    // first re-subscribes to a query still in error and re-throws it.
+    this.props.onRetry?.();
     this.setState({ error: null });
   };
 
@@ -66,9 +75,16 @@ const ErrorPanel: React.FC<{ error: Error; onRetry: () => void }> = ({ error, on
     <div role="alert" className={styles.panel}>
       <p className={styles.heading}>{heading}</p>
       <p className={styles.message}>{detail}</p>
-      <button type="button" className={styles.retry} onClick={onRetry}>
-        {t.common.retry}
-      </button>
+      <div className={styles.actions}>
+        <button type="button" className={styles.retry} onClick={onRetry}>
+          {t.common.retry}
+        </button>
+        {/* The language exit rides the card. A failure card may be the only thing
+            left on screen (the full-page view fails whole), and its words are in a
+            language the reader may not read — settings is where the language lives,
+            so it must survive every failure that hides the rail's own entry. */}
+        <SettingsMenu variant="tile" />
+      </div>
     </div>
   );
 };

@@ -73,6 +73,10 @@ interface FileAttachmentModalProps {
   error: string;
   /** The upload in flight, or null when nothing is uploading. */
   uploadProgress: UploadProgress | null;
+  /** True while the session's file set is being written to — an upload OR a removal.
+   *  The modal's surfaces close on both: a second write started mid-flight lands on a
+   *  request already describing a different set, and Done implies the set is settled. */
+  isMutating: boolean;
   onAddFiles: (files: FileList) => void;
   onRemoveFile: (fileId: string) => void;
 }
@@ -83,13 +87,16 @@ const FileAttachmentModal: React.FC<FileAttachmentModalProps> = ({
   attachments,
   error,
   uploadProgress,
+  isMutating,
   onAddFiles,
   onRemoveFile,
 }) => {
   const t = useTranslations();
   const inputRef = useRef<HTMLInputElement>(null);
   const totalBytes = attachments.reduce((sum, a) => sum + a.sizeBytes, 0);
-  const isUploading = uploadProgress !== null;
+  // Removal counts too, not only upload: it used to gate on the upload alone, so a
+  // removal in flight left every surface open — including a second click on the same
+  // Remove button, which fired the delete twice.
 
   return (
     <Modal open={open} onCancel={onClose} title={t.fileModal.title} footer={null} destroyOnHidden>
@@ -102,7 +109,7 @@ const FileAttachmentModal: React.FC<FileAttachmentModalProps> = ({
         accept={ACCEPT_ATTRIBUTE}
         className={styles.hiddenInput}
         aria-label="Choose files"
-        disabled={isUploading}
+        disabled={isMutating}
         onChange={(e) => {
           if (e.target.files) {
             onAddFiles(e.target.files);
@@ -115,23 +122,23 @@ const FileAttachmentModal: React.FC<FileAttachmentModalProps> = ({
           removed from under one, lands on a request already describing a different set. */}
       <div
         role="button"
-        tabIndex={isUploading ? -1 : 0}
-        aria-disabled={isUploading || undefined}
-        className={isUploading ? `${styles.dropzone} ${styles.dropzoneBusy}` : styles.dropzone}
+        tabIndex={isMutating ? -1 : 0}
+        aria-disabled={isMutating || undefined}
+        className={isMutating ? `${styles.dropzone} ${styles.dropzoneBusy}` : styles.dropzone}
         onClick={() => {
-          if (!isUploading) {
+          if (!isMutating) {
             inputRef.current?.click();
           }
         }}
         onKeyDown={(e) => {
-          if (!isUploading && (e.key === 'Enter' || e.key === ' ')) {
+          if (!isMutating && (e.key === 'Enter' || e.key === ' ')) {
             inputRef.current?.click();
           }
         }}
         onDragOver={(e) => e.preventDefault()}
         onDrop={(e) => {
           e.preventDefault();
-          if (!isUploading && e.dataTransfer.files.length) {
+          if (!isMutating && e.dataTransfer.files.length) {
             onAddFiles(e.dataTransfer.files);
           }
         }}
@@ -185,7 +192,7 @@ const FileAttachmentModal: React.FC<FileAttachmentModalProps> = ({
               <li key={upload.id}>
                 <FileRow
                   upload={upload}
-                  disabled={isUploading}
+                  disabled={isMutating}
                   onRemove={() => onRemoveFile(upload.id)}
                 />
               </li>
@@ -200,7 +207,9 @@ const FileAttachmentModal: React.FC<FileAttachmentModalProps> = ({
         <span className={styles.footerSummary}>
           {t.fileModal.summary(attachments.length, MAX_ATTACHMENT_COUNT, formatBytes(totalBytes))}
         </span>
-        <Button type="primary" autoInsertSpace={false} onClick={onClose}>
+        {/* Done says "the set is settled" — while a write is still in flight it is
+            not, and closing on top of it hides the one place the progress shows. */}
+        <Button type="primary" autoInsertSpace={false} disabled={isMutating} onClick={onClose}>
           {t.fileModal.done}
         </Button>
       </div>

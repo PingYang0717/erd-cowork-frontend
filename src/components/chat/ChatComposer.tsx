@@ -266,6 +266,7 @@ const ChatComposer: React.FC<ChatComposerProps> = ({
         attachments={attachments}
         error={attachmentError}
         uploadProgress={uploadProgress}
+        isMutating={isMutatingFiles}
         onAddFiles={(files) => void addFiles(files)}
         onRemoveFile={(fileId) => void removeFile(fileId)}
       />

@@ -15,6 +15,10 @@ export interface RepairOffer {
   artifactId: string;
   errors: BrowserJsError[];
   status: RepairStatus;
+  /** The backend's own sentence about why a repair failed, when it gave one. Shown
+   *  under the generic "did not succeed" line — the reader deciding whether to retry
+   *  deserves the reason the server actually stated. */
+  failureMessage?: string;
 }
 
 type QueuedOffer = Pick<RepairOffer, 'artifactId' | 'errors'>;
@@ -41,7 +45,7 @@ interface RepairOfferState {
   dismissed: string[];
   report: (artifactId: string, errors: BrowserJsError[]) => void;
   /** Moves the current offer's status; ignored unless the offer is for `artifactId`. */
-  setStatus: (artifactId: string, status: RepairStatus) => void;
+  setStatus: (artifactId: string, status: RepairStatus, failureMessage?: string) => void;
   /** The repair for `artifactId` finished; drop its offer and promote the next queued
    *  one. Ignored unless the current offer is for `artifactId`. */
   resolve: (artifactId: string) => void;
@@ -90,10 +94,12 @@ export const useRepairOfferStore = create<RepairOfferState>()(
         set({ queue: [...queue, { artifactId, errors }] }, false, 'report:queue');
       },
 
-      setStatus: (artifactId, status) =>
+      setStatus: (artifactId, status, failureMessage) =>
         set(
           (state) =>
-            state.offer?.artifactId === artifactId ? { offer: { ...state.offer, status } } : state,
+            state.offer?.artifactId === artifactId
+              ? { offer: { ...state.offer, status, failureMessage } }
+              : state,
           false,
           'setStatus',
         ),
