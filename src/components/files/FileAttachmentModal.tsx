@@ -73,6 +73,10 @@ interface FileAttachmentModalProps {
   error: string;
   /** The upload in flight, or null when nothing is uploading. */
   uploadProgress: UploadProgress | null;
+  /** True while the session's file set is being written to — an upload OR a removal.
+   *  The modal's surfaces close on both: a second write started mid-flight lands on a
+   *  request already describing a different set, and Done implies the set is settled. */
+  isMutating: boolean;
   onAddFiles: (files: FileList) => void;
   onRemoveFile: (fileId: string) => void;
 }
@@ -83,13 +87,17 @@ const FileAttachmentModal: React.FC<FileAttachmentModalProps> = ({
   attachments,
   error,
   uploadProgress,
+  isMutating,
   onAddFiles,
   onRemoveFile,
 }) => {
   const t = useTranslations();
   const inputRef = useRef<HTMLInputElement>(null);
   const totalBytes = attachments.reduce((sum, a) => sum + a.sizeBytes, 0);
-  const isUploading = uploadProgress !== null;
+  // Removal counts too, not only upload: it used to gate on the upload alone, so a
+  // removal in flight left every surface open — including a second click on the same
+  // Remove button, which fired the delete twice.
+  const isUploading = isMutating;
 
   return (
     <Modal open={open} onCancel={onClose} title={t.fileModal.title} footer={null} destroyOnHidden>
@@ -200,7 +208,9 @@ const FileAttachmentModal: React.FC<FileAttachmentModalProps> = ({
         <span className={styles.footerSummary}>
           {t.fileModal.summary(attachments.length, MAX_ATTACHMENT_COUNT, formatBytes(totalBytes))}
         </span>
-        <Button type="primary" autoInsertSpace={false} onClick={onClose}>
+        {/* Done says "the set is settled" — while a write is still in flight it is
+            not, and closing on top of it hides the one place the progress shows. */}
+        <Button type="primary" autoInsertSpace={false} disabled={isMutating} onClick={onClose}>
           {t.fileModal.done}
         </Button>
       </div>
