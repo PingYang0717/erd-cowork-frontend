@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import Tooltip from '@/components/common/Tooltip';
 import { useTranslations } from '@/i18n/useTranslations';
 import type { ArtifactVersion } from '@/types/api';
+import { artifactVersionLabel } from '@/utils/artifactVersionLabel';
 import { formatRelativeTime } from '@/utils/formatRelativeTime';
 
 import styles from './VersionSwitcher.module.css';
@@ -111,8 +112,10 @@ const VersionSwitcher: React.FC<VersionSwitcherProps> = ({ versions, activeVersi
           onClick={() => setIsOpen((v) => !v)}
         >
           <HistoryOutlined aria-hidden />
-          {activeVersion?.version !== undefined && (
-            <span className={styles.versionTriggerN}>v{activeVersion.version}</span>
+          {artifactVersionLabel(activeVersion?.version) !== null && (
+            <span className={styles.versionTriggerN}>
+              {artifactVersionLabel(activeVersion?.version)}
+            </span>
           )}
           <span className={styles.versionTriggerLabel}>{activeVersion?.title ?? ''}</span>
           <DownOutlined aria-hidden className={styles.versionTriggerChevron} />
@@ -150,16 +153,22 @@ const VersionSwitcher: React.FC<VersionSwitcherProps> = ({ versions, activeVersi
                     closeAndRefocus();
                   }}
                 >
-                  {v.version !== undefined && (
-                    <span className={styles.versionMenuItemN}>v{v.version}</span>
+                  {artifactVersionLabel(v.version) !== null && (
+                    <span className={styles.versionMenuItemN}>
+                      {artifactVersionLabel(v.version)}
+                    </span>
                   )}
                   <span className={styles.versionMenuItemLabel}>{v.title}</span>
-                  <span className={styles.versionMenuItemTime}>
-                    {v.createdAt ? formatRelativeTime(v.createdAt) : ''}
-                  </span>
+                  {/* Before the time, not after it. The label takes the slack, so
+                      whatever is last sits at the right edge — with the tick there, the
+                      times of published and unpublished rows ended up at different
+                      places and would not read as a column. */}
                   {v.publishedAt != null && (
                     <CheckOutlined aria-label="Published" className={styles.versionMenuItemCheck} />
                   )}
+                  <span className={styles.versionMenuItemTime}>
+                    {v.createdAt ? formatRelativeTime(v.createdAt) : ''}
+                  </span>
                 </button>
               );
             })}
