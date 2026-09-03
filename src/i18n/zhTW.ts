@@ -134,7 +134,10 @@ export const zhTW = {
     htmlLive: '產生中的 HTML',
     htmlLabel: 'HTML',
     loading: '載入中…',
-    noSource: '此版本無原始碼可檢視（無法載入）',
+    /** 後端明說 404——真的沒有原始碼。 */
+    noSource: '此版本無原始碼可檢視',
+    /** 讀取失敗但原始碼可能好端端的——不對泛型失敗聲稱「沒有」。 */
+    sourceLoadFailed: '原始碼載入失敗，請稍後重試',
     /** TABLE 只送 truncated: boolean,不送筆數——所以這裡不報數字(後端待辦:
      *  希望 TABLE 帶 rowLimit)。 */
     truncated: '(結果已截斷)',

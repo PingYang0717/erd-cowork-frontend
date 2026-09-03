@@ -75,13 +75,28 @@ const SettingsMenu: React.FC<SettingsMenuProps> = ({ variant }) => {
       title={t.settings.title}
       content={panel}
     >
+      {/* aria-haspopup + aria-expanded: the trigger opens a panel, and a reader has to
+          hear that — the same contract VersionSwitcher's trigger keeps (A-2). antd's
+          Popover adds nothing to a custom child, so the button says it itself. */}
       {variant === 'rail' ? (
-        <button type="button" className={styles.railEntry} aria-label="Settings">
+        <button
+          type="button"
+          className={styles.railEntry}
+          aria-label="Settings"
+          aria-haspopup="dialog"
+          aria-expanded={open}
+        >
           <SettingOutlined aria-hidden />
           <span className={styles.railEntryLabel}>{t.settings.title}</span>
         </button>
       ) : (
-        <button type="button" className={styles.tile} aria-label="Settings">
+        <button
+          type="button"
+          className={styles.tile}
+          aria-label="Settings"
+          aria-haspopup="dialog"
+          aria-expanded={open}
+        >
           <SettingOutlined aria-hidden />
         </button>
       )}

@@ -8,6 +8,7 @@ import {
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { isNotFoundError } from '@/api/apiError';
 import Tooltip from '@/components/common/Tooltip';
 import { useArtifactContent } from '@/hooks/useArtifactContent';
 import { usePublishArtifact } from '@/hooks/useArtifactMutations';
@@ -20,7 +21,6 @@ import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
 import type { ArtifactVersion } from '@/types/api';
 import { artifactHref } from '@/utils/artifactUrl';
 import { deriveArtifactVersions } from '@/utils/deriveArtifactVersions';
-import { isNotFoundError } from '@/utils/describeLoadError';
 
 import ArtifactFrame from './ArtifactFrame';
 import styles from './ArtifactPanel.module.css';
@@ -77,6 +77,10 @@ const ArtifactPanelView: React.FC<ArtifactPanelViewProps> = ({ sessionId }) => {
       {
         artifactId: streamedArtifact.artifactId,
         title: streamedArtifact.title,
+        // Next in the same message-order numbering: the history refetch has not landed
+        // yet, but this row will be exactly derived.length + 1 when it does. Without
+        // this the newest row sat unmarked for the seconds the run was still open.
+        version: derived.length + 1,
       },
     ];
   }, [detail.messages, streamedArtifact]);

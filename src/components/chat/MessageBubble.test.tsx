@@ -1,8 +1,10 @@
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { http, HttpResponse } from 'msw';
 import { describe, expect, it, vi } from 'vitest';
 
 import { INTERRUPTED_TEXTS, REPAIR_RECORD_PREFIXES } from '@/constants/wireStrings';
+import { server } from '@/mocks/server';
 import type { StepItem, TableResult } from '@/types/api';
 
 import MessageBubble, { type LiveRun } from './MessageBubble';
@@ -170,5 +172,42 @@ describe('MessageBubble', () => {
     );
 
     expect(screen.getAllByRole('button', { name: /HTML/ })).toHaveLength(1);
+  });
+
+  /** Only a 404 means "there is no source". A 500 or a dropped connection says nothing
+   *  about whether it exists — the same rule the Artifact panes follow for their
+   *  documents — so the two failures get different sentences. */
+  it('says the source is absent only when the backend answered 404', async () => {
+    const user = userEvent.setup();
+    server.use(http.get('/api/artifacts/:id/raw', () => new HttpResponse(null, { status: 404 })));
+    render(
+      <MessageBubble
+        sender="AI"
+        text="Done."
+        artifact={{ artifactId: 'artifact-1', title: 'SPC dashboard' }}
+      />,
+    );
+
+    await user.click(screen.getByRole('button', { name: 'View HTML' }));
+
+    expect(await screen.findByText('No source available for this version')).toBeInTheDocument();
+  });
+
+  it('reports a failed source load as a failure, not as an absence', async () => {
+    const user = userEvent.setup();
+    server.use(http.get('/api/artifacts/:id/raw', () => new HttpResponse(null, { status: 500 })));
+    render(
+      <MessageBubble
+        sender="AI"
+        text="Done."
+        artifact={{ artifactId: 'artifact-1', title: 'SPC dashboard' }}
+      />,
+    );
+
+    await user.click(screen.getByRole('button', { name: 'View HTML' }));
+
+    expect(
+      await screen.findByText('Could not load the source — please try again shortly'),
+    ).toBeInTheDocument();
   });
 });

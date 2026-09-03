@@ -4,11 +4,12 @@ import {
   HomeOutlined,
   ReloadOutlined,
   ShareAltOutlined,
-  UsergroupAddOutlined,
+  UserOutlined,
 } from '@ant-design/icons';
 import React, { useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
+import { isNotFoundError } from '@/api/apiError';
 import SettingsMenu from '@/components/common/SettingsMenu';
 import { useArtifactContent } from '@/hooks/useArtifactContent';
 import { useArtifacts } from '@/hooks/useArtifacts';
@@ -16,7 +17,6 @@ import { useTranslations } from '@/i18n/useTranslations';
 import { useActiveRunStore } from '@/stores/useActiveRunStore';
 import type { Artifact, ArtifactVersion } from '@/types/api';
 import { artifactHref } from '@/utils/artifactUrl';
-import { isNotFoundError } from '@/utils/describeLoadError';
 
 import ArtifactFrame from './ArtifactFrame';
 import styles from './ArtifactFullPageView.module.css';
@@ -83,7 +83,10 @@ const ArtifactFullPageView: React.FC<ArtifactFullPageViewProps> = ({ artifactId 
         <div className={styles.headerCenter}>
           {routeArtifact && !routeArtifact.isOwn ? (
             <div className={styles.sharedToMeHeader} aria-label="Shared to me">
-              <UsergroupAddOutlined aria-hidden className={styles.sharedToMeIcon} />
+              {/* One person: this icon sits beside the owner's name, the same mapping
+                  the Gallery card uses — the group icon says "shared to me", the single
+                  head says "who it came from". */}
+              <UserOutlined aria-hidden className={styles.sharedToMeIcon} />
               <span className={styles.sharedToMeName}>{routeArtifact.ownerDisplay}</span>
               <span className={styles.sharedToMeBadge}>{t.studio.sharedToMe}</span>
             </div>

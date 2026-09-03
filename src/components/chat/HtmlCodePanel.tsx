@@ -1,7 +1,7 @@
 import { CodeOutlined, DownOutlined, UpOutlined } from '@ant-design/icons';
 import React, { useEffect, useRef, useState } from 'react';
 
-import { isCanceled } from '@/api/apiError';
+import { isCanceled, isNotFoundError } from '@/api/apiError';
 import { getArtifactRawHtml } from '@/api/artifactApi';
 import { useTranslations } from '@/i18n/useTranslations';
 
@@ -22,7 +22,11 @@ interface HtmlCodePanelProps {
  *  which is the only thing loading has ever meant — so loading is derived, not stored. */
 interface FetchOutcome {
   artifactId: string;
-  result: { status: 'ok'; code: string } | { status: 'error' };
+  /** `missing` records whether the backend said 404 — "there is no source" — as opposed
+   *  to failing to answer. The two get different sentences: claiming no source exists on
+   *  the strength of a 500 states something this client cannot know (the same rule the
+   *  Artifact panes follow for their documents). */
+  result: { status: 'ok'; code: string } | { status: 'error'; missing: boolean };
 }
 
 /** The artifact's HTML, collapsed by default. Live during a run, fetched on demand
@@ -56,7 +60,7 @@ const HtmlCodePanel: React.FC<HtmlCodePanelProps> = ({ code, artifactId, autoScr
         if (isCanceled(error)) {
           return;
         }
-        setOutcome({ artifactId, result: { status: 'error' } });
+        setOutcome({ artifactId, result: { status: 'error', missing: isNotFoundError(error) } });
       });
     return () => controller.abort();
   }, [isExpanded, hasLiveCode, artifactId, resolved]);
@@ -96,7 +100,11 @@ const HtmlCodePanel: React.FC<HtmlCodePanelProps> = ({ code, artifactId, autoScr
       {isExpanded && (
         <div className={styles.body}>
           {isLoading && <p className={styles.note}>{t.chat.loading}</p>}
-          {resolved?.status === 'error' && <p className={styles.note}>{t.chat.noSource}</p>}
+          {resolved?.status === 'error' && (
+            <p className={styles.note}>
+              {resolved.missing ? t.chat.noSource : t.chat.sourceLoadFailed}
+            </p>
+          )}
           {shownCode !== null && (
             <pre ref={codeRef} className={styles.code}>
               {shownCode}
