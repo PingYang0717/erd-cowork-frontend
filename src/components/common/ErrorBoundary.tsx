@@ -9,6 +9,11 @@ interface Props {
   children: ReactNode;
   /** Shown instead of the default panel. Receives a retry that remounts the subtree. */
   fallback?: (error: Error, retry: () => void) => ReactNode;
+  /** Runs before the remount a retry causes. DataBoundary passes TanStack's reset
+   *  through here: without it, a suspense query re-throws its CACHED error the moment
+   *  the subtree remounts — the card flashed back instantly and Retry recovered
+   *  nothing, which a probe against a failing endpoint confirmed. */
+  onRetry?: () => void;
 }
 
 interface State {
@@ -34,6 +39,9 @@ class ErrorBoundary extends Component<Props, State> {
   }
 
   private readonly retry = (): void => {
+    // Order matters: reset the query error state first, then remount — remounting
+    // first re-subscribes to a query still in error and re-throws it.
+    this.props.onRetry?.();
     this.setState({ error: null });
   };
 

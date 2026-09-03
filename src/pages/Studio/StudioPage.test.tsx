@@ -134,6 +134,22 @@ describe('StudioPage three-pane layout', () => {
     expect(await screen.findByRole('radio', { name: en.settings.languageEn })).toBeInTheDocument();
   });
 
+  /** The collapse state persists now, so "reload while collapsed" is an ordinary
+   *  path — and the collapsed rail reads the same suspense query as the expanded one.
+   *  Without its own boundary a failing sessions fetch had nothing above it to catch:
+   *  the whole page unmounted to blank, the worst of all three failures (no message,
+   *  no screen, no data). */
+  it('shows an error card — not a blank page — when sessions fail with the rail collapsed', async () => {
+    useStudioLayoutStore.setState({ isSessionRailCollapsed: true });
+    server.use(http.get('/api/sessions', () => new HttpResponse(null, { status: 500 })));
+    // retry off: the assertion is about the card appearing, not about waiting out backoff.
+    renderStudio({ retry: false });
+
+    expect(await screen.findByText(en.errors.loadFailedHeading)).toBeInTheDocument();
+    // The rest of the shell survives alongside the failed rail.
+    expect(screen.getByRole('banner', { name: 'Thread header' })).toBeInTheDocument();
+  });
+
   /** The divider used to be pointer-only: role="separator" with no tabIndex and no
    *  keys, so a keyboard user could not move any boundary at all (A-4). One arrow
    *  press is a complete one-step drag through the same read→move→commit protocol. */

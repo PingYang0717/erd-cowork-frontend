@@ -101,6 +101,28 @@ describe('File attachments', () => {
   /** Removing a file is a write to the same set the next question would be answered
    *  against. Until it lands, SENDING is shut — typing is not: a message sent in that window
    *  describes a set of files that is already changing under it. */
+  /** The backend knows why it refused ("single file over the limit") and used to have
+   *  that sentence thrown away for the generic one. Its words reach the dialog now;
+   *  the generic wording is only for failures that carried no reason. */
+  it("shows the backend's own reason when an upload is refused", async () => {
+    const user = userEvent.setup();
+    server.use(
+      http.post('/api/sessions/:sessionId/files', () =>
+        HttpResponse.json(
+          { code: 'TOO_LARGE', message: '單一檔案超過 2 GB 上限' },
+          { status: 413 },
+        ),
+      ),
+    );
+    renderStudio();
+    await selectASessionAndOpenFileModal(user);
+
+    await user.upload(screen.getByLabelText('Choose files'), fileOfSize('huge.csv', 4096));
+
+    const dialog = screen.getByRole('dialog', { name: 'Attach files' });
+    expect(await within(dialog).findByRole('alert')).toHaveTextContent('單一檔案超過 2 GB 上限');
+  });
+
   /** Same rule inside the dialog: while a removal is in flight the set is not settled,
    *  so Done must not claim it is — and the Remove that started it must not fire twice. */
   it('disables Done and the row while a removal is in flight inside the dialog', async () => {

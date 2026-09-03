@@ -61,8 +61,15 @@ const StudioShell: React.FC = () => {
         className={styles.sessionRail}
         style={{ width: railWidth }}
       >
+        {/* BOTH branches sit behind the boundary: the collapsed rail reads the same
+            suspense query (useSessionGroups → useSessions), and the collapse state is
+            persisted now — so "reload while collapsed" is an ordinary path, and without
+            a boundary here a failing sessions fetch had nothing above it to catch:
+            the whole page went blank. */}
         {isSessionRailCollapsed ? (
-          <CollapsedSessionRail onExpand={toggleSessionRailCollapsed} />
+          <DataBoundary label="Sessions">
+            <CollapsedSessionRail onExpand={toggleSessionRailCollapsed} />
+          </DataBoundary>
         ) : (
           <DataBoundary label="Sessions">
             <ExpandedSessionRail onCollapse={toggleSessionRailCollapsed} />
