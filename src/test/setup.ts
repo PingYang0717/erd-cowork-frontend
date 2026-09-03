@@ -1,6 +1,6 @@
 // Seeds the anonymous user id BEFORE the mocks' module graph loads — fixtures capture
 // `currentUser.id` at module-load time. Side-effect import; must stay first.
-
+// eslint-disable-next-line simple-import-sort/imports
 import './seedTestIdentity';
 import '@testing-library/jest-dom/vitest';
 
