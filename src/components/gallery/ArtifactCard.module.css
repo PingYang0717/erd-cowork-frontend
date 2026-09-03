@@ -43,6 +43,11 @@
   position: absolute;
   top: 8px;
   left: 36px;
+  /* The icon and the words are one label — spaced like the badge below it, which says
+     the same thing about the same Artifact. */
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
   padding: 2px 7px;
   border-radius: 6px;
   font-size: 10px;
