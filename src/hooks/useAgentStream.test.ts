@@ -2,6 +2,7 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
+import { en } from '@/i18n/en';
 import { mockAgentStream, mockAgentStreamRejection } from '@/test/agentStream';
 import { appWrapper } from '@/test/appHarness';
 
@@ -294,9 +295,13 @@ describe('useAgentStream', () => {
       expect(result.current.state.networkError).toBe(true);
       expect(result.current.state.isStreaming).toBe(false);
     });
+    // Against the dictionary, not a copy of the string. This is also what pins the
+    // message being read when the disconnect happens rather than when the module was
+    // imported: a module constant would freeze on the language current at import —
+    // Chinese, before the suite pins English — and this assertion would fail.
     expect(result.current.state.error).toEqual({
       code: 'NETWORK_ERROR',
-      message: '⚠ Connection lost — please send again',
+      message: en.chat.networkError,
     });
     expect(result.current.state.stopped).toBe(false);
     expect(result.current.state.liveText).toBe('Vt is dri');
