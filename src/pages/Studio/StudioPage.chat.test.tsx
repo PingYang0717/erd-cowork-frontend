@@ -1,7 +1,10 @@
 import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { http, HttpResponse } from 'msw';
 import { beforeEach, describe, expect, it } from 'vitest';
 
+import { en } from '@/i18n/en';
+import { server } from '@/mocks/server';
 import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
 import { useStudioLayoutStore } from '@/stores/useStudioLayoutStore';
 import { mockAgentStream } from '@/test/agentStream';
@@ -116,14 +119,49 @@ describe('Chat composer', () => {
    *  conversation reads that the Connectors panel could flatly contradict. The header
    *  now carries identity and toggles only; what a session draws on is shown where it
    *  is decided. */
-  it('keeps the thread header to identity and toggles — no hardcoded data-source claim', () => {
+  /** The header names the app and nothing else. It used to carry the theme and language
+   *  toggles as well; those are preferences about the app rather than about this
+   *  conversation, and they live in the rail's Settings now. The data-source chip the
+   *  mockup hard-coded ("Inline DB · N5 line") is still deliberately absent — it asserted
+   *  a fact the Connectors panel could flatly contradict. */
+  it('keeps the thread header to identity alone', async () => {
     renderStudio();
 
     const header = screen.getByRole('banner', { name: 'Thread header' });
     expect(within(header).queryByText(/Inline DB/)).not.toBeInTheDocument();
+    expect(within(header).queryByRole('button')).not.toBeInTheDocument();
+    // The preferences are still reachable — from the rail, once.
+    expect(await screen.findByRole('button', { name: 'Settings' })).toBeInTheDocument();
+  });
+});
+
+describe('Composer periphery failures', () => {
+  beforeEach(() => {
+    useStudioLayoutStore.setState(useStudioLayoutStore.getInitialState());
+    useSessionSelectionStore.setState(useSessionSelectionStore.getInitialState());
+  });
+
+  /** The composer suspends on the connectors catalogue — a peripheral read whose
+   *  failure used to take the WHOLE thread pane down, history included. Behind its
+   *  own boundary, the conversation stays readable and only the composer strip shows
+   *  the card (whose Retry is real, per DataBoundary). */
+  it('keeps the conversation readable when the connectors catalogue fails', async () => {
+    const user = userEvent.setup();
+    server.use(http.get('/api/connectors', () => new HttpResponse(null, { status: 500 })));
+    renderStudio({ retry: false });
+    // Not selectASession: that helper waits for the composer textbox, which in this
+    // scenario is exactly the strip that fails.
+    await user.click(await screen.findByRole('button', { name: 'SPC — Vt (gate CD)' }));
+
+    // The seeded history is still on screen…
     expect(
-      within(header).getByRole('button', { name: /Switch to (dark|light) mode/ }),
+      await within(screen.getByRole('log', { name: 'Messages' })).findByText(
+        /Control chart with CL/,
+      ),
     ).toBeInTheDocument();
+    // …and the failure is contained to the composer strip, card and retry included.
+    expect(screen.getByText(en.errors.loadFailedHeading)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument();
   });
 });
 

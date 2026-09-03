@@ -2,6 +2,7 @@ import React, { useCallback } from 'react';
 import { Outlet } from 'react-router-dom';
 
 import DataBoundary from '@/components/common/DataBoundary';
+import SettingsMenu from '@/components/common/SettingsMenu';
 import CollapsedSessionRail from '@/components/session/CollapsedSessionRail';
 import SessionList from '@/components/session/SessionList';
 import { useArtifacts } from '@/hooks/useArtifacts';
@@ -61,13 +62,27 @@ const StudioShell: React.FC = () => {
         className={styles.sessionRail}
         style={{ width: railWidth }}
       >
-        {isSessionRailCollapsed ? (
-          <CollapsedSessionRail onExpand={toggleSessionRailCollapsed} />
-        ) : (
+        {/* BOTH branches sit behind the boundary: the collapsed rail reads the same
+            suspense query (useSessionGroups → useSessions), and the collapse state is
+            persisted now — so "reload while collapsed" is an ordinary path, and without
+            a boundary here a failing sessions fetch had nothing above it to catch:
+            the whole page went blank. */}
+        <div className={styles.railContent}>
           <DataBoundary label="Sessions">
-            <ExpandedSessionRail onCollapse={toggleSessionRailCollapsed} />
+            {isSessionRailCollapsed ? (
+              <CollapsedSessionRail onExpand={toggleSessionRailCollapsed} />
+            ) : (
+              <ExpandedSessionRail onCollapse={toggleSessionRailCollapsed} />
+            )}
           </DataBoundary>
-        )}
+        </div>
+        {/* OUTSIDE the boundary, deliberately: settings is where the language lives,
+            and a reader facing a failed pane in a language they cannot read needs
+            this entry to survive exactly that failure. It used to sit inside the
+            rail components, behind the very query whose error card replaced it. */}
+        <div className={styles.railSettings}>
+          <SettingsMenu variant={isSessionRailCollapsed ? 'tile' : 'rail'} />
+        </div>
       </nav>
 
       {!isSessionRailCollapsed && (

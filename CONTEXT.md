@@ -58,6 +58,14 @@ _Avoid_: Dashboard, Report, Output、**產出**、**儀表板**（這些是 Arti
 
 介面文案一律寫 `Artifact`，中英文皆然。「產出」曾在版本選單與 Artifact 面板裡通用了一段時間——那是 Output 的中文，這一列本來就禁止了它，只是沒人把中文寫法對上英文。「儀表板」更危險：`Artifact.type` 不在契約裡，前端根本無從得知它是 dashboard 還是 slides，寫下去就是斷言一件查不到的事。
 
+**產出序號（`vN`）**:
+一份 Artifact 在**它所屬 session** 裡是第幾個被做出來的,由帶 `artifactId` 的訊息依到達順序決定。Studio 的版本選單顯示它。
+_Avoid_: 版本、version（那是下一條,是不同的東西）
+
+**Artifact 版本**:
+同一份 Artifact 換不同條件(例如另一個時間區間)重跑出來的結果。**尚未設計、尚未實作**(artifact-model-decisions Q6)。全頁 Artifact 檢視的選單將來要列的是這個。
+_Avoid_: 產出序號（同上,兩者都會想寫成 `vN`,但一個數 session 裡的第幾份、一個數這份的第幾版）
+
 **發布（Publish）**:
 把一個 Artifact 開放給自己以外的人使用。Scenario 跑完產出的是**只有自己看得到的**成果，發布是那道把它交出去的動作；未發布的 Artifact 不能分享。
 _Avoid_: 生成、Generate（畫面上的按鈕曾叫「生成 Artifact」，但它不產生任何東西——Artifact 在按下去之前就已經存在了。「生成」與「重新生成」只差兩個字卻是完全不同的動作，這是要避開的正是那個混淆）

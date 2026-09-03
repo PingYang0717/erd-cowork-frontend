@@ -1,6 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 
+import { errorMessage, isOffline } from '@/api/apiError';
 import { deleteFile, uploadFiles, type UploadProgress } from '@/api/fileApi';
 import { useActionErrorToast } from '@/hooks/useActionErrorToast';
 import { planFileAdditions } from '@/utils/uploadValidation';
@@ -46,8 +47,15 @@ export const useFileAttachments = (sessionId: string) => {
     try {
       await uploadFiles(sessionId, plan.accepted, setUploadProgress);
       await queryClient.invalidateQueries({ queryKey: sessionDetailQueryKey(sessionId) });
-    } catch {
-      setError(getTranslations().files.uploadFailed);
+    } catch (uploadError) {
+      // The backend's own reason first ("single file exceeds 2 GB") — it was being
+      // thrown away for the generic sentence. Offline gets named; only a reason-less
+      // failure falls back to the generic wording.
+      const t = getTranslations();
+      setError(
+        errorMessage(uploadError) ??
+          (isOffline(uploadError) ? t.errors.offlineAction : t.files.uploadFailed),
+      );
     } finally {
       setUploadProgress(null);
     }

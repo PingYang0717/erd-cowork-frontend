@@ -27,7 +27,10 @@ export const createSseParser = (onEvent: (event: AgentEvent) => void): SseParser
       onEvent(JSON.parse(dataLines.join('\n')) as AgentEvent);
     } catch {
       // A truncated or corrupt block is dropped rather than killing the stream —
-      // the events after it are still worth delivering.
+      // the events after it are still worth delivering. Logged, not silent: a
+      // dropped TOKEN block is missing reply text with no signal anywhere, and this
+      // line is the only place that knows it happened.
+      console.warn('[eRD Cowork] dropped an unparseable stream block', dataLines.join('\n'));
     }
   };
 

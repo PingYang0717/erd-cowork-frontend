@@ -50,6 +50,9 @@ export const zhTW = {
     openInNewTab: '在新分頁開啟預覽',
     /** Shown for any failure to load the document, which is why it hedges. */
     missing: '這個 Artifact 已不存在,可能已被刪除。請從上方選單挑選其他 Artifact。',
+    /** Said when the load failed for a reason that is not "gone" — the Artifact may be
+     *  perfectly fine and the request simply did not get through. */
+    loadFailed: '這個 Artifact 載入失敗,請稍後重試。',
     publishedToast: '已發布 — 已加入左側 Artifacts 清單。',
     goToArtifacts: '前往 Artifacts',
     /** Artifact, not 產出. The version menu deliberately avoids 「版本」 — these are
@@ -58,6 +61,10 @@ export const zhTW = {
     switchVersion: '切換 Artifact',
     /** 個人副本不能再往下分享——分享只有原擁有者做得到(CONTEXT.md)。 */
     shareNotOwner: '只有原擁有者可以分享',
+    /** The full-page view's menu, which lists one Artifact's own versions rather than
+     *  a session's outputs. Those are different things and the count belongs to the
+     *  other one. */
+    ownVersionsTitle: '這個 Artifact 的版本',
     versionMenuTitle: (count: number) => `此對話的 Artifact · 共 ${count} 個，可切換後再發布`,
   },
 
@@ -85,6 +92,20 @@ export const zhTW = {
     deleteConfirmTitle: '刪除這段對話？',
     deleteConfirmBody: (title: string) => `「${title}」會從清單中移除。`,
     deleteConfirm: '刪除',
+  },
+
+  settings: {
+    /** The rail entry and the panel it opens share a name — pressing the thing called
+     *  Settings should land you somewhere called Settings. */
+    title: '設定',
+    language: '語言',
+    /** Each language names itself. A reader who cannot read the current interface still
+     *  has to find their own — so this is the one place a language is not translated. */
+    languageZh: '中文',
+    languageEn: 'English',
+    theme: '主題',
+    themeLight: '淺色',
+    themeDark: '深色',
   },
 
   gallery: {
@@ -117,7 +138,10 @@ export const zhTW = {
     htmlLive: '產生中的 HTML',
     htmlLabel: 'HTML',
     loading: '載入中…',
-    noSource: '此版本無原始碼可檢視（無法載入）',
+    /** 後端明說 404——真的沒有原始碼。 */
+    noSource: '此版本無原始碼可檢視',
+    /** 讀取失敗但原始碼可能好端端的——不對泛型失敗聲稱「沒有」。 */
+    sourceLoadFailed: '原始碼載入失敗，請稍後重試',
     /** TABLE 只送 truncated: boolean,不送筆數——所以這裡不報數字(後端待辦:
      *  希望 TABLE 帶 rowLimit)。 */
     truncated: '(結果已截斷)',
@@ -264,6 +288,9 @@ export const zhTW = {
      *  for two. */
     offlineAction: '無法連線到後端服務，請確認服務已啟動後重試。',
     notReady: '後端尚未就緒，請稍後再試。',
+    /** The action failed and the backend said nothing readable about why. */
+    actionFailed: '操作失敗,請稍後再試。',
+    actionFailedWithStatus: (status: number) => `操作失敗(伺服器回應 ${status}),請稍後再試。`,
   },
 } as const;
 

@@ -1,0 +1,66 @@
+/* The rail entry. Matches the nav shortcuts above it — Settings is one more place the
+   rail can take you, not a different kind of control. */
+.railEntry {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 10px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--erd-color-text-secondary, #595959);
+  font-size: 13px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.railEntry:hover {
+  background: var(--erd-color-fill-tertiary, #f0f0f0);
+}
+
+.railEntryLabel {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* Collapsed rail: the same entry with the label dropped, sized like the icon tiles it
+   sits under. */
+.tile {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--erd-color-text-secondary, #595959);
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.tile:hover {
+  background: var(--erd-color-fill-tertiary, #f0f0f0);
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  /* No minimum: the panel is as wide as the widest control in it, which is the language
+     Segmented. A floor of 200px left empty space on both sides of two short controls.
+     The rows still stretch to that width, so the two Segmenteds line up with each
+     other rather than each shrinking to its own text. */
+}
+
+.row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.rowLabel {
+  font-size: 12px;
+  color: var(--erd-color-text-tertiary, #8c8c8c);
+}

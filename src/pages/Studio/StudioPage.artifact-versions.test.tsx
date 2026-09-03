@@ -119,6 +119,43 @@ describe('Artifact version switcher', () => {
     // The seeded output's timestamp (2026-08-20) renders in its row; the relative
     // format shows a weekday within a week of "now", the date beyond that.
     expect(within(seededRow).getByText(/^(Thu|Aug 20)$/)).toBeInTheDocument();
+
+    // The row reads `vN` then the title. `version` is a number on the wire (confirmed
+    // 2026-09-03), so this is a straight render — the digit-parsing that stood in while
+    // the field was thought to be worded is gone.
+    expect(within(seededRow).getByText('v1')).toBeInTheDocument();
+
+    // The tick sits before the time, so the times line up as a column whether or not a
+    // row is published — with the tick last, a published row pushed its time left.
+    const seededChildren = [...seededRow.children].map((child) => child.className);
+    const tickAt = seededChildren.findIndex((c) => c.includes('versionMenuItemCheck'));
+    const timeAt = seededChildren.findIndex((c) => c.includes('versionMenuItemTime'));
+    expect(tickAt).toBeGreaterThanOrEqual(0);
+    expect(tickAt).toBeLessThan(timeAt);
+  });
+
+  /** The number used to come from the artifacts list, and nothing refetches that list
+   *  when a run ends — so the Artifact just produced sat in the menu as a title with no
+   *  mark beside it, while every older row had one. Deriving the number from the
+   *  messages needs nothing that has not already arrived. */
+  it('numbers an Artifact the moment the run produces it', async () => {
+    const user = userEvent.setup();
+    renderStudio();
+
+    await user.click(await screen.findByRole('button', { name: 'SPC — Vt (gate CD)' }));
+    await screen.findByTitle('Artifact preview');
+    await user.type(
+      await screen.findByRole('textbox', { name: 'Message' }),
+      'Regenerate the dashboard.{Enter}',
+    );
+    await screen.findByRole('button', { name: 'Publish Artifact' });
+
+    await user.click(screen.getByRole('button', { name: 'Switch Artifact' }));
+
+    const rows = within(await screen.findByRole('menu')).getAllByRole('menuitem');
+    // Newest first: the one this run produced leads.
+    expect(within(rows[0]).getByText('v2')).toBeInTheDocument();
+    expect(within(rows[rows.length - 1]).getByText('v1')).toBeInTheDocument();
   });
 
   /** The menu-button keyboard contract (A-2): opening focuses the current item,

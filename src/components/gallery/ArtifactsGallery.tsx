@@ -144,7 +144,10 @@ const ArtifactsGallery: React.FC = () => {
           menu={{ items: sortMenuItems, onClick: ({ key }) => setSort(key as SortKey) }}
         >
           <button type="button" className={styles.sortTrigger}>
-            <SortAscendingOutlined aria-hidden />
+            {/* The chosen option's own icon, not a fixed one. It was hardcoded to the
+                A→Z glyph, so picking "Pinned first" left the trigger claiming the list
+                was sorted alphabetically — the icon contradicted the words beside it. */}
+            {activeSortOption.icon}
             <span>{t.gallery.sortLabel}</span>
             <span className={styles.sortTriggerValue}>{t.gallery[activeSortOption.labelKey]}</span>
             <DownOutlined aria-hidden className={styles.sortTriggerChevron} />

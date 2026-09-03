@@ -5,7 +5,10 @@ import { THEME_STORAGE_KEY } from '@/constants/storage';
 
 interface ThemeState {
   isDarkMode: boolean;
-  toggleTheme: () => void;
+  /** A setter, not a toggle: the only consumer is a Segmented that names both modes,
+   *  and adapting a set-control to a toggle needed a guard against re-picking the
+   *  current mode flipping it away. */
+  setDarkMode: (isDarkMode: boolean) => void;
 }
 
 export const useThemeStore = create<ThemeState>()(
@@ -15,8 +18,7 @@ export const useThemeStore = create<ThemeState>()(
     persist(
       (set) => ({
         isDarkMode: false,
-        toggleTheme: () =>
-          set((state) => ({ isDarkMode: !state.isDarkMode }), false, 'toggleTheme'),
+        setDarkMode: (isDarkMode) => set({ isDarkMode }, false, 'setDarkMode'),
       }),
       { name: THEME_STORAGE_KEY },
     ),

@@ -119,7 +119,7 @@ const toArtifactDto = (stored: StoredArtifact): Artifact => {
   return {
     id: stored.id,
     title: stored.title,
-    version: artifactVersionNumber(stored),
+    version: artifactVersionOrdinal(stored),
     sessionId: stored.sessionId,
     sessionTitle: sessions.read().find((session) => session.id === stored.sessionId)?.title ?? '',
     pinnedAt: stored.pinnedAt,
@@ -154,7 +154,7 @@ const setPublished = (id: string | readonly string[] | undefined, published: boo
 /** Each artifact IS a version (deriveArtifactVersions); number it the way the client
  *  does — by its position among the session's artifact-bearing messages — so the
  *  rendered "· vN" matches the menu. */
-const artifactVersionNumber = (artifact: { id: string; sessionId: string }): number => {
+const artifactVersionOrdinal = (artifact: { id: string; sessionId: string }): number => {
   const artifactMessages = messages
     .read()
     .filter((m) => m.sessionId === artifact.sessionId && m.artifactId != null);
@@ -228,7 +228,7 @@ export const artifactHandlers = [
     const fixture = buildArtifactFixture(
       artifact.scenario,
       artifact.kind,
-      artifactVersionNumber(artifact),
+      artifactVersionOrdinal(artifact),
     );
     // The backend serves text/html directly, not { html } JSON. The `r` cache-buster
     // (reload nonce) needs no reading — the same document simply goes out again.
@@ -245,7 +245,7 @@ export const artifactHandlers = [
     const fixture = buildArtifactFixture(
       artifact.scenario,
       artifact.kind,
-      artifactVersionNumber(artifact),
+      artifactVersionOrdinal(artifact),
     );
     return new HttpResponse(fixture, { headers: { 'Content-Type': 'text/plain' } });
   }),

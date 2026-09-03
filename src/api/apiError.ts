@@ -36,6 +36,14 @@ export const isCanceled = (error: unknown): boolean =>
   errorName(error) === 'AbortError' ||
   errorName(error) === 'CanceledError';
 
+/** Whether the backend answered "this is not here" as opposed to failing to answer.
+ *
+ *  Only a 404 says the thing is gone. A 500, a timeout or an unreachable backend say
+ *  nothing about whether it exists — telling the reader it was deleted on the strength
+ *  of those is stating something the client cannot know, and it is the kind of claim
+ *  someone acts on by giving up looking for it. */
+export const isNotFound = (error: unknown): boolean => httpStatus(error) === 404;
+
 /** The HTTP status the backend answered with, or null when there was no answer. */
 export const httpStatus = (error: unknown): number | null =>
   axios.isAxiosError(error) && error.response !== undefined ? error.response.status : null;

@@ -1,7 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback } from 'react';
 
-import { errorCode } from '@/api/apiError';
+import { errorCode, errorMessage } from '@/api/apiError';
 import { repairArtifact } from '@/api/artifactApi';
 import { artifactContentQueryKey } from '@/hooks/useArtifactContent';
 import { useActiveRunStore } from '@/stores/useActiveRunStore';
@@ -42,7 +42,13 @@ export const useArtifactRepair = () => {
         // Retention deleted the source data. Another attempt runs against the same
         // absence, so the card stops offering one — the composer's retention notice is
         // where the user finds out what to do instead.
-        setStatus(artifactId, isFilesExpired(error) ? 'files-expired' : 'failed');
+        // The backend's sentence rides along when it gave one — the card's generic
+        // "did not succeed" says nothing about whether trying again is worthwhile.
+        setStatus(
+          artifactId,
+          isFilesExpired(error) ? 'files-expired' : 'failed',
+          errorMessage(error) ?? undefined,
+        );
       }
     },
     [queryClient, setStatus, resolve, bumpArtifactReload],

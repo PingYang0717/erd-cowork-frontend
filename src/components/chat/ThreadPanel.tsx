@@ -2,8 +2,6 @@ import { ThunderboltFilled } from '@ant-design/icons';
 import React, { type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 
 import DataBoundary from '@/components/common/DataBoundary';
-import LanguageToggle from '@/components/common/LanguageToggle';
-import ThemeToggle from '@/components/common/ThemeToggle';
 import { type SendInput, useAgentStream } from '@/hooks/useAgentStream';
 import { useArtifactRepair } from '@/hooks/useArtifactRepair';
 import { useApplyRememberedDataSources } from '@/hooks/useConnectorMutations';
@@ -32,13 +30,6 @@ const ThreadHeader: React.FC = () => {
           asserted a fact the Connectors panel could flatly contradict (attach WAT,
           drop Inline, and the chip still claimed Inline). What a conversation reads is
           the session's business, and it is already shown where it is decided. */}
-      {/* One group, one flex item: the header is space-between, and as siblings the
-          two toggles got spread apart — the language button floated to the middle of
-          the header on its own. They are a pair of preferences and sit as one. */}
-      <span className={styles.headerActions}>
-        <LanguageToggle />
-        <ThemeToggle />
-      </span>
     </header>
   );
 };
@@ -113,10 +104,16 @@ const ThreadView: React.FC<ThreadViewProps> = ({ sessionId }) => {
    *  thread itself is aria-live="off" (every token used to be re-read; A-1), so this
    *  sr-only region is the one place a finished answer is announced from. */
   const [announcement, setAnnouncement] = useState('');
+  // No setPending(null) on run end — deliberately. The success path never needed it:
+  // the bubble is suppressed by derivation the moment the refetched history grows past
+  // `atLength` (showOptimisticBubble), and the awaited refetch lands before DONE. And
+  // the failure path must NOT have it: the history has nothing to carry, so clearing
+  // made the user's own words vanish with only the error left. The pending text
+  // lingers in state, suppressed or visible as the derivation decides, until the next
+  // send replaces it or the session remount retires it.
   const prevStreamingRef = useRef(false);
   useEffect(() => {
     if (prevStreamingRef.current && !state.isStreaming) {
-      setPending(null);
       setAnnouncement(state.liveText || state.answer || '');
     }
     prevStreamingRef.current = state.isStreaming;
@@ -239,13 +236,19 @@ const ThreadView: React.FC<ThreadViewProps> = ({ sessionId }) => {
         </div>
       )}
       <div className={styles.composer}>
-        <ChatComposer
-          sessionId={sessionId}
-          onSend={handleSend}
-          disabled={state.isStreaming}
-          isStreaming={state.isStreaming}
-          onStop={stop}
-        />
+        {/* Its own boundary: the composer suspends on the connectors catalogue and
+            /config — peripheral reads whose failure used to take the WHOLE thread
+            pane down, history included. Failed here, the conversation stays readable
+            and the card's Retry (real now, per DataBoundary) covers just this strip. */}
+        <DataBoundary label="Composer">
+          <ChatComposer
+            sessionId={sessionId}
+            onSend={handleSend}
+            disabled={state.isStreaming}
+            isStreaming={state.isStreaming}
+            onStop={stop}
+          />
+        </DataBoundary>
       </div>
       {/* Visually hidden, never displayed: the announcement channel for a finished
           reply. Its content is set once per run, so the reader hears the whole
