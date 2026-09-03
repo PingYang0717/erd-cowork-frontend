@@ -250,6 +250,10 @@
   background: transparent;
   border-radius: 6px;
   cursor: pointer;
+  /* Declared rather than inherited. Without this the dots took whatever colour the row
+     happened to pass down, which in dark mode was not a colour meant for them. Same
+     token as the counts beside it — both are quiet marks on a row, not its content. */
+  color: var(--erd-color-text-tertiary, #8c8c8c);
 }
 
 .moreActionsButton:hover {
