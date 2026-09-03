@@ -189,6 +189,10 @@ describe('Streaming a run in the Studio', () => {
     );
     expect(screen.queryByRole('status', { name: 'eRD AI is working' })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Send message' })).toBeInTheDocument();
+    // The user's own words survive the failure: the history refetch never ran, so
+    // clearing the optimistic bubble here erased what they typed — the message the
+    // error is asking them to send again.
+    expect(screen.getByText('Run an SPC analysis on Vt (gate CD).')).toBeInTheDocument();
   });
 
   it('collapses the artifact HTML being written behind a toggle, and keeps it out of the history', async () => {
