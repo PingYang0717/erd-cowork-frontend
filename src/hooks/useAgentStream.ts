@@ -49,10 +49,6 @@ type Action =
 const NETWORK_ERROR_CODE = 'NETWORK_ERROR';
 // English to match every other string on this surface; the mockup's Chinese copy is
 // confined to the clarification forms.
-/** Read where it is used rather than at module load: the language can change while the
- *  app is open, and a constant captured on import would keep the first one forever. */
-const networkErrorMessage = () => getTranslations().chat.networkError;
-
 const initialState: AgentStreamState = {
   isStreaming: false,
   stopped: false,
@@ -169,7 +165,10 @@ const reducer = (state: AgentStreamState, action: Action): AgentStreamState => {
         isStreaming: false,
         durationMs: action.durationMs,
         networkError: true,
-        error: { code: NETWORK_ERROR_CODE, message: networkErrorMessage() },
+        // Read here rather than held in a module constant: a constant is evaluated on
+        // import, so it would keep whatever language was current then even after the
+        // reader switched.
+        error: { code: NETWORK_ERROR_CODE, message: getTranslations().chat.networkError },
       };
 
     case 'DONE':
