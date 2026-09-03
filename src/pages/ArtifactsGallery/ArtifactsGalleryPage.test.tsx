@@ -4,6 +4,7 @@ import { http, HttpResponse } from 'msw';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { en } from '@/i18n/en';
 import { server } from '@/mocks/server';
 import ArtifactPage from '@/pages/Artifact/ArtifactPage';
 import { appWrapper } from '@/test/appHarness';
@@ -71,6 +72,29 @@ describe('Artifacts gallery', () => {
     expect(screen.queryByRole('button', { name: 'Scratch — CPK by lot' })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: /^All/ })).toHaveTextContent('3');
     expect(screen.getByRole('button', { name: /^Yours/ })).toHaveTextContent('2');
+  });
+
+  /** The trigger carries the chosen option's own icon. It used to be hardcoded to the
+   *  A→Z glyph, so picking "Pinned first" left the button showing an alphabetical mark
+   *  next to the words "Pinned first" — the icon contradicting the label beside it. */
+  it('shows the chosen sort own icon on the trigger', async () => {
+    const user = userEvent.setup();
+    renderGalleryPage();
+
+    const trigger = await screen.findByRole('button', { name: /Sort/ });
+    expect(trigger.querySelector('.anticon-pushpin')).toBeInTheDocument();
+
+    await user.click(trigger);
+    await user.click(await screen.findByText(en.gallery.sortName));
+
+    expect(
+      (await screen.findByRole('button', { name: /Sort/ })).querySelector(
+        '.anticon-sort-ascending',
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /Sort/ }).querySelector('.anticon-pushpin'),
+    ).toBeNull();
   });
 
   it('narrows the list per filter, independent of any pin/rename interaction', async () => {
