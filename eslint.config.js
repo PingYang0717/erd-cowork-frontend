@@ -50,4 +50,13 @@ export default tseslint.config(
   },
   prettierConfig,
   ...oxlint.configs['flat/recommended'],
+  {
+    // setup.ts 的 seedTestIdentity 是 side-effect import 且必須是第一行;部分環境的
+    // lint 會對它報排序,所以掛了 disable directive。這台若沒觸發,預設的
+    // reportUnusedDisableDirectives 會讓 --fix(pre-commit hook)把「沒用到的」
+    // directive 自動拔掉——在會觸發的機器上就又紅了。對這一個檔關閉回報,directive
+    // 才能在兩種環境都活著。
+    files: ['src/test/setup.ts'],
+    linterOptions: { reportUnusedDisableDirectives: 'off' },
+  },
 );
