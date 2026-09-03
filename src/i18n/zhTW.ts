@@ -50,6 +50,9 @@ export const zhTW = {
     openInNewTab: '在新分頁開啟預覽',
     /** Shown for any failure to load the document, which is why it hedges. */
     missing: '這個 Artifact 已不存在,可能已被刪除。請從上方選單挑選其他 Artifact。',
+    /** Said when the load failed for a reason that is not "gone" — the Artifact may be
+     *  perfectly fine and the request simply did not get through. */
+    loadFailed: '這個 Artifact 載入失敗,請稍後重試。',
     publishedToast: '已發布 — 已加入左側 Artifacts 清單。',
     goToArtifacts: '前往 Artifacts',
     /** Artifact, not 產出. The version menu deliberately avoids 「版本」 — these are

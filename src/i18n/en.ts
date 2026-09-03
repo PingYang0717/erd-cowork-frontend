@@ -40,6 +40,7 @@ export const en: Translations = {
     openInNewTab: 'Open preview in a new tab',
     missing:
       'This Artifact is no longer available — it may have been deleted. Pick another from the menu above.',
+    loadFailed: 'This Artifact could not be loaded. Please try again shortly.',
     publishedToast: 'Published — added to Artifacts on the left.',
     goToArtifacts: 'Go to Artifacts',
     switchVersion: 'Switch Artifact',

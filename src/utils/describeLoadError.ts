@@ -14,6 +14,15 @@ import type { Translations } from '@/i18n/zhTW';
  * long" — it is an aborted request. Both land here as a response-less AxiosError and both
  * are, from the user's side, the same thing: nothing came back.
  */
+/** Whether the backend answered "this is not here" as opposed to failing to answer.
+ *
+ *  Only a 404 says the thing is gone. A 500, a timeout or an unreachable backend say
+ *  nothing about whether it exists — telling the reader it was deleted on the strength of
+ *  those is stating something the client cannot know, and it is the kind of claim someone
+ *  acts on by giving up looking for it.
+ */
+export const isNotFoundError = (error: unknown): boolean => httpStatus(error) === 404;
+
 export const describeLoadError = (
   error: Error,
   t: Translations['errors'] = getTranslations().errors,
