@@ -164,7 +164,9 @@ const ArtifactPanelContent: React.FC<ArtifactPanelContentProps> = ({
         return {
           ...version,
           title: listed?.title ?? version.title,
-          version: listed?.version,
+          // The backend's number when the list has caught up, the derived one until
+          // then — they agree, both counting artifact-bearing messages in order.
+          version: listed?.version ?? version.version,
           publishedAt: listed?.publishedAt,
         };
       }),
