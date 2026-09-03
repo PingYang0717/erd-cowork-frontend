@@ -4,6 +4,7 @@ import { http, HttpResponse } from 'msw';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { en } from '@/i18n/en';
 import { server } from '@/mocks/server';
 import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
 import { useStudioLayoutStore } from '@/stores/useStudioLayoutStore';
@@ -114,6 +115,23 @@ describe('StudioPage three-pane layout', () => {
     expect(await screen.findByRole('button', { name: 'New chat' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Schedule' })).toBeInTheDocument();
     expect(rail.style.width).toBe('270px');
+  });
+
+  /** Language and theme live only in the rail now, so they have to survive it collapsing
+   *  — otherwise a collapsed rail puts them out of reach until the user thinks to expand
+   *  it again. */
+  it('offers Settings in both rail states', async () => {
+    const user = userEvent.setup();
+    renderStudio();
+
+    await user.click(await screen.findByRole('button', { name: 'Settings' }));
+    expect(await screen.findByRole('radio', { name: en.settings.languageEn })).toBeInTheDocument();
+    await user.keyboard('{Escape}');
+
+    await user.click(screen.getByRole('button', { name: 'Collapse session list' }));
+
+    await user.click(await screen.findByRole('button', { name: 'Settings' }));
+    expect(await screen.findByRole('radio', { name: en.settings.languageEn })).toBeInTheDocument();
   });
 
   /** The divider used to be pointer-only: role="separator" with no tabIndex and no

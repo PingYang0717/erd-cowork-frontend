@@ -9,6 +9,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useLocation, useNavigate } from 'react-router-dom';
 
+import SettingsMenu from '@/components/common/SettingsMenu';
 import { useSessionGroups } from '@/hooks/useSessionGroups';
 import { useTranslations } from '@/i18n/useTranslations';
 
@@ -198,6 +199,9 @@ const CollapsedSessionRail: React.FC<CollapsedSessionRailProps> = ({ onExpand })
             </>,
             document.body,
           )}
+      </div>
+      <div className={styles.railFooter}>
+        <SettingsMenu variant="tile" />
       </div>
     </div>
   );

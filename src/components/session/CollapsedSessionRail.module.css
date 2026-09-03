@@ -5,6 +5,8 @@
   gap: 6px;
   padding: 12px 0;
   width: 100%;
+  /* Full height so the settings tile has slack to be pushed into. */
+  height: 100%;
 }
 
 .divider {
@@ -123,4 +125,10 @@
   flex: 1;
   overflow-y: auto;
   padding: 4px 0 8px;
+}
+
+/* Pushes the settings tile to the foot of the rail; the tiles above keep their own
+   spacing. */
+.railFooter {
+  margin-top: auto;
 }

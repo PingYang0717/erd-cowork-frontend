@@ -116,14 +116,19 @@ describe('Chat composer', () => {
    *  conversation reads that the Connectors panel could flatly contradict. The header
    *  now carries identity and toggles only; what a session draws on is shown where it
    *  is decided. */
-  it('keeps the thread header to identity and toggles — no hardcoded data-source claim', () => {
+  /** The header names the app and nothing else. It used to carry the theme and language
+   *  toggles as well; those are preferences about the app rather than about this
+   *  conversation, and they live in the rail's Settings now. The data-source chip the
+   *  mockup hard-coded ("Inline DB · N5 line") is still deliberately absent — it asserted
+   *  a fact the Connectors panel could flatly contradict. */
+  it('keeps the thread header to identity alone', async () => {
     renderStudio();
 
     const header = screen.getByRole('banner', { name: 'Thread header' });
     expect(within(header).queryByText(/Inline DB/)).not.toBeInTheDocument();
-    expect(
-      within(header).getByRole('button', { name: /Switch to (dark|light) mode/ }),
-    ).toBeInTheDocument();
+    expect(within(header).queryByRole('button')).not.toBeInTheDocument();
+    // The preferences are still reachable — from the rail, once.
+    expect(await screen.findByRole('button', { name: 'Settings' })).toBeInTheDocument();
   });
 });
 

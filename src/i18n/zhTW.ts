@@ -87,6 +87,20 @@ export const zhTW = {
     deleteConfirm: '刪除',
   },
 
+  settings: {
+    /** The rail entry and the panel it opens share a name — pressing the thing called
+     *  Settings should land you somewhere called Settings. */
+    title: '設定',
+    language: '語言',
+    /** Each language names itself. A reader who cannot read the current interface still
+     *  has to find their own — so this is the one place a language is not translated. */
+    languageZh: '中文',
+    languageEn: 'English',
+    theme: '主題',
+    themeLight: '淺色',
+    themeDark: '深色',
+  },
+
   gallery: {
     sortLabel: '排序:',
     sortPinned: '釘選優先',

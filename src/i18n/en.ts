@@ -73,6 +73,16 @@ export const en: Translations = {
     deleteConfirm: 'Delete',
   },
 
+  settings: {
+    title: 'Settings',
+    language: 'Language',
+    languageZh: '中文',
+    languageEn: 'English',
+    theme: 'Theme',
+    themeLight: 'Light',
+    themeDark: 'Dark',
+  },
+
   gallery: {
     sortLabel: 'Sort:',
     sortPinned: 'Pinned first',
