@@ -32,8 +32,13 @@ const ThreadHeader: React.FC = () => {
           asserted a fact the Connectors panel could flatly contradict (attach WAT,
           drop Inline, and the chip still claimed Inline). What a conversation reads is
           the session's business, and it is already shown where it is decided. */}
-      <LanguageToggle />
-      <ThemeToggle />
+      {/* One group, one flex item: the header is space-between, and as siblings the
+          two toggles got spread apart — the language button floated to the middle of
+          the header on its own. They are a pair of preferences and sit as one. */}
+      <span className={styles.headerActions}>
+        <LanguageToggle />
+        <ThemeToggle />
+      </span>
     </header>
   );
 };
