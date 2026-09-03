@@ -1,18 +1,13 @@
 /** The short mark the version switcher shows for an Artifact — `v1`, `v2`.
  *
- *  The backend names this field's value in words (`version 1`), so rendering it behind a
- *  `v` produced `vversion 1`. Only the ordinal is wanted; the word is the backend's way
- *  of saying what the number counts, not something to repeat on a button 40px wide.
+ *  `version` is a number on the wire (confirmed 2026-09-03). This existed to dig the
+ *  digits out of a worded value (`version 1`), and that parsing is gone with the
+ *  assumption behind it: a field that stops being a number should break here, not be
+ *  quietly reinterpreted.
  *
- *  Reads the digits out of whatever arrives rather than assuming a shape: the field has
- *  been a number here and a sentence there, and a menu row is not the place to find out
- *  which. Anything with no number in it answers `null`, and the caller shows no mark at
- *  all — better than a `v` on its own, which would read as a version named nothing.
+ *  What remains is the absent case. A freshly produced Artifact is not in the artifacts
+ *  list yet, so the menu can hold a row whose version has not arrived — it shows no mark
+ *  rather than a lone `v`, which would read as a version named nothing.
  */
-export const artifactVersionLabel = (version: string | number | undefined): string | null => {
-  if (version === undefined || version === null) {
-    return null;
-  }
-  const digits = String(version).match(/\d+/);
-  return digits ? `v${digits[0]}` : null;
-};
+export const artifactVersionLabel = (version: number | undefined): string | null =>
+  version === undefined ? null : `v${version}`;

@@ -11,10 +11,12 @@ export interface Artifact {
   /** What the Gallery shows. The user writes it when they publish — an Artifact is put
    *  on the shelf under a name they chose, not under whatever the run was called. */
   title: string;
-  /** Which version of its analysis this is, worded by the backend — `version 1`, not
-   *  `1`. The version menu shows only the ordinal (`artifactVersionLabel`); the Gallery
-   *  does not read it at all, because a card is named by its title. */
-  version: string;
+  /** Which version of its analysis this is — a number, confirmed with the backend
+   *  (2026-09-03). It was briefly read as the worded form `version 1`, and the client
+   *  parsed the digits back out; that parsing is gone, so a shape change here fails
+   *  loudly rather than being silently absorbed. The version menu renders it as `vN`;
+   *  the Gallery does not read it at all, because a card is named by its title. */
+  version: number;
   sessionId: string;
   /** The producing session's title, denormalised — the Gallery card no longer has to
    *  fetch the session list to name where an Artifact came from. */
@@ -52,7 +54,7 @@ export interface Artifact {
 export interface ArtifactVersion {
   artifactId: string;
   title: string;
-  version?: string;
+  version?: number;
   createdAt?: string;
   publishedAt?: string | null;
 }
