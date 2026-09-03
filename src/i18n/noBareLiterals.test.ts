@@ -1,5 +1,5 @@
 import { readdirSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, relative, sep } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
@@ -77,15 +77,20 @@ describe('UI copy goes through the dictionary', () => {
     const report: Record<string, string[]> = {};
 
     for (const file of files) {
-      const relative = file.slice(SRC.length + 1);
+      // path.relative + separator normalisation, NOT a string slice: slicing by
+      // SRC.length broke the moment the two paths disagreed about anything the
+      // length can't see (Windows separators, a symlinked or differently-cased
+      // checkout) — the key then missed ALLOWED and legitimate entries like the
+      // product name in ThreadPanel read as violations.
+      const relativePath = relative(SRC, file).split(sep).join('/');
       // aria-label / title lines are exempt (ADR-0012); strip them before matching.
       const source = readFileSync(file, 'utf8')
         .split('\n')
         .filter((line) => !/aria-label|title=|aria-labelledby/.test(line))
         .join('\n');
-      const found = violationsIn(source, relative);
+      const found = violationsIn(source, relativePath);
       if (found.length > 0) {
-        report[relative] = found;
+        report[relativePath] = found;
       }
     }
 

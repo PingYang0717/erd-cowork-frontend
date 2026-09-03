@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
 
 // The router reads window.location once at module-evaluation time, so each test puts
 // its URL there first and then re-imports the module tree fresh — this doubles as the
@@ -22,6 +22,15 @@ const renderAppAt = async (path: string) => {
 // the default 5s test timeout under load (V8/antd CSS-in-JS caches don't
 // survive resetModules) — hence the longer budget on every test here.
 const RESET_MODULES_TIMEOUT = 10000;
+
+// Warm the module graph once before any test runs: the FIRST evaluation of the App
+// tree (antd, providers, every page) is by far the most expensive, and paying it
+// inside a test regularly blew that test's own budget on a loaded machine. Paid here
+// with its own generous budget, the per-test re-imports only re-evaluate.
+beforeAll(async () => {
+  vi.resetModules();
+  await import('./App');
+}, 60000);
 
 describe('Routing shell', () => {
   it(
