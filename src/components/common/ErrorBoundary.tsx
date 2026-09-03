@@ -4,6 +4,7 @@ import { useTranslations } from '@/i18n/useTranslations';
 import { describeLoadError } from '@/utils/describeLoadError';
 
 import styles from './ErrorBoundary.module.css';
+import SettingsMenu from './SettingsMenu';
 
 interface Props {
   children: ReactNode;
@@ -74,9 +75,16 @@ const ErrorPanel: React.FC<{ error: Error; onRetry: () => void }> = ({ error, on
     <div role="alert" className={styles.panel}>
       <p className={styles.heading}>{heading}</p>
       <p className={styles.message}>{detail}</p>
-      <button type="button" className={styles.retry} onClick={onRetry}>
-        {t.common.retry}
-      </button>
+      <div className={styles.actions}>
+        <button type="button" className={styles.retry} onClick={onRetry}>
+          {t.common.retry}
+        </button>
+        {/* The language exit rides the card. A failure card may be the only thing
+            left on screen (the full-page view fails whole), and its words are in a
+            language the reader may not read — settings is where the language lives,
+            so it must survive every failure that hides the rail's own entry. */}
+        <SettingsMenu variant="tile" />
+      </div>
     </div>
   );
 };

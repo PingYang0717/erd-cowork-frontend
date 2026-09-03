@@ -1,6 +1,6 @@
 import { SettingOutlined } from '@ant-design/icons';
 import { Popover, Segmented } from 'antd';
-import React, { useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 
 import { useTranslations } from '@/i18n/useTranslations';
 import { type Language, useLanguageStore } from '@/stores/useLanguageStore';
@@ -28,18 +28,38 @@ interface SettingsMenuProps {
 const SettingsMenu: React.FC<SettingsMenuProps> = ({ variant }) => {
   const t = useTranslations();
   const [open, setOpen] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const language = useLanguageStore((state) => state.language);
   const setLanguage = useLanguageStore((state) => state.setLanguage);
   const isDarkMode = useThemeStore((state) => state.isDarkMode);
-  const toggleTheme = useThemeStore((state) => state.toggleTheme);
+  const setDarkMode = useThemeStore((state) => state.setDarkMode);
+
+  const handleLanguageChange = useCallback(
+    (value: string | number) => setLanguage(value as Language),
+    [setLanguage],
+  );
+  const handleThemeChange = useCallback(
+    (value: string | number) => setDarkMode(value === 'dark'),
+    [setDarkMode],
+  );
+  /** The dialog keyboard contract this repo adopted (A-2/A-6): Escape closes and puts
+   *  focus back on the opener. antd's Popover does neither for a custom child, so the
+   *  panel and the trigger both carry it. */
+  const handleKeyDown = useCallback((event: React.KeyboardEvent) => {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      setOpen(false);
+      triggerRef.current?.focus();
+    }
+  }, []);
 
   const panel = (
-    <div className={styles.panel}>
+    <div className={styles.panel} onKeyDown={handleKeyDown}>
       <div className={styles.row}>
         <span className={styles.rowLabel}>{t.settings.language}</span>
         <Segmented
           value={language}
-          onChange={(value) => setLanguage(value as Language)}
+          onChange={handleLanguageChange}
           options={[
             { value: 'zh-TW', label: t.settings.languageZh },
             { value: 'en', label: t.settings.languageEn },
@@ -50,13 +70,7 @@ const SettingsMenu: React.FC<SettingsMenuProps> = ({ variant }) => {
         <span className={styles.rowLabel}>{t.settings.theme}</span>
         <Segmented
           value={isDarkMode ? 'dark' : 'light'}
-          // The store owns a toggle rather than a setter, so this fires only on a real
-          // change — picking the mode already in use would otherwise flip it away.
-          onChange={(value) => {
-            if ((value === 'dark') !== isDarkMode) {
-              toggleTheme();
-            }
-          }}
+          onChange={handleThemeChange}
           options={[
             { value: 'light', label: t.settings.themeLight },
             { value: 'dark', label: t.settings.themeDark },
@@ -75,31 +89,22 @@ const SettingsMenu: React.FC<SettingsMenuProps> = ({ variant }) => {
       title={t.settings.title}
       content={panel}
     >
-      {/* aria-haspopup + aria-expanded: the trigger opens a panel, and a reader has to
-          hear that — the same contract VersionSwitcher's trigger keeps (A-2). antd's
-          Popover adds nothing to a custom child, so the button says it itself. */}
-      {variant === 'rail' ? (
-        <button
-          type="button"
-          className={styles.railEntry}
-          aria-label="Settings"
-          aria-haspopup="dialog"
-          aria-expanded={open}
-        >
-          <SettingOutlined aria-hidden />
-          <span className={styles.railEntryLabel}>{t.settings.title}</span>
-        </button>
-      ) : (
-        <button
-          type="button"
-          className={styles.tile}
-          aria-label="Settings"
-          aria-haspopup="dialog"
-          aria-expanded={open}
-        >
-          <SettingOutlined aria-hidden />
-        </button>
-      )}
+      {/* One button, not one per variant: the pair used to duplicate every attribute
+          and drift was only a matter of time. aria-haspopup + aria-expanded because a
+          reader has to hear that this opens a panel — antd adds nothing to a custom
+          child (the same contract VersionSwitcher's trigger keeps, A-2). */}
+      <button
+        ref={triggerRef}
+        type="button"
+        className={variant === 'rail' ? styles.railEntry : styles.tile}
+        aria-label="Settings"
+        aria-haspopup="dialog"
+        aria-expanded={open}
+        onKeyDown={handleKeyDown}
+      >
+        <SettingOutlined aria-hidden />
+        {variant === 'rail' && <span className={styles.railEntryLabel}>{t.settings.title}</span>}
+      </button>
     </Popover>
   );
 };

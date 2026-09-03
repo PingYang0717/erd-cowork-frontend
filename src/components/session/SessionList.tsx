@@ -10,7 +10,6 @@ import { Button } from 'antd';
 import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
-import SettingsMenu from '@/components/common/SettingsMenu';
 import { useSessionGroups } from '@/hooks/useSessionGroups';
 import { useTranslations } from '@/i18n/useTranslations';
 import { usePublishCoachStore } from '@/stores/usePublishCoachStore';
@@ -158,9 +157,6 @@ const SessionList: React.FC<SessionListProps> = ({ onCollapse, artifactsCount })
           emptyFallback={t.session.noRecents}
         />
       </div>
-      {/* After the scroll region, so it sits at the foot of the rail however long the
-          session list grows — `.scrollRegion` takes the slack. */}
-      <SettingsMenu variant="rail" />
     </div>
   );
 };
