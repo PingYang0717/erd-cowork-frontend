@@ -6,19 +6,16 @@ import {
   ShareAltOutlined,
   UsergroupAddOutlined,
 } from '@ant-design/icons';
-import React, { Suspense, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
-import ErrorBoundary from '@/components/common/ErrorBoundary';
 import SettingsMenu from '@/components/common/SettingsMenu';
 import { useArtifactContent } from '@/hooks/useArtifactContent';
 import { useArtifacts } from '@/hooks/useArtifacts';
-import { useSessionDetail } from '@/hooks/useSessionDetail';
 import { useTranslations } from '@/i18n/useTranslations';
 import { useActiveRunStore } from '@/stores/useActiveRunStore';
 import type { Artifact, ArtifactVersion } from '@/types/api';
 import { artifactHref } from '@/utils/artifactUrl';
-import { deriveArtifactVersions } from '@/utils/deriveArtifactVersions';
 
 import ArtifactFrame from './ArtifactFrame';
 import styles from './ArtifactFullPageView.module.css';
@@ -91,21 +88,11 @@ const ArtifactFullPageView: React.FC<ArtifactFullPageViewProps> = ({ artifactId 
             </div>
           ) : (
             routeArtifact && (
-              // Its own boundary, falling back to nothing. The switcher reads the
-              // producing session, and deleting a session does not delete the Artifacts
-              // it produced — so that read can 404 on a page whose Artifact is perfectly
-              // fetchable. Without this the page-level boundary caught it and replaced
-              // the whole view with a retry screen that could never succeed.
-              <ErrorBoundary fallback={() => null}>
-                <Suspense fallback={null}>
-                  <SessionVersionSwitcher
-                    artifact={routeArtifact}
-                    artifacts={artifacts ?? []}
-                    displayedArtifactId={displayedArtifactId}
-                    onSelect={setSelectedArtifactId}
-                  />
-                </Suspense>
-              </ErrorBoundary>
+              // No boundary needed any more: this reads the Artifact it was handed and
+              // nothing else. It used to fetch the producing session, which can 404 on a
+              // page whose Artifact is perfectly fetchable — a deleted session does not
+              // delete what it produced.
+              <ArtifactVersions artifact={routeArtifact} onSelect={setSelectedArtifactId} />
             )
           )}
         </div>
@@ -171,38 +158,39 @@ const ArtifactFullPageView: React.FC<ArtifactFullPageViewProps> = ({ artifactId 
 
 /** Loads the artifact's session to derive its version list — its own component so the
  *  session query only runs when there is an owned artifact to derive from. */
-interface SessionVersionSwitcherProps {
+interface ArtifactVersionsProps {
   artifact: Artifact;
-  artifacts: Artifact[];
-  displayedArtifactId: string | undefined;
   onSelect: (artifactId: string) => void;
 }
 
-const SessionVersionSwitcher: React.FC<SessionVersionSwitcherProps> = ({
-  artifact,
-  artifacts,
-  displayedArtifactId,
-  onSelect,
-}) => {
-  const { data: detail } = useSessionDetail(artifact.sessionId);
-
+/** The versions of the Artifact on screen — which today is the Artifact itself.
+ *
+ *  It used to list everything the producing session made. Those are siblings, not
+ *  versions (artifact-model-decisions Q1): each is its own Artifact, and the Studio panel
+ *  lists them because there the conversation is the context. Here the reader arrived from
+ *  the Gallery at one Artifact, with no conversation on screen — offering its siblings
+ *  under a heading about versions conflates two different things.
+ *
+ *  Real versions — the same analysis re-run over another time range — are Q6, deliberately
+ *  not built this round. The switcher stays wired for one entry rather than being taken
+ *  out: the selection it feeds is what those versions will move, and this is the shape
+ *  they arrive into.
+ */
+const ArtifactVersions: React.FC<ArtifactVersionsProps> = ({ artifact, onSelect }) => {
   const versions = useMemo<ArtifactVersion[]>(
-    () =>
-      deriveArtifactVersions(detail.messages).map((version) => ({
-        ...version,
-        publishedAt: artifacts.find((a) => a.id === version.artifactId)?.publishedAt,
-      })),
-    [detail.messages, artifacts],
+    () => [
+      {
+        artifactId: artifact.id,
+        title: artifact.title,
+        version: artifact.version,
+        createdAt: artifact.createdAt,
+        publishedAt: artifact.publishedAt,
+      },
+    ],
+    [artifact],
   );
 
-  if (versions.length === 0) {
-    return null;
-  }
-
-  const activeVersion =
-    versions.find((v) => v.artifactId === displayedArtifactId) ?? versions[versions.length - 1];
-
-  return <VersionSwitcher versions={versions} activeVersion={activeVersion} onSelect={onSelect} />;
+  return <VersionSwitcher versions={versions} activeVersion={versions[0]} onSelect={onSelect} />;
 };
 
 export default ArtifactFullPageView;

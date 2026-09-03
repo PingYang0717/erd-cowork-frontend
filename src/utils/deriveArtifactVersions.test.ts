@@ -36,19 +36,36 @@ describe('deriveArtifactVersions', () => {
     ]);
 
     expect(versions).toEqual([
-      // No version number: these are independent Artifacts, listed in the order the
-      // conversation produced them.
+      // Numbered by arrival — the same rule the backend numbers by, so the two agree.
+      // The menu used to read this from the artifacts list, which a just-produced
+      // Artifact is not in yet; deriving it here needs nothing that has not arrived.
       {
         artifactId: 'a1',
         title: 'SPC analysis',
         createdAt: '2026-08-20T09:01:00.000Z',
+        version: 1,
       },
       {
         artifactId: 'a2',
         title: 'SPC analysis v2',
         createdAt: '2026-08-20T09:05:00.000Z',
+        version: 2,
       },
     ]);
+  });
+
+  /** Numbering counts artifact-bearing messages, not messages — a question between two
+   *  outputs must not push the second one to v3. */
+  it('numbers by position among artifacts, ignoring the messages between them', () => {
+    const versions = deriveArtifactVersions([
+      message({ sender: 'USER', text: 'q' }),
+      message({ artifactId: 'a1' }),
+      message({ sender: 'USER', text: 'q' }),
+      message({ sender: 'USER', text: 'q' }),
+      message({ artifactId: 'a2' }),
+    ]);
+
+    expect(versions.map((v) => v.version)).toEqual([1, 2]);
   });
 
   it('falls back to the first 50 chars of the message text when artifactTitle is null', () => {

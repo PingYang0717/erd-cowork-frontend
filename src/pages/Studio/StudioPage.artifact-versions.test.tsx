@@ -134,6 +134,30 @@ describe('Artifact version switcher', () => {
     expect(tickAt).toBeLessThan(timeAt);
   });
 
+  /** The number used to come from the artifacts list, and nothing refetches that list
+   *  when a run ends — so the Artifact just produced sat in the menu as a title with no
+   *  mark beside it, while every older row had one. Deriving the number from the
+   *  messages needs nothing that has not already arrived. */
+  it('numbers an Artifact the moment the run produces it', async () => {
+    const user = userEvent.setup();
+    renderStudio();
+
+    await user.click(await screen.findByRole('button', { name: 'SPC — Vt (gate CD)' }));
+    await screen.findByTitle('Artifact preview');
+    await user.type(
+      await screen.findByRole('textbox', { name: 'Message' }),
+      'Regenerate the dashboard.{Enter}',
+    );
+    await screen.findByRole('button', { name: 'Publish Artifact' });
+
+    await user.click(screen.getByRole('button', { name: 'Switch Artifact' }));
+
+    const rows = within(await screen.findByRole('menu')).getAllByRole('menuitem');
+    // Newest first: the one this run produced leads.
+    expect(within(rows[0]).getByText('v2')).toBeInTheDocument();
+    expect(within(rows[rows.length - 1]).getByText('v1')).toBeInTheDocument();
+  });
+
   /** The menu-button keyboard contract (A-2): opening focuses the current item,
    *  arrows move between items, Escape closes and puts focus back on the trigger —
    *  in a three-pane layout, focus dropped to <body> is a position lost entirely. */

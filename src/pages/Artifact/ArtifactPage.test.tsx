@@ -41,9 +41,10 @@ describe('Artifact full-page view', () => {
 
     const iframe = (await screen.findByTitle('Artifact preview')) as HTMLIFrameElement;
     expect(iframe.getAttribute('srcdoc')).toContain('SPC analysis — Vt (gate CD)');
-    // No version switcher (there is no session to derive versions from), and no error
-    // screen standing in for the whole page.
-    expect(screen.queryByRole('button', { name: 'Switch Artifact' })).not.toBeInTheDocument();
+    // The switcher is unaffected: it reads the Artifact it was handed, not the session
+    // that produced it. It used to fetch the session, so a deleted one removed the menu
+    // from a page whose Artifact was perfectly fetchable.
+    expect(await screen.findByRole('button', { name: 'Switch Artifact' })).toBeInTheDocument();
     expect(screen.queryByText(/failed to load/)).not.toBeInTheDocument();
   });
 
@@ -90,9 +91,10 @@ describe('Artifact full-page view', () => {
 
     await screen.findByTitle('Artifact preview');
 
-    // Versions derive from the artifact's session history: session-1 seeds one
-    // artifact-bearing message, so artifact-1 is its v1 (and its only version).
-    // Switching between versions is covered in the Studio panel's suite.
+    // Only this Artifact. Its siblings from the same conversation are not its versions
+    // (artifact-model-decisions Q1) — the Studio panel lists those, because there the
+    // conversation is the context; here the reader arrived at one Artifact from the
+    // Gallery. Real versions (Q6) are not built yet.
     await user.click(await screen.findByRole('button', { name: 'Switch Artifact' }));
     const items = await screen.findAllByRole('menuitem');
     expect(items).toHaveLength(1);
