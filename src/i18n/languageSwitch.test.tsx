@@ -73,6 +73,22 @@ describe('Switching the interface language', () => {
     expect(trigger).toHaveAttribute('aria-expanded', 'true');
   });
 
+  /** The dialog keyboard contract the repo adopted (A-2/A-6): Escape closes and puts
+   *  focus back on the opener — antd's Popover does neither for a custom child. */
+  it('closes on Escape and hands focus back to the trigger', async () => {
+    const user = userEvent.setup();
+    renderSettings();
+
+    const trigger = screen.getByRole('button', { name: 'Settings' });
+    await user.click(trigger);
+    expect(await screen.findByText(zhTW.settings.theme)).toBeInTheDocument();
+
+    await user.keyboard('{Escape}');
+
+    expect(trigger).toHaveAttribute('aria-expanded', 'false');
+    expect(trigger).toHaveFocus();
+  });
+
   /** Both languages are named, and the one in use is marked — a reader who cannot read
    *  the current interface still has to be able to find their own. A toggle showing only
    *  the destination could not do that. */

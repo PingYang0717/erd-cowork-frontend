@@ -148,6 +148,10 @@ describe('StudioPage three-pane layout', () => {
     expect(await screen.findByText(en.errors.loadFailedHeading)).toBeInTheDocument();
     // The rest of the shell survives alongside the failed rail.
     expect(screen.getByRole('banner', { name: 'Thread header' })).toBeInTheDocument();
+    // And so does Settings — it sits OUTSIDE the boundary now. It used to live inside
+    // the rail components, so the very failure whose card a reader might not be able
+    // to read also removed their only way to switch language.
+    expect(screen.getAllByRole('button', { name: 'Settings' }).length).toBeGreaterThan(0);
   });
 
   /** The divider used to be pointer-only: role="separator" with no tabIndex and no

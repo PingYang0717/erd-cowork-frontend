@@ -2,6 +2,7 @@ import React, { useCallback } from 'react';
 import { Outlet } from 'react-router-dom';
 
 import DataBoundary from '@/components/common/DataBoundary';
+import SettingsMenu from '@/components/common/SettingsMenu';
 import CollapsedSessionRail from '@/components/session/CollapsedSessionRail';
 import SessionList from '@/components/session/SessionList';
 import { useArtifacts } from '@/hooks/useArtifacts';
@@ -66,15 +67,24 @@ const StudioShell: React.FC = () => {
             persisted now — so "reload while collapsed" is an ordinary path, and without
             a boundary here a failing sessions fetch had nothing above it to catch:
             the whole page went blank. */}
-        {isSessionRailCollapsed ? (
-          <DataBoundary label="Sessions">
-            <CollapsedSessionRail onExpand={toggleSessionRailCollapsed} />
-          </DataBoundary>
-        ) : (
-          <DataBoundary label="Sessions">
-            <ExpandedSessionRail onCollapse={toggleSessionRailCollapsed} />
-          </DataBoundary>
-        )}
+        <div className={styles.railContent}>
+          {isSessionRailCollapsed ? (
+            <DataBoundary label="Sessions">
+              <CollapsedSessionRail onExpand={toggleSessionRailCollapsed} />
+            </DataBoundary>
+          ) : (
+            <DataBoundary label="Sessions">
+              <ExpandedSessionRail onCollapse={toggleSessionRailCollapsed} />
+            </DataBoundary>
+          )}
+        </div>
+        {/* OUTSIDE the boundary, deliberately: settings is where the language lives,
+            and a reader facing a failed pane in a language they cannot read needs
+            this entry to survive exactly that failure. It used to sit inside the
+            rail components, behind the very query whose error card replaced it. */}
+        <div className={styles.railSettings}>
+          <SettingsMenu variant={isSessionRailCollapsed ? 'tile' : 'rail'} />
+        </div>
       </nav>
 
       {!isSessionRailCollapsed && (

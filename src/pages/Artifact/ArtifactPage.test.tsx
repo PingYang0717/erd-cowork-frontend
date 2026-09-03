@@ -163,4 +163,15 @@ describe('Artifact full-page view', () => {
 
     openSpy.mockRestore();
   });
+
+  /** A shared-link recipient can land here with the backend down, facing an error card
+   *  in a language they may not read. The card carries the settings entry (ErrorPanel),
+   *  so the language exit survives the very failure that hid every other entry. */
+  it('keeps a Settings entry on the failure card when the artifacts list cannot load', async () => {
+    server.use(http.get('/api/artifacts', () => new HttpResponse(null, { status: 500 })));
+    renderArtifactPageAt('/cowork/artifact/artifact-1');
+
+    expect(await screen.findByText(en.errors.loadFailedHeading)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Settings' })).toBeInTheDocument();
+  });
 });

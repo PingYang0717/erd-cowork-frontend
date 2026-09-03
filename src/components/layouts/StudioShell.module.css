@@ -6,9 +6,32 @@
 
 .sessionRail {
   flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
   background: var(--erd-color-bg-container, #fff);
   border-right: 1px solid var(--erd-color-border-secondary, #f0f0f0);
+}
+
+/* The boundary-wrapped rail body; the settings foot below stays outside it. */
+.railContent {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.railContent > * {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.railSettings {
+  flex: 0 0 auto;
+  display: flex;
+  justify-content: center;
+  padding: 8px;
+  border-top: 1px solid var(--erd-color-border-secondary, #f0f0f0);
 }
 
 .content {
