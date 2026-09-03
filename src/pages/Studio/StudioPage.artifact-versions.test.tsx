@@ -120,10 +120,10 @@ describe('Artifact version switcher', () => {
     // format shows a weekday within a week of "now", the date beyond that.
     expect(within(seededRow).getByText(/^(Thu|Aug 20)$/)).toBeInTheDocument();
 
-    // The ordinal alone. The backend words this field (`version 1`), so rendering it
-    // straight behind a `v` read `vversion 1`.
+    // The row reads `vN` then the title. `version` is a number on the wire (confirmed
+    // 2026-09-03), so this is a straight render — the digit-parsing that stood in while
+    // the field was thought to be worded is gone.
     expect(within(seededRow).getByText('v1')).toBeInTheDocument();
-    expect(within(menu).queryByText(/vversion/)).not.toBeInTheDocument();
 
     // The tick sits before the time, so the times line up as a column whether or not a
     // row is published — with the tick last, a published row pushed its time left.

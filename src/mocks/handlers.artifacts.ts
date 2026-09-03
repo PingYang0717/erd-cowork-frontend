@@ -119,7 +119,7 @@ const toArtifactDto = (stored: StoredArtifact): Artifact => {
   return {
     id: stored.id,
     title: stored.title,
-    version: artifactVersionValue(stored),
+    version: artifactVersionOrdinal(stored),
     sessionId: stored.sessionId,
     sessionTitle: sessions.read().find((session) => session.id === stored.sessionId)?.title ?? '',
     pinnedAt: stored.pinnedAt,
@@ -161,12 +161,6 @@ const artifactVersionOrdinal = (artifact: { id: string; sessionId: string }): nu
   const index = artifactMessages.findIndex((m) => m.artifactId === artifact.id);
   return index >= 0 ? index + 1 : 1;
 };
-
-/** What the field carries on the wire: the ordinal in words. Kept faithful on purpose —
- *  a mock handing over a bare number would let a client render it raw and pass here,
- *  then show `vversion 1` in production, which is what happened. */
-const artifactVersionValue = (artifact: { id: string; sessionId: string }): string =>
-  `version ${artifactVersionOrdinal(artifact)}`;
 
 export const artifactHandlers = [
   http.get('/api/artifacts', () => {

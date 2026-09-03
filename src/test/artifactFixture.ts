@@ -7,7 +7,7 @@ import type { Artifact } from '@/types/api';
 export const artifactFixture = (overrides: Partial<Artifact> = {}): Artifact => {
   return {
     id: 'artifact-1',
-    version: 'version 1',
+    version: 1,
     sessionId: 'session-1',
     sessionTitle: 'SPC — Vt (gate CD)',
     title: 'SPC analysis — Vt (gate CD)',
