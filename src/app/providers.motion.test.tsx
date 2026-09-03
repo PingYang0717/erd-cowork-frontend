@@ -18,12 +18,12 @@ import AppProviders from './providers';
  *  alternative is losing the setting without noticing. */
 const INSTANT_DURATION = '0.01s';
 
-function instantDurationScopes(): string[] {
+const instantDurationScopes = (): string[] => {
   return Array.from(document.querySelectorAll('style'))
     .flatMap((tag) => (tag.textContent ?? '').split('}'))
     .filter((rule) => rule.includes(`--ant-motion-duration-mid:${INSTANT_DURATION}`))
     .map((rule) => rule.split('{')[0].trim());
-}
+};
 
 /** No overlay duration may be `0s`, whatever else changes: that is the value that broke
  *  mask cleanup, and it is the one a future "make it instant" edit would reach for.
@@ -33,12 +33,12 @@ function instantDurationScopes(): string[] {
  *  under a different name. */
 const DURATION_TOKENS = ['fast', 'mid', 'slow'] as const;
 
-function zeroDurationTokens(): string[] {
+const zeroDurationTokens = (): string[] => {
   const css = Array.from(document.querySelectorAll('style'))
     .map((tag) => tag.textContent ?? '')
     .join('');
   return DURATION_TOKENS.filter((token) => css.includes(`--ant-motion-duration-${token}:0s`));
-}
+};
 
 describe('overlays open without a perceptible enter animation', () => {
   it('the modal and its mask sit in an instant-duration scope', async () => {

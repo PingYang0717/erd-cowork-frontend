@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
 
 // The router reads window.location once at module-evaluation time, so each test puts
 // its URL there first and then re-imports the module tree fresh — this doubles as the
@@ -10,18 +10,27 @@ import { describe, expect, it, vi } from 'vitest';
 // It is a hash router (ADR-0011), so the route goes in the fragment: pushing the bare
 // path would leave the router at `/` and every assertion below would fail on the wrong
 // screen rather than on the thing it is testing.
-async function renderAppAt(path: string) {
+const renderAppAt = async (path: string) => {
   window.history.pushState({}, '', `#${path}`);
   vi.resetModules();
   const { default: App } = await import('./App');
   return render(<App />);
-}
+};
 
 // Every test's vi.resetModules() forces a fresh re-evaluation of the entire
 // App module tree (antd, providers, all pages), which regularly pushes past
 // the default 5s test timeout under load (V8/antd CSS-in-JS caches don't
 // survive resetModules) — hence the longer budget on every test here.
 const RESET_MODULES_TIMEOUT = 10000;
+
+// Warm the module graph once before any test runs: the FIRST evaluation of the App
+// tree (antd, providers, every page) is by far the most expensive, and paying it
+// inside a test regularly blew that test's own budget on a loaded machine. Paid here
+// with its own generous budget, the per-test re-imports only re-evaluate.
+beforeAll(async () => {
+  vi.resetModules();
+  await import('./App');
+}, 60000);
 
 describe('Routing shell', () => {
   it(

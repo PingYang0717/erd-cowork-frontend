@@ -1,4 +1,4 @@
-﻿import { CloseOutlined, FileExcelOutlined, FileTextOutlined } from '@ant-design/icons';
+import { CloseOutlined, FileExcelOutlined, FileTextOutlined } from '@ant-design/icons';
 import React from 'react';
 
 import { useTranslations } from '@/i18n/useTranslations';

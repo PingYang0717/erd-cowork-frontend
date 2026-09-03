@@ -4,7 +4,7 @@ import type { TableResult } from '@/types/api';
 
 import { splitAnswerByTableMarkers } from './tableMarkers';
 
-function table(tableId: string): TableResult {
+const table = (tableId: string): TableResult => {
   return {
     tableId,
     intent: `intent for ${tableId}`,
@@ -12,7 +12,7 @@ function table(tableId: string): TableResult {
     rows: [['L1', 1]],
     truncated: false,
   };
-}
+};
 
 describe('splitAnswerByTableMarkers', () => {
   it('returns the whole answer as one text segment when there is no marker', () => {

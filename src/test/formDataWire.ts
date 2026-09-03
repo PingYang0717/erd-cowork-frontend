@@ -4,7 +4,7 @@ import { httpClient } from '@/api/apiClient';
  *  FormData 時檔名當然都在;這個 test-only interceptor 把 FormData 預先序列化成
  *  與瀏覽器等價的 multipart bytes,讓 mock 後端讀到真實的 wire。app 原始碼
  *  (fileApi 的 FormData 路線)維持 cowork 同形,不為測試環境讓步(ADR-0007)。 */
-export function installFormDataWire(): void {
+export const installFormDataWire = (): void => {
   httpClient.interceptors.request.use(async (config) => {
     if (!(config.data instanceof FormData)) return config;
 
@@ -44,4 +44,4 @@ export function installFormDataWire(): void {
     config.headers['Content-Type'] = `multipart/form-data; boundary=${boundary}`;
     return config;
   });
-}
+};

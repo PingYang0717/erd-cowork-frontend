@@ -13,7 +13,7 @@ import { artifactHref } from '@/utils/artifactUrl';
 
 import ArtifactPage from './ArtifactPage';
 
-function renderArtifactPageAt(path: string) {
+const renderArtifactPageAt = (path: string) => {
   // Retries would hide the "not found" case behind exponential backoff, so
   // this suite's requests resolve/reject immediately.
   return render(
@@ -28,7 +28,7 @@ function renderArtifactPageAt(path: string) {
     </MemoryRouter>,
     { wrapper: appWrapper() },
   );
-}
+};
 
 describe('Artifact full-page view', () => {
   /** The version switcher reads the producing session, which may be gone — deleting a
@@ -44,7 +44,7 @@ describe('Artifact full-page view', () => {
     // No version switcher (there is no session to derive versions from), and no error
     // screen standing in for the whole page.
     expect(screen.queryByRole('button', { name: 'Switch Artifact' })).not.toBeInTheDocument();
-    expect(screen.queryByText(/載入失敗/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/failed to load/)).not.toBeInTheDocument();
   });
 
   it('renders the correct seeded Artifact when navigated to directly, with no prior session context', async () => {
@@ -109,6 +109,9 @@ describe('Artifact full-page view', () => {
     expect(within(header).getByText('Alice Wu')).toBeInTheDocument();
     expect(within(header).getByText('Shared to me')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Switch Artifact' })).not.toBeInTheDocument();
+    // A personal copy cannot be shared onward — sharing is the owner's act
+    // (CONTEXT.md). The button stays visible so the rule is seen, not discovered.
+    expect(screen.getByRole('button', { name: 'Share artifact' })).toBeDisabled();
   });
 
   it('offers Share, Reload, and Open-in-new-tab in the toolbar', async () => {
@@ -122,12 +125,17 @@ describe('Artifact full-page view', () => {
     // backend's own answer, ready or not).
     expect(screen.getByRole('button', { name: 'Share artifact' })).toBeEnabled();
 
+    // A Reload must REMOUNT the document, not merely refetch the same HTML — the
+    // string never changes, so React would leave a wedged iframe exactly where it
+    // was. A fresh element is the observable proof the document restarted (ADR-0001).
+    const frameBefore = screen.getByTitle('Artifact preview');
     await user.click(screen.getByRole('button', { name: 'Reload artifact' }));
-    expect(await screen.findByTitle('Artifact preview')).toBeInTheDocument();
+    const frameAfter = await screen.findByTitle('Artifact preview');
+    expect(frameAfter).not.toBe(frameBefore);
 
     const openInNewTab = screen.getByRole('button', { name: 'Open artifact in new tab' });
     await user.hover(openInNewTab);
-    expect(await screen.findByRole('tooltip')).toHaveTextContent('在新分頁開啟預覽');
+    expect(await screen.findByRole('tooltip')).toHaveTextContent('Open preview in a new tab');
     await user.unhover(openInNewTab);
 
     await user.click(openInNewTab);

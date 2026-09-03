@@ -51,7 +51,7 @@ const INSTANT = {
  *    algorithm derives from these, so they stay light in both themes (see `SEED`).
  *  - **map / alias** (surfaces, borders, fills, text, `colorPrimaryBg`…) — applied after
  *    derivation, so they are pinned to the active theme directly. */
-export function buildAntdTheme(isDarkMode: boolean): ThemeConfig {
+export const buildAntdTheme = (isDarkMode: boolean): ThemeConfig => {
   const tokens = THEME_TOKENS[isDarkMode ? 'dark' : 'light'];
 
   return {
@@ -109,4 +109,4 @@ export function buildAntdTheme(isDarkMode: boolean): ThemeConfig {
       Select: INSTANT,
     },
   };
-}
+};

@@ -14,7 +14,7 @@ import { renderStudio } from '@/test/renderStudio';
 // useStudioLayoutStore instance (module-scoped), so both StudioShell (rail
 // width) and StudioPage (thread width) must be re-imported together for the
 // "resets on reload" tests to exercise a genuinely fresh store.
-async function renderReloadedStudioPage() {
+const renderReloadedStudioPage = async () => {
   vi.resetModules();
   const { default: ReloadedStudioShell } = await import('@/components/layouts/StudioShell');
   const { default: ReloadedStudioPage } = await import('./StudioPage');
@@ -28,7 +28,7 @@ async function renderReloadedStudioPage() {
     </MemoryRouter>,
     { wrapper: appWrapper({ retry: true }) },
   );
-}
+};
 
 describe('StudioPage three-pane layout', () => {
   beforeEach(() => {
@@ -116,7 +116,55 @@ describe('StudioPage three-pane layout', () => {
     expect(rail.style.width).toBe('270px');
   });
 
-  it('keeps panel widths as session-only state that resets on reload, per architecture.md', async () => {
+  /** The divider used to be pointer-only: role="separator" with no tabIndex and no
+   *  keys, so a keyboard user could not move any boundary at all (A-4). One arrow
+   *  press is a complete one-step drag through the same read→move→commit protocol. */
+  it('resizes the rail by keyboard, and reports its position as a separator value', async () => {
+    const user = userEvent.setup();
+    renderStudio();
+    await screen.findByRole('button', { name: 'New chat' });
+
+    const handle = screen.getByRole('separator', { name: 'Resize session rail' });
+    expect(handle).toHaveAttribute('aria-valuenow', '270');
+    expect(handle).toHaveAttribute('aria-valuemin', '200');
+    expect(handle).toHaveAttribute('aria-valuemax', '460');
+
+    handle.focus();
+    await user.keyboard('{ArrowRight}');
+    expect(screen.getByRole('navigation', { name: 'Session list' }).style.width).toBe('286px');
+    expect(handle).toHaveAttribute('aria-valuenow', '286');
+
+    await user.keyboard('{ArrowLeft}{ArrowLeft}');
+    expect(handle).toHaveAttribute('aria-valuenow', '254');
+  });
+
+  /** The collapsed rail's history flyout claims role="dialog"; a dialog receives
+   *  focus, closes on Escape, and hands focus back to its opener (A-6) — before
+   *  this, focus stayed on the button behind the backdrop and Escape did nothing. */
+  it('treats the chat-history flyout as a real dialog: focus in, Escape out', async () => {
+    const user = userEvent.setup();
+    renderStudio();
+    await screen.findByRole('button', { name: 'New chat' });
+
+    await user.click(screen.getByRole('button', { name: 'Collapse session list' }));
+    const historyButton = screen.getByRole('button', { name: 'Chat history' });
+    await user.click(historyButton);
+
+    const dialog = await screen.findByRole('dialog', { name: 'Chat history' });
+    expect(dialog).toHaveFocus();
+    expect(dialog).toHaveAttribute('aria-modal', 'true');
+
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('dialog', { name: 'Chat history' })).not.toBeInTheDocument();
+    expect(historyButton).toHaveFocus();
+  });
+
+  /** A layout someone dragged into shape is a preference, like the theme beside it —
+   *  losing it on every reload made the drag pointless. (The previous version of this
+   *  test asserted reset-on-reload "per architecture.md"; that document never actually
+   *  recorded such a decision, and the store persists now, same key discipline as
+   *  theme/language: constants/storage.ts.) */
+  it('keeps panel widths across a reload — a dragged layout is a preference', async () => {
     renderStudio();
 
     fireEvent.pointerDown(screen.getByRole('separator', { name: 'Resize session rail' }), {
@@ -129,7 +177,7 @@ describe('StudioPage three-pane layout', () => {
     await renderReloadedStudioPage();
 
     expect(screen.getAllByRole('navigation', { name: 'Session list' })[1].style.width).toBe(
-      '270px',
+      '330px',
     );
   });
 });

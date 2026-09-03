@@ -65,6 +65,6 @@ describe('ResultTable', () => {
   it('says the backend cut the result at 200 rows', () => {
     render(<ResultTable table={table({ truncated: true })} />);
 
-    expect(screen.getByText('(前 200 列)')).toBeInTheDocument();
+    expect(screen.getByText('(results truncated)')).toBeInTheDocument();
   });
 });

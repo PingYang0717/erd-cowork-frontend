@@ -7,7 +7,7 @@ import styles from './Tooltip.module.css';
 
 /** jsdom gives every element a zero rect, so the trigger's distance from the top of the
  *  viewport has to be stated for the flip to be exercised at all. */
-function placeTriggerAt(topPx: number) {
+const placeTriggerAt = (topPx: number) => {
   vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({
     top: topPx,
     bottom: topPx + 32,
@@ -19,7 +19,7 @@ function placeTriggerAt(topPx: number) {
     y: topPx,
     toJSON: () => ({}),
   });
-}
+};
 
 describe('Tooltip', () => {
   it('opens above the trigger when there is room', async () => {
@@ -68,5 +68,26 @@ describe('Tooltip', () => {
     await user.unhover(screen.getByRole('button', { name: 'R' }));
 
     await waitFor(() => expect(screen.queryByRole('tooltip')).not.toBeInTheDocument());
+  });
+
+  /** Focus shows the tip immediately — the 0.35s delay is a pointer affordance, and a
+   *  keyboard user has already committed to the control (A-5). The open tip is wired
+   *  to the trigger with aria-describedby, which is what makes it announced at all. */
+  it('shows on focus without the hover delay, and describes the trigger', async () => {
+    const user = userEvent.setup();
+    placeTriggerAt(400);
+    render(
+      <Tooltip content="重新整理">
+        <button type="button">R</button>
+      </Tooltip>,
+    );
+
+    await user.tab();
+
+    const trigger = screen.getByRole('button', { name: 'R' });
+    expect(trigger).toHaveFocus();
+    const tip = screen.getByRole('tooltip');
+    expect(trigger).toHaveAttribute('aria-describedby', tip.id);
+    expect(trigger).toHaveAccessibleDescription('重新整理');
   });
 });

@@ -1,24 +1,19 @@
 import { useQueryClient } from '@tanstack/react-query';
-import axios from 'axios';
 import { useCallback } from 'react';
 
-import { apiClient } from '@/api/apiClient';
+import { errorCode } from '@/api/apiError';
+import { repairArtifact } from '@/api/artifactApi';
 import { artifactContentQueryKey } from '@/hooks/useArtifactContent';
 import { useActiveRunStore } from '@/stores/useActiveRunStore';
 import { type BrowserJsError, useRepairOfferStore } from '@/stores/useRepairOfferStore';
 
 /** The backend's code for "the files this artifact was built from are gone". */
-function isFilesExpired(error: unknown): boolean {
-  return (
-    axios.isAxiosError(error) &&
-    (error.response?.data as { code?: string } | undefined)?.code === 'FILES_EXPIRED'
-  );
-}
+const isFilesExpired = (error: unknown): boolean => errorCode(error) === 'FILES_EXPIRED';
 
 /** Asks the agent to rebuild an artifact that threw, then reloads it.
  *  A repair that produced no improvement is reported, not swallowed: the user decides
  *  whether to try again. */
-export function useArtifactRepair() {
+export const useArtifactRepair = () => {
   const queryClient = useQueryClient();
   const setStatus = useRepairOfferStore((store) => store.setStatus);
   const resolve = useRepairOfferStore((store) => store.resolve);
@@ -29,10 +24,7 @@ export function useArtifactRepair() {
       setStatus(artifactId, 'repairing');
 
       try {
-        const { repaired } = await apiClient.post<{ repaired: boolean }>(
-          `/artifacts/${artifactId}/repair`,
-          { errors },
-        );
+        const { repaired } = await repairArtifact(artifactId, errors);
 
         if (!repaired) {
           setStatus(artifactId, 'failed');
@@ -55,4 +47,4 @@ export function useArtifactRepair() {
     },
     [queryClient, setStatus, resolve, bumpArtifactReload],
   );
-}
+};

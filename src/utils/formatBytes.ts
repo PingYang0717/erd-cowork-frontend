@@ -2,7 +2,7 @@ import { BYTES_PER_KB } from '@/constants/bytes';
 
 const UNITS = ['B', 'KB', 'MB', 'GB', 'TB'];
 
-export function formatBytes(bytes: number): string {
+export const formatBytes = (bytes: number): string => {
   if (bytes < BYTES_PER_KB) {
     return `${bytes} B`;
   }
@@ -20,4 +20,4 @@ export function formatBytes(bytes: number): string {
     minimumFractionDigits: 1,
     maximumFractionDigits: 1,
   })} ${UNITS[unitIndex]}`;
-}
+};

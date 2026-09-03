@@ -1,6 +1,7 @@
 import { CodeOutlined, DownOutlined, UpOutlined } from '@ant-design/icons';
 import React, { useEffect, useRef, useState } from 'react';
 
+import { isCanceled } from '@/api/apiError';
 import { getArtifactRawHtml } from '@/api/artifactApi';
 import { useTranslations } from '@/i18n/useTranslations';
 
@@ -52,7 +53,7 @@ const HtmlCodePanel: React.FC<HtmlCodePanelProps> = ({ code, artifactId, autoScr
       .then((html) => setOutcome({ artifactId, result: { status: 'ok', code: html } }))
       .catch((error: unknown) => {
         // The abort is ours (collapse, unmount, version switch) — not a failure to report.
-        if (error instanceof Error && error.name === 'CanceledError') {
+        if (isCanceled(error)) {
           return;
         }
         setOutcome({ artifactId, result: { status: 'error' } });

@@ -30,12 +30,12 @@ interface ResizablePane<T extends HTMLElement> {
  *  So the width lives on the DOM node for the duration of the drag and is committed to the
  *  store once, on release. The committed value is still what renders the pane, so nothing
  *  else has to know this happened. */
-export function useResizablePane<T extends HTMLElement>({
+export const useResizablePane = <T extends HTMLElement>({
   min,
   max,
   read,
   commit,
-}: ResizablePaneOptions): ResizablePane<T> {
+}: ResizablePaneOptions): ResizablePane<T> => {
   const paneRef = useRef<T>(null);
   const widthRef = useRef(0);
 
@@ -60,4 +60,4 @@ export function useResizablePane<T extends HTMLElement>({
   }, [commit]);
 
   return { paneRef, onDragStart, onDrag, onDragEnd };
-}
+};

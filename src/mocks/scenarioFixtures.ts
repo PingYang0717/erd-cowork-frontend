@@ -122,7 +122,7 @@ export const SCENARIO_FIXTURES: Record<ScenarioKey, ScenarioFixture> = {
 /** Keyword match standing in for the backend LLM reading the question. Returns null
  *  when nothing matched, so the caller can fall back to a base artifact's scenario
  *  (iteration) before defaulting. */
-export function matchScenario(text: string): ScenarioKey | null {
+export const matchScenario = (text: string): ScenarioKey | null => {
   if (/daily\s*monitor|a14/i.test(text)) {
     return 'daily';
   }
@@ -136,4 +136,4 @@ export function matchScenario(text: string): ScenarioKey | null {
     return 'spc';
   }
   return null;
-}
+};

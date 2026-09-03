@@ -6,9 +6,9 @@ import { THEME_TOKENS } from './tokens';
 
 /** What antd actually ends up using, after its algorithm has run over the seeds and the
  *  overrides have been applied on top. */
-function resolve(isDarkMode: boolean) {
+const resolve = (isDarkMode: boolean) => {
   return theme.getDesignToken(buildAntdTheme(isDarkMode));
-}
+};
 
 describe('buildAntdTheme', () => {
   /** The one that has already broken once. A seed is a starting hue, not a colour to

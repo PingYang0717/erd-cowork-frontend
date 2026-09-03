@@ -21,11 +21,11 @@ interface HorizontalDragHandlers {
  *  underneath, iframes included. Listeners still go on `window` so they work where capture
  *  is unavailable (jsdom, older browsers), and `buttons === 0` is a last-resort net for any
  *  release we still never hear about. */
-export function useHorizontalDrag({ onDragStart, onDrag, onDragEnd }: HorizontalDragHandlers) {
+export const useHorizontalDrag = ({ onDragStart, onDrag, onDragEnd }: HorizontalDragHandlers) => {
   const lastClientXRef = useRef(0);
   const [isDragging, setIsDragging] = useState(false);
 
-  function onPointerDown(event: React.PointerEvent) {
+  const onPointerDown = (event: React.PointerEvent) => {
     // Secondary buttons do not resize anything, and would otherwise arm a drag that only
     // the context menu could end.
     if (event.button !== 0) return;
@@ -76,7 +76,7 @@ export function useHorizontalDrag({ onDragStart, onDrag, onDragEnd }: Horizontal
     window.addEventListener('pointerup', endDrag);
     window.addEventListener('pointercancel', endDrag);
     window.addEventListener('lostpointercapture', endDrag);
-  }
+  };
 
   return { onPointerDown, isDragging };
-}
+};

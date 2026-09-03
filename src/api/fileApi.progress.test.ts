@@ -3,28 +3,33 @@ import { describe, expect, it } from 'vitest';
 
 import { server } from '@/mocks/server';
 
-import { uploadFiles } from './fileApi';
+import { uploadFiles, type UploadProgress } from './fileApi';
 
-function csv(name: string, sizeBytes: number): File {
+const csv = (name: string, sizeBytes: number): File => {
   return new File([new Uint8Array(sizeBytes)], name, { type: 'text/csv' });
-}
+};
 
 /** A CSV here runs to gigabytes; an upload with no reported progress is a frozen screen. */
 describe('fileApi.uploadFiles progress', () => {
-  it('reports progress and finishes at 100', async () => {
-    const seen: number[] = [];
+  /** The transfer maps to 0–90 and the last report says `processing`: bytes out is
+   *  all this side can measure, and the old 0–100 mapping claimed completion while
+   *  the backend was still receiving and parsing. */
+  it('reports transfer progress capped at 90, ending in the processing phase', async () => {
+    const seen: UploadProgress[] = [];
 
-    await uploadFiles('session-2', [csv('lots.csv', 2048)], (percent) => seen.push(percent));
+    await uploadFiles('session-2', [csv('lots.csv', 2048)], (progress) => seen.push(progress));
 
     expect(seen.length).toBeGreaterThan(0);
-    expect(seen.at(-1)).toBe(100);
-    expect(seen.every((percent) => percent >= 0 && percent <= 100)).toBe(true);
+    expect(seen.at(-1)).toEqual({ percent: 90, phase: 'processing' });
+    expect(seen.every(({ percent }) => percent >= 0 && percent <= 90)).toBe(true);
+    // Only the final report may claim the server's turn.
+    expect(seen.slice(0, -1).every(({ phase }) => phase === 'transferring')).toBe(true);
   });
 
   it('never reports backwards', async () => {
     const seen: number[] = [];
 
-    await uploadFiles('session-2', [csv('lots.csv', 4096)], (percent) => seen.push(percent));
+    await uploadFiles('session-2', [csv('lots.csv', 4096)], ({ percent }) => seen.push(percent));
 
     expect([...seen].sort((a, b) => a - b)).toEqual(seen);
   });

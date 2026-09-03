@@ -8,13 +8,13 @@ import { useStudioLayoutStore } from '@/stores/useStudioLayoutStore';
 import { useThemeStore } from '@/stores/useThemeStore';
 import { renderStudio } from '@/test/renderStudio';
 
-function artifactSrcdoc() {
+const artifactSrcdoc = () => {
   return (screen.getByTitle('Artifact preview') as HTMLIFrameElement).getAttribute('srcdoc');
-}
+};
 
 /** Puts two artifact-bearing messages in one thread: the seeded session has one, and
  *  a typed iteration lands as the next. */
-async function threadWithTwoArtifacts(user: ReturnType<typeof userEvent.setup>) {
+const threadWithTwoArtifacts = async (user: ReturnType<typeof userEvent.setup>) => {
   await user.click(await screen.findByRole('button', { name: 'SPC — Vt (gate CD)' }));
   await screen.findByTitle('Artifact preview');
   await user.type(
@@ -22,7 +22,7 @@ async function threadWithTwoArtifacts(user: ReturnType<typeof userEvent.setup>) 
     'Regenerate the dashboard.{Enter}',
   );
   await expect.poll(artifactSrcdoc, { timeout: 5000 }).toContain('· v2');
-}
+};
 
 describe("A past reply's Artifact chip", () => {
   beforeEach(() => {

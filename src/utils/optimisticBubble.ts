@@ -7,6 +7,9 @@
  *  a message sent twice in a row, where the previous identical message looks like the
  *  refetch already landing and the second bubble is wrongly suppressed (C-3).
  */
-export function showOptimisticBubble(historyLength: number, historyLengthAtSend: number): boolean {
+export const showOptimisticBubble = (
+  historyLength: number,
+  historyLengthAtSend: number,
+): boolean => {
   return historyLength <= historyLengthAtSend;
-}
+};

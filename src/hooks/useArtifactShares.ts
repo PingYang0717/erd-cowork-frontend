@@ -2,9 +2,9 @@ import { useQuery } from '@tanstack/react-query';
 
 import { listArtifactShares } from '@/api/artifactApi';
 
-export function artifactSharesQueryKey(artifactId: string) {
+export const artifactSharesQueryKey = (artifactId: string) => {
   return ['artifactShares', artifactId] as const;
-}
+};
 
 /** Who an Artifact is already shared with.
  *
@@ -13,7 +13,7 @@ export function artifactSharesQueryKey(artifactId: string) {
  *  fetching it for every card in a Gallery would be a request per card for something
  *  nobody asked to see.
  */
-export function useArtifactShares(artifactId: string, enabled: boolean) {
+export const useArtifactShares = (artifactId: string, enabled: boolean) => {
   const { data, isFetching, isError } = useQuery({
     queryKey: artifactSharesQueryKey(artifactId),
     queryFn: () => listArtifactShares(artifactId),
@@ -27,4 +27,4 @@ export function useArtifactShares(artifactId: string, enabled: boolean) {
      *  client does not understand. Distinct from an empty list, which is an answer. */
     isUnavailable: isError,
   };
-}
+};

@@ -24,7 +24,7 @@ interface RenderStudioOptions {
  *  The providers come from `appWrapper`, which carries `AntdApp` as well as the query
  *  client — without it `useActionErrorToast` is a no-op and no mutation failure can be
  *  asserted from here. */
-export function renderStudio({ retry = true }: RenderStudioOptions = {}) {
+export const renderStudio = ({ retry = true }: RenderStudioOptions = {}) => {
   return render(
     <MemoryRouter initialEntries={['/cowork']}>
       <Routes>
@@ -36,12 +36,12 @@ export function renderStudio({ retry = true }: RenderStudioOptions = {}) {
     </MemoryRouter>,
     { wrapper: appWrapper({ retry }) },
   );
-}
+};
 
 /** Waits for the composer to be interactive.
  *
  *  Its subtree suspends on its own queries, so anything that reaches for a control with a
  *  synchronous `getBy*` right after selecting a session races that suspension. */
-export function waitForComposer(): Promise<HTMLElement> {
+export const waitForComposer = (): Promise<HTMLElement> => {
   return screen.findByRole('textbox', { name: 'Message' });
-}
+};

@@ -10,10 +10,10 @@ export interface SseParser {
 /** Incremental SSE parser: calls `onEvent` for each agent event, separated by blank lines.
  *  Chunks arrive at arbitrary byte boundaries, so a partial event is buffered until its
  *  terminating blank line shows up in a later chunk. */
-export function createSseParser(onEvent: (event: AgentEvent) => void): SseParser {
+export const createSseParser = (onEvent: (event: AgentEvent) => void): SseParser => {
   let buffer = '';
 
-  function processBlock(block: string): void {
+  const processBlock = (block: string): void => {
     const dataLines = block
       .split('\n')
       .filter((line) => line.startsWith('data:'))
@@ -29,7 +29,7 @@ export function createSseParser(onEvent: (event: AgentEvent) => void): SseParser
       // A truncated or corrupt block is dropped rather than killing the stream —
       // the events after it are still worth delivering.
     }
-  }
+  };
 
   return {
     feed(chunk: string): void {
@@ -52,4 +52,4 @@ export function createSseParser(onEvent: (event: AgentEvent) => void): SseParser
       buffer = '';
     },
   };
-}
+};

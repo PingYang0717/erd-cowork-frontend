@@ -6,17 +6,17 @@ import {
   ShareAltOutlined,
   UsergroupAddOutlined,
 } from '@ant-design/icons';
-import { useQueryClient } from '@tanstack/react-query';
 import React, { Suspense, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import ErrorBoundary from '@/components/common/ErrorBoundary';
 import LanguageToggle from '@/components/common/LanguageToggle';
 import ThemeToggle from '@/components/common/ThemeToggle';
-import { artifactContentQueryKey, useArtifactContent } from '@/hooks/useArtifactContent';
+import { useArtifactContent } from '@/hooks/useArtifactContent';
 import { useArtifacts } from '@/hooks/useArtifacts';
 import { useSessionDetail } from '@/hooks/useSessionDetail';
 import { useTranslations } from '@/i18n/useTranslations';
+import { useActiveRunStore } from '@/stores/useActiveRunStore';
 import type { Artifact, ArtifactVersion } from '@/types/api';
 import { artifactHref } from '@/utils/artifactUrl';
 import { deriveArtifactVersions } from '@/utils/deriveArtifactVersions';
@@ -42,7 +42,14 @@ const ArtifactFullPageView: React.FC<ArtifactFullPageViewProps> = ({ artifactId 
   const t = useTranslations();
   const navigate = useNavigate();
   const location = useLocation();
-  const queryClient = useQueryClient();
+  // A Reload here means the same thing it does in the Studio panel (ADR-0001):
+  // throw the document away and mount a fresh one. The shared nonce is that channel —
+  // it feeds the content query key AND the iframe key below, so bumping it both
+  // refetches and remounts. Invalidating the content query alone did neither: the
+  // HTML never changes, so the refetch returned the same string and React, seeing an
+  // unchanged `srcDoc`, left the wedged iframe exactly where it was.
+  const reloadNonce = useActiveRunStore((s) => s.artifactReloadNonce);
+  const bumpArtifactReload = useActiveRunStore((s) => s.bumpArtifactReload);
 
   const [selectedArtifactId, setSelectedArtifactId] = useState<string | null>(null);
   const [isShareOpen, setIsShareOpen] = useState(false);
@@ -53,7 +60,7 @@ const ArtifactFullPageView: React.FC<ArtifactFullPageViewProps> = ({ artifactId 
   // the switcher can jump between sibling artifacts (each version IS an artifact).
   const displayedArtifactId = selectedArtifactId ?? artifactId;
   const displayedArtifact = artifacts?.find((a) => a.id === displayedArtifactId);
-  const { data, isError } = useArtifactContent(displayedArtifactId);
+  const { data, isError } = useArtifactContent(displayedArtifactId, reloadNonce);
 
   const origin = (location.state as FullPageLocationState | null)?.from;
 
@@ -67,12 +74,12 @@ const ArtifactFullPageView: React.FC<ArtifactFullPageViewProps> = ({ artifactId 
             onClick={() => navigate(origin === 'gallery' ? '/cowork/artifacts' : '/cowork')}
           >
             <ArrowLeftOutlined aria-hidden />
-            Back
+            {t.studio.back}
           </button>
         ) : (
           <button type="button" className={styles.backButton} onClick={() => navigate('/cowork')}>
             <HomeOutlined aria-hidden />
-            Home
+            {t.studio.home}
           </button>
         )}
 
@@ -81,7 +88,7 @@ const ArtifactFullPageView: React.FC<ArtifactFullPageViewProps> = ({ artifactId 
             <div className={styles.sharedToMeHeader} aria-label="Shared to me">
               <UsergroupAddOutlined aria-hidden className={styles.sharedToMeIcon} />
               <span className={styles.sharedToMeName}>{routeArtifact.ownerDisplay}</span>
-              <span className={styles.sharedToMeBadge}>Shared to me</span>
+              <span className={styles.sharedToMeBadge}>{t.studio.sharedToMe}</span>
             </div>
           ) : (
             routeArtifact && (
@@ -104,24 +111,29 @@ const ArtifactFullPageView: React.FC<ArtifactFullPageViewProps> = ({ artifactId 
           )}
         </div>
 
+        {/* Sharing is the owner's act on a published Artifact (CONTEXT.md): a personal
+            copy cannot be shared onward, and nothing unpublished can be shared at all.
+            The Studio panel already gates its Share this way — this view used to let
+            both through, disagreeing with its sibling about the same rule. */}
         <ArtifactToolbarButton
-          tooltip={t.artifact.share}
+          tooltip={
+            !displayedArtifact?.isOwn
+              ? t.artifact.shareNotOwner
+              : displayedArtifact.publishedAt === null
+                ? t.artifact.shareBlocked
+                : t.artifact.share
+          }
           label={ARTIFACT_TOOLBAR_LABELS.share}
           icon={<ShareAltOutlined aria-hidden />}
           className={styles.shareButton}
+          disabled={!displayedArtifact?.isOwn || displayedArtifact.publishedAt === null}
           onClick={() => setIsShareOpen(true)}
         />
         <ArtifactToolbarButton
           tooltip={t.artifact.reload}
           label={ARTIFACT_TOOLBAR_LABELS.reload}
           icon={<ReloadOutlined aria-hidden />}
-          onClick={() => {
-            if (displayedArtifactId !== undefined) {
-              queryClient.invalidateQueries({
-                queryKey: artifactContentQueryKey(displayedArtifactId),
-              });
-            }
-          }}
+          onClick={bumpArtifactReload}
         />
         <ArtifactToolbarButton
           tooltip={t.artifact.openInNewTab}
@@ -139,9 +151,13 @@ const ArtifactFullPageView: React.FC<ArtifactFullPageViewProps> = ({ artifactId 
         <ThemeToggle />
       </div>
       <div className={styles.body}>
-        {isError && <div className={styles.empty}>Artifact not found.</div>}
+        {isError && <div className={styles.empty}>{t.studio.artifactNotFound}</div>}
         {data && displayedArtifactId && (
-          <ArtifactFrame html={data} artifactId={displayedArtifactId} />
+          <ArtifactFrame
+            key={`${displayedArtifactId}-${reloadNonce}`}
+            html={data}
+            artifactId={displayedArtifactId}
+          />
         )}
       </div>
       {displayedArtifact && (

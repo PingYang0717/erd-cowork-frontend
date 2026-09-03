@@ -93,7 +93,7 @@ describe('MessageBubble', () => {
 
     rerender(<MessageBubble sender="AI" text="Done." steps={[step()]} />);
 
-    const recap = screen.getByRole('button', { name: 'Worked through 1 steps' });
+    const recap = screen.getByRole('button', { name: 'Worked through 1 step' });
     expect(screen.queryByText('Scanning lots')).not.toBeInTheDocument();
     await userEvent.click(recap);
     expect(screen.getByText('Scanning lots')).toBeInTheDocument();
@@ -123,13 +123,13 @@ describe('MessageBubble', () => {
     const { rerender } = render(
       <MessageBubble sender="AI" live={liveRun({ liveText: 'Partial', stopped: true })} />,
     );
-    expect(screen.getByText('⏹ 已停止生成')).toBeInTheDocument();
+    expect(screen.getByText('⏹ Generation stopped')).toBeInTheDocument();
 
     rerender(
       <MessageBubble sender="AI" live={liveRun({ liveText: 'Partial', networkError: true })} />,
     );
-    expect(screen.queryByText('⏹ 已停止生成')).not.toBeInTheDocument();
-    expect(screen.getByText('⚠ 連線中斷，請重新送出一次')).toBeInTheDocument();
+    expect(screen.queryByText('⏹ Generation stopped')).not.toBeInTheDocument();
+    expect(screen.getByText('⚠ Connection lost — please send again')).toBeInTheDocument();
   });
 
   it('renders the backend’s own record messages as hints, not as agent prose', () => {
@@ -154,7 +154,7 @@ describe('MessageBubble', () => {
 
     expect(screen.getByText('SPC dashboard')).toBeInTheDocument();
     // cowork's read-back label; the "</>" glyph prefix is decorative (ADR-0002).
-    expect(screen.getByRole('button', { name: '查看 HTML' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'View HTML' })).toBeInTheDocument();
   });
 
   it('shows the live HTML instead of the fetchable one while the agent is still writing it', () => {

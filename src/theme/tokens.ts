@@ -130,7 +130,7 @@ export const THEME_TOKENS: Record<'light' | 'dark', ThemeTokens> = {
 
 // The custom-property surface the CSS Modules read. Keys mirror the mockup's
 // own variable names one-for-one.
-export function themeCssVars(tokens: ThemeTokens): Record<string, string> {
+export const themeCssVars = (tokens: ThemeTokens): Record<string, string> => {
   return {
     '--erd-color-primary': tokens.primary,
     '--erd-color-primary-hover': tokens.primaryHover,
@@ -168,18 +168,18 @@ export function themeCssVars(tokens: ThemeTokens): Record<string, string> {
     '--shadow-md': tokens.shadowMd,
     '--shadow-lg': tokens.shadowLg,
   };
-}
+};
 
 // The same palette as a :root rule. Dialogs, dropdown menus and the collapsed
 // rail flyout are portaled to document.body, outside the React tree that could
 // carry these as inline styles — declaring them on :root is what lets those
 // surfaces read the theme instead of silently falling back to the light
 // literals baked into each var() call.
-export function themeCssText(tokens: ThemeTokens): string {
+export const themeCssText = (tokens: ThemeTokens): string => {
   const declarations = Object.entries(themeCssVars(tokens))
     .map(([name, value]) => `  ${name}: ${value};`)
     .join('\n');
   return `:root {
 ${declarations}
 }`;
-}
+};

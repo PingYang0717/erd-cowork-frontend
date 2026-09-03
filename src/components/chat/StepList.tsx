@@ -7,6 +7,7 @@ import {
 } from '@ant-design/icons';
 import React, { useState } from 'react';
 
+import { useTranslations } from '@/i18n/useTranslations';
 import type { StepItem, StepStatus } from '@/types/api';
 
 import styles from './StepList.module.css';
@@ -69,6 +70,7 @@ interface StepsRecapProps {
 }
 
 export const StepsRecap: React.FC<StepsRecapProps> = ({ steps }) => {
+  const t = useTranslations();
   const [isExpanded, setIsExpanded] = useState(false);
   // The mockup leads the row with the run's outcome. A recap is only ever rendered for
   // a finished run, so the only question left is whether any step failed.
@@ -96,7 +98,7 @@ export const StepsRecap: React.FC<StepsRecapProps> = ({ steps }) => {
             className={`${styles.stepsRecapStatus} ${styles.stepIconSuccess}`}
           />
         )}
-        Worked through {steps.length} steps
+        {t.chat.workedThrough(steps.length)}
         {isExpanded ? (
           <UpOutlined aria-hidden className={styles.stepsRecapChevron} />
         ) : (

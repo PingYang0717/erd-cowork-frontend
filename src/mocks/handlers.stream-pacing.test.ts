@@ -6,7 +6,7 @@ import { setStreamPace } from './handlers';
  *  One chunk means the whole run landed in a single microtask — React batches it into
  *  one render and the working card, step statuses and typewriter reply are never
  *  painted, which is exactly the regression this guards. */
-async function chunkCount(sessionId: string): Promise<number> {
+const chunkCount = async (sessionId: string): Promise<number> => {
   const response = await fetch(`/api/sessions/${sessionId}/messages`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream' },
@@ -21,7 +21,7 @@ async function chunkCount(sessionId: string): Promise<number> {
     chunks += 1;
   }
   return chunks;
-}
+};
 
 describe('mock run pacing', () => {
   it('delivers a run as many chunks, not one, so the progress is watchable', async () => {

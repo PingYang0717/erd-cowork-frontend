@@ -5,7 +5,7 @@ import type { AgentEvent } from '@/types/api/agentEvent';
 
 import { SCENARIO_FIXTURES } from './scenarioFixtures';
 
-async function collect(sessionId: string, question: string, baseArtifactId?: string) {
+const collect = async (sessionId: string, question: string, baseArtifactId?: string) => {
   const events: AgentEvent[] = [];
   for await (const event of streamAgentMessage({
     sessionId,
@@ -16,7 +16,7 @@ async function collect(sessionId: string, question: string, baseArtifactId?: str
     events.push(event);
   }
   return events;
-}
+};
 
 /** Iterating on an artifact (baseArtifactId) inherits its scenario and kind — but an
  *  explicit keyword in the question still wins, the way the backend LLM would read a

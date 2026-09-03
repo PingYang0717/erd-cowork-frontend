@@ -18,7 +18,7 @@ import { artifactSharesQueryKey } from './useArtifactShares';
  *  backend owns the direction, so its answer is the only thing that knows which way the
  *  pin went — waiting for a refetch to find out leaves the button showing the old state
  *  in the meantime, and shows the wrong one entirely if the refetch is slow or fails. */
-export function useToggleArtifactPin() {
+export const useToggleArtifactPin = () => {
   const queryClient = useQueryClient();
   const toastError = useActionErrorToast();
 
@@ -26,18 +26,19 @@ export function useToggleArtifactPin() {
     mutationFn: (id: string) => toggleArtifactPin(id),
     onSuccess: (result, id) => {
       // The answer is not an Artifact — it names its subject `artifactId`, not `id`, and
-      // carries only what the toggle settled. So the fields it does bring are applied by
-      // name rather than spread: spreading would have put a stray `artifactId` on the
-      // row, and matching on `result.id` (which does not exist) found nothing at all,
-      // which is why the button used to sit still after a successful pin.
+      // carries only what the toggle settled. Merged, not replaced: `pinnedAt` is the
+      // toggle's outcome (the contract guarantees it), while `owner` / `isOwn` are
+      // applied only when the answer actually carried them. Writing them
+      // unconditionally put undefined on the row when an answer carried less — isOwn:
+      // undefined is falsy, and the user's own Artifact turned "shared to me".
       queryClient.setQueryData<Artifact[]>(artifactsQueryKey, (previous) =>
         previous?.map((artifact) =>
           artifact.id === id
             ? {
                 ...artifact,
                 pinnedAt: result.pinnedAt,
-                owner: result.owner,
-                isOwn: result.isOwn,
+                ...(result.owner !== undefined ? { owner: result.owner } : {}),
+                ...(result.isOwn !== undefined ? { isOwn: result.isOwn } : {}),
               }
             : artifact,
         ),
@@ -48,7 +49,7 @@ export function useToggleArtifactPin() {
     },
     onError: toastError,
   });
-}
+};
 
 /** Takes an Artifact off the Gallery's shelf.
  *
@@ -56,7 +57,7 @@ export function useToggleArtifactPin() {
  *  living in the conversation that produced it, its HTML is still fetchable, and a panel
  *  showing it stays right where it is. What ends is its listing — so the cached content
  *  and anything pointing at it are deliberately left alone. */
-export function useUnpublishArtifact() {
+export const useUnpublishArtifact = () => {
   const queryClient = useQueryClient();
   const toastError = useActionErrorToast();
 
@@ -73,10 +74,10 @@ export function useUnpublishArtifact() {
     },
     onError: toastError,
   });
-}
+};
 
 /** Applies a change to an Artifact's share list. */
-export function useUpdateArtifactShares() {
+export const useUpdateArtifactShares = () => {
   const queryClient = useQueryClient();
   const toastError = useActionErrorToast();
 
@@ -111,9 +112,9 @@ export function useUpdateArtifactShares() {
     },
     onError: toastError,
   });
-}
+};
 
-export function usePublishArtifact() {
+export const usePublishArtifact = () => {
   const queryClient = useQueryClient();
   const toastError = useActionErrorToast();
 
@@ -126,4 +127,4 @@ export function usePublishArtifact() {
     },
     onError: toastError,
   });
-}
+};

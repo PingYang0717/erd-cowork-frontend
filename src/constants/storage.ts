@@ -18,3 +18,8 @@ export const THEME_STORAGE_KEY = 'erd-cowork:theme';
 
 /** Which language the interface speaks. */
 export const LANGUAGE_STORAGE_KEY = 'erd-cowork:language';
+
+/** The Studio's pane widths and rail collapse. A layout someone dragged into shape is
+ *  a preference like the theme beside it — losing it on every reload made the drag
+ *  pointless. */
+export const STUDIO_LAYOUT_STORAGE_KEY = 'erd-cowork:studio-layout';

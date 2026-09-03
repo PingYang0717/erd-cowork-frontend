@@ -30,6 +30,8 @@ describe('Unpublishing an Artifact from the Gallery', () => {
       await screen.findByRole('button', { name: 'More actions for SPC analysis — Vt (gate CD)' }),
     );
     await user.click(await screen.findByRole('menuitem', { name: 'Delete' }));
+    // The destructive step now sits behind a confirm — click through it.
+    await user.click(await screen.findByRole('button', { name: 'Delete' }));
     await waitFor(() =>
       expect(
         screen.queryByRole('button', { name: 'SPC analysis — Vt (gate CD)' }),
@@ -44,6 +46,6 @@ describe('Unpublishing an Artifact from the Gallery', () => {
     expect(frame.getAttribute('srcdoc')).toContain('SPC analysis');
 
     // And it is offered for publishing again, since it is no longer published.
-    expect(await screen.findByRole('button', { name: '發布 Artifact' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Publish Artifact' })).toBeInTheDocument();
   });
 });

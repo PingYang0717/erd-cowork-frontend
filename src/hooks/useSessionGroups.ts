@@ -9,18 +9,18 @@ import type { Session, SessionDetail } from '@/types/api/session';
 import { sessionDetailQueryKey } from './useSessionDetail';
 import { useSessions } from './useSessions';
 
-function sortByRecency(sessions: Session[]) {
+const sortByRecency = (sessions: Session[]) => {
   return [...sessions].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
-}
+};
 
 /** The shell a draft's thread reads until its first message lands. Its title MUST match
  *  what the backend names a new session, or the rail label changes under the user the
  *  moment the session becomes real. */
-function emptySessionDetail(id: string, createdAt: string): SessionDetail {
+const emptySessionDetail = (id: string, createdAt: string): SessionDetail => {
   return { id, title: DRAFT_SESSION_TITLE, createdAt, messages: [], files: [], dataSourceIds: [] };
-}
+};
 
-export function useSessionGroups() {
+export const useSessionGroups = () => {
   const { data } = useSessions();
   // Stable identity: the landing effect below depends on this list, and `data ?? []`
   // would hand it a new array on every render.
@@ -91,23 +91,26 @@ export function useSessionGroups() {
   // /cowork/artifacts or /cowork/schedule silently updates the store with
   // nothing visibly changing, since the Outlet there isn't showing the
   // thread at all.
-  function selectAndNavigate(id: string) {
-    selectSession(id);
-    navigate('/cowork');
-  }
+  const selectAndNavigate = useCallback(
+    (id: string) => {
+      selectSession(id);
+      navigate('/cowork');
+    },
+    [selectSession, navigate],
+  );
 
   /** Opens a draft session. The backend has no POST /sessions — the id is this client's
    *  to invent, and the first message upserts it (ADR-0005). Pressing New chat while a
    *  draft is already open does nothing but bring it into view: seeding a second shell
    *  would leave the first orphaned in the cache. */
-  function createAndNavigate() {
+  const createAndNavigate = useCallback(() => {
     if (isDraftActive) {
       navigate('/cowork');
       return;
     }
     openDraft();
     navigate('/cowork');
-  }
+  }, [isDraftActive, navigate, openDraft]);
 
   return {
     pinned,
@@ -121,4 +124,4 @@ export function useSessionGroups() {
     selectAndNavigate,
     createAndNavigate,
   };
-}
+};

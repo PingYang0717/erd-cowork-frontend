@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { zhTW } from '@/i18n/zhTW';
+import { en } from '@/i18n/en';
 import { server } from '@/mocks/server';
 import { useRepairOfferStore } from '@/stores/useRepairOfferStore';
 import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
@@ -11,18 +11,18 @@ import { useStudioLayoutStore } from '@/stores/useStudioLayoutStore';
 import { renderStudio, waitForComposer } from '@/test/renderStudio';
 import { answerAnalysisConditions } from '@/test/studioRun';
 
-async function runAnalysis(user: ReturnType<typeof userEvent.setup>) {
+const runAnalysis = async (user: ReturnType<typeof userEvent.setup>) => {
   await user.click(await screen.findByRole('button', { name: 'New chat' }));
   await screen.findByRole('button', { name: 'New analysis' });
   await waitForComposer();
   await user.click(screen.getByRole('button', { name: 'SPC analysis' }));
   await answerAnalysisConditions(user);
   return (await screen.findByTitle('Artifact preview')) as HTMLIFrameElement;
-}
+};
 
 /** jsdom does not run scripts inside an iframe's srcdoc, so the collector the artifact
  *  ships cannot fire on its own. This is the message it would post. */
-function reportRuntimeError(iframe: HTMLIFrameElement, message: string) {
+const reportRuntimeError = (iframe: HTMLIFrameElement, message: string) => {
   act(() => {
     window.dispatchEvent(
       new MessageEvent('message', {
@@ -31,7 +31,7 @@ function reportRuntimeError(iframe: HTMLIFrameElement, message: string) {
       }),
     );
   });
-}
+};
 
 describe('Artifact repair', () => {
   beforeEach(() => {
@@ -56,20 +56,20 @@ describe('Artifact repair', () => {
     renderStudio();
 
     const iframe = await runAnalysis(user);
-    expect(screen.queryByText(/偵測到 Artifact 執行錯誤/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/runtime error/)).not.toBeInTheDocument();
 
     reportRuntimeError(iframe, "Cannot read properties of undefined (reading 'series')");
 
-    expect(await screen.findByText(zhTW.repair.detected(1))).toBeInTheDocument();
+    expect(await screen.findByText(en.repair.detected(1))).toBeInTheDocument();
     expect(
       screen.getByText("Cannot read properties of undefined (reading 'series')"),
     ).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: '修復' }));
+    await user.click(screen.getByRole('button', { name: 'Repair' }));
 
     // The offer clears once the repair lands, and the artifact is served again.
     await screen.findByTitle('Artifact preview');
-    expect(screen.queryByText(/偵測到 Artifact 執行錯誤/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/runtime error/)).not.toBeInTheDocument();
   });
 
   it('stops offering once the user has dismissed it for that artifact', async () => {
@@ -79,13 +79,13 @@ describe('Artifact repair', () => {
     const iframe = await runAnalysis(user);
 
     reportRuntimeError(iframe, 'boom');
-    await screen.findByText(zhTW.repair.detected(1));
+    await screen.findByText(en.repair.detected(1));
 
-    await user.click(screen.getByRole('button', { name: '忽略' }));
-    expect(screen.queryByText(/偵測到 Artifact 執行錯誤/)).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Ignore' }));
+    expect(screen.queryByText(/runtime error/)).not.toBeInTheDocument();
 
     reportRuntimeError(iframe, 'boom again');
-    expect(screen.queryByText(/偵測到 Artifact 執行錯誤/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/runtime error/)).not.toBeInTheDocument();
   });
 
   it('says so when a repair produced nothing, and lets the user try again', async () => {
@@ -101,14 +101,14 @@ describe('Artifact repair', () => {
 
     const iframe = await runAnalysis(user);
     reportRuntimeError(iframe, 'boom');
-    await screen.findByText(zhTW.repair.detected(1));
+    await screen.findByText(en.repair.detected(1));
 
-    await user.click(screen.getByRole('button', { name: '修復' }));
+    await user.click(screen.getByRole('button', { name: 'Repair' }));
 
-    expect(await screen.findByText('修復未成功')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: '修復' })).not.toBeInTheDocument();
+    expect(await screen.findByText('Repair did not succeed')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Repair' })).not.toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: '再試一次' }));
+    await user.click(screen.getByRole('button', { name: 'Try again' }));
     await waitFor(() => expect(attempts).toBe(2));
   });
 
@@ -125,12 +125,12 @@ describe('Artifact repair', () => {
 
     const iframe = await runAnalysis(user);
     reportRuntimeError(iframe, 'boom');
-    await screen.findByText(zhTW.repair.detected(1));
+    await screen.findByText(en.repair.detected(1));
 
-    await user.click(screen.getByRole('button', { name: '修復' }));
+    await user.click(screen.getByRole('button', { name: 'Repair' }));
 
-    expect(await screen.findByText(zhTW.repair.filesExpired)).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: '再試一次' })).not.toBeInTheDocument();
+    expect(await screen.findByText(en.repair.filesExpired)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Try again' })).not.toBeInTheDocument();
   });
 
   it('drops the offer when the user moves to another session', async () => {
@@ -139,12 +139,10 @@ describe('Artifact repair', () => {
 
     const iframe = await runAnalysis(user);
     reportRuntimeError(iframe, 'boom');
-    await screen.findByText(zhTW.repair.detected(1));
+    await screen.findByText(en.repair.detected(1));
 
     await user.click(await screen.findByRole('button', { name: 'New chat' }));
 
-    await waitFor(() =>
-      expect(screen.queryByText(/偵測到 Artifact 執行錯誤/)).not.toBeInTheDocument(),
-    );
+    await waitFor(() => expect(screen.queryByText(/runtime error/)).not.toBeInTheDocument());
   });
 });

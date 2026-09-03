@@ -13,7 +13,7 @@ import ArtifactsGalleryPage from './ArtifactsGalleryPage';
 
 /** One Artifact in the fixed contract's shape, for the tests that need to state their
  *  own data rather than take the seeded three. */
-function artifactDto(over: Partial<Artifact> & Pick<Artifact, 'id' | 'title'>): Artifact {
+const artifactDto = (over: Partial<Artifact> & Pick<Artifact, 'id' | 'title'>): Artifact => {
   return {
     version: 1,
     sessionId: 'session-1',
@@ -28,16 +28,16 @@ function artifactDto(over: Partial<Artifact> & Pick<Artifact, 'id' | 'title'>): 
     hasPersonalCopy: false,
     ...over,
   };
-}
+};
 
-function renderGalleryPage() {
+const renderGalleryPage = () => {
   return render(
     <MemoryRouter>
       <ArtifactsGalleryPage />
     </MemoryRouter>,
     { wrapper: appWrapper({ retry: true }) },
   );
-}
+};
 
 describe('Artifacts gallery', () => {
   afterEach(() => {
@@ -105,23 +105,23 @@ describe('Artifacts gallery', () => {
     renderGalleryPage();
     await screen.findByRole('button', { name: 'SPC analysis — Vt (gate CD)' });
 
-    function orderedCardNames() {
+    const orderedCardNames = () => {
       const list = screen.getByRole('list', { name: 'Artifacts' });
       return within(list)
         .getAllByRole('listitem')
         .map((item) => within(item).getAllByRole('button')[0].textContent);
-    }
+    };
 
-    await user.click(screen.getByRole('button', { name: /排序:/ }));
-    await user.click(screen.getByRole('menuitem', { name: /名稱 A→Z/ }));
+    await user.click(screen.getByRole('button', { name: /Sort:/ }));
+    await user.click(screen.getByRole('menuitem', { name: /Name A→Z/ }));
 
     const namesByNameSort = orderedCardNames();
     expect(namesByNameSort[0]).toContain('Daily monitor');
     expect(namesByNameSort[1]).toContain('Inline dashboard');
     expect(namesByNameSort[2]).toContain('SPC analysis');
 
-    await user.click(screen.getByRole('button', { name: /排序:/ }));
-    await user.click(screen.getByRole('menuitem', { name: /最近建立/ }));
+    await user.click(screen.getByRole('button', { name: /Sort:/ }));
+    await user.click(screen.getByRole('menuitem', { name: /Most recent/ }));
 
     const namesByRecency = orderedCardNames();
     expect(namesByRecency[0]).toContain('Inline dashboard');
@@ -312,6 +312,14 @@ describe('Artifacts gallery', () => {
 
     const unpin = await screen.findByRole('button', { name: `Unpin ${name}` });
     expect(unpin).toBeEnabled();
+
+    // The corruption this merge exists to stop: the partial answer carried no
+    // `isOwn`, and writing it anyway put undefined — falsy — on the row, turning the
+    // user's own Artifact into "shared to me": wrong shelf, owner menu gone. The
+    // omitted field has to leave the cached value standing.
+    // Delete only exists on an owned card — its presence IS the proof isOwn survived.
+    await user.click(screen.getByRole('button', { name: `More actions for ${name}` }));
+    expect(await screen.findByRole('menuitem', { name: 'Delete' })).toBeInTheDocument();
   });
 
   it("shows Pin, Copy Link, Share, and Delete in an owned card's more-actions menu", async () => {
@@ -344,6 +352,8 @@ describe('Artifacts gallery', () => {
       screen.getByRole('button', { name: 'More actions for SPC analysis — Vt (gate CD)' }),
     );
     await user.click(screen.getByRole('menuitem', { name: 'Delete' }));
+    // The destructive step now sits behind a confirm — click through it.
+    await user.click(await screen.findByRole('button', { name: 'Delete' }));
 
     await waitFor(() =>
       expect(

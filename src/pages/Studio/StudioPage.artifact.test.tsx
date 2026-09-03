@@ -7,7 +7,7 @@ import { useStudioLayoutStore } from '@/stores/useStudioLayoutStore';
 import { renderStudio, waitForComposer } from '@/test/renderStudio';
 import { answerAnalysisConditions } from '@/test/studioRun';
 
-async function selectASessionAndRunSpcScenario(user: ReturnType<typeof userEvent.setup>) {
+const selectASessionAndRunSpcScenario = async (user: ReturnType<typeof userEvent.setup>) => {
   await user.click(await screen.findByRole('button', { name: 'New chat' }));
   await screen.findByRole('button', { name: 'New analysis' });
   await waitForComposer();
@@ -15,7 +15,7 @@ async function selectASessionAndRunSpcScenario(user: ReturnType<typeof userEvent
   await user.click(screen.getByRole('button', { name: 'SPC analysis' }));
   await answerAnalysisConditions(user);
   await screen.findByRole('button', { name: /^Worked through \d+ steps$/ });
-}
+};
 
 describe('Artifact panel', () => {
   beforeEach(() => {
