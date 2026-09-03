@@ -1,7 +1,8 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 
-import { deleteFile, uploadFiles } from '@/api/fileApi';
+import { deleteFile, uploadFiles, type UploadProgress } from '@/api/fileApi';
+import { useActionErrorToast } from '@/hooks/useActionErrorToast';
 import { planFileAdditions } from '@/utils/uploadValidation';
 
 import { sessionDetailQueryKey, useSessionDetail } from './useSessionDetail';
@@ -18,19 +19,22 @@ import { getTranslations } from '@/i18n/useTranslations';
 /** Session-level attachments per the backend contract: files live on the session
  *  (POST /sessions/{id}/files) and surface through SessionDetail.files. Count, size
  *  and extension limits are validated client-side before anything is uploaded. */
-export function useFileAttachments(sessionId: string) {
+export const useFileAttachments = (sessionId: string) => {
   const [error, setError] = useState('');
-  /** How far the upload in flight has got, or null when nothing is uploading. A CSV
-   *  here runs to gigabytes — without this the modal is frozen for minutes. */
-  const [uploadPercent, setUploadPercent] = useState<number | null>(null);
+  /** The upload in flight, or null when nothing is uploading. A CSV here runs to
+   *  gigabytes — without this the modal is frozen for minutes. Carries a phase, not
+   *  only a percent: bytes-all-sent and server-still-working are different waits and
+   *  the modal says which one it is. */
+  const [uploadProgress, setUploadProgress] = useState<UploadProgress | null>(null);
   /** A removal in flight. Uploading has `uploadPercent` to say so; removing has no
    *  progress to report, only the fact that it is happening. */
   const [isRemoving, setIsRemoving] = useState(false);
+  const toastError = useActionErrorToast();
   const queryClient = useQueryClient();
   const { data: detail } = useSessionDetail(sessionId);
   const attachments = detail.files;
 
-  async function addFiles(files: Iterable<File>) {
+  const addFiles = async (files: Iterable<File>) => {
     const plan = planFileAdditions(attachments, files);
     setError(plan.error);
 
@@ -38,36 +42,40 @@ export function useFileAttachments(sessionId: string) {
       return;
     }
 
-    setUploadPercent(0);
+    setUploadProgress({ percent: 0, phase: 'transferring' });
     try {
-      await uploadFiles(sessionId, plan.accepted, setUploadPercent);
+      await uploadFiles(sessionId, plan.accepted, setUploadProgress);
       await queryClient.invalidateQueries({ queryKey: sessionDetailQueryKey(sessionId) });
     } catch {
       setError(getTranslations().files.uploadFailed);
     } finally {
-      setUploadPercent(null);
+      setUploadProgress(null);
     }
-  }
+  };
 
-  async function removeFile(fileId: string) {
+  const removeFile = async (fileId: string) => {
     setIsRemoving(true);
     try {
       await deleteFile(sessionId, fileId);
       setError('');
       await queryClient.invalidateQueries({ queryKey: sessionDetailQueryKey(sessionId) });
+    } catch (removeError) {
+      // Failing silently left the chip on screen with nothing changed and nothing
+      // said — the one mutation in the app whose failure the user never heard about.
+      toastError(removeError);
     } finally {
       setIsRemoving(false);
     }
-  }
+  };
 
   return {
     attachments,
     error,
-    uploadPercent,
+    uploadProgress,
     /** True while the session's file set is being written to, either way. A question sent
      *  in this window would be answered against a set that is still changing under it. */
-    isMutating: uploadPercent !== null || isRemoving,
+    isMutating: uploadProgress !== null || isRemoving,
     addFiles,
     removeFile,
   };
-}
+};

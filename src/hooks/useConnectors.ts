@@ -19,7 +19,7 @@ const NONE: string[] = [];
  *  says which of those it is actually drawing on. `connected` is therefore a fact about
  *  the session, not about the connector — the same source can be attached to one
  *  conversation and not another. */
-export function useConnectors(sessionId: string) {
+export const useConnectors = (sessionId: string) => {
   const { data: catalogue } = useSuspenseQuery({
     queryKey: connectorsQueryKey,
     queryFn: listCatalogue,
@@ -40,4 +40,4 @@ export function useConnectors(sessionId: string) {
       ),
     [catalogue, attached],
   );
-}
+};

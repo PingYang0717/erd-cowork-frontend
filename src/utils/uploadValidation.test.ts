@@ -6,7 +6,7 @@ import { planFileAdditions } from './uploadValidation';
 
 const GB = 1024 * 1024 * 1024;
 
-function existingFile(name: string, sizeBytes: number): UploadedFileInfo {
+const existingFile = (name: string, sizeBytes: number): UploadedFileInfo => {
   return {
     id: name,
     name,
@@ -16,10 +16,10 @@ function existingFile(name: string, sizeBytes: number): UploadedFileInfo {
     rowCount: null,
     expired: false,
   };
-}
+};
 
 describe('planFileAdditions', () => {
-  it('accepts supported files and skips duplicates by name', () => {
+  it('skips a duplicate by name — and says so instead of silently dropping it', () => {
     const plan = planFileAdditions(
       [existingFile('a.csv', 100)],
       [
@@ -28,11 +28,13 @@ describe('planFileAdditions', () => {
       ],
     );
 
+    // Re-dragging the same file is usually an attempt to replace it; the message is
+    // what tells the user why nothing changed. The other file still goes through.
     expect(plan.accepted.map((file) => file.name)).toEqual(['b.xlsx']);
-    expect(plan.error).toBe('');
+    expect(plan.error).toBe('A file with the same name is already attached');
   });
 
-  it('rejects unsupported extensions with the Chinese error, without blocking later files', () => {
+  it('rejects unsupported extensions with the dictionary error, without blocking later files', () => {
     const plan = planFileAdditions(
       [],
       [
@@ -42,7 +44,7 @@ describe('planFileAdditions', () => {
     );
 
     expect(plan.accepted.map((file) => file.name)).toEqual(['lots.csv']);
-    expect(plan.error).toBe('僅支援 .csv / .xlsx');
+    expect(plan.error).toBe('Only .csv / .xlsx are supported');
   });
 
   it('caps the total at 5 files', () => {
@@ -52,7 +54,7 @@ describe('planFileAdditions', () => {
     );
 
     expect(plan.accepted).toHaveLength(5);
-    expect(plan.error).toBe('最多 5 個檔案');
+    expect(plan.error).toBe('Up to 5 files');
   });
 
   it('rejects a file that would push the total over 5 GB', () => {
@@ -62,6 +64,6 @@ describe('planFileAdditions', () => {
     );
 
     expect(plan.accepted).toHaveLength(0);
-    expect(plan.error).toBe('總計上限 5 GB');
+    expect(plan.error).toBe('5 GB in total');
   });
 });

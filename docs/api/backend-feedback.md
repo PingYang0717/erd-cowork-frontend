@@ -49,3 +49,9 @@
 - **Artifact 的 theme 變體不做**:Artifact HTML 只有單一配色,前端沒有任何 theme
   參數或換色通道,後端無需支援(見
   [ADR-0001](../adr/0001-artifact-rendered-via-sandboxed-iframe.md))。
+
+## TABLE 事件希望補 `rowLimit`(2026-09-03)
+
+TABLE 事件目前只送 `truncated: boolean`,不送截斷筆數。前端曾寫死「(前 200 列)」——
+那是前端獻上的、後端沒說過的數字,已改為不報數字的「(結果已截斷)」。若 TABLE 能帶
+`rowLimit`(實際套用的上限),前端就能誠實地報出筆數。

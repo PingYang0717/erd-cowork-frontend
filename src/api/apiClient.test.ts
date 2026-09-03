@@ -5,14 +5,14 @@ import { streamAgentMessage } from './agentApi';
 import { getUserId, httpClient, setAuthHeaderProvider } from './apiClient';
 
 /** 用 adapter 攔截:走完整的 interceptor 鏈,但不發出真實請求。 */
-function captureRequests(): InternalAxiosRequestConfig[] {
+const captureRequests = (): InternalAxiosRequestConfig[] => {
   const captured: InternalAxiosRequestConfig[] = [];
   httpClient.defaults.adapter = async (config) => {
     captured.push(config);
     return { data: {}, status: 200, statusText: 'OK', headers: {}, config };
   };
   return captured;
-}
+};
 
 const defaultProvider = (): Record<string, string> => ({ 'X-User-Id': getUserId() });
 

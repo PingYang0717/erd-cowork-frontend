@@ -48,7 +48,7 @@ push('Unhandled rejection: '+(e.reason&&e.reason.message?e.reason.message:String
 })();</script>`;
 
 // Both artifact kinds ship the same document shell.
-function renderDocument(title: string, css: string, body: string) {
+const renderDocument = (title: string, css: string, body: string) => {
   const { bg, fg } = PALETTE;
 
   return `<!doctype html>
@@ -67,9 +67,9 @@ ${css}
 ${body}
 </body>
 </html>`;
-}
+};
 
-function renderDashboardHtml(content: ArtifactContent) {
+const renderDashboardHtml = (content: ArtifactContent) => {
   const { fg, fgMuted, accent, cardBg, cardBorder } = PALETTE;
   const tagsHtml = content.tags.map((tag) => `<span class="tag">${tag}</span>`).join('');
   const statsHtml = content.stats
@@ -100,11 +100,11 @@ function renderDashboardHtml(content: ArtifactContent) {
 <div class="stats">${statsHtml}</div>`;
 
   return renderDocument(content.title, css, body);
-}
+};
 
 // The slides kind renders the same analysis as a stacked deck (title slide,
 // findings slide, key-figures slide) instead of one dashboard surface.
-function renderSlidesHtml(content: ArtifactContent) {
+const renderSlidesHtml = (content: ArtifactContent) => {
   const { fg, fgMuted, accent, cardBg, cardBorder } = PALETTE;
   const tagsHtml = content.tags.map((tag) => `<span class="tag">${tag}</span>`).join('');
   const figuresHtml = content.stats
@@ -153,12 +153,12 @@ function renderSlidesHtml(content: ArtifactContent) {
 </div>`;
 
   return renderDocument(content.title, css, body);
-}
+};
 
-function buildFixture(content: ArtifactContent, kind: ArtifactKind = 'dashboard'): string {
+const buildFixture = (content: ArtifactContent, kind: ArtifactKind = 'dashboard'): string => {
   const render = kind === 'slides' ? renderSlidesHtml : renderDashboardHtml;
   return render(content);
-}
+};
 
 const SCENARIO_CONTENT: Record<ScenarioKey, ArtifactContent> = {
   spc: {
@@ -212,13 +212,13 @@ const SCENARIO_CONTENT: Record<ScenarioKey, ArtifactContent> = {
 // Every version of an Artifact renders its own content: the version number is
 // carried into the rendered subtitle, so regenerating an Artifact produces a
 // version that is visibly different from the one before it.
-export function buildArtifactFixture(
+export const buildArtifactFixture = (
   scenario: ScenarioKey,
   kind: ArtifactKind,
   versionN?: number,
-): string {
+): string => {
   const content = SCENARIO_CONTENT[scenario];
   const versioned =
     versionN == null ? content : { ...content, subtitle: `${content.subtitle} · v${versionN}` };
   return buildFixture(versioned, kind);
-}
+};

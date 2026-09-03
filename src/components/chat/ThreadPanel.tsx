@@ -1,4 +1,4 @@
-import { DatabaseOutlined, ThunderboltFilled } from '@ant-design/icons';
+import { ThunderboltFilled } from '@ant-design/icons';
 import React, { type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 
 import DataBoundary from '@/components/common/DataBoundary';
@@ -8,6 +8,7 @@ import { type SendInput, useAgentStream } from '@/hooks/useAgentStream';
 import { useArtifactRepair } from '@/hooks/useArtifactRepair';
 import { useApplyRememberedDataSources } from '@/hooks/useConnectorMutations';
 import { useSessionDetail } from '@/hooks/useSessionDetail';
+import { useTranslations } from '@/i18n/useTranslations';
 import { useActiveRunStore } from '@/stores/useActiveRunStore';
 import { useRepairOfferStore } from '@/stores/useRepairOfferStore';
 import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
@@ -27,15 +28,17 @@ const ThreadHeader: React.FC = () => {
         <ThunderboltFilled aria-hidden className={styles.headerIcon} />
         Cowork · Data studio
       </span>
-      {/* The mockup's data-source chip (its demo is wired to the Inline DB /
-          N5 line fixture); sits beside the ThemeToggle because the Workspace
-          header itself is out of scope — this app is the eRD Cowork App only. */}
-      <span className={styles.dataSourceChip}>
-        <DatabaseOutlined aria-hidden />
-        Inline DB · N5 line
+      {/* No data-source chip here: the mockup hard-coded "Inline DB · N5 line", which
+          asserted a fact the Connectors panel could flatly contradict (attach WAT,
+          drop Inline, and the chip still claimed Inline). What a conversation reads is
+          the session's business, and it is already shown where it is decided. */}
+      {/* One group, one flex item: the header is space-between, and as siblings the
+          two toggles got spread apart — the language button floated to the middle of
+          the header on its own. They are a pair of preferences and sit as one. */}
+      <span className={styles.headerActions}>
+        <LanguageToggle />
+        <ThemeToggle />
       </span>
-      <LanguageToggle />
-      <ThemeToggle />
     </header>
   );
 };
@@ -62,6 +65,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({ heading, subtitle }) => {
  *  conversation is open, and a header that blinks away every time a session loads is a
  *  worse answer than one that stays put. */
 const ThreadPanel: React.FC = () => {
+  const t = useTranslations();
   const selectedSessionId = useSessionSelectionStore((s) => s.selectedSessionId);
 
   return (
@@ -77,8 +81,8 @@ const ThreadPanel: React.FC = () => {
       ) : (
         <div className={styles.body}>
           <EmptyState
-            heading="Select or start a session"
-            subtitle="Start or select a session from the left to begin an analysis."
+            heading={t.studio.emptyNoSessionHeading}
+            subtitle={t.studio.emptyNoSessionSubtitle}
           />
         </div>
       )}
@@ -91,6 +95,7 @@ interface ThreadViewProps {
 }
 
 const ThreadView: React.FC<ThreadViewProps> = ({ sessionId }) => {
+  const t = useTranslations();
   const { data: detail } = useSessionDetail(sessionId);
   const messages = detail.messages;
   const { state, send, stop } = useAgentStream(sessionId);
@@ -104,13 +109,20 @@ const ThreadView: React.FC<ThreadViewProps> = ({ sessionId }) => {
   // now carries it. Comparing lengths, not text, is what makes sending the same words
   // twice in a row show two bubbles (an equal last-history text would falsely suppress).
   const [pending, setPending] = useState<{ text: string; atLength: number } | null>(null);
+  /** What the screen reader hears when a run finishes: the complete reply, once. The
+   *  thread itself is aria-live="off" (every token used to be re-read; A-1), so this
+   *  sr-only region is the one place a finished answer is announced from. */
+  const [announcement, setAnnouncement] = useState('');
   const prevStreamingRef = useRef(false);
   useEffect(() => {
     if (prevStreamingRef.current && !state.isStreaming) {
       setPending(null);
+      setAnnouncement(state.liveText || state.answer || '');
     }
     prevStreamingRef.current = state.isStreaming;
-  }, [state.isStreaming]);
+    // liveText/answer are stable once streaming has ended; the transition guard makes
+    // the extra runs their presence in deps causes no-ops.
+  }, [state.isStreaming, state.liveText, state.answer]);
   const repairOffer = useRepairOfferStore((store) => store.offer);
   const dismissRepair = useRepairOfferStore((store) => store.dismiss);
   const resetRepair = useRepairOfferStore((store) => store.reset);
@@ -223,10 +235,7 @@ const ThreadView: React.FC<ThreadViewProps> = ({ sessionId }) => {
         />
       ) : (
         <div className={styles.body}>
-          <EmptyState
-            heading="Start an analysis"
-            subtitle={'Try "Daily monitor (A14)" below, or ask for an SPC analysis on Vt.'}
-          />
+          <EmptyState heading={t.studio.emptyStartHeading} subtitle={t.studio.emptyStartSubtitle} />
         </div>
       )}
       <div className={styles.composer}>
@@ -237,6 +246,12 @@ const ThreadView: React.FC<ThreadViewProps> = ({ sessionId }) => {
           isStreaming={state.isStreaming}
           onStop={stop}
         />
+      </div>
+      {/* Visually hidden, never displayed: the announcement channel for a finished
+          reply. Its content is set once per run, so the reader hears the whole
+          answer exactly once instead of once per token. */}
+      <div role="status" aria-label="Latest reply" className={styles.srOnly}>
+        {announcement}
       </div>
     </>
   );

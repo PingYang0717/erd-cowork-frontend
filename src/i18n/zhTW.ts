@@ -56,6 +56,8 @@ export const zhTW = {
      *  siblings, not a chain (artifact-model-decisions Q2) — but that decision was about
      *  not implying a lineage, not about coining a second name for the thing itself. */
     switchVersion: '切換 Artifact',
+    /** 個人副本不能再往下分享——分享只有原擁有者做得到(CONTEXT.md)。 */
+    shareNotOwner: '只有原擁有者可以分享',
     versionMenuTitle: (count: number) => `此對話的 Artifact · 共 ${count} 個，可切換後再發布`,
   },
 
@@ -67,6 +69,24 @@ export const zhTW = {
     publish: '發布',
   },
 
+  /** The session rail's own words. */
+  session: {
+    newChat: '開新對話',
+    schedule: '排程',
+    artifacts: 'Artifacts',
+    pinned: '釘選',
+    recents: '最近',
+    noRecents: '沒有最近的對話。',
+    chatHistory: '對話紀錄',
+    pin: '釘選',
+    unpin: '取消釘選',
+    rename: '重新命名',
+    delete: '刪除',
+    deleteConfirmTitle: '刪除這段對話？',
+    deleteConfirmBody: (title: string) => `「${title}」會從清單中移除。`,
+    deleteConfirm: '刪除',
+  },
+
   gallery: {
     sortLabel: '排序:',
     sortPinned: '釘選優先',
@@ -76,6 +96,14 @@ export const zhTW = {
     emptyYours: '你還沒有生成任何 Artifact。',
     emptyShared: '目前沒有分享給你的 Artifact。',
     emptyPinned: '你還沒有釘選任何 Artifact。',
+    linkCopied: '已複製連結',
+    linkCopyFailed: '無法複製連結，請開啟分享視窗手動複製。',
+    /** 對使用者而言是刪除(卡片消失);底下是取消發布,並收回分享對象的存取權——
+     *  後果溢出到別人身上,所以動作前先問。 */
+    removeConfirmTitle: '從 Artifacts 移除？',
+    removeConfirmBody: (title: string) =>
+      `「${title}」會取消發布，所有分享對象都將失去存取權；它仍會留在產生它的對話中。`,
+    removeConfirm: '刪除',
   },
 
   chat: {
@@ -90,7 +118,9 @@ export const zhTW = {
     htmlLabel: 'HTML',
     loading: '載入中…',
     noSource: '此版本無原始碼可檢視（無法載入）',
-    truncatedRows: (n: number) => `(前 ${n} 列)`,
+    /** TABLE 只送 truncated: boolean,不送筆數——所以這裡不報數字(後端待辦:
+     *  希望 TABLE 帶 rowLimit)。 */
+    truncated: '(結果已截斷)',
     manageConnections: '管理連線',
     selectedCount: (n: number) => `已選 ${n} 項`,
     filesExpired: (days: number) =>
@@ -99,6 +129,12 @@ export const zhTW = {
     questionTitle: '分析條件',
     questionSubmit: '送出',
     questionDisabledHint: '請先回答上面的問題',
+    /** 檔案集合還在變動時說明為何不能送——輸入框仍可打字,只有送出被擋。 */
+    uploadingWait: '檔案處理中，完成後即可送出',
+    thinking: '思考過程',
+    workedThrough: (n: number) => `共執行 ${n} 個步驟`,
+    shownRight: '已顯示於右側 →',
+    showRight: '顯示於右側 →',
   },
 
   repair: {
@@ -125,6 +161,95 @@ export const zhTW = {
     onlySpreadsheets: '僅支援 .csv / .xlsx',
     tooManyFiles: (count: number) => `最多 ${count} 個檔案`,
     tooLarge: (total: string) => `總計上限 ${total}`,
+    duplicateName: '已附加過同名檔案',
+    /** 位元組送完之後、後端回應之前的那段等待。進度條停在 90% 是誠實的——
+     *  後端還要多久前端無從得知,不編一條會動的進度。 */
+    processing: '伺服器處理中…',
+  },
+
+  /** Relative timestamps. Weekday/month tables live in the dictionary because they
+   *  differ by language; `formatRelativeTime` reads them at call time. */
+  time: {
+    justNow: '剛剛',
+    minutesAgo: (n: number) => `${n} 分鐘前`,
+    hoursAgo: (n: number) => `${n} 小時前`,
+    yesterday: '昨天',
+    weekday: (day: number) => ['週日', '週一', '週二', '週三', '週四', '週五', '週六'][day],
+    monthDay: (month: number, date: number) => `${month + 1} 月 ${date} 日`,
+    monthDayYear: (month: number, date: number, year: number) =>
+      `${year} 年 ${month + 1} 月 ${date} 日`,
+  },
+
+  connectors: {
+    title: 'Connectors',
+    subtitle: (connected: number, total: number) =>
+      `把 eRD AI 連上你的 RD 資料來源 · ${total} 個中已連線 ${connected} 個。`,
+    selectedSources: '已選來源',
+    clearAll: '全部清除',
+    noneSelected: '尚未選擇任何來源 — 從下方連一個。',
+    searchPlaceholder: '搜尋資料來源…',
+    filterAll: '全部',
+    filterConnected: '已連線',
+    filterNotConnected: '未連線',
+    showing: (shown: number, total: number) => `顯示 ${shown} / ${total}`,
+    submit: '送出',
+    add: '新增',
+    addPlaceholder: '新增自訂資料來源（例如 My Team DB）…',
+    noMatch: (keyword: string) => `沒有符合「${keyword}」的資料來源。`,
+    statusConnecting: '連線中…',
+    statusConnected: '已連線',
+    statusExpired: 'Token 已過期',
+    statusNoAccess: '無權限',
+    statusNotConnected: '未連線',
+  },
+
+  fileModal: {
+    title: '附加檔案',
+    subtitle: '拖放或選擇要附加到這次分析的檔案。',
+    attached: '已附加',
+    noFiles: '尚無檔案',
+    summary: (count: number, max: number, size: string) => `${count} / ${max} 個檔案 · ${size}`,
+    done: '完成',
+  },
+
+  composer: {
+    inlineDashboard: 'Inline dashboard',
+    spcAnalysis: 'SPC 分析',
+    generateSlides: '產生投影片',
+    dailyMonitor: 'Daily monitor（A14）',
+    cpTestStatus: 'CP Test 狀態',
+    attachFiles: '附加檔案',
+    connectors: 'Connectors',
+    placeholder: '問 eRD AI，或附加 .csv / .xlsx…',
+  },
+
+  studio: {
+    emptyNoSessionHeading: '選擇或開啟一段對話',
+    emptyNoSessionSubtitle: '從左側開啟或選擇一段對話開始分析。',
+    emptyStartHeading: '開始分析',
+    emptyStartSubtitle: '試試下方的「Daily monitor（A14）」，或請它對 Vt 做 SPC 分析。',
+    artifactEmptyHeading: '尚無 Artifact',
+    artifactEmptySubtitle: '請 eRD AI 執行一段分析 — Artifact 會在這裡呈現。',
+    back: '返回',
+    home: '首頁',
+    sharedToMe: '分享給我',
+    artifactNotFound: '找不到 Artifact。',
+  },
+
+  galleryHeader: {
+    title: 'Artifacts',
+    subtitle: 'eRD Cowork 產生的每一份 Artifact — 點擊開啟。',
+    filterAll: '全部',
+    filterYours: '你的',
+    filterShared: '分享給我',
+    filterPinned: '釘選',
+    sharedBadge: '已分享',
+    sharedToMe: '分享給我',
+    copyLink: '複製連結',
+    share: '分享',
+    delete: '刪除',
+    pin: '釘選',
+    unpin: '取消釘選',
   },
 
   errors: {

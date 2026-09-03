@@ -3,16 +3,16 @@ import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { zhTW } from '@/i18n/zhTW';
+import { en } from '@/i18n/en';
 import { server } from '@/mocks/server';
 import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
 import { useStudioLayoutStore } from '@/stores/useStudioLayoutStore';
 import { renderStudio, waitForComposer } from '@/test/renderStudio';
 
-async function openMenuOf(user: ReturnType<typeof userEvent.setup>, title: string) {
+const openMenuOf = async (user: ReturnType<typeof userEvent.setup>, title: string) => {
   await screen.findByRole('button', { name: title });
   await user.click(screen.getByRole('button', { name: `More actions for ${title}` }));
-}
+};
 
 /** The three session writes go straight to the backend now — no disabled rows, no
  *  後端未支援 hints (the backend is here; an endpoint that is not answers with an
@@ -53,8 +53,10 @@ describe('Session row actions', () => {
 
     await openMenuOf(user, 'Defect pareto — W12');
     await user.click(await screen.findByRole('menuitem', { name: /Delete/ }));
+    // The destructive step now sits behind a confirm — click through it.
+    await user.click(await screen.findByRole('button', { name: 'Delete' }));
 
-    expect(await screen.findByText(zhTW.errors.notReady)).toBeInTheDocument();
+    expect(await screen.findByText(en.errors.notReady)).toBeInTheDocument();
     // The row stays: a delete that failed did not happen.
     expect(screen.getByRole('button', { name: 'Defect pareto — W12' })).toBeInTheDocument();
   });
@@ -163,6 +165,8 @@ describe('Session row actions', () => {
 
     await openMenuOf(user, 'Defect pareto — W12');
     await user.click(await screen.findByRole('menuitem', { name: 'Delete' }));
+    // The destructive step now sits behind a confirm — click through it.
+    await user.click(await screen.findByRole('button', { name: 'Delete' }));
 
     await waitFor(() =>
       expect(screen.queryByRole('button', { name: 'Defect pareto — W12' })).not.toBeInTheDocument(),
@@ -202,6 +206,8 @@ describe('Session row actions', () => {
 
     await openMenuOf(user, 'New analysis');
     await user.click(await screen.findByRole('menuitem', { name: 'Delete' }));
+    // The destructive step now sits behind a confirm — click through it.
+    await user.click(await screen.findByRole('button', { name: 'Delete' }));
 
     await waitFor(() =>
       expect(screen.queryByRole('button', { name: 'New analysis' })).not.toBeInTheDocument(),
@@ -251,9 +257,24 @@ describe('Session row actions', () => {
 
     await openMenuOf(user, 'Defect pareto — W12');
     await user.click(await screen.findByRole('menuitem', { name: 'Delete' }));
+    // The destructive step now sits behind a confirm — click through it.
+    await user.click(await screen.findByRole('button', { name: 'Delete' }));
 
     await waitFor(() =>
       expect(screen.queryByRole('button', { name: 'Defect pareto — W12' })).not.toBeInTheDocument(),
     );
+  });
+
+  /** The other half of the confirm: backing out is a real path, and it must leave
+   *  the conversation exactly where it was — no request, no row change. */
+  it('keeps the session when the delete confirm is cancelled', async () => {
+    const user = userEvent.setup();
+    renderStudio();
+
+    await openMenuOf(user, 'Defect pareto — W12');
+    await user.click(await screen.findByRole('menuitem', { name: 'Delete' }));
+    await user.click(await screen.findByRole('button', { name: 'Cancel' }));
+
+    expect(screen.getByRole('button', { name: 'Defect pareto — W12' })).toBeInTheDocument();
   });
 });

@@ -19,7 +19,7 @@ import { sessionDetailQueryKey } from './useSessionDetail';
  *  what this conversation may read, and the same source can be attached to one session
  *  and not another. Invalidating the session detail is what refreshes the panel, since
  *  that is where attachment lives. */
-export function useSetSessionDataSource(sessionId: string) {
+export const useSetSessionDataSource = (sessionId: string) => {
   const queryClient = useQueryClient();
   const toastError = useActionErrorToast();
 
@@ -45,7 +45,7 @@ export function useSetSessionDataSource(sessionId: string) {
     // A write that fails silently is how a choice quietly stops sticking.
     onError: toastError,
   });
-}
+};
 
 /** Carries the user's remembered connector combination into a conversation that has
  *  none of its own.
@@ -57,7 +57,7 @@ export function useSetSessionDataSource(sessionId: string) {
  *
  *  Failure is deliberately swallowed: a connector is something the agent MAY use, so
  *  losing the pre-selection is a smaller harm than refusing to send the message. */
-export function useApplyRememberedDataSources(sessionId: string) {
+export const useApplyRememberedDataSources = (sessionId: string) => {
   const queryClient = useQueryClient();
 
   return useCallback(
@@ -78,14 +78,14 @@ export function useApplyRememberedDataSources(sessionId: string) {
     },
     [sessionId, queryClient],
   );
-}
+};
 
 /** Adds a source to the catalogue.
  *
  *  Only the catalogue: whether this conversation draws on it is part of the selection the
  *  user submits, so the new source arrives pre-picked in the draft and reaches the session
  *  with everything else on Submit. */
-export function useAddConnector() {
+export const useAddConnector = () => {
   const queryClient = useQueryClient();
   const toastError = useActionErrorToast();
 
@@ -96,4 +96,4 @@ export function useAddConnector() {
     },
     onError: toastError,
   });
-}
+};

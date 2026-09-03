@@ -43,7 +43,7 @@ const EMPTY_MESSAGE_KEYS: Record<
 // the same id; one row per id is enough. Keyed by id — not name — so two
 // genuinely different Artifacts that happen to share a name both survive.
 // (Reintroduces, by id, what the earlier name-based dedupe got wrong.)
-function dedupeById(artifacts: Artifact[]) {
+const dedupeById = (artifacts: Artifact[]) => {
   const seen = new Set<string>();
   return artifacts.filter((artifact) => {
     if (seen.has(artifact.id)) {
@@ -52,9 +52,9 @@ function dedupeById(artifacts: Artifact[]) {
     seen.add(artifact.id);
     return true;
   });
-}
+};
 
-function filterArtifacts(artifacts: Artifact[], category: FilterCategory) {
+const filterArtifacts = (artifacts: Artifact[], category: FilterCategory) => {
   switch (category) {
     case 'yours':
       return artifacts.filter((artifact) => artifact.isOwn);
@@ -68,9 +68,9 @@ function filterArtifacts(artifacts: Artifact[], category: FilterCategory) {
     default:
       return artifacts;
   }
-}
+};
 
-function sortArtifacts(artifacts: Artifact[], sort: SortKey) {
+const sortArtifacts = (artifacts: Artifact[], sort: SortKey) => {
   const sorted = [...artifacts];
   if (sort === 'name') {
     sorted.sort((a, b) => a.title.localeCompare(b.title));
@@ -82,7 +82,7 @@ function sortArtifacts(artifacts: Artifact[], sort: SortKey) {
     sorted.sort((a, b) => (b.pinnedAt ?? '').localeCompare(a.pinnedAt ?? ''));
   }
   return sorted;
-}
+};
 
 const ArtifactsGallery: React.FC = () => {
   const t = useTranslations();
@@ -136,10 +136,8 @@ const ArtifactsGallery: React.FC = () => {
     <div className={styles.page}>
       <div className={styles.header}>
         <div>
-          <h1 className={styles.title}>Artifacts</h1>
-          <p className={styles.subtitle}>
-            Every Artifact eRD Cowork has produced — click to open it.
-          </p>
+          <h1 className={styles.title}>{t.galleryHeader.title}</h1>
+          <p className={styles.subtitle}>{t.galleryHeader.subtitle}</p>
         </div>
         <Dropdown
           trigger={['click']}
@@ -156,26 +154,26 @@ const ArtifactsGallery: React.FC = () => {
 
       <div className={styles.filters}>
         <FilterPill
-          label="All"
+          label={t.galleryHeader.filterAll}
           count={artifacts.length}
           active={category === 'all'}
           onClick={() => setCategory('all')}
         />
         <FilterPill
-          label="Yours"
+          label={t.galleryHeader.filterYours}
           count={counts.yours}
           active={category === 'yours'}
           onClick={() => setCategory('yours')}
         />
         <FilterPill
-          label="Shared to me"
+          label={t.galleryHeader.filterShared}
           count={counts.shared}
           active={category === 'shared'}
           onClick={() => setCategory('shared')}
         />
         {counts.pinned > 0 && (
           <FilterPill
-            label="Pinned"
+            label={t.galleryHeader.filterPinned}
             count={counts.pinned}
             active={category === 'pinned'}
             onClick={() => setCategory('pinned')}

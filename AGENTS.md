@@ -69,6 +69,10 @@ Husky + lint-staged 會自動跑 `oxlint --fix` → `eslint --fix` → `prettier
 
 ### 元件
 
+- **所有 function 一律 `const xxx = () => {}`**——不只元件:hooks、utils、模組私有
+  helper、mocks 與測試 helper 全部適用。僅兩個例外:generator 無法寫成 arrow
+  (`streamAgentMessage` 用 `const xxx = function* () {}`),以及 `ErrorBoundary`
+  class(React 沒有 `componentDidCatch` 的 hook 對等物)
 - 一律 `const X: React.FC<XProps> = (props) => {}` + 具名 props interface,**包含檔案內的
   子元件**。interface 命名 `<元件名>Props`,宣告在該元件正上方;無 props 的寫 `React.FC`
   不帶泛型,不造空 interface(ADR-0010)

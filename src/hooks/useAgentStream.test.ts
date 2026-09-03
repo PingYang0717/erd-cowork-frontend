@@ -8,13 +8,13 @@ import { appWrapper } from '@/test/appHarness';
 import { useAgentStream } from './useAgentStream';
 
 /** The hook now owns the post-run invalidation, so it needs a QueryClient around it. */
-function renderAgentStream(sessionId = 'session-1') {
+const renderAgentStream = (sessionId = 'session-1') => {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return {
     queryClient,
     ...renderHook(() => useAgentStream(sessionId), { wrapper: appWrapper({ queryClient }) }),
   };
-}
+};
 
 describe('useAgentStream', () => {
   it('accumulates TOKEN deltas into the live reply text while streaming', async () => {
@@ -296,7 +296,7 @@ describe('useAgentStream', () => {
     });
     expect(result.current.state.error).toEqual({
       code: 'NETWORK_ERROR',
-      message: '⚠ 連線中斷，請重新送出一次',
+      message: '⚠ Connection lost — please send again',
     });
     expect(result.current.state.stopped).toBe(false);
     expect(result.current.state.liveText).toBe('Vt is dri');

@@ -1,4 +1,4 @@
-﻿import {
+import {
   CloseOutlined,
   CloudUploadOutlined,
   ExclamationCircleOutlined,
@@ -8,6 +8,7 @@
 import { Button, Modal, Progress } from 'antd';
 import React, { useRef } from 'react';
 
+import type { UploadProgress } from '@/api/fileApi';
 import {
   ACCEPT_ATTRIBUTE,
   MAX_ATTACHMENT_COUNT,
@@ -19,10 +20,10 @@ import { formatBytes } from '@/utils/formatBytes';
 
 import styles from './FileAttachmentModal.module.css';
 
-function fileExtension(fileName: string) {
+const fileExtension = (fileName: string) => {
   const dot = fileName.lastIndexOf('.');
   return dot === -1 ? '' : fileName.slice(dot + 1).toLowerCase();
-}
+};
 
 // The mockup's file rows color the icon by type: csv = primary,
 // xlsx/xls = success.
@@ -70,8 +71,8 @@ interface FileAttachmentModalProps {
   onClose: () => void;
   attachments: UploadedFileInfo[];
   error: string;
-  /** Progress of the upload in flight, or null when nothing is uploading. */
-  uploadPercent: number | null;
+  /** The upload in flight, or null when nothing is uploading. */
+  uploadProgress: UploadProgress | null;
   onAddFiles: (files: FileList) => void;
   onRemoveFile: (fileId: string) => void;
 }
@@ -81,18 +82,18 @@ const FileAttachmentModal: React.FC<FileAttachmentModalProps> = ({
   onClose,
   attachments,
   error,
-  uploadPercent,
+  uploadProgress,
   onAddFiles,
   onRemoveFile,
 }) => {
   const t = useTranslations();
   const inputRef = useRef<HTMLInputElement>(null);
   const totalBytes = attachments.reduce((sum, a) => sum + a.sizeBytes, 0);
-  const isUploading = uploadPercent !== null;
+  const isUploading = uploadProgress !== null;
 
   return (
-    <Modal open={open} onCancel={onClose} title="Attach files" footer={null} destroyOnHidden>
-      <p className={styles.subtitle}>Drop or choose files to attach to this analysis.</p>
+    <Modal open={open} onCancel={onClose} title={t.fileModal.title} footer={null} destroyOnHidden>
+      <p className={styles.subtitle}>{t.fileModal.subtitle}</p>
 
       <input
         ref={inputRef}
@@ -144,14 +145,24 @@ const FileAttachmentModal: React.FC<FileAttachmentModalProps> = ({
         </div>
       </div>
 
-      {uploadPercent !== null && (
-        <Progress
-          percent={uploadPercent}
-          aria-label="Uploading"
-          size="small"
-          status="active"
-          className={styles.uploadProgress}
-        />
+      {uploadProgress !== null && (
+        <>
+          <Progress
+            percent={uploadProgress.percent}
+            aria-label="Uploading"
+            size="small"
+            status="active"
+            className={styles.uploadProgress}
+          />
+          {/* Bytes are out; the backend is still receiving and parsing. The bar parks
+              at 90 (honestly — this client cannot see the server's share) and this
+              line says the wait is the server's, not a hang. */}
+          {uploadProgress.phase === 'processing' && (
+            <p role="status" className={styles.processingNote}>
+              {t.files.processing}
+            </p>
+          )}
+        </>
       )}
 
       {error && (
@@ -163,7 +174,7 @@ const FileAttachmentModal: React.FC<FileAttachmentModalProps> = ({
 
       <div className={styles.attachedSection}>
         <div className={styles.attachedHeader}>
-          <span>Attached</span>
+          <span>{t.fileModal.attached}</span>
           {attachments.length > 0 && (
             <span className={styles.attachedCount}>{attachments.length}</span>
           )}
@@ -181,16 +192,16 @@ const FileAttachmentModal: React.FC<FileAttachmentModalProps> = ({
             ))}
           </ul>
         ) : (
-          <div className={styles.emptyAttached}>No files yet</div>
+          <div className={styles.emptyAttached}>{t.fileModal.noFiles}</div>
         )}
       </div>
 
       <div className={styles.footer}>
         <span className={styles.footerSummary}>
-          {attachments.length} / {MAX_ATTACHMENT_COUNT} files · {formatBytes(totalBytes)}
+          {t.fileModal.summary(attachments.length, MAX_ATTACHMENT_COUNT, formatBytes(totalBytes))}
         </span>
         <Button type="primary" autoInsertSpace={false} onClick={onClose}>
-          Done
+          {t.fileModal.done}
         </Button>
       </div>
     </Modal>

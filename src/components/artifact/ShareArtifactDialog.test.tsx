@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { describe, expect, it, vi } from 'vitest';
 
-import { zhTW } from '@/i18n/zhTW';
+import { en } from '@/i18n/en';
 import { server } from '@/mocks/server';
 import { appWrapper } from '@/test/appHarness';
 import { artifactFixture } from '@/test/artifactFixture';
@@ -12,21 +12,21 @@ import ShareArtifactDialog from './ShareArtifactDialog';
 
 const artifact = artifactFixture();
 
-function renderDialog(onClose = vi.fn()) {
+const renderDialog = (onClose = vi.fn()) => {
   return {
     onClose,
     ...render(<ShareArtifactDialog open onClose={onClose} artifact={artifact} />, {
       wrapper: appWrapper(),
     }),
   };
-}
+};
 
 /** Waits for a click on an option to have registered as a choice.
  *
  *  Reads the chosen tags, not the Submit button: Submit is always pressable now, so its
  *  state says nothing about whether the click landed — which is exactly the confusion an
  *  earlier version of these tests fell into. */
-async function selected(): Promise<string[]> {
+const selected = async (): Promise<string[]> => {
   return waitFor(() => {
     const tags = Array.from(document.querySelectorAll('.ant-select-selection-item')).map(
       (node) => node.getAttribute('title') ?? '',
@@ -34,7 +34,7 @@ async function selected(): Promise<string[]> {
     expect(tags.length).toBeGreaterThan(0);
     return tags;
   });
-}
+};
 
 describe('Sharing an Artifact: picking recipients', () => {
   /** Submitting closes the dialog, so nothing is left to render the share list — asking
@@ -100,7 +100,7 @@ describe('Sharing an Artifact: picking recipients', () => {
 
     const writeText = vi.fn().mockResolvedValue(undefined);
     navigator.clipboard.writeText = writeText;
-    await user.click(screen.getByRole('button', { name: /複製/ }));
+    await user.click(screen.getByRole('button', { name: /Copy/ }));
     expect(writeText).toHaveBeenCalledWith(
       expect.stringContaining('/#/cowork/artifact/artifact-1'),
     );
@@ -115,7 +115,7 @@ describe('Sharing an Artifact: picking recipients', () => {
     );
     renderDialog();
 
-    expect(await screen.findByText(zhTW.share.unavailable)).toBeInTheDocument();
+    expect(await screen.findByText(en.share.unavailable)).toBeInTheDocument();
     // Still standing, and still offering the way out every dialog needs.
     expect(screen.getByRole('button', { name: 'Submit' })).toBeEnabled();
   });
@@ -129,7 +129,7 @@ describe('Sharing an Artifact: picking recipients', () => {
     );
     renderDialog();
 
-    expect(await screen.findByText(zhTW.share.unavailable)).toBeInTheDocument();
+    expect(await screen.findByText(en.share.unavailable)).toBeInTheDocument();
     // Editing a list nobody can see would be building a delta on a baseline that is not
     // real; the picker is closed rather than the dialog.
     expect(screen.getByRole('combobox')).toBeDisabled();
@@ -163,7 +163,7 @@ describe('Sharing an Artifact: picking recipients', () => {
     await user.click(field);
     await user.type(field, 'CH');
 
-    expect(await screen.findByText('請至少輸入 3 個字元')).toBeInTheDocument();
+    expect(await screen.findByText('Type at least 3 characters')).toBeInTheDocument();
   });
 
   it('searches the backend once the key is long enough, and offers what it matched', async () => {
@@ -268,7 +268,7 @@ describe('Sharing an Artifact: picking recipients', () => {
     await user.type(field, 'CHXXGHYC');
 
     expect(
-      await screen.findByText(zhTW.share.searchFailed, {}, { timeout: 3000 }),
+      await screen.findByText(en.share.searchFailed, {}, { timeout: 3000 }),
     ).toBeInTheDocument();
   });
 
@@ -282,7 +282,7 @@ describe('Sharing an Artifact: picking recipients', () => {
     await user.type(field, 'CHXXGHYC');
 
     expect(
-      await screen.findByText(zhTW.share.searchFailed, {}, { timeout: 3000 }),
+      await screen.findByText(en.share.searchFailed, {}, { timeout: 3000 }),
     ).toBeInTheDocument();
   });
 
@@ -294,10 +294,10 @@ describe('Sharing an Artifact: picking recipients', () => {
     vi.spyOn(navigator.clipboard, 'writeText').mockRejectedValue(new Error('denied'));
     renderDialog();
 
-    await user.click(await screen.findByRole('button', { name: /複製/ }));
+    await user.click(await screen.findByRole('button', { name: /Copy/ }));
 
-    expect(screen.getByRole('button', { name: /複製/ })).toHaveTextContent('複製');
-    expect(screen.queryByText('已複製')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Copy/ })).toHaveTextContent('Copy');
+    expect(screen.queryByText('Copied')).not.toBeInTheDocument();
   });
 
   /** A recipient already chosen must not turn back into a bare id when the next search

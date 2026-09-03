@@ -8,7 +8,7 @@ import { getArtifactContent } from './artifactApi';
 const API_BASE = '/api';
 
 /** Captures the URL the next artifact-content request actually goes out with. */
-function captureContentRequest(): { url: () => URL } {
+const captureContentRequest = (): { url: () => URL } => {
   let captured: URL | null = null;
   server.use(
     http.get(`${API_BASE}/artifacts/:id`, ({ request }) => {
@@ -24,7 +24,7 @@ function captureContentRequest(): { url: () => URL } {
       return captured;
     },
   };
-}
+};
 
 /** Artifact HTML has no theme variants (ADR-0001): the request carries no `theme`. What it may carry is `r`, the reload
  *  cache-buster, and only when a reload actually happened (nonce > 0). */

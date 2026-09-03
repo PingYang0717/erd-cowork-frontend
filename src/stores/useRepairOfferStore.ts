@@ -1,11 +1,11 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 
-export interface BrowserJsError {
-  message: string;
-  line: number;
-  col: number;
-}
+import type { BrowserJsError } from '@/api/artifactApi';
+
+// Moved to the api layer — it is the repair endpoint's body shape — and re-exported
+// here so the panes that report and read offers keep one import for offer + error.
+export type { BrowserJsError } from '@/api/artifactApi';
 
 /** `files-expired` is terminal in a way `failed` is not: the data the artifact was built
  *  from has been deleted, so another attempt cannot succeed. */
@@ -54,7 +54,7 @@ interface RepairOfferState {
 }
 
 /** Pulls the next not-yet-dismissed offer from the queue as the new current offer. */
-function promoteNext(queue: QueuedOffer[], dismissed: string[]): Partial<RepairOfferState> {
+const promoteNext = (queue: QueuedOffer[], dismissed: string[]): Partial<RepairOfferState> => {
   const nextIndex = queue.findIndex((item) => !dismissed.includes(item.artifactId));
   if (nextIndex === -1) {
     return { offer: null, queue: [] };
@@ -64,7 +64,7 @@ function promoteNext(queue: QueuedOffer[], dismissed: string[]): Partial<RepairO
     offer: { artifactId: next.artifactId, errors: next.errors, status: 'pending' },
     queue: queue.slice(nextIndex + 1),
   };
-}
+};
 
 export const useRepairOfferStore = create<RepairOfferState>()(
   devtools(

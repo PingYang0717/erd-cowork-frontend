@@ -17,18 +17,23 @@ export const getArtifactContent = (artifactId: string, reloadNonce: number) =>
 /** The artifact's source before assembly (text/plain). Read by the chat bubble's
  *  "view HTML" panel, and the text a later turn iterates from. */
 export const getArtifactRawHtml = (artifactId: string, signal?: AbortSignal) =>
-  apiClient.get<string>(`/artifacts/${artifactId}/raw`, {
+  apiClient.get<string>(`/artifacts/${encodeURIComponent(artifactId)}/raw`, {
     responseType: 'text',
     signal,
   });
 
 /** What the pin endpoint answers with. Not an `Artifact`: it names the subject
- *  `artifactId` rather than `id`, and carries only what the toggle settled. */
+ *  `artifactId` rather than `id`, and carries only what the toggle settled.
+ *
+ *  Only `pinnedAt` is required — it is the one thing a pin toggle can actually
+ *  change, and an answer without it says nothing. The rest are enrichments the
+ *  cache merges when present: optional in the type so the hook must handle their
+ *  absence, which is what "merged, not replaced" means. */
 export interface ArtifactPinResult {
-  artifactId: string;
+  artifactId?: string;
   pinnedAt: string | null;
-  owner: string;
-  isOwn: boolean;
+  owner?: string;
+  isOwn?: boolean;
 }
 
 /** Toggles the pin. One endpoint and no body: the backend decides the direction, and the
@@ -98,4 +103,21 @@ export const listArtifactShares = async (id: string): Promise<DirectoryEntry[]> 
  *  non-list into the cache the dialog maps over. `unknown` makes the check the compiler's
  *  business rather than a comment's. */
 export const updateArtifactShares = (id: string, update: ArtifactShareUpdate) =>
-  apiClient.patch<unknown>(`/artifacts/${id}/shares`, update);
+  apiClient.patch(`/artifacts/${id}/shares`, update);
+
+/** One JS error an Artifact's document reported while running, verbatim as its
+ *  injected collector posts it. Lives here because it is a wire shape — the repair
+ *  endpoint's body carries a list of these. */
+export interface BrowserJsError {
+  message: string;
+  line: number;
+  col: number;
+}
+
+/** Asks the agent to rebuild an Artifact whose HTML threw while running. The answer
+ *  is one honest boolean: a repair that produced no improvement says so rather than
+ *  being reported as success. */
+export const repairArtifact = (id: string, errors: BrowserJsError[]) =>
+  apiClient.post<{ repaired: boolean }>(`/artifacts/${encodeURIComponent(id)}/repair`, {
+    errors,
+  });

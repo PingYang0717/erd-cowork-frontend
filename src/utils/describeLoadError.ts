@@ -1,5 +1,4 @@
-import axios from 'axios';
-
+import { errorMessage, httpStatus, isOffline } from '@/api/apiError';
 import { getTranslations } from '@/i18n/useTranslations';
 import type { Translations } from '@/i18n/zhTW';
 
@@ -15,36 +14,35 @@ import type { Translations } from '@/i18n/zhTW';
  * long" — it is an aborted request. Both land here as a response-less AxiosError and both
  * are, from the user's side, the same thing: nothing came back.
  */
-export function describeLoadError(
+export const describeLoadError = (
   error: Error,
   t: Translations['errors'] = getTranslations().errors,
-): { heading: string; detail: string } {
-  if (axios.isAxiosError(error) && error.response === undefined) {
+): { heading: string; detail: string } => {
+  if (isOffline(error)) {
     return { heading: t.offlineHeading, detail: t.offlineDetail };
   }
   // The status code is worth showing; axios's own sentence around it is not. It arrives
   // as `Request failed with status code 500` — English whatever the interface is set to,
   // and about axios rather than about what the user should do next.
-  if (axios.isAxiosError(error) && error.response !== undefined) {
-    return { heading: t.loadFailedHeading, detail: t.loadFailedDetail(error.response.status) };
+  const status = httpStatus(error);
+  if (status !== null) {
+    return { heading: t.loadFailedHeading, detail: t.loadFailedDetail(status) };
   }
   return { heading: t.loadFailedHeading, detail: error.message };
-}
+};
 
 /** What to tell the user about a failed action (mutation). The backend's own
  *  `{ code, message }` wins; a backend that is not answering gets named; anything
  *  else falls back to "not ready yet" — per the decision that nothing is disabled
  *  up front, the error is how the user learns an endpoint has not landed. */
-export function describeActionError(error: unknown): string {
+export const describeActionError = (error: unknown): string => {
   const t = getTranslations().errors;
-  if (axios.isAxiosError(error)) {
-    if (error.response === undefined) {
-      return t.offlineAction;
-    }
-    const body = error.response.data as { message?: string } | undefined;
-    if (body?.message) {
-      return body.message;
-    }
+  if (isOffline(error)) {
+    return t.offlineAction;
+  }
+  const message = errorMessage(error);
+  if (message !== null) {
+    return message;
   }
   return t.notReady;
-}
+};

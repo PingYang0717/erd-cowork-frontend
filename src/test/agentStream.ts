@@ -25,7 +25,7 @@ const API_BASE = '/api';
 /** Replaces the message endpoint with a stream the test drives event by event.
  *  Nothing is on a timer: the test decides when the next event arrives, so every
  *  intermediate state of a run is observable. */
-export function mockAgentStream(): MockAgentStream {
+export const mockAgentStream = (): MockAgentStream => {
   const encoder = new TextEncoder();
   let controller: ReadableStreamDefaultController<Uint8Array> | null = null;
   let aborted = false;
@@ -33,13 +33,13 @@ export function mockAgentStream(): MockAgentStream {
   const userIds: (string | null)[] = [];
   const buffered: string[] = [];
 
-  function write(chunk: string): void {
+  const write = (chunk: string): void => {
     if (controller) {
       controller.enqueue(encoder.encode(chunk));
     } else {
       buffered.push(chunk);
     }
-  }
+  };
 
   server.use(
     http.post(`${API_BASE}/sessions/:sessionId/messages`, async ({ params, request }) => {
@@ -84,15 +84,15 @@ export function mockAgentStream(): MockAgentStream {
     requests,
     userIds,
   };
-}
+};
 
 /** Makes the message endpoint fail before any stream opens, the way a real backend
  *  reports a refusal: a non-2xx status with a JSON `{ code, message }` body. */
-export function mockAgentStreamRejection(failure: {
+export const mockAgentStreamRejection = (failure: {
   status: number;
   code: string;
   message: string;
-}): void {
+}): void => {
   server.use(
     http.post(`${API_BASE}/sessions/:sessionId/messages`, () =>
       HttpResponse.json(
@@ -101,4 +101,4 @@ export function mockAgentStreamRejection(failure: {
       ),
     ),
   );
-}
+};

@@ -172,3 +172,9 @@
   font-size: 12px;
   line-height: 1.6;
 }
+
+.uploadingNotice {
+  margin: 0 0 6px;
+  font-size: 12px;
+  color: var(--erd-color-text-secondary);
+}

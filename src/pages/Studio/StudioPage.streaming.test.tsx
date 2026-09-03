@@ -9,16 +9,16 @@ import { mockAgentStream } from '@/test/agentStream';
 import { renderStudio, waitForComposer } from '@/test/renderStudio';
 import { answerAnalysisConditions } from '@/test/studioRun';
 
-async function selectASession(user: ReturnType<typeof userEvent.setup>) {
+const selectASession = async (user: ReturnType<typeof userEvent.setup>) => {
   await user.click(await screen.findByRole('button', { name: 'New chat' }));
   await screen.findByRole('button', { name: 'New analysis' });
   await waitForComposer();
-}
+};
 
-async function startAnalysis(user: ReturnType<typeof userEvent.setup>) {
+const startAnalysis = async (user: ReturnType<typeof userEvent.setup>) => {
   await selectASession(user);
   await user.click(screen.getByRole('button', { name: 'SPC analysis' }));
-}
+};
 
 describe('Streaming a run in the Studio', () => {
   beforeEach(() => {
@@ -60,16 +60,25 @@ describe('Streaming a run in the Studio', () => {
     await startAnalysis(user);
 
     const panel = await screen.findByRole('status', { name: 'eRD AI is working' });
-    expect(within(panel).getByText(/處理中/)).toBeInTheDocument();
+    expect(within(panel).getByText(/is working/)).toBeInTheDocument();
+    // Additions announce individually; the whole panel is not re-read per step (A-3).
+    expect(panel).toHaveAttribute('aria-atomic', 'false');
+    // The thread itself is silenced — the streaming bubble lives inside it, and
+    // role="log"'s implicit polite live region re-read every token (A-1).
+    expect(screen.getByRole('log', { name: 'Messages' })).toHaveAttribute('aria-live', 'off');
 
     // The label above stays the speaker's name while the run is going.
     expect(screen.getByText('eRD AI')).toBeInTheDocument();
 
+    act(() => stream.push({ type: 'TOKEN', delta: 'Done.' }));
     act(() => stream.push({ type: 'ANSWER', text: 'Done.' }));
     act(() => stream.close());
 
     // And the panel's claim goes with the panel when the run ends.
-    await waitFor(() => expect(screen.queryByText(/處理中/)).not.toBeInTheDocument());
+    await waitFor(() => expect(screen.queryByText(/is working/)).not.toBeInTheDocument());
+    // The finished reply is announced once, from the dedicated region — the only
+    // live channel left now that the log is off (A-1).
+    expect(screen.getByRole('status', { name: 'Latest reply' })).toHaveTextContent('Done.');
   });
 
   it('shows the reply building up token by token while the run is still going', async () => {
@@ -156,8 +165,11 @@ describe('Streaming a run in the Studio', () => {
     await waitFor(() =>
       expect(screen.queryByRole('status', { name: 'eRD AI is working' })).not.toBeInTheDocument(),
     );
-    expect(screen.getByText('Recomputed control limits.')).toBeInTheDocument();
-    expect(screen.getByText('eRD AI · 已停止')).toBeInTheDocument();
+    // Scoped to the thread: the sr-only announcement region (A-1) holds the same text.
+    expect(
+      within(screen.getByRole('log', { name: 'Messages' })).getByText('Recomputed control limits.'),
+    ).toBeInTheDocument();
+    expect(screen.getByText('eRD AI · stopped')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Send message' })).toBeInTheDocument();
   });
 
@@ -172,7 +184,9 @@ describe('Streaming a run in the Studio', () => {
 
     act(() => stream.disconnect());
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('⚠ 連線中斷，請重新送出一次');
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      '⚠ Connection lost — please send again',
+    );
     expect(screen.queryByRole('status', { name: 'eRD AI is working' })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Send message' })).toBeInTheDocument();
   });
@@ -189,7 +203,7 @@ describe('Streaming a run in the Studio', () => {
     act(() => stream.push({ type: 'CODE', delta: '></div>' }));
 
     // The label says the source is still being written (cowork's wording).
-    const toggle = await screen.findByRole('button', { name: '產生中的 HTML' });
+    const toggle = await screen.findByRole('button', { name: 'HTML being written' });
     expect(toggle).toHaveAttribute('aria-expanded', 'false');
 
     await user.click(toggle);
@@ -223,7 +237,7 @@ describe('Streaming a run in the Studio', () => {
     expect(within(table).getByRole('cell', { name: '0.361' })).toBeInTheDocument();
     // A null cell renders empty rather than as the word "null".
     expect(within(table).queryByRole('cell', { name: 'null' })).not.toBeInTheDocument();
-    expect(screen.getByText('(前 200 列)')).toBeInTheDocument();
+    expect(screen.getByText('(results truncated)')).toBeInTheDocument();
   });
 
   // Runs against the scripted mock backend rather than a hand-driven stream: this is a
@@ -508,7 +522,12 @@ describe('Streaming a run in the Studio', () => {
       await answerAnalysisConditions(user);
 
       await screen.findByRole('button', { name: /^Worked through \d+ steps$/ });
-      expect(screen.getByText(/Done — recomputed control limits/)).toBeInTheDocument();
+      // Scoped to the thread: the sr-only announcement region (A-1) holds the same text.
+      expect(
+        within(screen.getByRole('log', { name: 'Messages' })).getByText(
+          /Done — recomputed control limits/,
+        ),
+      ).toBeInTheDocument();
     });
 
     /** The convenience the localStorage preference exists for: the same person grants
@@ -597,7 +616,7 @@ describe('Streaming a run in the Studio', () => {
       await screen.findByText('分析條件');
 
       expect(screen.getByText('可多選,只顯示已連線的來源。')).toBeInTheDocument();
-      await user.click(screen.getByRole('button', { name: '管理連線' }));
+      await user.click(screen.getByRole('button', { name: 'Manage connections' }));
 
       expect(await screen.findByRole('dialog', { name: 'Connectors' })).toBeInTheDocument();
     });
@@ -682,7 +701,12 @@ describe('Streaming a run in the Studio', () => {
       await user.click(screen.getByRole('button', { name: '開始分析' }));
 
       await screen.findByRole('button', { name: /^Worked through \d+ steps$/ });
-      expect(screen.getByText(/CP Test status dashboard is ready/)).toBeInTheDocument();
+      // Scoped to the thread: the sr-only announcement region (A-1) holds the same text.
+      expect(
+        within(screen.getByRole('log', { name: 'Messages' })).getByText(
+          /CP Test status dashboard is ready/,
+        ),
+      ).toBeInTheDocument();
     });
 
     it('sends a true boolean as its option label in the prose answer, and lets it be switched back off', async () => {
@@ -781,12 +805,17 @@ describe('Streaming a run in the Studio', () => {
 
       await user.click(within(items).getByRole('button', { name: /Vt \(gate CD\)/ }));
       expect(screen.getByRole('button', { name: '先產生這 1 項' })).toBeEnabled();
-      expect(screen.getByText('已選 1 項')).toBeInTheDocument();
+      expect(screen.getByText('1 selected')).toBeInTheDocument();
 
       await user.click(screen.getByRole('button', { name: '先產生這 1 項' }));
 
       await screen.findByRole('button', { name: /^Worked through \d+ steps$/ });
-      expect(screen.getByText(/Done — recomputed control limits/)).toBeInTheDocument();
+      // Scoped to the thread: the sr-only announcement region (A-1) holds the same text.
+      expect(
+        within(screen.getByRole('log', { name: 'Messages' })).getByText(
+          /Done — recomputed control limits/,
+        ),
+      ).toBeInTheDocument();
     });
 
     it('leaves the answered conditions in the thread as a prose user message', async () => {

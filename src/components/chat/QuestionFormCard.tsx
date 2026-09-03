@@ -13,18 +13,23 @@ const SEARCHABLE_FROM = 4;
 
 /** How many values the user has picked across the whole form. Drives the submit label
  *  of a form that asks "how many first?" — the DC item reask counts what it will chart. */
-function countAnswers(answers: Answers): number {
+const countAnswers = (answers: Answers): number => {
   return Object.values(answers).reduce<number>((total, answer) => {
     if (Array.isArray(answer)) {
       return total + answer.length;
     }
     return answer === false || answer === '' || answer === undefined ? total : total + 1;
   }, 0);
-}
+};
 
 /** A chip's label carries its spec limits when the field has them, so an engineer can
  *  judge an item without opening anything. */
-function optionLabel(option: { label: string; unit?: string; lo?: number; hi?: number }): string {
+const optionLabel = (option: {
+  label: string;
+  unit?: string;
+  lo?: number;
+  hi?: number;
+}): string => {
   if (option.lo === undefined || option.hi === undefined || option.unit === undefined) {
     return option.label;
   }
@@ -32,18 +37,18 @@ function optionLabel(option: { label: string; unit?: string; lo?: number; hi?: n
     return option.label;
   }
   return `${option.label} · ${option.lo} – ${option.hi} ${option.unit}`;
-}
+};
 
 export type Answers = Record<string, QuestionAnswer>;
 
-function isVisible(field: QuestionField, answers: Answers): boolean {
+const isVisible = (field: QuestionField, answers: Answers): boolean => {
   if (!field.visibleWhen) {
     return true;
   }
   return answers[field.visibleWhen.field] === field.visibleWhen.equals;
-}
+};
 
-function isAnswered(field: QuestionField, answers: Answers): boolean {
+const isAnswered = (field: QuestionField, answers: Answers): boolean => {
   const answer = answers[field.key];
 
   if (Array.isArray(answer)) {
@@ -53,7 +58,7 @@ function isAnswered(field: QuestionField, answers: Answers): boolean {
     return answer.trim() !== '';
   }
   return answer === true;
-}
+};
 
 interface ChipGroupProps {
   field: QuestionField;
@@ -142,11 +147,11 @@ const QuestionFormCard: React.FC<QuestionFormCardProps> = ({
   // One debounce for the whole card: only one field is ever searchable at a time.
   const settledSearches = useDebouncedValue(searches);
 
-  function setFieldText(field: QuestionField, value: string) {
+  const setFieldText = (field: QuestionField, value: string) => {
     setAnswers((previous) => ({ ...previous, [field.key]: value }));
-  }
+  };
 
-  function toggle(field: QuestionField, value: string) {
+  const toggle = (field: QuestionField, value: string) => {
     setAnswers((previous) => {
       const next: Answers =
         field.kind === 'boolean'
@@ -174,7 +179,7 @@ const QuestionFormCard: React.FC<QuestionFormCardProps> = ({
 
       return next;
     });
-  }
+  };
 
   const selectedCount = countAnswers(answers);
   const submitLabel = form.submitLabel.replace('{count}', String(selectedCount));

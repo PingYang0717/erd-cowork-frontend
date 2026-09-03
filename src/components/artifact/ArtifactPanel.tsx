@@ -29,15 +29,14 @@ import ShareArtifactDialog from './ShareArtifactDialog';
 import VersionSwitcher from './VersionSwitcher';
 
 const EmptyPanel: React.FC = () => {
+  const t = useTranslations();
   return (
     <div className={styles.empty}>
       <div className={styles.emptyIcon}>
         <AppstoreOutlined aria-hidden />
       </div>
-      <p className={styles.emptyHeading}>No artifact yet</p>
-      <p className={styles.emptyText}>
-        Ask eRD AI to build a dashboard or a deck — the result renders here.
-      </p>
+      <p className={styles.emptyHeading}>{t.studio.artifactEmptyHeading}</p>
+      <p className={styles.emptyText}>{t.studio.artifactEmptySubtitle}</p>
     </div>
   );
 };

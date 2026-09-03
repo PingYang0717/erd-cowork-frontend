@@ -77,12 +77,12 @@ export interface MessageBubbleProps {
 // step can also fail — hence the fourth state (ADR-0003).
 /** Messages the backend persists on its own behalf — an interrupted response, a repair
  *  outcome. They are records, not agent prose, so they never reach the Markdown renderer. */
-function systemRecordKind(text: string): 'interrupted' | 'repair' | null {
+const systemRecordKind = (text: string): 'interrupted' | 'repair' | null => {
   if (INTERRUPTED_TEXTS.includes(text)) {
     return 'interrupted';
   }
   return REPAIR_RECORD_PREFIXES.some((prefix) => text.startsWith(prefix)) ? 'repair' : null;
-}
+};
 
 /** One turn in the thread. History and the run in flight go through exactly this
  *  component: a turn that has just finished must look identical to the same turn read
@@ -162,8 +162,16 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
         {/* The live region exists for as long as the run does, not only once it has
             something to say: a run that has started but reported nothing yet is still
             what a screen reader needs announced. */}
+        {/* aria-atomic="false" overrides role="status"'s implicit atomic=true: each
+            arriving step row is announced on its own, instead of the whole panel
+            being re-read every time a step is appended (A-3). */}
         {streaming && (
-          <div role="status" aria-label="eRD AI is working" className={styles.workingSteps}>
+          <div
+            role="status"
+            aria-atomic="false"
+            aria-label="eRD AI is working"
+            className={styles.workingSteps}
+          >
             {/* The run says it is running from inside the step panel, where the steps it
                 is producing appear — rather than from the label above, which names who is
                 speaking and should read the same whether or not they are mid-sentence. */}
@@ -189,7 +197,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
             persisted: it belongs to this connection, not to the conversation
             (ADR-0003). */}
         {thinking && (
-          <CollapsiblePanel label="Thinking">
+          <CollapsiblePanel label={t.chat.thinking}>
             <p className={styles.thinkingBody}>{thinking}</p>
           </CollapsiblePanel>
         )}
@@ -239,14 +247,14 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
               <AppstoreOutlined aria-hidden className={styles.artifactChipIcon} />
               <span className={styles.artifactChipTitle}>{artifact.title}</span>
               <span className={styles.artifactChipHint}>
-                {artifactShown ? 'shown right →' : 'show right →'}
+                {artifactShown ? t.chat.shownRight : t.chat.showRight}
               </span>
             </button>
           ) : (
             <div className={styles.artifactChip}>
               <AppstoreOutlined aria-hidden className={styles.artifactChipIcon} />
               <span className={styles.artifactChipTitle}>{artifact.title}</span>
-              <span className={styles.artifactChipHint}>shown right →</span>
+              <span className={styles.artifactChipHint}>{t.chat.shownRight}</span>
             </div>
           ))}
         {/* The source is only fetchable once the run has stopped writing it; while it is
@@ -294,9 +302,9 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
 /** Takes the copy rather than reaching for it. Reading the language here worked only
  *  because the one caller subscribes to it — move this into a memoised child and the
  *  label would freeze on whatever language was current when it mounted, silently. */
-function agentLabel(stopped: boolean, t: Translations['chat']): string {
+const agentLabel = (stopped: boolean, t: Translations['chat']): string => {
   return stopped ? t.agentStopped : t.agentName;
-}
+};
 
 /** The open turn's timer. The clock is read in the interval rather than during render —
  *  a render has to be able to run twice and say the same thing. */

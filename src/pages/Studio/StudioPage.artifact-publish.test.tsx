@@ -26,7 +26,7 @@ describe('Per-version Artifact publishing', () => {
 
     // The seeded session's latest version is already published.
     await user.click(await screen.findByRole('button', { name: 'SPC — Vt (gate CD)' }));
-    expect(await screen.findByText('已發布')).toBeInTheDocument();
+    expect(await screen.findByText('Published')).toBeInTheDocument();
 
     // Regenerating produces a new, not-yet-published version.
     await user.type(
@@ -34,13 +34,13 @@ describe('Per-version Artifact publishing', () => {
       'Regenerate the dashboard.{Enter}',
     );
 
-    await screen.findByRole('button', { name: '發布 Artifact' });
-    expect(screen.queryByText('已發布')).not.toBeInTheDocument();
+    await screen.findByRole('button', { name: 'Publish Artifact' });
+    expect(screen.queryByText('Published')).not.toBeInTheDocument();
 
     await publishArtifactAs(user);
 
-    expect(await screen.findByText('已發布')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: '發布 Artifact' })).not.toBeInTheDocument();
+    expect(await screen.findByText('Published')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Publish Artifact' })).not.toBeInTheDocument();
   });
 
   /** The regression this pins down: the content HTML's query key once lived under the
@@ -66,14 +66,16 @@ describe('Per-version Artifact publishing', () => {
       await screen.findByRole('textbox', { name: 'Message' }),
       'Regenerate the dashboard.{Enter}',
     );
-    await screen.findByRole('button', { name: '發布 Artifact' });
+    await screen.findByRole('button', { name: 'Publish Artifact' });
     const fetchesBeforePublish = contentFetches;
 
     await publishArtifactAs(user);
-    await screen.findByText('已發布');
+    await screen.findByText('Published');
     // The list refetch (publishedAt badge) has landed by now; give any stray content
     // refetch the same window before counting.
-    await waitFor(() => expect(screen.queryByRole('button', { name: '發布 Artifact' })).toBeNull());
+    await waitFor(() =>
+      expect(screen.queryByRole('button', { name: 'Publish Artifact' })).toBeNull(),
+    );
 
     expect(contentFetches).toBe(fetchesBeforePublish);
   });
@@ -83,10 +85,10 @@ describe('Per-version Artifact publishing', () => {
     renderStudio();
 
     await user.click(await screen.findByRole('button', { name: 'SPC — Vt (gate CD)' }));
-    await screen.findByText('已發布');
+    await screen.findByText('Published');
 
     await user.click(screen.getByRole('button', { name: 'Share artifact' }));
-    expect(await screen.findByRole('dialog', { name: /分享/ })).toBeInTheDocument();
+    expect(await screen.findByRole('dialog', { name: /Share/ })).toBeInTheDocument();
   });
 
   /** The Gallery names a card by its title, so publishing asks for one — and refuses to
@@ -103,21 +105,21 @@ describe('Per-version Artifact publishing', () => {
     renderStudio();
 
     await user.click(await screen.findByRole('button', { name: 'SPC — Vt (gate CD)' }));
-    await screen.findByText('已發布');
+    await screen.findByText('Published');
     await user.type(
       await screen.findByRole('textbox', { name: 'Message' }),
       'Regenerate the dashboard.{Enter}',
     );
 
-    await user.click(await screen.findByRole('button', { name: '發布 Artifact' }));
-    const nameField = await screen.findByLabelText('名稱');
+    await user.click(await screen.findByRole('button', { name: 'Publish Artifact' }));
+    const nameField = await screen.findByLabelText('Name');
 
     // Emptied, the confirm closes.
     await user.clear(nameField);
-    expect(screen.getByRole('button', { name: /^發布$/ })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /^Publish$/ })).toBeDisabled();
 
     await user.type(nameField, '8 月 A14 良率追蹤');
-    await user.click(screen.getByRole('button', { name: /^發布$/ }));
+    await user.click(screen.getByRole('button', { name: /^Publish$/ }));
 
     await waitFor(() => expect(published).toEqual({ title: '8 月 A14 良率追蹤' }));
   });
@@ -131,12 +133,12 @@ describe('Per-version Artifact publishing', () => {
     renderStudio();
 
     await user.click(await screen.findByRole('button', { name: 'SPC — Vt (gate CD)' }));
-    await screen.findByText('已發布');
+    await screen.findByText('Published');
     await user.type(
       await screen.findByRole('textbox', { name: 'Message' }),
       'Regenerate the dashboard.{Enter}',
     );
-    await screen.findByRole('button', { name: '發布 Artifact' });
+    await screen.findByRole('button', { name: 'Publish Artifact' });
 
     await user.click(await screen.findByRole('button', { name: 'Switch Artifact' }));
     const items = await screen.findAllByRole('menuitem');
@@ -154,13 +156,13 @@ describe('Per-version Artifact publishing', () => {
     renderStudio();
 
     await user.click(await screen.findByRole('button', { name: 'SPC — Vt (gate CD)' }));
-    await screen.findByText('已發布');
+    await screen.findByText('Published');
 
     await user.type(
       await screen.findByRole('textbox', { name: 'Message' }),
       'Regenerate the dashboard.{Enter}',
     );
-    await screen.findByRole('button', { name: '發布 Artifact' });
+    await screen.findByRole('button', { name: 'Publish Artifact' });
 
     expect(screen.getByRole('button', { name: 'Share artifact' })).toBeDisabled();
     await user.click(screen.getByRole('button', { name: 'Share artifact' }));
@@ -172,22 +174,22 @@ describe('Per-version Artifact publishing', () => {
     renderStudio();
 
     await user.click(await screen.findByRole('button', { name: 'SPC — Vt (gate CD)' }));
-    await screen.findByText('已發布');
+    await screen.findByText('Published');
 
     await user.type(
       await screen.findByRole('textbox', { name: 'Message' }),
       'Regenerate the dashboard.{Enter}',
     );
-    await screen.findByRole('button', { name: '發布 Artifact' });
+    await screen.findByRole('button', { name: 'Publish Artifact' });
 
     // Switch back to the seeded, already-published first output: the chip returns.
     await user.click(await screen.findByRole('button', { name: 'Switch Artifact' }));
     await user.click((await screen.findAllByRole('menuitem')).at(-1) as HTMLElement);
-    expect(await screen.findByText('已發布')).toBeInTheDocument();
+    expect(await screen.findByText('Published')).toBeInTheDocument();
 
     // And the newer output is still unpublished when switching to it again.
     await user.click(await screen.findByRole('button', { name: 'Switch Artifact' }));
     await user.click((await screen.findAllByRole('menuitem'))[0]);
-    expect(await screen.findByRole('button', { name: '發布 Artifact' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Publish Artifact' })).toBeInTheDocument();
   });
 });

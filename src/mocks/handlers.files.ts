@@ -11,10 +11,10 @@ export interface StoredFile extends UploadedFileInfo {
   sessionId: string;
 }
 
-export function toFileDto(stored: StoredFile): UploadedFileInfo {
+export const toFileDto = (stored: StoredFile): UploadedFileInfo => {
   const { sessionId: _sessionId, ...rest } = stored;
   return rest;
-}
+};
 
 export const sessionFiles = createPersistedResource<StoredFile>('erd-cowork:session-files', []);
 
@@ -22,9 +22,9 @@ export const sessionFiles = createPersistedResource<StoredFile>('erd-cowork:sess
  *  brand-checks File entries and rejects jsdom's File in tests. latin1 maps one char
  *  per byte, so part sizes stay exact. Only metadata is kept — the mock never stores
  *  file contents. */
-async function parseMultipartFiles(
+const parseMultipartFiles = async (
   request: Request,
-): Promise<{ name: string; size: number; type: string }[]> {
+): Promise<{ name: string; size: number; type: string }[]> => {
   const contentType = request.headers.get('content-type') ?? '';
   const boundaryMatch = contentType.match(/boundary=(?:"([^"]+)"|([^;]+))/i);
   if (!boundaryMatch) {
@@ -51,7 +51,7 @@ async function parseMultipartFiles(
     files.push({ name: filenameMatch[1], size: body.length, type: (typeMatch?.[1] ?? '').trim() });
   }
   return files;
-}
+};
 
 export const fileHandlers = [
   http.post('/api/sessions/:sessionId/files', async ({ params, request }) => {

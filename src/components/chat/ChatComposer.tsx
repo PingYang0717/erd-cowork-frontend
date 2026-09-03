@@ -29,29 +29,36 @@ import styles from './ChatComposer.module.css';
 
 // The backend infers everything from the question text (its body is question-only),
 // so a prompt is just its text — the mock mirrors that inference by keyword.
-const SUGGESTED_PROMPTS: { label: string; text: string; icon: ReactNode }[] = [
+// `text` deliberately stays English in every language: it is the message SENT, and
+// the keyword vocabulary the scenario inference is known to answer to is this one.
+// Only the chip's visible `labelKey` follows the interface language.
+const SUGGESTED_PROMPTS: {
+  labelKey: 'inlineDashboard' | 'spcAnalysis' | 'generateSlides' | 'dailyMonitor' | 'cpTestStatus';
+  text: string;
+  icon: ReactNode;
+}[] = [
   {
-    label: 'Inline dashboard',
+    labelKey: 'inlineDashboard',
     text: 'Generate an Inline dashboard.',
     icon: <DotChartOutlined aria-hidden />,
   },
   {
-    label: 'SPC analysis',
+    labelKey: 'spcAnalysis',
     text: 'Run an SPC analysis on Vt (gate CD).',
     icon: <LineChartOutlined aria-hidden />,
   },
   {
-    label: 'Generate slides',
+    labelKey: 'generateSlides',
     text: 'Generate slides from this analysis.',
     icon: <FilePptOutlined aria-hidden />,
   },
   {
-    label: 'Daily monitor (A14)',
+    labelKey: 'dailyMonitor',
     text: 'Generate the Daily Monitor dashboard for A14.',
     icon: <DashboardOutlined aria-hidden />,
   },
   {
-    label: 'CP Test status',
+    labelKey: 'cpTestStatus',
     text: 'What is the CP Test status?',
     icon: <PieChartOutlined aria-hidden />,
   },
@@ -85,7 +92,7 @@ const ChatComposer: React.FC<ChatComposerProps> = ({
   const {
     attachments,
     error: attachmentError,
-    uploadPercent,
+    uploadProgress,
     isMutating: isMutatingFiles,
     addFiles,
     removeFile,
@@ -107,18 +114,18 @@ const ChatComposer: React.FC<ChatComposerProps> = ({
 
   // Attachments do not travel with the message: they already live on the session
   // (uploaded on attach), and the mock snapshots them onto the sent message.
-  function send(question: string) {
+  const send = (question: string) => {
     onSend({ question });
-  }
+  };
 
-  function submitDraft() {
+  const submitDraft = () => {
     const text = draft.trim();
     if (!text || isBlocked) {
       return;
     }
     send(text);
     setDraft('');
-  }
+  };
 
   return (
     <div>
@@ -127,17 +134,22 @@ const ChatComposer: React.FC<ChatComposerProps> = ({
           {t.chat.filesExpired(retentionDays)}
         </p>
       )}
+      {isMutatingFiles && (
+        <p role="status" className={styles.uploadingNotice}>
+          {t.chat.uploadingWait}
+        </p>
+      )}
       <div className={styles.suggestRow}>
         {SUGGESTED_PROMPTS.map((prompt) => (
           <button
-            key={prompt.label}
+            key={prompt.labelKey}
             type="button"
             className={styles.suggestChip}
             disabled={isBlocked}
             onClick={() => send(prompt.text)}
           >
             {prompt.icon}
-            {prompt.label}
+            {t.composer[prompt.labelKey]}
           </button>
         ))}
       </div>
@@ -158,14 +170,14 @@ const ChatComposer: React.FC<ChatComposerProps> = ({
               items: [
                 {
                   key: 'attach',
-                  label: 'Attach files',
+                  label: t.composer.attachFiles,
                   icon: <FileAddOutlined aria-hidden />,
                 },
                 {
                   key: 'connectors',
                   label: (
                     <span className={styles.menuItemLabel}>
-                      Connectors
+                      {t.composer.connectors}
                       {connectedConnectorCount > 0 && (
                         <span className={styles.menuItemBadge} aria-hidden="true">
                           {connectedConnectorCount}
@@ -193,13 +205,17 @@ const ChatComposer: React.FC<ChatComposerProps> = ({
               <PlusOutlined aria-hidden />
             </button>
           </Dropdown>
+          {/* Deliberately NOT disabled while files are mutating: a gigabyte CSV
+              uploads for minutes, and locking the box locks the user out of writing
+              the question they are waiting to send. `submitDraft` and the send
+              button still hold the line — only sending waits for the file set. */}
           <Input.TextArea
             className={styles.messageInput}
             variant="borderless"
             aria-label="Message"
-            placeholder="Ask eRD AI, or attach .csv / .xlsx…"
+            placeholder={t.composer.placeholder}
             value={draft}
-            disabled={isBlocked}
+            disabled={disabled || hasExpiredFiles}
             autoSize={{ minRows: 1, maxRows: 5 }}
             onChange={(e) => setDraft(e.target.value)}
             onCompositionStart={() => {
@@ -249,7 +265,7 @@ const ChatComposer: React.FC<ChatComposerProps> = ({
         onClose={() => setFileModalOpen(false)}
         attachments={attachments}
         error={attachmentError}
-        uploadPercent={uploadPercent}
+        uploadProgress={uploadProgress}
         onAddFiles={(files) => void addFiles(files)}
         onRemoveFile={(fileId) => void removeFile(fileId)}
       />

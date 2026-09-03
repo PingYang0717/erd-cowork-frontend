@@ -43,6 +43,7 @@ export const en: Translations = {
     publishedToast: 'Published — added to Artifacts on the left.',
     goToArtifacts: 'Go to Artifacts',
     switchVersion: 'Switch Artifact',
+    shareNotOwner: 'Only the owner can share this Artifact',
     versionMenuTitle: (count: number) =>
       `${count} Artifact${count === 1 ? '' : 's'} from this conversation · switch before publishing`,
   },
@@ -55,6 +56,23 @@ export const en: Translations = {
     publish: 'Publish',
   },
 
+  session: {
+    newChat: 'New chat',
+    schedule: 'Schedule',
+    artifacts: 'Artifacts',
+    pinned: 'Pinned',
+    recents: 'Recents',
+    noRecents: 'No recent chats.',
+    chatHistory: 'Chat history',
+    pin: 'Pin',
+    unpin: 'Unpin',
+    rename: 'Rename',
+    delete: 'Delete',
+    deleteConfirmTitle: 'Delete this conversation?',
+    deleteConfirmBody: (title: string) => `"${title}" will be removed from your list.`,
+    deleteConfirm: 'Delete',
+  },
+
   gallery: {
     sortLabel: 'Sort:',
     sortPinned: 'Pinned first',
@@ -64,6 +82,12 @@ export const en: Translations = {
     emptyYours: 'You have not produced any Artifacts yet.',
     emptyShared: 'Nothing has been shared with you yet.',
     emptyPinned: 'You have not pinned any Artifacts yet.',
+    linkCopied: 'Link copied',
+    linkCopyFailed: 'Could not copy the link — open Share to copy it by hand.',
+    removeConfirmTitle: 'Remove from Artifacts?',
+    removeConfirmBody: (title: string) =>
+      `"${title}" will be unpublished and every recipient will lose access; it stays in the conversation that produced it.`,
+    removeConfirm: 'Delete',
   },
 
   chat: {
@@ -77,7 +101,7 @@ export const en: Translations = {
     htmlLabel: 'HTML',
     loading: 'Loading…',
     noSource: 'No source available for this version (could not load)',
-    truncatedRows: (n: number) => `(first ${n} rows)`,
+    truncated: '(results truncated)',
     manageConnections: 'Manage connections',
     selectedCount: (n: number) => `${n} selected`,
     filesExpired: (days: number) =>
@@ -85,6 +109,11 @@ export const en: Translations = {
     questionTitle: 'Analysis conditions',
     questionSubmit: 'Send',
     questionDisabledHint: 'Answer the questions above first',
+    uploadingWait: 'Files are still being processed — sending resumes once they finish',
+    thinking: 'Thinking',
+    workedThrough: (n: number) => `Worked through ${n} step${n === 1 ? '' : 's'}`,
+    shownRight: 'shown right →',
+    showRight: 'show right →',
   },
 
   repair: {
@@ -107,6 +136,92 @@ export const en: Translations = {
     onlySpreadsheets: 'Only .csv / .xlsx are supported',
     tooManyFiles: (count: number) => `Up to ${count} files`,
     tooLarge: (total: string) => `${total} in total`,
+    duplicateName: 'A file with the same name is already attached',
+    processing: 'Server processing…',
+  },
+
+  time: {
+    justNow: 'Just now',
+    minutesAgo: (n: number) => `${n}m ago`,
+    hoursAgo: (n: number) => `${n}h ago`,
+    yesterday: 'Yesterday',
+    weekday: (day: number) => ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][day],
+    monthDay: (month: number, date: number) =>
+      `${['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][month]} ${date}`,
+    monthDayYear: (month: number, date: number, year: number) =>
+      `${['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][month]} ${date}, ${year}`,
+  },
+
+  connectors: {
+    title: 'Connectors',
+    subtitle: (connected: number, total: number) =>
+      `Connect eRD AI to your RD data sources · ${connected} of ${total} connected.`,
+    selectedSources: 'Selected sources',
+    clearAll: 'Clear all',
+    noneSelected: 'No sources selected yet — connect one below.',
+    searchPlaceholder: 'Search data sources…',
+    filterAll: 'All',
+    filterConnected: 'Connected',
+    filterNotConnected: 'Not Connected',
+    showing: (shown: number, total: number) => `Showing ${shown} of ${total}`,
+    submit: 'Submit',
+    add: 'Add',
+    addPlaceholder: 'Add a custom data source (e.g. My Team DB)…',
+    noMatch: (keyword: string) => `No data sources match "${keyword}".`,
+    statusConnecting: 'Connecting…',
+    statusConnected: 'Connected',
+    statusExpired: 'Token expired',
+    statusNoAccess: 'No access',
+    statusNotConnected: 'Not connected',
+  },
+
+  fileModal: {
+    title: 'Attach files',
+    subtitle: 'Drop or choose files to attach to this analysis.',
+    attached: 'Attached',
+    noFiles: 'No files yet',
+    summary: (count: number, max: number, size: string) => `${count} / ${max} files · ${size}`,
+    done: 'Done',
+  },
+
+  composer: {
+    inlineDashboard: 'Inline dashboard',
+    spcAnalysis: 'SPC analysis',
+    generateSlides: 'Generate slides',
+    dailyMonitor: 'Daily monitor (A14)',
+    cpTestStatus: 'CP Test status',
+    attachFiles: 'Attach files',
+    connectors: 'Connectors',
+    placeholder: 'Ask eRD AI, or attach .csv / .xlsx…',
+  },
+
+  studio: {
+    emptyNoSessionHeading: 'Select or start a session',
+    emptyNoSessionSubtitle: 'Start or select a session from the left to begin an analysis.',
+    emptyStartHeading: 'Start an analysis',
+    emptyStartSubtitle: 'Try "Daily monitor (A14)" below, or ask for an SPC analysis on Vt.',
+    artifactEmptyHeading: 'No artifact yet',
+    artifactEmptySubtitle: 'Ask eRD AI to run an analysis — the Artifact renders here.',
+    back: 'Back',
+    home: 'Home',
+    sharedToMe: 'Shared to me',
+    artifactNotFound: 'Artifact not found.',
+  },
+
+  galleryHeader: {
+    title: 'Artifacts',
+    subtitle: 'Every Artifact eRD Cowork has produced — click to open it.',
+    filterAll: 'All',
+    filterYours: 'Yours',
+    filterShared: 'Shared to me',
+    filterPinned: 'Pinned',
+    sharedBadge: 'Shared',
+    sharedToMe: 'Shared to me',
+    copyLink: 'Copy link',
+    share: 'Share',
+    delete: 'Delete',
+    pin: 'Pin',
+    unpin: 'Unpin',
   },
 
   errors: {

@@ -16,19 +16,19 @@ const SUGGESTED_PROMPTS = [
   'CP Test status',
 ];
 
-async function selectASession(user: ReturnType<typeof userEvent.setup>) {
+const selectASession = async (user: ReturnType<typeof userEvent.setup>) => {
   await user.click(await screen.findByRole('button', { name: 'New chat' }));
   await screen.findByRole('button', { name: 'New analysis' });
   await waitForComposer();
-}
+};
 
 /** Clicks a suggested prompt and waits for the whole scripted run to land in the thread.
  *  The mock backend streams the run and closes; there is no timer to advance. */
-async function runScenario(user: ReturnType<typeof userEvent.setup>, label: string) {
+const runScenario = async (user: ReturnType<typeof userEvent.setup>, label: string) => {
   await user.click(screen.getByRole('button', { name: label }));
   await answerAnalysisConditions(user);
   return screen.findByRole('button', { name: /^Worked through \d+ steps$/ });
-}
+};
 
 describe('Chat composer', () => {
   beforeEach(() => {
@@ -112,11 +112,15 @@ describe('Chat composer', () => {
     expect(textbox).toHaveValue('統計製程');
   });
 
-  it('shows the data-source chip alongside the theme toggle in the thread header', () => {
+  /** The mockup hard-coded "Inline DB · N5 line" here — a claim about what the
+   *  conversation reads that the Connectors panel could flatly contradict. The header
+   *  now carries identity and toggles only; what a session draws on is shown where it
+   *  is decided. */
+  it('keeps the thread header to identity and toggles — no hardcoded data-source claim', () => {
     renderStudio();
 
     const header = screen.getByRole('banner', { name: 'Thread header' });
-    expect(within(header).getByText('Inline DB · N5 line')).toBeInTheDocument();
+    expect(within(header).queryByText(/Inline DB/)).not.toBeInTheDocument();
     expect(
       within(header).getByRole('button', { name: /Switch to (dark|light) mode/ }),
     ).toBeInTheDocument();
@@ -159,7 +163,10 @@ describe('Scenario matching', () => {
 
       await runScenario(user, label);
 
-      expect(screen.getByText(replyMatch)).toBeInTheDocument();
+      // Scoped to the thread: the sr-only announcement region (A-1) holds the same text.
+      expect(
+        within(screen.getByRole('log', { name: 'Messages' })).getByText(replyMatch),
+      ).toBeInTheDocument();
       const chip = screen.getByText('shown right →').closest('div') as HTMLElement;
       expect(within(chip).getByText(artifactName)).toBeInTheDocument();
       expect(screen.queryByRole('status', { name: 'eRD AI is working' })).not.toBeInTheDocument();
@@ -254,7 +261,10 @@ describe('Scenario matching', () => {
       await screen.findByRole('button', { name: /^Worked through \d+ steps$/ });
 
       expect(screen.getByText(text)).toBeInTheDocument();
-      expect(screen.getByText(replyMatch)).toBeInTheDocument();
+      // Scoped to the thread: the sr-only announcement region (A-1) holds the same text.
+      expect(
+        within(screen.getByRole('log', { name: 'Messages' })).getByText(replyMatch),
+      ).toBeInTheDocument();
       const chip = screen.getByText('shown right →').closest('div') as HTMLElement;
       expect(within(chip).getByText(artifactName)).toBeInTheDocument();
       expect(screen.queryByRole('status', { name: 'eRD AI is working' })).not.toBeInTheDocument();

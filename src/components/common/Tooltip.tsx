@@ -16,9 +16,14 @@ interface TooltipProps {
 }
 
 /**
- * The mockup's `.erd-tip` tooltip: dark inverted surface that fades in after
- * a 0.35s hover/focus delay. Wraps its trigger in an inline container that
- * owns the hover/focus tracking, so the trigger element needs no extra props.
+ * The mockup's `.erd-tip` tooltip: dark inverted surface that fades in after a 0.35s
+ * hover delay — hover only: focus shows it immediately, because a keyboard user has
+ * already committed to the control and the delay is a pointer affordance (A-5).
+ *
+ * Wraps its trigger in an inline container that owns the hover/focus tracking. When
+ * the child is a single element, the open tip is wired to it with `aria-describedby`
+ * — the `tipId` existed for exactly this and was connected to nothing, so the content
+ * was never announced.
  */
 const Tooltip: React.FC<TooltipProps> = ({ content, children, wrapperClassName }) => {
   const [open, setOpen] = useState(false);
@@ -29,32 +34,46 @@ const Tooltip: React.FC<TooltipProps> = ({ content, children, wrapperClassName }
 
   useEffect(() => () => clearTimeout(timerRef.current), []);
 
-  const show = () => {
+  const reveal = () => {
+    // Flip below when there is no room above. Every toolbar in this app sits at the
+    // top edge of a pane with `overflow: hidden`, so a tip that always opened upward
+    // would be sliced off by the pane rather than shown.
+    const top = wrapperRef.current?.getBoundingClientRect().top ?? SPACE_NEEDED_ABOVE;
+    setBelow(top < SPACE_NEEDED_ABOVE);
+    setOpen(true);
+  };
+  const showDelayed = () => {
     clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(() => {
-      // Flip below when there is no room above. Every toolbar in this app sits at the
-      // top edge of a pane with `overflow: hidden`, so a tip that always opened upward
-      // would be sliced off by the pane rather than shown.
-      const top = wrapperRef.current?.getBoundingClientRect().top ?? SPACE_NEEDED_ABOVE;
-      setBelow(top < SPACE_NEEDED_ABOVE);
-      setOpen(true);
-    }, SHOW_DELAY_MS);
+    timerRef.current = setTimeout(reveal, SHOW_DELAY_MS);
+  };
+  const showNow = () => {
+    clearTimeout(timerRef.current);
+    reveal();
   };
   const hide = () => {
     clearTimeout(timerRef.current);
     setOpen(false);
   };
 
+  // The describedby has to sit on the trigger itself — readers resolve it from the
+  // focused element, not from an ancestor span. Only a single element child can carry
+  // it; anything else keeps the old behaviour (visible, unannounced).
+  const describedChild = React.isValidElement(children)
+    ? React.cloneElement(children as React.ReactElement<{ 'aria-describedby'?: string }>, {
+        'aria-describedby': open ? tipId : undefined,
+      })
+    : children;
+
   return (
     <span
       ref={wrapperRef}
       className={wrapperClassName ? `${styles.wrapper} ${wrapperClassName}` : styles.wrapper}
-      onMouseEnter={show}
+      onMouseEnter={showDelayed}
       onMouseLeave={hide}
-      onFocus={show}
+      onFocus={showNow}
       onBlur={hide}
     >
-      {children}
+      {describedChild}
       {open && (
         <span
           role="tooltip"

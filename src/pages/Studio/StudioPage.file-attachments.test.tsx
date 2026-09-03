@@ -14,27 +14,27 @@ import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
 import { useStudioLayoutStore } from '@/stores/useStudioLayoutStore';
 import { renderStudio, waitForComposer } from '@/test/renderStudio';
 
-async function selectASessionAndOpenFileModal(user: ReturnType<typeof userEvent.setup>) {
+const selectASessionAndOpenFileModal = async (user: ReturnType<typeof userEvent.setup>) => {
   await user.click(await screen.findByRole('button', { name: 'New chat' }));
   await screen.findByRole('button', { name: 'New analysis' });
   await waitForComposer();
   await user.click(screen.getByRole('button', { name: 'Attach files or connect a data source' }));
   await user.click(screen.getByRole('menuitem', { name: 'Attach files' }));
   return screen.findByRole('dialog', { name: 'Attach files' });
-}
+};
 
 // The composer's own attachment chips render outside the (portal-rendered)
 // modal, so scoping to this list disambiguates them from the modal's copy
 // of the same chips without needing the modal to be closed first.
-function composerAttachments() {
+const composerAttachments = () => {
   return screen.getByRole('list', { name: 'Attached files' });
-}
+};
 
 // Real bytes, not a faked size property: uploads now travel as multipart form
 // data through the mock endpoint, which measures the actual part bytes.
-function fileOfSize(name: string, sizeBytes: number): File {
+const fileOfSize = (name: string, sizeBytes: number): File => {
   return new File([new Uint8Array(sizeBytes)], name, { type: 'text/csv' });
-}
+};
 
 describe('File attachments', () => {
   beforeEach(() => {
@@ -75,7 +75,7 @@ describe('File attachments', () => {
 
     expect(screen.getByRole('progressbar', { name: 'Uploading' })).toBeInTheDocument();
     expect(screen.getByLabelText('Choose files')).toBeDisabled();
-    expect(screen.getByRole('button', { name: /點擊選擇/ })).toHaveAttribute(
+    expect(screen.getByRole('button', { name: /Click to choose/ })).toHaveAttribute(
       'aria-disabled',
       'true',
     );
@@ -83,7 +83,7 @@ describe('File attachments', () => {
     await waitForElementToBeRemoved(() => screen.queryByRole('progressbar', { name: 'Uploading' }));
 
     expect(screen.getByLabelText('Choose files')).toBeEnabled();
-    expect(screen.getByRole('button', { name: /點擊選擇/ })).not.toHaveAttribute(
+    expect(screen.getByRole('button', { name: /Click to choose/ })).not.toHaveAttribute(
       'aria-disabled',
       'true',
     );
@@ -97,9 +97,9 @@ describe('File attachments', () => {
   });
 
   /** Removing a file is a write to the same set the next question would be answered
-   *  against. Until it lands, the composer is shut: a message sent in that window
+   *  against. Until it lands, SENDING is shut — typing is not: a message sent in that window
    *  describes a set of files that is already changing under it. */
-  it('shuts the composer while a file is being removed, and opens it again after', async () => {
+  it('blocks sending — but not typing — while a file is being removed', async () => {
     const user = userEvent.setup();
     let releaseDelete: (() => void) | undefined;
     server.use(
@@ -125,11 +125,18 @@ describe('File attachments', () => {
     await user.click(
       within(composerAttachments()).getByRole('button', { name: /^Remove lots\.csv/ }),
     );
-    await waitFor(() => expect(composer).toBeDisabled());
-    expect(screen.getByRole('button', { name: 'Send message' })).toBeDisabled();
+    // Typing stays open — a gigabyte upload locks the box for minutes otherwise.
+    // Only SENDING waits for the file set to settle, and the notice says why.
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Send message' })).toBeDisabled(),
+    );
+    expect(composer).toBeEnabled();
+    expect(
+      screen.getByText('Files are still being processed — sending resumes once they finish'),
+    ).toBeInTheDocument();
 
     releaseDelete?.();
-    await waitFor(() => expect(composer).toBeEnabled());
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Send message' })).toBeEnabled());
   });
 
   it('attaches a file via click-to-browse and shows it as a chip in the composer', async () => {
@@ -138,8 +145,8 @@ describe('File attachments', () => {
     const dialog = await selectASessionAndOpenFileModal(user);
 
     // The dropzone speaks the mockup's Chinese copy.
-    expect(within(dialog).getByText('點擊選擇')).toBeInTheDocument();
-    expect(within(dialog).getByText('最多 5 個檔案 · 總計上限 5 GB')).toBeInTheDocument();
+    expect(within(dialog).getByText('Click to choose')).toBeInTheDocument();
+    expect(within(dialog).getByText('Up to 5 files · 5 GB in total')).toBeInTheDocument();
 
     const input = screen.getByLabelText('Choose files');
     await user.upload(input, fileOfSize('lot-genealogy.csv', 1024));
@@ -159,7 +166,9 @@ describe('File attachments', () => {
 
     await user.upload(input, fileOfSize('notes.pdf', 1024));
 
-    expect(await within(dialog).findByRole('alert')).toHaveTextContent('僅支援 .csv / .xlsx');
+    expect(await within(dialog).findByRole('alert')).toHaveTextContent(
+      'Only .csv / .xlsx are supported',
+    );
     expect(within(dialog).queryByText('notes.pdf')).not.toBeInTheDocument();
 
     // Supported types still go through afterwards.
@@ -176,7 +185,7 @@ describe('File attachments', () => {
     const files = Array.from({ length: 6 }, (_, i) => fileOfSize(`file-${i}.csv`, 1024));
     await user.upload(input, files);
 
-    expect(await within(dialog).findByRole('alert')).toHaveTextContent('最多 5 個檔案');
+    expect(await within(dialog).findByRole('alert')).toHaveTextContent('Up to 5 files');
     expect(within(dialog).getAllByRole('button', { name: /^Remove file-/ })).toHaveLength(5);
     expect(within(dialog).queryByText('file-5.csv')).not.toBeInTheDocument();
   });

@@ -50,7 +50,7 @@ const targetKey = (target: { type: string; id: string }) => `${target.type}:${ta
 
 /** A stored share as the read endpoint returns it: the same shape the directory search
  *  uses, so a recipient already on the list reads with its name. */
-function sharesOf(artifactId: string): DirectoryEntry[] {
+const sharesOf = (artifactId: string): DirectoryEntry[] => {
   return shares
     .read()
     .filter((share) => share.artifactId === artifactId)
@@ -59,7 +59,7 @@ function sharesOf(artifactId: string): DirectoryEntry[] {
         ? { type: 'EMPLOYEE' as const, employeeNt: id, employeeName: id, employeeOrgName: '' }
         : { type: 'ORG' as const, orgId: id, orgName: id, orgLevel: type },
     );
-}
+};
 
 export const artifacts = createPersistedResource<StoredArtifact>('erd-cowork:artifacts:v6', [
   {
@@ -114,7 +114,7 @@ export const artifacts = createPersistedResource<StoredArtifact>('erd-cowork:art
   },
 ]);
 
-function toArtifactDto(stored: StoredArtifact): Artifact {
+const toArtifactDto = (stored: StoredArtifact): Artifact => {
   const isOwn = stored.ownerId === currentUser.id;
   return {
     id: stored.id,
@@ -133,11 +133,11 @@ function toArtifactDto(stored: StoredArtifact): Artifact {
     isShared: stored.isShared,
     hasPersonalCopy: false,
   };
-}
-function updateArtifact(
+};
+const updateArtifact = (
   id: string | readonly string[] | undefined,
   change: Partial<StoredArtifact>,
-) {
+) => {
   const all = artifacts.read();
   const existing = all.find((artifact) => artifact.id === id);
   if (!existing) {
@@ -146,7 +146,7 @@ function updateArtifact(
   const updated: StoredArtifact = { ...existing, ...change };
   artifacts.write(all.map((artifact) => (artifact.id === id ? updated : artifact)));
   return HttpResponse.json(toArtifactDto(updated));
-}
+};
 
 const setPublished = (id: string | readonly string[] | undefined, published: boolean) =>
   updateArtifact(id, { publishedAt: published ? new Date().toISOString() : null });
@@ -154,13 +154,13 @@ const setPublished = (id: string | readonly string[] | undefined, published: boo
 /** Each artifact IS a version (deriveArtifactVersions); number it the way the client
  *  does — by its position among the session's artifact-bearing messages — so the
  *  rendered "· vN" matches the menu. */
-function artifactVersionNumber(artifact: { id: string; sessionId: string }): number {
+const artifactVersionNumber = (artifact: { id: string; sessionId: string }): number => {
   const artifactMessages = messages
     .read()
     .filter((m) => m.sessionId === artifact.sessionId && m.artifactId != null);
   const index = artifactMessages.findIndex((m) => m.artifactId === artifact.id);
   return index >= 0 ? index + 1 : 1;
-}
+};
 
 export const artifactHandlers = [
   http.get('/api/artifacts', () => {

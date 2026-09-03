@@ -42,6 +42,9 @@ const StudioLayout: React.FC = () => {
 
       <ResizeHandle
         label="Resize thread panel"
+        value={threadWidth}
+        min={THREAD_MIN_WIDTH}
+        max={THREAD_MAX_WIDTH}
         onDragStart={onDragStart}
         onDrag={onDrag}
         onDragEnd={onDragEnd}

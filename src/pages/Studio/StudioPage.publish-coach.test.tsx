@@ -8,11 +8,11 @@ import { useThemeStore } from '@/stores/useThemeStore';
 import { renderStudio, waitForComposer } from '@/test/renderStudio';
 import { answerAnalysisConditions, publishArtifactAs } from '@/test/studioRun';
 
-function artifactsNav() {
+const artifactsNav = () => {
   // Name starts with the label ("Artifacts" + badge count); the toast's
   // 前往 Artifacts button doesn't match the anchor.
   return screen.findByRole('button', { name: /^Artifacts/ });
-}
+};
 
 describe('Publish feedback: badge count, coach highlight, toast', () => {
   beforeEach(() => {
@@ -38,7 +38,7 @@ describe('Publish feedback: badge count, coach highlight, toast', () => {
     await answerAnalysisConditions(user);
 
     // The new artifact arrives unpublished once the steps animation finishes.
-    await screen.findByRole('button', { name: '發布 Artifact' }, { timeout: 5000 });
+    await screen.findByRole('button', { name: 'Publish Artifact' }, { timeout: 5000 });
     expect(within(await artifactsNav()).getByText('3')).toBeInTheDocument();
     expect(await artifactsNav()).not.toHaveAttribute('data-coach');
 
@@ -49,8 +49,8 @@ describe('Publish feedback: badge count, coach highlight, toast', () => {
     expect(await artifactsNav()).toHaveAttribute('data-coach', 'true');
 
     const toast = await screen.findByRole('status', { name: 'Artifact published' });
-    expect(within(toast).getByRole('button', { name: '前往 Artifacts' })).toBeInTheDocument();
-    expect(within(toast).getByRole('button', { name: '知道了' })).toBeInTheDocument();
+    expect(within(toast).getByRole('button', { name: 'Go to Artifacts' })).toBeInTheDocument();
+    expect(within(toast).getByRole('button', { name: 'Got it' })).toBeInTheDocument();
   });
 
   /** The coach points at the Artifacts entry; arriving there is what it was asking for,
@@ -67,7 +67,7 @@ describe('Publish feedback: badge count, coach highlight, toast', () => {
     await waitForComposer();
     await user.click(screen.getByRole('button', { name: 'SPC analysis' }));
     await answerAnalysisConditions(user);
-    await screen.findByRole('button', { name: '發布 Artifact' }, { timeout: 5000 });
+    await screen.findByRole('button', { name: 'Publish Artifact' }, { timeout: 5000 });
     await publishArtifactAs(user);
     expect(await artifactsNav()).toHaveAttribute('data-coach', 'true');
 
@@ -86,11 +86,11 @@ describe('Publish feedback: badge count, coach highlight, toast', () => {
     await waitForComposer();
     await user.click(screen.getByRole('button', { name: 'SPC analysis' }));
     await answerAnalysisConditions(user);
-    await screen.findByRole('button', { name: '發布 Artifact' }, { timeout: 5000 });
+    await screen.findByRole('button', { name: 'Publish Artifact' }, { timeout: 5000 });
     await publishArtifactAs(user);
 
     const toast = await screen.findByRole('status', { name: 'Artifact published' });
-    await user.click(within(toast).getByRole('button', { name: '知道了' }));
+    await user.click(within(toast).getByRole('button', { name: 'Got it' }));
     expect(screen.queryByRole('status', { name: 'Artifact published' })).not.toBeInTheDocument();
     expect(await artifactsNav()).not.toHaveAttribute('data-coach');
 
@@ -99,10 +99,10 @@ describe('Publish feedback: badge count, coach highlight, toast', () => {
       await screen.findByRole('textbox', { name: 'Message' }),
       'Regenerate the dashboard.{Enter}',
     );
-    await screen.findByRole('button', { name: '發布 Artifact' });
+    await screen.findByRole('button', { name: 'Publish Artifact' });
     await publishArtifactAs(user);
     const toast2 = await screen.findByRole('status', { name: 'Artifact published' });
-    await user.click(within(toast2).getByRole('button', { name: '前往 Artifacts' }));
+    await user.click(within(toast2).getByRole('button', { name: 'Go to Artifacts' }));
 
     expect(await screen.findByRole('heading', { name: 'Artifacts' })).toBeInTheDocument();
   });

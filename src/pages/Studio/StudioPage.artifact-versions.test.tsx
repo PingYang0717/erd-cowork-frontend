@@ -3,16 +3,16 @@ import userEvent from '@testing-library/user-event';
 import { http } from 'msw';
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { zhTW } from '@/i18n/zhTW';
+import { en } from '@/i18n/en';
 import { server } from '@/mocks/server';
 import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
 import { useStudioLayoutStore } from '@/stores/useStudioLayoutStore';
 import { useThemeStore } from '@/stores/useThemeStore';
 import { renderStudio } from '@/test/renderStudio';
 
-function artifactSrcdoc() {
+const artifactSrcdoc = () => {
   return (screen.getByTitle('Artifact preview') as HTMLIFrameElement).getAttribute('srcdoc');
-}
+};
 
 /** Versions are derived from the session's artifact-bearing messages (cowork master's
  *  model): every regenerate is a chat turn that yields a new artifact, and that
@@ -95,12 +95,15 @@ describe('Artifact version switcher', () => {
       await screen.findByRole('textbox', { name: 'Message' }),
       'Regenerate the dashboard.{Enter}',
     );
-    await screen.findByRole('button', { name: '發布 Artifact' });
+    await screen.findByRole('button', { name: 'Publish Artifact' });
 
     await user.click(screen.getByRole('button', { name: 'Switch Artifact' }));
 
     const menu = await screen.findByRole('menu');
-    expect(within(menu).getByText(zhTW.artifact.versionMenuTitle(2))).toBeInTheDocument();
+    // The header sits in the popup but OUTSIDE the menu role — a menu's children may
+    // only be items, and the title div used to be an illegal child (A-2).
+    expect(screen.getByText(en.artifact.versionMenuTitle(2))).toBeInTheDocument();
+    expect(within(menu).queryByText(en.artifact.versionMenuTitle(2))).not.toBeInTheDocument();
 
     // Newest first: the fresh output leads, the seeded one is last.
     const rows = within(menu).getAllByRole('menuitem');
@@ -116,5 +119,41 @@ describe('Artifact version switcher', () => {
     // The seeded output's timestamp (2026-08-20) renders in its row; the relative
     // format shows a weekday within a week of "now", the date beyond that.
     expect(within(seededRow).getByText(/^(Thu|Aug 20)$/)).toBeInTheDocument();
+  });
+
+  /** The menu-button keyboard contract (A-2): opening focuses the current item,
+   *  arrows move between items, Escape closes and puts focus back on the trigger —
+   *  in a three-pane layout, focus dropped to <body> is a position lost entirely. */
+  it('is keyboard-operable: focus moves in, arrows navigate, Escape restores the trigger', async () => {
+    const user = userEvent.setup();
+    renderStudio();
+
+    await user.click(await screen.findByRole('button', { name: 'SPC — Vt (gate CD)' }));
+    await screen.findByTitle('Artifact preview');
+    await user.type(
+      await screen.findByRole('textbox', { name: 'Message' }),
+      'Regenerate the dashboard.{Enter}',
+    );
+    await screen.findByRole('button', { name: 'Publish Artifact' });
+
+    const trigger = screen.getByRole('button', { name: 'Switch Artifact' });
+    await user.click(trigger);
+
+    // Focus lands on the current version, not the top of the list.
+    const rows = await screen.findAllByRole('menuitem');
+    expect(rows[0]).toHaveAttribute('aria-current', 'true');
+    expect(rows[0]).toHaveFocus();
+
+    await user.keyboard('{ArrowDown}');
+    expect(rows[1]).toHaveFocus();
+    await user.keyboard('{ArrowDown}');
+    // Wraps rather than falling off the end.
+    expect(rows[0]).toHaveFocus();
+    await user.keyboard('{ArrowUp}');
+    expect(rows[1]).toHaveFocus();
+
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+    expect(trigger).toHaveFocus();
   });
 });

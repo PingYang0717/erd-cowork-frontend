@@ -8,7 +8,7 @@ import type { Question, QuestionForm } from '@/types/api/agentEvent';
  *  per-option metadata (so a DC item cannot carry its spec limits). A backend that is to
  *  drive the full analysis-conditions forms has to send `QuestionForm` itself — that ask
  *  is on the backend feedback list. */
-export function liftQuestions(questions: Question[]): QuestionForm {
+export const liftQuestions = (questions: Question[]): QuestionForm => {
   const t = getTranslations().chat;
   return {
     formKey: 'backend-question',
@@ -24,4 +24,4 @@ export function liftQuestions(questions: Question[]): QuestionForm {
     disabledHint: t.questionDisabledHint,
     summaryLabel: t.questionTitle,
   };
-}
+};

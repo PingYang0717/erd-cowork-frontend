@@ -28,10 +28,10 @@ interface StoredMessage extends Message {
   sessionId: string;
 }
 
-export function toMessageDto(stored: StoredMessage): Message {
+export const toMessageDto = (stored: StoredMessage): Message => {
   const { sessionId: _sessionId, ...rest } = stored;
   return rest;
-}
+};
 
 export const messages = createPersistedResource<StoredMessage>('erd-cowork:messages:v2', [
   {
@@ -58,7 +58,7 @@ export const messages = createPersistedResource<StoredMessage>('erd-cowork:messa
  *  its own, which is how the two used to disagree: a source connected in the panel never
  *  appeared in the question, and the test that "covered" this asserted the absent one
  *  was absent. */
-function attachedConnectors(sessionId: string): Connector[] {
+const attachedConnectors = (sessionId: string): Connector[] => {
   const attached = new Set(
     sessionDataSources
       .read()
@@ -69,7 +69,7 @@ function attachedConnectors(sessionId: string): Connector[] {
     ...connector,
     status: 'connected' as const,
   }));
-}
+};
 
 // Session-level files per the backend contract (POST /sessions/{id}/files).
 
@@ -112,16 +112,16 @@ let tokenPaceMs = 22;
 /** Collapses the pacing for tests. Tests that need to observe an intermediate state
  *  drive their own stream (`src/test/agentStream.ts`); the rest only care about where a
  *  run ends up, and should not wait seconds to find out. */
-export function setStreamPace(stepMs: number, tokenMs: number): void {
+export const setStreamPace = (stepMs: number, tokenMs: number): void => {
   streamPaceMs = stepMs;
   tokenPaceMs = tokenMs;
-}
+};
 
-function pace(milliseconds: number): Promise<void> {
+const pace = (milliseconds: number): Promise<void> => {
   return new Promise((resolve) => setTimeout(resolve, milliseconds));
-}
+};
 
-function sseResponse(events: AgentEvent[]) {
+const sseResponse = (events: AgentEvent[]) => {
   const encoder = new TextEncoder();
   let cancelled = false;
 
@@ -158,15 +158,15 @@ function sseResponse(events: AgentEvent[]) {
   return new HttpResponse(body, {
     headers: { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache' },
   });
-}
+};
 
 /** Persists what the run produced, then replays it as an event stream. */
-function streamRun(
+const streamRun = (
   sessionId: string,
   scenarioKey: ScenarioKey,
   artifactKind: ArtifactKind,
   leadingSteps: StepItem[] = [],
-) {
+) => {
   const fixture = SCENARIO_FIXTURES[scenarioKey];
   const artifactName =
     artifactKind === 'slides' ? `${fixture.artifactName} (slides)` : fixture.artifactName;
@@ -215,7 +215,7 @@ function streamRun(
   events.push({ type: 'ANSWER', text: fixture.reply });
 
   return sseResponse(events);
-}
+};
 const dcItems = createPersistedResource<DcItem>('erd-cowork:dc-items', DC_ITEM_FIXTURES);
 
 export const messageHandlers = [

@@ -2,6 +2,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useReducer, useRef } from 'react';
 
 import { AgentStreamHttpError, type SendMessageArgs, streamAgentMessage } from '@/api/agentApi';
+import { isCanceled } from '@/api/apiError';
 import { getTranslations } from '@/i18n/useTranslations';
 import type { AgentEvent, QuestionForm, StepItem, TableResult } from '@/types/api/agentEvent';
 import { liftQuestions } from '@/utils/liftQuestions';
@@ -71,7 +72,7 @@ const initialState: AgentStreamState = {
 
 /** A step is identified by its `stepKey`: a later event for the same key is a status
  *  transition, not a new step, and must not move it in the list. */
-function upsertStep(steps: StepItem[], incoming: StepItem): StepItem[] {
+const upsertStep = (steps: StepItem[], incoming: StepItem): StepItem[] => {
   const existingIndex = steps.findIndex((step) => step.stepKey === incoming.stepKey);
 
   if (existingIndex === -1) {
@@ -79,9 +80,9 @@ function upsertStep(steps: StepItem[], incoming: StepItem): StepItem[] {
   }
 
   return steps.map((step, index) => (index === existingIndex ? incoming : step));
-}
+};
 
-function reducer(state: AgentStreamState, action: Action): AgentStreamState {
+const reducer = (state: AgentStreamState, action: Action): AgentStreamState => {
   switch (action.type) {
     case 'START':
       return { ...initialState, isStreaming: true, startedAt: action.startedAt };
@@ -177,17 +178,23 @@ function reducer(state: AgentStreamState, action: Action): AgentStreamState {
     default:
       return state;
   }
-}
+};
 
-export function useAgentStream(sessionId: string): {
+export const useAgentStream = (
+  sessionId: string,
+): {
   state: AgentStreamState;
   send(input: SendInput): Promise<void>;
   stop(): void;
   reset(): void;
-} {
+} => {
   const [state, dispatch] = useReducer(reducer, initialState);
   const queryClient = useQueryClient();
   const controllerRef = useRef<AbortController | null>(null);
+  // The two delayed refetches an aborted run schedules (below). Kept so unmount can
+  // clear them — without this they outlived the hook and fired invalidates against
+  // the global queryClient up to 1.6s after the thread was gone.
+  const abortRefetchTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   // True only while the async generator is still delivering events. `stop` reads it to
   // tell a real mid-stream interruption from a click that lands in the finishing window
   // (after the last event, while the history refetch runs before DONE) — where the
@@ -209,6 +216,9 @@ export function useAgentStream(sessionId: string): {
   useEffect(
     () => () => {
       controllerRef.current?.abort();
+      for (const timer of abortRefetchTimersRef.current) {
+        clearTimeout(timer);
+      }
     },
     [],
   );
@@ -236,14 +246,18 @@ export function useAgentStream(sessionId: string): {
         // and everything already streamed stays on screen. The backend persists an
         // aborted run asynchronously (doOnCancel), so refetch in two delayed stages
         // instead of racing it now.
-        if (error instanceof Error && error.name === 'AbortError') {
+        if (isCanceled(error)) {
           dispatch({ type: 'DONE', durationMs: Date.now() - startedAt });
-          setTimeout(() => {
-            void invalidateSessionData();
+          abortRefetchTimersRef.current.push(
             setTimeout(() => {
               void invalidateSessionData();
-            }, 800);
-          }, 800);
+              abortRefetchTimersRef.current.push(
+                setTimeout(() => {
+                  void invalidateSessionData();
+                }, 800),
+              );
+            }, 800),
+          );
           return;
         }
 
@@ -285,4 +299,4 @@ export function useAgentStream(sessionId: string): {
   }, []);
 
   return { state, send, stop, reset };
-}
+};
