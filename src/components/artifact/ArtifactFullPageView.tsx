@@ -10,8 +10,7 @@ import React, { Suspense, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import ErrorBoundary from '@/components/common/ErrorBoundary';
-import LanguageToggle from '@/components/common/LanguageToggle';
-import ThemeToggle from '@/components/common/ThemeToggle';
+import SettingsMenu from '@/components/common/SettingsMenu';
 import { useArtifactContent } from '@/hooks/useArtifactContent';
 import { useArtifacts } from '@/hooks/useArtifacts';
 import { useSessionDetail } from '@/hooks/useSessionDetail';
@@ -147,8 +146,7 @@ const ArtifactFullPageView: React.FC<ArtifactFullPageViewProps> = ({ artifactId 
             }
           }}
         />
-        <LanguageToggle />
-        <ThemeToggle />
+        <SettingsMenu variant="tile" />
       </div>
       <div className={styles.body}>
         {isError && <div className={styles.empty}>{t.studio.artifactNotFound}</div>}

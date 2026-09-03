@@ -37,12 +37,6 @@
 
 /* 兩顆偏好鈕(語言/主題)是一組:單一 flex item,才不會被 header 的
    space-between 拆散。 */
-.headerActions {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
 .dataSourceChip {
   margin-left: auto;
   margin-right: 10px;

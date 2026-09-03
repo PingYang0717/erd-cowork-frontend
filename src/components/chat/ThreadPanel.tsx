@@ -2,8 +2,6 @@ import { ThunderboltFilled } from '@ant-design/icons';
 import React, { type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 
 import DataBoundary from '@/components/common/DataBoundary';
-import LanguageToggle from '@/components/common/LanguageToggle';
-import ThemeToggle from '@/components/common/ThemeToggle';
 import { type SendInput, useAgentStream } from '@/hooks/useAgentStream';
 import { useArtifactRepair } from '@/hooks/useArtifactRepair';
 import { useApplyRememberedDataSources } from '@/hooks/useConnectorMutations';
@@ -32,13 +30,6 @@ const ThreadHeader: React.FC = () => {
           asserted a fact the Connectors panel could flatly contradict (attach WAT,
           drop Inline, and the chip still claimed Inline). What a conversation reads is
           the session's business, and it is already shown where it is decided. */}
-      {/* One group, one flex item: the header is space-between, and as siblings the
-          two toggles got spread apart — the language button floated to the middle of
-          the header on its own. They are a pair of preferences and sit as one. */}
-      <span className={styles.headerActions}>
-        <LanguageToggle />
-        <ThemeToggle />
-      </span>
     </header>
   );
 };
