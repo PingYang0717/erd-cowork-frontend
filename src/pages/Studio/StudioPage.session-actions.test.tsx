@@ -44,7 +44,11 @@ describe('Session row actions', () => {
   });
 
   /** A backend that answers with nothing readable still has to say something. */
-  it('falls back to a plain message when the failure carries none', async () => {
+  /** A backend that answers with nothing readable still has to say something — and that
+   *  something must not be "the endpoint is not built yet", which every message-less
+   *  failure used to be told. A 500 is a server error on an endpoint that plainly exists;
+   *  reported as unbuilt, the reader waits for something that is already there. */
+  it('names a server error as a failure, not as an unbuilt endpoint', async () => {
     const user = userEvent.setup();
     server.use(
       http.patch('/api/sessions/:id/soft-delete', () => new HttpResponse(null, { status: 500 })),
@@ -56,7 +60,8 @@ describe('Session row actions', () => {
     // The destructive step now sits behind a confirm — click through it.
     await user.click(await screen.findByRole('button', { name: 'Delete' }));
 
-    expect(await screen.findByText(en.errors.notReady)).toBeInTheDocument();
+    expect(await screen.findByText(en.errors.actionFailedWithStatus(500))).toBeInTheDocument();
+    expect(screen.queryByText(en.errors.notReady)).not.toBeInTheDocument();
     // The row stays: a delete that failed did not happen.
     expect(screen.getByRole('button', { name: 'Defect pareto — W12' })).toBeInTheDocument();
   });
