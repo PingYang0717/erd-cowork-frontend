@@ -48,7 +48,10 @@
   display: flex;
   flex-direction: column;
   gap: 14px;
-  min-width: 200px;
+  /* No minimum: the panel is as wide as the widest control in it, which is the language
+     Segmented. A floor of 200px left empty space on both sides of two short controls.
+     The rows still stretch to that width, so the two Segmenteds line up with each
+     other rather than each shrinking to its own text. */
 }
 
 .row {
