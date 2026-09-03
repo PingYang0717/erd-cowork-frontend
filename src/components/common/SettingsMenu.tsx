@@ -27,12 +27,12 @@ interface SettingsMenuProps {
 
 const SettingsMenu: React.FC<SettingsMenuProps> = ({ variant }) => {
   const t = useTranslations();
-  const [open, setOpen] = useState(false);
-  const triggerRef = useRef<HTMLButtonElement>(null);
   const language = useLanguageStore((state) => state.language);
   const setLanguage = useLanguageStore((state) => state.setLanguage);
   const isDarkMode = useThemeStore((state) => state.isDarkMode);
   const setDarkMode = useThemeStore((state) => state.setDarkMode);
+  const [open, setOpen] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement>(null);
 
   const handleLanguageChange = useCallback(
     (value: string | number) => setLanguage(value as Language),

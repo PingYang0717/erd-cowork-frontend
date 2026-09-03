@@ -47,8 +47,6 @@ type Action =
   | { type: 'DONE'; durationMs: number };
 
 const NETWORK_ERROR_CODE = 'NETWORK_ERROR';
-// English to match every other string on this surface; the mockup's Chinese copy is
-// confined to the clarification forms.
 const initialState: AgentStreamState = {
   isStreaming: false,
   stopped: false,

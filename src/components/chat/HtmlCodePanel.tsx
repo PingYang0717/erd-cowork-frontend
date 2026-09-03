@@ -1,7 +1,7 @@
 import { CodeOutlined, DownOutlined, UpOutlined } from '@ant-design/icons';
 import React, { useEffect, useRef, useState } from 'react';
 
-import { isCanceled, isNotFoundError } from '@/api/apiError';
+import { isCanceled, isNotFound } from '@/api/apiError';
 import { getArtifactRawHtml } from '@/api/artifactApi';
 import { useTranslations } from '@/i18n/useTranslations';
 
@@ -60,7 +60,7 @@ const HtmlCodePanel: React.FC<HtmlCodePanelProps> = ({ code, artifactId, autoScr
         if (isCanceled(error)) {
           return;
         }
-        setOutcome({ artifactId, result: { status: 'error', missing: isNotFoundError(error) } });
+        setOutcome({ artifactId, result: { status: 'error', missing: isNotFound(error) } });
       });
     return () => controller.abort();
   }, [isExpanded, hasLiveCode, artifactId, resolved]);

@@ -9,7 +9,7 @@ import {
 import React, { useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
-import { isNotFoundError } from '@/api/apiError';
+import { isNotFound } from '@/api/apiError';
 import SettingsMenu from '@/components/common/SettingsMenu';
 import { useArtifactContent } from '@/hooks/useArtifactContent';
 import { useArtifacts } from '@/hooks/useArtifacts';
@@ -145,7 +145,7 @@ const ArtifactFullPageView: React.FC<ArtifactFullPageViewProps> = ({ artifactId 
             claim they act on by not looking for it again. */}
         {isError && (
           <div className={styles.empty}>
-            {isNotFoundError(error) ? t.studio.artifactNotFound : t.artifact.loadFailed}
+            {isNotFound(error) ? t.studio.artifactNotFound : t.artifact.loadFailed}
           </div>
         )}
         {data && displayedArtifactId && (
@@ -167,8 +167,6 @@ const ArtifactFullPageView: React.FC<ArtifactFullPageViewProps> = ({ artifactId 
   );
 };
 
-/** Loads the artifact's session to derive its version list — its own component so the
- *  session query only runs when there is an owned artifact to derive from. */
 interface ArtifactVersionsProps {
   artifact: Artifact;
   onSelect: (artifactId: string) => void;
@@ -188,6 +186,7 @@ interface ArtifactVersionsProps {
  *  they arrive into.
  */
 const ArtifactVersions: React.FC<ArtifactVersionsProps> = ({ artifact, onSelect }) => {
+  const t = useTranslations();
   const versions = useMemo<ArtifactVersion[]>(
     () => [
       {
@@ -201,7 +200,19 @@ const ArtifactVersions: React.FC<ArtifactVersionsProps> = ({ artifact, onSelect 
     [artifact],
   );
 
-  return <VersionSwitcher versions={versions} activeVersion={versions[0]} onSelect={onSelect} />;
+  return (
+    <VersionSwitcher
+      versions={versions}
+      activeVersion={versions[0]}
+      onSelect={onSelect}
+      // This Artifact's own versions, not the session's outputs. No ordinal: the number
+      // on hand counts outputs in the session, and under this heading it would be read
+      // as "version N of this Artifact" — a different thing, and not yet a real one
+      // (artifact-model-decisions Q6).
+      heading={t.artifact.ownVersionsTitle}
+      showOrdinal={false}
+    />
+  );
 };
 
 export default ArtifactFullPageView;

@@ -97,7 +97,6 @@ const FileAttachmentModal: React.FC<FileAttachmentModalProps> = ({
   // Removal counts too, not only upload: it used to gate on the upload alone, so a
   // removal in flight left every surface open — including a second click on the same
   // Remove button, which fired the delete twice.
-  const isUploading = isMutating;
 
   return (
     <Modal open={open} onCancel={onClose} title={t.fileModal.title} footer={null} destroyOnHidden>
@@ -110,7 +109,7 @@ const FileAttachmentModal: React.FC<FileAttachmentModalProps> = ({
         accept={ACCEPT_ATTRIBUTE}
         className={styles.hiddenInput}
         aria-label="Choose files"
-        disabled={isUploading}
+        disabled={isMutating}
         onChange={(e) => {
           if (e.target.files) {
             onAddFiles(e.target.files);
@@ -123,23 +122,23 @@ const FileAttachmentModal: React.FC<FileAttachmentModalProps> = ({
           removed from under one, lands on a request already describing a different set. */}
       <div
         role="button"
-        tabIndex={isUploading ? -1 : 0}
-        aria-disabled={isUploading || undefined}
-        className={isUploading ? `${styles.dropzone} ${styles.dropzoneBusy}` : styles.dropzone}
+        tabIndex={isMutating ? -1 : 0}
+        aria-disabled={isMutating || undefined}
+        className={isMutating ? `${styles.dropzone} ${styles.dropzoneBusy}` : styles.dropzone}
         onClick={() => {
-          if (!isUploading) {
+          if (!isMutating) {
             inputRef.current?.click();
           }
         }}
         onKeyDown={(e) => {
-          if (!isUploading && (e.key === 'Enter' || e.key === ' ')) {
+          if (!isMutating && (e.key === 'Enter' || e.key === ' ')) {
             inputRef.current?.click();
           }
         }}
         onDragOver={(e) => e.preventDefault()}
         onDrop={(e) => {
           e.preventDefault();
-          if (!isUploading && e.dataTransfer.files.length) {
+          if (!isMutating && e.dataTransfer.files.length) {
             onAddFiles(e.dataTransfer.files);
           }
         }}
@@ -193,7 +192,7 @@ const FileAttachmentModal: React.FC<FileAttachmentModalProps> = ({
               <li key={upload.id}>
                 <FileRow
                   upload={upload}
-                  disabled={isUploading}
+                  disabled={isMutating}
                   onRemove={() => onRemoveFile(upload.id)}
                 />
               </li>

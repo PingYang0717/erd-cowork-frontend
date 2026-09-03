@@ -68,15 +68,13 @@ const StudioShell: React.FC = () => {
             a boundary here a failing sessions fetch had nothing above it to catch:
             the whole page went blank. */}
         <div className={styles.railContent}>
-          {isSessionRailCollapsed ? (
-            <DataBoundary label="Sessions">
+          <DataBoundary label="Sessions">
+            {isSessionRailCollapsed ? (
               <CollapsedSessionRail onExpand={toggleSessionRailCollapsed} />
-            </DataBoundary>
-          ) : (
-            <DataBoundary label="Sessions">
+            ) : (
               <ExpandedSessionRail onCollapse={toggleSessionRailCollapsed} />
-            </DataBoundary>
-          )}
+            )}
+          </DataBoundary>
         </div>
         {/* OUTSIDE the boundary, deliberately: settings is where the language lives,
             and a reader facing a failed pane in a language they cannot read needs
