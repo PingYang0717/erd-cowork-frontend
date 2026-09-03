@@ -5,6 +5,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 
 import StudioShell from '@/components/layouts/StudioShell';
+import { en } from '@/i18n/en';
 import { server } from '@/mocks/server';
 import ArtifactsGalleryPage from '@/pages/ArtifactsGallery/ArtifactsGalleryPage';
 import StudioPage from '@/pages/Studio/StudioPage';
@@ -54,6 +55,16 @@ describe('Artifact full-page view', () => {
     const iframe = (await screen.findByTitle('Artifact preview')) as HTMLIFrameElement;
     expect(iframe.getAttribute('sandbox')).toBe('allow-scripts');
     expect(iframe.getAttribute('srcdoc')).toContain('SPC analysis — Vt (gate CD)');
+  });
+
+  /** Only a 404 means gone. A 500 says nothing about whether the Artifact exists, and
+   *  a reader told it was deleted stops looking for something that is still there. */
+  it('says the load failed, not that the Artifact is gone, when the server errors', async () => {
+    server.use(http.get('/api/artifacts/:id', () => new HttpResponse(null, { status: 500 })));
+    renderArtifactPageAt('/cowork/artifact/artifact-1');
+
+    expect(await screen.findByText(en.artifact.loadFailed)).toBeInTheDocument();
+    expect(screen.queryByText(en.studio.artifactNotFound)).not.toBeInTheDocument();
   });
 
   it('shows a not-found message when the Artifact id does not exist', async () => {

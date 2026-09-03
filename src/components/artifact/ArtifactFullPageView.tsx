@@ -16,6 +16,7 @@ import { useTranslations } from '@/i18n/useTranslations';
 import { useActiveRunStore } from '@/stores/useActiveRunStore';
 import type { Artifact, ArtifactVersion } from '@/types/api';
 import { artifactHref } from '@/utils/artifactUrl';
+import { isNotFoundError } from '@/utils/describeLoadError';
 
 import ArtifactFrame from './ArtifactFrame';
 import styles from './ArtifactFullPageView.module.css';
@@ -56,7 +57,7 @@ const ArtifactFullPageView: React.FC<ArtifactFullPageViewProps> = ({ artifactId 
   // the switcher can jump between sibling artifacts (each version IS an artifact).
   const displayedArtifactId = selectedArtifactId ?? artifactId;
   const displayedArtifact = artifacts?.find((a) => a.id === displayedArtifactId);
-  const { data, isError } = useArtifactContent(displayedArtifactId, reloadNonce);
+  const { data, isError, error } = useArtifactContent(displayedArtifactId, reloadNonce);
 
   const origin = (location.state as FullPageLocationState | null)?.from;
 
@@ -136,7 +137,14 @@ const ArtifactFullPageView: React.FC<ArtifactFullPageViewProps> = ({ artifactId 
         <SettingsMenu variant="tile" />
       </div>
       <div className={styles.body}>
-        {isError && <div className={styles.empty}>{t.studio.artifactNotFound}</div>}
+        {/* Only a 404 means gone. A 500 or an unreachable backend says nothing about
+            whether this Artifact exists, and telling the reader it was deleted is a
+            claim they act on by not looking for it again. */}
+        {isError && (
+          <div className={styles.empty}>
+            {isNotFoundError(error) ? t.studio.artifactNotFound : t.artifact.loadFailed}
+          </div>
+        )}
         {data && displayedArtifactId && (
           <ArtifactFrame
             key={`${displayedArtifactId}-${reloadNonce}`}

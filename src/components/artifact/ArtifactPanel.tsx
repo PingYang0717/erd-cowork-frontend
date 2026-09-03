@@ -20,6 +20,7 @@ import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
 import type { ArtifactVersion } from '@/types/api';
 import { artifactHref } from '@/utils/artifactUrl';
 import { deriveArtifactVersions } from '@/utils/deriveArtifactVersions';
+import { isNotFoundError } from '@/utils/describeLoadError';
 
 import ArtifactFrame from './ArtifactFrame';
 import styles from './ArtifactPanel.module.css';
@@ -130,7 +131,7 @@ const ArtifactPanelContent: React.FC<ArtifactPanelContentProps> = ({
   const reloadNonce = useActiveRunStore((s) => s.artifactReloadNonce);
   const bumpArtifactReload = useActiveRunStore((s) => s.bumpArtifactReload);
   const isRunStreaming = useActiveRunStore((s) => s.isRunStreaming);
-  const { data, isError } = useArtifactContent(artifactId, reloadNonce);
+  const { data, isError, error } = useArtifactContent(artifactId, reloadNonce);
   const { data: artifacts } = useArtifacts();
   const setDisplayedArtifactId = useActiveRunStore((s) => s.setDisplayedArtifactId);
   const artifact = artifacts?.find((a) => a.id === artifactId);
@@ -249,7 +250,9 @@ const ArtifactPanelContent: React.FC<ArtifactPanelContentProps> = ({
           <ArtifactFrame key={`${artifactId}-${reloadNonce}`} html={data} artifactId={artifactId} />
         ) : isError ? (
           <p role="status" className={styles.frameNotice}>
-            {t.artifact.missing}
+            {/* Same rule as the full-page view: gone is a 404, everything else is a
+                failure to load and must not be reported as a deletion. */}
+            {isNotFoundError(error) ? t.artifact.missing : t.artifact.loadFailed}
           </p>
         ) : null}
       </div>
