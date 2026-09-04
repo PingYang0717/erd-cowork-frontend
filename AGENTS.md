@@ -34,7 +34,13 @@ Lint 是 **oxlint + ESLint 並存**(`npm run lint` 依序跑兩個),格式走 Pr
 4. **Import 排序交給 ESLint 自動處理,不用手動排。**
    `simple-import-sort` 是 ESLint 留在陣容裡的主要理由——oxlint 沒有對等能力。
 
-5. **元件內部依序寫:hooks → useState → useRef → 衍生值 → useEffect → event handler → early return → JSX。**
+5. **元件內部依序寫:非 `react` 匯入的 hook → useRef → useState → useMemo → useEffect →
+   useCallback → render 用的衍生值 → JSX。** 頂部那組的判準是語法不是語意——看 import 行
+   寫不寫得出來,`useDebouncedValue` 這種純本地計算的自訂 hook 也算。**衍生值與唯一消費它的
+   effect/callback 不拆開**,只有一個消費者的 `useRef` 跟著那個消費者走。依賴是硬約束,
+   行長升冪只是沒有依賴時的 tiebreaker。完整規則與「為何不用純型別分組」見 ADR-0010 的
+   補充(2026-09-04)。目前只有 `ThreadPanel.tsx` 依此排列,是可以指著看的範本;這條規則
+   沒有 lint 能強制,靠 review 把關。
 
 ---
 
@@ -76,7 +82,7 @@ Husky + lint-staged 會自動跑 `oxlint --fix` → `eslint --fix` → `prettier
 - 一律 `const X: React.FC<XProps> = (props) => {}` + 具名 props interface,**包含檔案內的
   子元件**。interface 命名 `<元件名>Props`,宣告在該元件正上方;無 props 的寫 `React.FC`
   不帶泛型,不造空 interface(ADR-0010)
-- 檔案內順序:**props interface → hooks → handlers(`useCallback`)→ render → `export default`**
+- 檔案內順序:**props interface → 元件內部宣告(順序見鐵律 #5)→ render → `export default`**
 - **匯出只有一種形式:`export default <元件名>`,不併存具名匯出。** 同檔的型別
   (`MessageBubbleProps`、`LiveRun`、`Answers`)與跨檔使用的子元件(`SessionGroup`)
   仍具名匯出——那條規則管的是元件本身

@@ -81,3 +81,51 @@ useState } from 'react'`,不分兩行。
 
 **沒有動的**:`MarkdownBody`(lazy 邊界)、`ReplyText`(memo 邊界,有測試斷言
 `$typeof`)、以及所有被兩個以上檔案匯入的小元件。它們短,但短不是問題。
+
+## 補充(2026-09-04):元件內部的宣告排列
+
+先前這條規則只活在 AGENTS.md 的鐵律 #5(`hooks → useState → useRef → 衍生值 → useEffect
+→ event handler`),而它有兩個缺口。一是**「hook」這個詞涵蓋了 useState 自己**,所以「hooks
+排前面、useState 排後面」實際上無法判讀,不同人會排出不同結果。二是它預設同型別的宣告可以
+集中,但 `ThreadPanel` 這類元件是「衍生值緊貼唯一消費它的 effect」寫的——集中會拆散那些配對,
+而罩著配對的註解會失去指涉對象。
+
+**一、頂部放不是從 `react` 匯入的 hook。** 判準是語法,不是語意:看 import 行寫不寫得出來。
+`useTranslations`、`useSessionDetail`、`useAgentStream`、`useRepairOfferStore(...)`、
+`useArtifactRepair` 都在這一組;`useState` / `useRef` / `useMemo` / `useEffect` / `useCallback`
+不在。之所以不用「有沒有去拿外部資料」這種語意判準,是因為它有灰帶——`useDebouncedValue` 是
+自訂 hook 但純本地計算,`useHorizontalDrag` 碰 DOM 事件但不取資料,兩個都會在 review 上吵起來。
+語法判準沒有灰帶。
+
+同一個來源的多個 selector 視為一個子塊,塊內與塊間都按行長升冪排,塊之間空一行。
+
+**二、接著是 React 內建的 hook**,依 `useRef` → `useState` → `useMemo` → `useEffect` →
+`useCallback` 分組,組間空一行。
+
+**三、衍生值與唯一消費它的 effect/callback 是一個不可拆的單元**,整個單元依它的型別歸位。
+`const streamedArtifact = state.artifact;` 與發布它的 `useEffect` 之間不插入別的東西,罩在
+上面的註解才有指涉對象。同理,**只有一個消費者的 `useRef` 跟著那個消費者走**——第二點裡的
+`useRef` 只管沒有唯一消費者的 ref(例如多處共用的 DOM ref)。
+
+**四、依賴是硬約束,長度升冪只是 tiebreaker。** `handleAnswer` 依賴 `handleSend`、`hasContent`
+依賴 `live`,這些順序不管長度都不能換。長度只在兩個宣告之間沒有依賴關係時才決定先後。
+
+**五、只給 render 用的純衍生值(不是 `useMemo` 的)緊鄰 `return`。** 它們是 JSX 的輸入,離
+使用處近比離同類近重要。
+
+### 為何不是純型別分組
+
+純型別分組(所有 `useState` 一起、所有 `useEffect` 一起)規則更簡單,但它會把上面第三點的配對
+全部拆散。以 `ThreadView` 為例,那裡有四組「衍生值 + 它唯一的 effect/callback」,每一組都有一段
+註解解釋這個同步為什麼必要;拆散之後那段註解要嘛跟著值走(但它解釋的是 effect)、要嘛跟著
+effect 走(但它開頭講的是那個值)。用可讀性換規則的簡單,在這個檔案上是虧的。
+
+### 後果
+
+- **沒有 lint 能強制這條規則**,oxlint 與 ESLint 都沒有對等能力。它靠 code review 把關,
+  所以推廣速度取決於有多少人記得。
+- 目前**只有 `ThreadPanel.tsx` 依此排列**,作為可以指著看的範本。其餘 23 個含 3 個以上 hook
+  呼叫的元件維持舊排列,倉庫在推廣完成前會有兩種風格並存。
+- **重排 `useEffect` 會改變執行順序,以及反序的 cleanup 順序。** 只有在確認彼此沒有隱性先後
+  (一個寫 store、另一個讀)時才可以動。`ThreadView` 的四個 effect 寫的是不同的 store 欄位,
+  重排後 377 個測試全過。往後套用到其他檔案時,這個確認要逐檔做一次,不能假設。
