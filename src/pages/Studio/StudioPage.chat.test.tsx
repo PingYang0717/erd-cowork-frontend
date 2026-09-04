@@ -199,7 +199,7 @@ describe('Scenario matching', () => {
 
       await runScenario(user, label);
 
-      // Scoped to the thread: the sr-only announcement region (A-1) holds the same text.
+      // Scoped to the thread: the sr-only announcement region (ADR-0014 §live-region) holds the same text.
       expect(within(screen.getByRole('log', { name: 'Messages' })).getByText(replyMatch)).toBeInTheDocument();
       const chip = screen.getByText('shown right →').closest('div') as HTMLElement;
       expect(within(chip).getByText(artifactName)).toBeInTheDocument();
@@ -295,7 +295,7 @@ describe('Scenario matching', () => {
       await screen.findByRole('button', { name: /^Worked through \d+ steps$/ });
 
       expect(screen.getByText(text)).toBeInTheDocument();
-      // Scoped to the thread: the sr-only announcement region (A-1) holds the same text.
+      // Scoped to the thread: the sr-only announcement region (ADR-0014 §live-region) holds the same text.
       expect(within(screen.getByRole('log', { name: 'Messages' })).getByText(replyMatch)).toBeInTheDocument();
       const chip = screen.getByText('shown right →').closest('div') as HTMLElement;
       expect(within(chip).getByText(artifactName)).toBeInTheDocument();

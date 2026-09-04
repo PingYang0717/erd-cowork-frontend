@@ -121,7 +121,7 @@ describe('useAgentStream', () => {
     expect(result.current.state.liveText).toBe('Vt is dri');
   });
 
-  /** C-2: stop() only acts while the stream is being read. On an idle hook there is
+  /** ADR-0015 §stop-is-a-no-op-when-idle: stop() only acts while the stream is being read. On an idle hook there is
    *  nothing to stop — a click that flagged `stopped` here would render a 「已停止」
    *  ghost bubble next to a run that never happened (the real bug fired in the finishing
    *  window, where the button still says Stop after the last event). */

@@ -61,10 +61,10 @@ describe('Streaming a run in the Studio', () => {
 
     const panel = await screen.findByRole('status', { name: 'eRD AI is working' });
     expect(within(panel).getByText(/is working/)).toBeInTheDocument();
-    // Additions announce individually; the whole panel is not re-read per step (A-3).
+    // Additions announce individually; the whole panel is not re-read per step (ADR-0014 §step-announcements).
     expect(panel).toHaveAttribute('aria-atomic', 'false');
     // The thread itself is silenced — the streaming bubble lives inside it, and
-    // role="log"'s implicit polite live region re-read every token (A-1).
+    // role="log"'s implicit polite live region re-read every token (ADR-0014 §live-region).
     expect(screen.getByRole('log', { name: 'Messages' })).toHaveAttribute('aria-live', 'off');
 
     // The label above stays the speaker's name while the run is going.
@@ -77,7 +77,7 @@ describe('Streaming a run in the Studio', () => {
     // And the panel's claim goes with the panel when the run ends.
     await waitFor(() => expect(screen.queryByText(/is working/)).not.toBeInTheDocument());
     // The finished reply is announced once, from the dedicated region — the only
-    // live channel left now that the log is off (A-1).
+    // live channel left now that the log is off (ADR-0014 §live-region).
     expect(screen.getByRole('status', { name: 'Latest reply' })).toHaveTextContent('Done.');
   });
 
@@ -161,7 +161,7 @@ describe('Streaming a run in the Studio', () => {
     await user.click(stop);
 
     await waitFor(() => expect(screen.queryByRole('status', { name: 'eRD AI is working' })).not.toBeInTheDocument());
-    // Scoped to the thread: the sr-only announcement region (A-1) holds the same text.
+    // Scoped to the thread: the sr-only announcement region (ADR-0014 §live-region) holds the same text.
     expect(
       within(screen.getByRole('log', { name: 'Messages' })).getByText('Recomputed control limits.')
     ).toBeInTheDocument();
@@ -520,7 +520,7 @@ describe('Streaming a run in the Studio', () => {
       await answerAnalysisConditions(user);
 
       await screen.findByRole('button', { name: /^Worked through \d+ steps$/ });
-      // Scoped to the thread: the sr-only announcement region (A-1) holds the same text.
+      // Scoped to the thread: the sr-only announcement region (ADR-0014 §live-region) holds the same text.
       expect(
         within(screen.getByRole('log', { name: 'Messages' })).getByText(/Done — recomputed control limits/)
       ).toBeInTheDocument();
@@ -683,7 +683,7 @@ describe('Streaming a run in the Studio', () => {
       await user.click(screen.getByRole('button', { name: '開始分析' }));
 
       await screen.findByRole('button', { name: /^Worked through \d+ steps$/ });
-      // Scoped to the thread: the sr-only announcement region (A-1) holds the same text.
+      // Scoped to the thread: the sr-only announcement region (ADR-0014 §live-region) holds the same text.
       expect(
         within(screen.getByRole('log', { name: 'Messages' })).getByText(/CP Test status dashboard is ready/)
       ).toBeInTheDocument();
@@ -784,7 +784,7 @@ describe('Streaming a run in the Studio', () => {
       await user.click(screen.getByRole('button', { name: '先產生這 1 項' }));
 
       await screen.findByRole('button', { name: /^Worked through \d+ steps$/ });
-      // Scoped to the thread: the sr-only announcement region (A-1) holds the same text.
+      // Scoped to the thread: the sr-only announcement region (ADR-0014 §live-region) holds the same text.
       expect(
         within(screen.getByRole('log', { name: 'Messages' })).getByText(/Done — recomputed control limits/)
       ).toBeInTheDocument();

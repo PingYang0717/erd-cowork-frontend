@@ -18,7 +18,7 @@ interface TooltipProps {
 /**
  * The mockup's `.erd-tip` tooltip: dark inverted surface that fades in after a 0.35s
  * hover delay — hover only: focus shows it immediately, because a keyboard user has
- * already committed to the control and the delay is a pointer affordance (A-5).
+ * already committed to the control and the delay is a pointer affordance (ADR-0014 §tooltip-focus).
  *
  * Wraps its trigger in an inline container that owns the hover/focus tracking. When
  * the child is a single element, the open tip is wired to it with `aria-describedby`

@@ -100,7 +100,7 @@ const ThreadView: React.FC<ThreadViewProps> = ({ sessionId }) => {
   const applyRememberedDataSources = useApplyRememberedDataSources(sessionId);
 
   /** What the screen reader hears when a run finishes: the complete reply, once. The
-   *  thread itself is aria-live="off" (every token used to be re-read; A-1), so this
+   *  thread itself is aria-live="off" (every token used to be re-read; ADR-0014 §live-region), so this
    *  sr-only region is the one place a finished answer is announced from. */
   const [announcement, setAnnouncement] = useState('');
 
@@ -198,7 +198,7 @@ const ThreadView: React.FC<ThreadViewProps> = ({ sessionId }) => {
   const live: LiveRun | null = state.isStreaming || runEndedVisibly ? state : null;
 
   // Suppress the optimistic bubble once the refetched history has grown past the point
-  // it was sent from — that growth is the refetch carrying the message home (C-3).
+  // it was sent from — that growth is the refetch carrying the message home (ADR-0015 §optimistic-bubble).
   const optimisticUserText =
     pending !== null && showOptimisticBubble(messages.length, pending.atLength) ? pending.text : null;
 

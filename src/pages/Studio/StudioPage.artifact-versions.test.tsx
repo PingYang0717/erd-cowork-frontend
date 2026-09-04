@@ -92,7 +92,7 @@ describe('Artifact version switcher', () => {
 
     const menu = await screen.findByRole('menu');
     // The header sits in the popup but OUTSIDE the menu role — a menu's children may
-    // only be items, and the title div used to be an illegal child (A-2).
+    // only be items, and the title div used to be an illegal child (ADR-0014 §menu-keyboard).
     expect(screen.getByText(en.artifact.versionMenuTitle(2))).toBeInTheDocument();
     expect(within(menu).queryByText(en.artifact.versionMenuTitle(2))).not.toBeInTheDocument();
 
@@ -146,7 +146,7 @@ describe('Artifact version switcher', () => {
     expect(within(rows[rows.length - 1]).getByText('v1')).toBeInTheDocument();
   });
 
-  /** The menu-button keyboard contract (A-2): opening focuses the current item,
+  /** The menu-button keyboard contract (ADR-0014 §menu-keyboard): opening focuses the current item,
    *  arrows move between items, Escape closes and puts focus back on the trigger —
    *  in a three-pane layout, focus dropped to <body> is a position lost entirely. */
   it('is keyboard-operable: focus moves in, arrows navigate, Escape restores the trigger', async () => {
