@@ -1,6 +1,6 @@
 import reactHooks from 'eslint-plugin-react-hooks';
 import simpleImportSort from 'eslint-plugin-simple-import-sort';
-import tseslint, { parser as typescriptEslintParser } from 'typescript-eslint';
+import typescriptEslintParser from '@typescript-eslint/parser';
 
 // oxlint and ESLint run side by side, in that order (`npm run lint`).
 //
@@ -11,7 +11,7 @@ import tseslint, { parser as typescriptEslintParser } from 'typescript-eslint';
 //
 // `oxlint.configs['flat/recommended']` goes LAST and switches off every ESLint rule
 // oxlint already covers, so a finding is reported once, by whichever tool owns it.
-export default tseslint.config(
+export default [
   { ignores: ['dist', 'coverage', 'node_modules'] },
   {
     files: ['**/*.{js,jsx,ts,tsx}'],
@@ -62,4 +62,4 @@ export default tseslint.config(
       ],
     },
   }
-);
+];
