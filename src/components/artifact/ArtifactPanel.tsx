@@ -152,7 +152,7 @@ const ArtifactPanelContent: React.FC<ArtifactPanelContentProps> = ({
   }, [artifactId, isError, setDisplayedArtifactId]);
 
   // Enrich the derived versions with each artifact's published state for the menu's
-  // green check; the artifacts list is the mock's 前端-only source for it.
+  // green check; the artifacts list is the mock's frontend-only source for it.
   // The menu's own numbering and naming come from the Artifacts list: `version` is what
   // the backend counts, and `title` is the name the user gave it at publish time — the
   // message's wording is only a stand-in until the list catches up.
@@ -172,8 +172,8 @@ const ArtifactPanelContent: React.FC<ArtifactPanelContentProps> = ({
     [versions, artifacts]
   );
 
-  // 發布 = 把這個 Artifact 開放給別人使用。The mockup's button says 生成 Artifact;
-  // what it does is publish, and `publishedAt` is where that lives now.
+  // Publishing means making this Artifact available to other people. The mockup's button
+  // says 生成 Artifact; what it does is publish, and `publishedAt` is where that lives now.
   const isPublished = artifact?.publishedAt != null;
 
   return (

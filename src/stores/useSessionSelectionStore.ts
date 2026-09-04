@@ -22,13 +22,17 @@ export const useSessionSelectionStore = create<SessionSelectionState>()(
     (set) => ({
       selectedSessionId: null,
       draftStartedAt: null,
-      // 選走**別的** session 就等於放棄這個草稿——它沒有任何東西需要保存。選到草稿
-      // 自己則不是離開它:草稿的存在是從「這個選擇後端沒聽過」推導出來的,所以無條件
-      // 清掉時間戳,等於使用者一點自己那一列,那一列就消失。
+      // Selecting a DIFFERENT session abandons the draft — it holds nothing worth
+      // keeping. Selecting the draft itself is not leaving it, but the timestamp is
+      // cleared unconditionally anyway: a draft exists only by derivation ("the backend
+      // has never heard of this selection"), so clearing it means clicking your own row
+      // makes that row disappear.
       //
-      // 反過來那一半(選別的 session 就清掉)沒有測試守著,而且守不住:useSessionGroups
-      // 還要求選中的 id 不在 sessions 清單裡,選了真實 session 之後那一條就先為假,所以
-      // 時間戳殘不殘留都看不出差別。這裡仍然清掉是為了讓 state 自洽,不是畫面在依賴它。
+      // The other half of that (clear on selecting something else) has no test guarding
+      // it, and could not have one: useSessionGroups also requires the selected id to be
+      // absent from the sessions list, and once a real session is selected that condition
+      // is already false — so a leftover timestamp makes no visible difference. It is
+      // cleared here to keep the state self-consistent, not because the screen reads it.
       selectSession: (id) =>
         set(
           (state) => ({

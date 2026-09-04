@@ -108,8 +108,8 @@
   font-size: 12.5px;
 }
 
-/* 只給螢幕閱讀器:標準 sr-only 樣式(clip 而非 display:none,display:none 會讓
-   live region 完全失效)。 */
+/* Screen readers only: the standard sr-only treatment. Clipped rather than
+   display:none — display:none disables a live region outright. */
 .srOnly {
   position: absolute;
   width: 1px;

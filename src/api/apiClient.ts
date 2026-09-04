@@ -11,22 +11,24 @@ export const getUserId = (): string => {
   return id;
 };
 
-/** 回傳這次請求要送出的 auth header;回傳值語意是「完全取代」,預設以外的 provider
- *  不回傳 X-User-Id 就不會送。internal 環境用 SSO header 取代匿名 UUID,見
- *  bootstrap/internal.ts。 */
+/** Returns the auth headers to send with this request. The return value REPLACES the
+ *  defaults outright: a non-default provider that omits X-User-Id means X-User-Id is not
+ *  sent at all. The internal environment swaps the anonymous UUID for SSO headers this
+ *  way — see bootstrap/internal.ts. */
 export type AuthHeaderProvider = () => Record<string, string>;
 
 let authHeaderProvider: AuthHeaderProvider = () => ({ 'X-User-Id': getUserId() });
 
-/** 覆寫 auth header provider(internal SSO 接縫用它換上 gateway/SSO header)。provider
- *  MUST 每次請求都被呼叫,NEVER 快取回傳值——internal 的 token 會在背景刷新,快取住
- *  會在過期後開始 401。 */
+/** Replaces the auth header provider; the internal SSO seam uses this to install
+ *  gateway/SSO headers. The provider MUST be called on every request and its return value
+ *  MUST NEVER be cached — internal tokens refresh in the background, so a cached value
+ *  starts returning 401 the moment it expires. */
 export const setAuthHeaderProvider = (next: AuthHeaderProvider): void => {
   authHeaderProvider = next;
 };
 
-/** 取得目前應送出的 auth header;axios interceptor 與 agentApi 的 raw fetch 共用同一個
- *  provider,兩條路徑保持一致。 */
+/** The auth headers to send right now. The axios interceptor and agentApi's raw fetch
+ *  share this one provider, so both paths stay in step. */
 export const getAuthHeaders = (): Record<string, string> => authHeaderProvider();
 
 /** The axios instance itself.

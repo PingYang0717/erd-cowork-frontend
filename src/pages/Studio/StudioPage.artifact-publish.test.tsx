@@ -17,7 +17,8 @@ describe('Per-version Artifact publishing', () => {
     useThemeStore.setState(useThemeStore.getInitialState());
   });
 
-  // 發布 = 開放給別人使用。The button the mockup labels 生成 Artifact is what does it,
+  // Publishing means making it available to other people. The button the mockup labels
+  // 生成 Artifact is what does it,
   // and `publishedAt` is what it sets — not to be confused with 重新生成, which asks the
   // Agent for a whole new version.
   it('offers 發布 Artifact for a fresh (regenerated) version, and publishing flips it to 已發布', async () => {
