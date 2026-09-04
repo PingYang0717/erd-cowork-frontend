@@ -121,6 +121,7 @@ const ThreadView: React.FC<ThreadViewProps> = ({ sessionId }) => {
   const [pending, setPending] = useState<{ text: string; atLength: number } | null>(null);
 
   const prevStreamingRef = useRef(false);
+
   useEffect(() => {
     if (prevStreamingRef.current && !state.isStreaming) {
       setAnnouncement(state.liveText || state.answer || '');
@@ -133,6 +134,7 @@ const ThreadView: React.FC<ThreadViewProps> = ({ sessionId }) => {
   // Publishing to the Artifact pane is syncing with something outside this tree, and it
   // has to happen the moment the ARTIFACT event lands rather than when the run ends.
   const streamedArtifact = state.artifact;
+
   useEffect(() => {
     setStreamedArtifact(streamedArtifact);
     // Leaving the thread must not leave the Artifact pane pointing at a run that is no
@@ -143,6 +145,7 @@ const ThreadView: React.FC<ThreadViewProps> = ({ sessionId }) => {
   // The Artifact pane refuses a Reload while a run is open; like the artifact itself
   // this is state another tree needs, so it goes through the store.
   const isRunStreaming = state.isStreaming;
+
   useEffect(() => {
     setRunStreaming(isRunStreaming);
     return () => setRunStreaming(false);
@@ -156,6 +159,7 @@ const ThreadView: React.FC<ThreadViewProps> = ({ sessionId }) => {
   // Refetching after the run lives inside useAgentStream (awaited before DONE); the
   // artifact on display rides along as baseArtifactId so the run builds on it.
   const isStreaming = state.isStreaming;
+
   const handleSend = useCallback(
     async (input: SendInput) => {
       if (isStreaming) {
@@ -177,6 +181,7 @@ const ThreadView: React.FC<ThreadViewProps> = ({ sessionId }) => {
   // The backend body is question-only, so a reask's answers travel as one prose
   // sentence composed from the form (labels stand in for values on the wire).
   const question = state.question;
+
   const handleAnswer = useCallback(
     async (answers: Answers) => {
       if (!question) {
