@@ -1,6 +1,6 @@
+import { beforeEach, describe, expect, it } from 'vitest';
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, it } from 'vitest';
 
 import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
 import { useStudioLayoutStore } from '@/stores/useStudioLayoutStore';
@@ -95,10 +95,7 @@ describe('Publish feedback: badge count, coach highlight, toast', () => {
     expect(await artifactsNav()).not.toHaveAttribute('data-coach');
 
     // Publish another version to bring the toast back, then navigate.
-    await user.type(
-      await screen.findByRole('textbox', { name: 'Message' }),
-      'Regenerate the dashboard.{Enter}',
-    );
+    await user.type(await screen.findByRole('textbox', { name: 'Message' }), 'Regenerate the dashboard.{Enter}');
     await screen.findByRole('button', { name: 'Publish Artifact' });
     await publishArtifactAs(user);
     const toast2 = await screen.findByRole('status', { name: 'Artifact published' });

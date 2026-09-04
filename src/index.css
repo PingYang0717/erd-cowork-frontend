@@ -117,13 +117,8 @@ body {
 /* The mockup paints Delete red, full stop. A gated-off Delete keeps the red so the
    row still reads as the destructive act — the inline 後端未支援 hint and the
    not-allowed cursor are what say it is unavailable, not a grey wash. */
-.ant-dropdown.erd-menu
-  .ant-dropdown-menu
-  .ant-dropdown-menu-item-danger.ant-dropdown-menu-item-disabled,
-.ant-dropdown.erd-menu
-  .ant-dropdown-menu
-  .ant-dropdown-menu-item-danger.ant-dropdown-menu-item-disabled
-  .anticon {
+.ant-dropdown.erd-menu .ant-dropdown-menu .ant-dropdown-menu-item-danger.ant-dropdown-menu-item-disabled,
+.ant-dropdown.erd-menu .ant-dropdown-menu .ant-dropdown-menu-item-danger.ant-dropdown-menu-item-disabled .anticon {
   color: var(--erd-color-error, #ff4d4f);
   opacity: 0.75;
 }

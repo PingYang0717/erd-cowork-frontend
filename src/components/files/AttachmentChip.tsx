@@ -1,5 +1,5 @@
-import { CloseOutlined, FileExcelOutlined, FileTextOutlined } from '@ant-design/icons';
 import React from 'react';
+import { CloseOutlined, FileExcelOutlined, FileTextOutlined } from '@ant-design/icons';
 
 import { useTranslations } from '@/i18n/useTranslations';
 import type { UploadedFileInfo } from '@/types/api';
@@ -28,12 +28,7 @@ const AttachmentChip: React.FC<AttachmentChipProps> = ({ upload, onRemove }) => 
         <span className={styles.size}>{formatBytes(upload.sizeBytes)}</span>
       )}
       {onRemove && (
-        <button
-          type="button"
-          className={styles.remove}
-          aria-label={`Remove ${upload.name}`}
-          onClick={onRemove}
-        >
+        <button type="button" className={styles.remove} aria-label={`Remove ${upload.name}`} onClick={onRemove}>
           <CloseOutlined aria-hidden />
         </button>
       )}

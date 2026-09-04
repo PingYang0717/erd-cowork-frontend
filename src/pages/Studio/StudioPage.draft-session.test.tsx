@@ -1,7 +1,7 @@
-import { screen, within } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { beforeEach, describe, expect, it } from 'vitest';
+import { screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import { server } from '@/mocks/server';
 import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
@@ -69,7 +69,7 @@ describe('New chat opens a client-side draft', () => {
       http.post('/api/sessions', () => {
         createCalls += 1;
         return new HttpResponse(null, { status: 500 });
-      }),
+      })
     );
 
     await openStudio();
@@ -88,10 +88,7 @@ describe('New chat opens a client-side draft', () => {
     const rows = await recentGroup().findAllByRole('listitem');
     expect(rows).toHaveLength(before + 1);
     expect(within(rows[0]).getByText('New analysis')).toBeInTheDocument();
-    expect(within(rows[0]).getByRole('button', { name: 'New analysis' })).toHaveAttribute(
-      'aria-current',
-      'true',
-    );
+    expect(within(rows[0]).getByRole('button', { name: 'New analysis' })).toHaveAttribute('aria-current', 'true');
   });
 
   it('opens an empty thread rather than another session history', async () => {
@@ -107,9 +104,7 @@ describe('New chat opens a client-side draft', () => {
     await userEvent.click(screen.getByRole('button', { name: 'New chat' }));
 
     const draftRow = (await recentGroup().findAllByRole('listitem'))[0];
-    expect(
-      within(draftRow).queryByRole('button', { name: /More actions/ }),
-    ).not.toBeInTheDocument();
+    expect(within(draftRow).queryByRole('button', { name: /More actions/ })).not.toBeInTheDocument();
   });
 
   it('becomes a real session once its first message is sent', async () => {
@@ -121,9 +116,7 @@ describe('New chat opens a client-side draft', () => {
 
     // Its row now carries the actions a persisted session has.
     const draftRow = (await recentGroup().findAllByRole('listitem'))[0];
-    expect(
-      await within(draftRow).findByRole('button', { name: /More actions/ }),
-    ).toBeInTheDocument();
+    expect(await within(draftRow).findByRole('button', { name: /More actions/ })).toBeInTheDocument();
   });
 
   it('does not stack a second draft when New chat is pressed again', async () => {

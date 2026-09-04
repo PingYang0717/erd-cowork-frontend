@@ -1,19 +1,9 @@
-import {
-  DeleteOutlined,
-  EditOutlined,
-  MoreOutlined,
-  PushpinFilled,
-  PushpinOutlined,
-} from '@ant-design/icons';
-import { Dropdown, Input } from 'antd';
 import React, { useState } from 'react';
+import { Dropdown, Input } from 'antd';
+import { DeleteOutlined, EditOutlined, MoreOutlined, PushpinFilled, PushpinOutlined } from '@ant-design/icons';
 
 import { useConfirmDestructive } from '@/hooks/useConfirmDestructive';
-import {
-  useDeleteSession,
-  useRenameSession,
-  useToggleSessionPin,
-} from '@/hooks/useSessionMutations';
+import { useDeleteSession, useRenameSession, useToggleSessionPin } from '@/hooks/useSessionMutations';
 import { useTranslations } from '@/i18n/useTranslations';
 import type { Session } from '@/types/api/session';
 import { dispatchMenuAction } from '@/utils/dispatchMenuAction';
@@ -160,11 +150,7 @@ const SessionRow: React.FC<SessionRowProps> = ({ session, isSelected, isDraft, o
 
           menu={{ items: menuItems, onClick: ({ key }) => handleMenuClick(key) }}
         >
-          <button
-            type="button"
-            className={styles.moreActionsButton}
-            aria-label={`More actions for ${session.title}`}
-          >
+          <button type="button" className={styles.moreActionsButton} aria-label={`More actions for ${session.title}`}>
             <MoreOutlined aria-hidden />
           </button>
         </Dropdown>

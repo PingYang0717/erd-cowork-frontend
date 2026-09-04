@@ -1,13 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
-import {
-  publishArtifact,
-  toggleArtifactPin,
-  unpublishArtifact,
-  updateArtifactShares,
-} from '@/api/artifactApi';
+import { publishArtifact, toggleArtifactPin, unpublishArtifact, updateArtifactShares } from '@/api/artifactApi';
 import type { Artifact, ArtifactShareUpdate } from '@/types/api';
-
 import { useActionErrorToast } from './useActionErrorToast';
 import { artifactsQueryKey } from './useArtifacts';
 import { artifactSharesQueryKey } from './useArtifactShares';
@@ -40,8 +34,8 @@ export const useToggleArtifactPin = () => {
                 ...(result.owner !== undefined ? { owner: result.owner } : {}),
                 ...(result.isOwn !== undefined ? { isOwn: result.isOwn } : {}),
               }
-            : artifact,
-        ),
+            : artifact
+        )
       );
       // No invalidate to follow it: the answer holds everything the toggle changed, and
       // the rail's badge keeps this list mounted on every page — a refetch here was one
@@ -67,7 +61,7 @@ export const useUnpublishArtifact = () => {
       // Dropped from the list synchronously so the Gallery stops showing it on the very
       // next render rather than after the refetch lands.
       queryClient.setQueryData<Artifact[]>(artifactsQueryKey, (previous) =>
-        previous?.filter((artifact) => artifact.id !== unpublishedId),
+        previous?.filter((artifact) => artifact.id !== unpublishedId)
       );
       // No invalidate: the filter above is the whole change — the row is gone, and a
       // refetch would only confirm a list that was just made correct.
@@ -82,8 +76,7 @@ export const useUpdateArtifactShares = () => {
   const toastError = useActionErrorToast();
 
   return useMutation({
-    mutationFn: ({ id, update }: { id: string; update: ArtifactShareUpdate }) =>
-      updateArtifactShares(id, update),
+    mutationFn: ({ id, update }: { id: string; update: ArtifactShareUpdate }) => updateArtifactShares(id, update),
     onSuccess: (result, { id }) => {
       // The PATCH answers with the new share list, so refetching it right back would be
       // asking for what is already in hand. Guarded, because a body that is not a list
@@ -93,9 +86,7 @@ export const useUpdateArtifactShares = () => {
         queryClient.setQueryData(artifactSharesQueryKey(id), result);
         // `isShared` lives on the Artifact row, and the list in hand is what decides it.
         queryClient.setQueryData<Artifact[]>(artifactsQueryKey, (previous) =>
-          previous?.map((artifact) =>
-            artifact.id === id ? { ...artifact, isShared: result.length > 0 } : artifact,
-          ),
+          previous?.map((artifact) => (artifact.id === id ? { ...artifact, isShared: result.length > 0 } : artifact))
         );
       } else {
         // `refetchType: 'none'` — mark it stale, do not go and get it now. Submitting

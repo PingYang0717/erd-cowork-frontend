@@ -2,7 +2,6 @@ import { AxiosError, AxiosHeaders } from 'axios';
 import { describe, expect, it } from 'vitest';
 
 import { en } from '@/i18n/en';
-
 import { describeActionError, describeLoadError } from './describeLoadError';
 
 const axiosError = (code: string, response?: AxiosError['response']) => {
@@ -82,8 +81,8 @@ describe('describeActionError', () => {
           data: { message: '配額已滿' },
           headers: new AxiosHeaders(),
           config: { headers: new AxiosHeaders() },
-        }),
-      ),
+        })
+      )
     ).toBe('配額已滿');
   });
 
@@ -98,8 +97,8 @@ describe('describeActionError', () => {
           data: null,
           headers: new AxiosHeaders(),
           config: { headers: new AxiosHeaders() },
-        }),
-      ),
+        })
+      )
     ).toBe(en.errors.notReady);
   });
 
@@ -113,7 +112,7 @@ describe('describeActionError', () => {
         data: null,
         headers: new AxiosHeaders(),
         config: { headers: new AxiosHeaders() },
-      }),
+      })
     );
     expect(answered).toBe(en.errors.actionFailedWithStatus(500));
     expect(answered).not.toBe(en.errors.notReady);

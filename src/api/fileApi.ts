@@ -1,5 +1,4 @@
 import type { UploadedFileInfo } from '@/types/api';
-
 import { apiClient } from './apiClient';
 
 /** Where an upload actually is. `onUploadProgress` measures bytes leaving this
@@ -16,7 +15,7 @@ export interface UploadProgress {
 export const uploadFiles = (
   sessionId: string,
   files: File[],
-  onProgress?: (progress: UploadProgress) => void,
+  onProgress?: (progress: UploadProgress) => void
 ): Promise<UploadedFileInfo[]> => {
   const formData = new FormData();
   files.forEach((file) => formData.append('files', file));

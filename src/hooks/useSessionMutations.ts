@@ -4,7 +4,6 @@ import { deleteSession, renameSession, toggleSessionPin } from '@/api/sessionApi
 import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
 import type { Artifact } from '@/types/api';
 import type { Session } from '@/types/api/session';
-
 import { useActionErrorToast } from './useActionErrorToast';
 import { artifactsQueryKey } from './useArtifacts';
 import { sessionDetailQueryKey } from './useSessionDetail';
@@ -32,9 +31,7 @@ export const useRenameSession = () => {
       // than refetched: the new name is already in hand, and the list is otherwise
       // untouched by a rename.
       queryClient.setQueryData<Artifact[]>(artifactsQueryKey, (previous) =>
-        previous?.map((artifact) =>
-          artifact.sessionId === id ? { ...artifact, sessionTitle: title } : artifact,
-        ),
+        previous?.map((artifact) => (artifact.sessionId === id ? { ...artifact, sessionTitle: title } : artifact))
       );
     },
     onError: toastError,
@@ -73,7 +70,7 @@ export const useDeleteSession = () => {
       // recent, since you were just in it — it would re-select what was deleted, and the
       // thread would carry on rendering that conversation from cache.
       queryClient.setQueryData<Session[]>(sessionsQueryKey, (previous) =>
-        previous?.filter((session) => session.id !== deletedId),
+        previous?.filter((session) => session.id !== deletedId)
       );
 
       // Deleting the session you are in has to close it too. Left selected, the thread

@@ -1,6 +1,6 @@
-import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { fireEvent, render, screen } from '@testing-library/react';
 
 import { useHorizontalDrag } from './useHorizontalDrag';
 
@@ -16,10 +16,7 @@ const trackWindowListeners = () => {
     return (add as (...args: unknown[]) => void)(type, ...rest);
   }) as typeof window.addEventListener);
 
-  vi.spyOn(window, 'removeEventListener').mockImplementation(((
-    type: string,
-    ...rest: unknown[]
-  ) => {
+  vi.spyOn(window, 'removeEventListener').mockImplementation(((type: string, ...rest: unknown[]) => {
     if (type in live) live[type as keyof typeof live] -= 1;
     return (remove as (...args: unknown[]) => void)(type, ...rest);
   }) as typeof window.removeEventListener);

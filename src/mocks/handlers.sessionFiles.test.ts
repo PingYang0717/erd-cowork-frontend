@@ -10,7 +10,7 @@ const API_BASE = '/api';
  *  test/formDataWire.ts) — an independent source of truth for the wire format. */
 const postMultipart = async (
   sessionId: string,
-  files: { name: string; sizeBytes: number; type?: string }[],
+  files: { name: string; sizeBytes: number; type?: string }[]
 ): Promise<UploadedFileInfo[]> => {
   const boundary = `----erdCoworkTest${Math.random().toString(16).slice(2)}`;
   const encoder = new TextEncoder();
@@ -20,8 +20,8 @@ const postMultipart = async (
       encoder.encode(
         `--${boundary}\r\n` +
           `Content-Disposition: form-data; name="files"; filename="${file.name}"\r\n` +
-          `Content-Type: ${file.type ?? 'text/csv'}\r\n\r\n`,
-      ),
+          `Content-Type: ${file.type ?? 'text/csv'}\r\n\r\n`
+      )
     );
     chunks.push(new Uint8Array(file.sizeBytes));
     chunks.push(encoder.encode('\r\n'));

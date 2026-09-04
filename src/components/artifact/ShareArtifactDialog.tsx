@@ -1,6 +1,6 @@
-import { CheckOutlined, CopyOutlined, FundOutlined, LinkOutlined } from '@ant-design/icons';
-import { Button, Input, Modal, Select } from 'antd';
 import React, { useMemo, useState } from 'react';
+import { Button, Input, Modal, Select } from 'antd';
+import { CheckOutlined, CopyOutlined, FundOutlined, LinkOutlined } from '@ant-design/icons';
 
 import { DIRECTORY_SEARCH_MIN_LENGTH } from '@/api/directoryApi';
 import { useUpdateArtifactShares } from '@/hooks/useArtifactMutations';
@@ -78,7 +78,7 @@ const ShareArtifactDialog: React.FC<ShareArtifactDialogProps> = ({ open, onClose
       },
       // Submitting is the end of the dialog: the recipient list was the thing being
       // edited, and once it is saved there is nothing left here to do.
-      { onSuccess: handleClose },
+      { onSuccess: handleClose }
     );
   };
 
@@ -95,14 +95,7 @@ const ShareArtifactDialog: React.FC<ShareArtifactDialogProps> = ({ open, onClose
   };
 
   return (
-    <Modal
-      open={open}
-      onCancel={handleClose}
-      title={t.share.title}
-      width={460}
-      footer={null}
-      destroyOnHidden
-    >
+    <Modal open={open} onCancel={handleClose} title={t.share.title} width={460} footer={null} destroyOnHidden>
       <p className={styles.subtitle}>{t.share.subtitle}</p>
       <div className={styles.infoCard} aria-label="Artifact details">
         <span className={styles.infoCardIcon} aria-hidden>
@@ -124,12 +117,7 @@ const ShareArtifactDialog: React.FC<ShareArtifactDialogProps> = ({ open, onClose
 
       <div className={styles.section}>
         <div className={styles.sectionLabel}>{t.share.recipientsLabel}</div>
-        <RecipientSelect
-          value={chosen}
-          loading={isLoading}
-          disabled={isUnavailable}
-          onChange={handleChoose}
-        />
+        <RecipientSelect value={chosen} loading={isLoading} disabled={isUnavailable} onChange={handleChoose} />
         {/* Editing is closed rather than the dialog: a delta built on a baseline nobody
             could read is not an edit the user meant to make. Submit stays pressable —
             it is also the way out, and an unchanged list sends an empty delta. */}
@@ -198,12 +186,7 @@ interface RecipientSelectProps {
  *  the key is long enough to narrow anything (`filterOption={false}` hands matching to
  *  the backend), and what the user picked has to survive the options list changing under
  *  it — so chosen entries are remembered here and merged back into the options. */
-const RecipientSelect: React.FC<RecipientSelectProps> = ({
-  value,
-  loading,
-  disabled,
-  onChange,
-}) => {
+const RecipientSelect: React.FC<RecipientSelectProps> = ({ value, loading, disabled, onChange }) => {
   const t = useTranslations();
   const [keyword, setKeyword] = useState('');
   const { entries, isSearching, isError, enabled } = useDirectorySearch(useDebouncedValue(keyword));
@@ -228,11 +211,7 @@ const RecipientSelect: React.FC<RecipientSelectProps> = ({
     // Resolve the keys back to entries. The caller works in entries, not keys: the share
     // payload needs each one's kind and id, which only the entry carries.
     const known = new Map([...value, ...entries].map((entry) => [directoryEntryKey(entry), entry]));
-    onChange(
-      keys
-        .map((key) => known.get(key))
-        .filter((entry): entry is DirectoryEntry => entry !== undefined),
-    );
+    onChange(keys.map((key) => known.get(key)).filter((entry): entry is DirectoryEntry => entry !== undefined));
   };
 
   return (
@@ -249,8 +228,7 @@ const RecipientSelect: React.FC<RecipientSelectProps> = ({
         // the debounced keyword — this is what answers the keystroke in between, and it
         // never hides a row the backend returned, because it looks at more than the
         // backend was given.
-        filterOption: (input, option) =>
-          option?.entry === undefined || directoryEntryMatches(option.entry, input),
+        filterOption: (input, option) => option?.entry === undefined || directoryEntryMatches(option.entry, input),
         searchValue: keyword,
         onSearch: setKeyword,
       }}

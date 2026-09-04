@@ -1,8 +1,7 @@
-import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
+import { render, screen } from '@testing-library/react';
 
 import type { TableResult } from '@/types/api';
-
 import ResultTable from './ResultTable';
 
 const table = (overrides: Partial<TableResult> = {}): TableResult => ({
@@ -31,7 +30,7 @@ describe('ResultTable', () => {
           columns: ['value'],
           rows: [[0.1 + 0.2], [1e-7], [true], [null], [12345]],
         })}
-      />,
+      />
     );
 
     // 0.1 + 0.2 is 0.30000000000000004 in IEEE754; the reader gets the number

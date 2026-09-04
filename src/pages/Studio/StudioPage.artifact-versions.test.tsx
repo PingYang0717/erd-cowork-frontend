@@ -1,7 +1,7 @@
-import { screen, within } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { http } from 'msw';
 import { beforeEach, describe, expect, it } from 'vitest';
+import { screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import { en } from '@/i18n/en';
 import { server } from '@/mocks/server';
@@ -37,10 +37,7 @@ describe('Artifact version switcher', () => {
     await expect.poll(artifactSrcdoc).toContain('· v1');
 
     // An iteration typed into the composer lands as a second output and takes the panel.
-    await user.type(
-      await screen.findByRole('textbox', { name: 'Message' }),
-      'Regenerate the dashboard.{Enter}',
-    );
+    await user.type(await screen.findByRole('textbox', { name: 'Message' }), 'Regenerate the dashboard.{Enter}');
     await expect.poll(artifactSrcdoc, { timeout: 5000 }).toContain('· v2');
 
     // Switching back to the first output re-renders the iframe with its HTML. The menu
@@ -60,17 +57,14 @@ describe('Artifact version switcher', () => {
       http.get('/api/artifacts/:id', () => {
         contentFetches += 1;
         return undefined;
-      }),
+      })
     );
     const user = userEvent.setup();
     renderStudio();
 
     await user.click(await screen.findByRole('button', { name: 'SPC — Vt (gate CD)' }));
     await expect.poll(artifactSrcdoc).toContain('· v1');
-    await user.type(
-      await screen.findByRole('textbox', { name: 'Message' }),
-      'Regenerate the dashboard.{Enter}',
-    );
+    await user.type(await screen.findByRole('textbox', { name: 'Message' }), 'Regenerate the dashboard.{Enter}');
     await expect.poll(artifactSrcdoc, { timeout: 5000 }).toContain('· v2');
     const fetchesForBoth = contentFetches;
 
@@ -91,10 +85,7 @@ describe('Artifact version switcher', () => {
 
     // Iterate so the menu holds mixed published states (the seeded one is published,
     // the fresh one is not).
-    await user.type(
-      await screen.findByRole('textbox', { name: 'Message' }),
-      'Regenerate the dashboard.{Enter}',
-    );
+    await user.type(await screen.findByRole('textbox', { name: 'Message' }), 'Regenerate the dashboard.{Enter}');
     await screen.findByRole('button', { name: 'Publish Artifact' });
 
     await user.click(screen.getByRole('button', { name: 'Switch Artifact' }));
@@ -144,10 +135,7 @@ describe('Artifact version switcher', () => {
 
     await user.click(await screen.findByRole('button', { name: 'SPC — Vt (gate CD)' }));
     await screen.findByTitle('Artifact preview');
-    await user.type(
-      await screen.findByRole('textbox', { name: 'Message' }),
-      'Regenerate the dashboard.{Enter}',
-    );
+    await user.type(await screen.findByRole('textbox', { name: 'Message' }), 'Regenerate the dashboard.{Enter}');
     await screen.findByRole('button', { name: 'Publish Artifact' });
 
     await user.click(screen.getByRole('button', { name: 'Switch Artifact' }));
@@ -167,10 +155,7 @@ describe('Artifact version switcher', () => {
 
     await user.click(await screen.findByRole('button', { name: 'SPC — Vt (gate CD)' }));
     await screen.findByTitle('Artifact preview');
-    await user.type(
-      await screen.findByRole('textbox', { name: 'Message' }),
-      'Regenerate the dashboard.{Enter}',
-    );
+    await user.type(await screen.findByRole('textbox', { name: 'Message' }), 'Regenerate the dashboard.{Enter}');
     await screen.findByRole('button', { name: 'Publish Artifact' });
 
     const trigger = screen.getByRole('button', { name: 'Switch Artifact' });

@@ -5,10 +5,7 @@ import type { QuestionAnswer, QuestionField, QuestionForm } from '@/types/api/ag
  *  ChatPanel sends. Values map to their option labels so the sentence reads the way the
  *  form did; the structured `{ answers, inReplyTo }` wire is on the backend feedback
  *  list, not in the contract. */
-export const composeAnswerText = (
-  form: QuestionForm,
-  answers: Record<string, QuestionAnswer>,
-): string => {
+export const composeAnswerText = (form: QuestionForm, answers: Record<string, QuestionAnswer>): string => {
   const parts: string[] = [];
 
   for (const field of form.fields) {

@@ -1,7 +1,7 @@
-import { screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { beforeEach, describe, expect, it } from 'vitest';
+import { screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import { en } from '@/i18n/en';
 import { server } from '@/mocks/server';
@@ -62,9 +62,7 @@ describe('Artifact panel', () => {
 
     await user.click(await screen.findByRole('button', { name: 'SPC — Vt (gate CD)' }));
 
-    expect(
-      await screen.findByText(en.artifact.loadFailed, {}, { timeout: 4000 }),
-    ).toBeInTheDocument();
+    expect(await screen.findByText(en.artifact.loadFailed, {}, { timeout: 4000 })).toBeInTheDocument();
     expect(screen.queryByText(en.artifact.missing)).not.toBeInTheDocument();
   });
 });

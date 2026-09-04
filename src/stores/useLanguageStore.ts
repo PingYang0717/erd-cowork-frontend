@@ -27,8 +27,8 @@ export const useLanguageStore = create<LanguageState>()(
         language: 'zh-TW',
         setLanguage: (language) => set({ language }, false, 'setLanguage'),
       }),
-      { name: LANGUAGE_STORAGE_KEY },
+      { name: LANGUAGE_STORAGE_KEY }
     ),
-    { name: 'Language' },
-  ),
+    { name: 'Language' }
+  )
 );

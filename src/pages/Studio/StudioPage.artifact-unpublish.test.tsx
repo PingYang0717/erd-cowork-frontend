@@ -1,6 +1,6 @@
+import { beforeEach, describe, expect, it } from 'vitest';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, it } from 'vitest';
 
 import { useActiveRunStore } from '@/stores/useActiveRunStore';
 import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
@@ -26,16 +26,12 @@ describe('Unpublishing an Artifact from the Gallery', () => {
     await screen.findByTitle('Artifact preview');
 
     await user.click(screen.getByRole('button', { name: /^Artifacts/ }));
-    await user.click(
-      await screen.findByRole('button', { name: 'More actions for SPC analysis — Vt (gate CD)' }),
-    );
+    await user.click(await screen.findByRole('button', { name: 'More actions for SPC analysis — Vt (gate CD)' }));
     await user.click(await screen.findByRole('menuitem', { name: 'Delete' }));
     // The destructive step now sits behind a confirm — click through it.
     await user.click(await screen.findByRole('button', { name: 'Delete' }));
     await waitFor(() =>
-      expect(
-        screen.queryByRole('button', { name: 'SPC analysis — Vt (gate CD)' }),
-      ).not.toBeInTheDocument(),
+      expect(screen.queryByRole('button', { name: 'SPC analysis — Vt (gate CD)' })).not.toBeInTheDocument()
     );
 
     // Back in the conversation it came from, it is still there and still rendered: what

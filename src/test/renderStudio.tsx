@@ -1,10 +1,9 @@
-import { render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { render, screen } from '@testing-library/react';
 
 import StudioShell from '@/components/layouts/StudioShell';
 import ArtifactsGalleryPage from '@/pages/ArtifactsGallery/ArtifactsGalleryPage';
 import StudioPage from '@/pages/Studio/StudioPage';
-
 import { appWrapper } from './appHarness';
 
 interface RenderStudioOptions {
@@ -34,7 +33,7 @@ export const renderStudio = ({ retry = true }: RenderStudioOptions = {}) => {
         </Route>
       </Routes>
     </MemoryRouter>,
-    { wrapper: appWrapper({ retry }) },
+    { wrapper: appWrapper({ retry }) }
   );
 };
 

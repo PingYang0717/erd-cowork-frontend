@@ -1,5 +1,5 @@
-import { useQueryClient } from '@tanstack/react-query';
 import { useCallback } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 
 import { errorCode, errorMessage } from '@/api/apiError';
 import { repairArtifact } from '@/api/artifactApi';
@@ -44,13 +44,9 @@ export const useArtifactRepair = () => {
         // where the user finds out what to do instead.
         // The backend's sentence rides along when it gave one — the card's generic
         // "did not succeed" says nothing about whether trying again is worthwhile.
-        setStatus(
-          artifactId,
-          isFilesExpired(error) ? 'files-expired' : 'failed',
-          errorMessage(error) ?? undefined,
-        );
+        setStatus(artifactId, isFilesExpired(error) ? 'files-expired' : 'failed', errorMessage(error) ?? undefined);
       }
     },
-    [queryClient, setStatus, resolve, bumpArtifactReload],
+    [queryClient, setStatus, resolve, bumpArtifactReload]
   );
 };

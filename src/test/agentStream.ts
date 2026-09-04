@@ -65,7 +65,7 @@ export const mockAgentStream = (): MockAgentStream => {
       return new HttpResponse(body, {
         headers: { 'Content-Type': 'text/event-stream' },
       });
-    }),
+    })
   );
 
   return {
@@ -88,17 +88,10 @@ export const mockAgentStream = (): MockAgentStream => {
 
 /** Makes the message endpoint fail before any stream opens, the way a real backend
  *  reports a refusal: a non-2xx status with a JSON `{ code, message }` body. */
-export const mockAgentStreamRejection = (failure: {
-  status: number;
-  code: string;
-  message: string;
-}): void => {
+export const mockAgentStreamRejection = (failure: { status: number; code: string; message: string }): void => {
   server.use(
     http.post(`${API_BASE}/sessions/:sessionId/messages`, () =>
-      HttpResponse.json(
-        { code: failure.code, message: failure.message },
-        { status: failure.status },
-      ),
-    ),
+      HttpResponse.json({ code: failure.code, message: failure.message }, { status: failure.status })
+    )
   );
 };
