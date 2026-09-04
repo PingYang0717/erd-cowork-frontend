@@ -11,8 +11,8 @@ describe('initInternalRuntime', () => {
 
   it('initInternalRuntime_implThrows_propagates', async () => {
     const initialize = vi.fn().mockRejectedValue(new Error('SSO 未載入'));
-    await expect(
-      initInternalRuntime({ './internal.impl.ts': async () => ({ initialize }) }),
-    ).rejects.toThrow('SSO 未載入');
+    await expect(initInternalRuntime({ './internal.impl.ts': async () => ({ initialize }) })).rejects.toThrow(
+      'SSO 未載入'
+    );
   });
 });

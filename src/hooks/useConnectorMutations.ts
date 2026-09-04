@@ -1,14 +1,9 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCallback } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
-import {
-  addConnector as addConnectorRequest,
-  readRememberedSelection,
-  rememberSelection,
-} from '@/api/connectorApi';
+import { addConnector as addConnectorRequest, readRememberedSelection, rememberSelection } from '@/api/connectorApi';
 import { attachDataSource, detachDataSource } from '@/api/sessionApi';
 import type { SessionDetail } from '@/types/api/session';
-
 import { useActionErrorToast } from './useActionErrorToast';
 import { connectorsQueryKey } from './useConnectors';
 import { sessionDetailQueryKey } from './useSessionDetail';
@@ -31,8 +26,7 @@ export const useSetSessionDataSource = (sessionId: string) => {
       // capabilities every time, so the next conversation can open on this combination
       // instead of asking them to pick it again.
       const current = new Set(
-        queryClient.getQueryData<SessionDetail>(sessionDetailQueryKey(sessionId))?.dataSourceIds ??
-          [],
+        queryClient.getQueryData<SessionDetail>(sessionDetailQueryKey(sessionId))?.dataSourceIds ?? []
       );
       if (attached) {
         current.add(id);
@@ -76,7 +70,7 @@ export const useApplyRememberedDataSources = (sessionId: string) => {
         // Nothing to tell the user: the conversation runs either way.
       }
     },
-    [sessionId, queryClient],
+    [sessionId, queryClient]
   );
 };
 

@@ -1,5 +1,11 @@
 // Self-hosted (@fontsource) like cowork upstream: the internal network blocks font
 // CDNs, so the files ship in the bundle (ADR-0002).
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
+
+import App from '@/app/App';
+import { initInternalRuntime } from '@/bootstrap/internal';
+
 import '@fontsource-variable/inter/wght.css';
 // Variable font: one face covers 100-900, replacing the 400/500/700 static trio — the
 // @font-face CSS was 88.7% of the render-blocking stylesheet, and this cuts those
@@ -7,17 +13,11 @@ import '@fontsource-variable/inter/wght.css';
 import '@fontsource-variable/noto-sans-tc/wght.css';
 import './index.css';
 
-import { StrictMode } from 'react';
-import { createRoot } from 'react-dom/client';
-
-import App from '@/app/App';
-import { initInternalRuntime } from '@/bootstrap/internal';
-
 const mountApp = (): void => {
   createRoot(document.getElementById('root')!).render(
     <StrictMode>
       <App />
-    </StrictMode>,
+    </StrictMode>
   );
 };
 

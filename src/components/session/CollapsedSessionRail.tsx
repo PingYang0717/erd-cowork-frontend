@@ -1,3 +1,6 @@
+import React, { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
   AppstoreOutlined,
   ClockCircleOutlined,
@@ -5,15 +8,12 @@ import {
   MenuUnfoldOutlined,
   PlusOutlined,
 } from '@ant-design/icons';
-import React, { useEffect, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
-import { useLocation, useNavigate } from 'react-router-dom';
 
 import { useSessionGroups } from '@/hooks/useSessionGroups';
 import { useTranslations } from '@/i18n/useTranslations';
+import { SessionGroup } from './SessionList';
 
 import styles from './CollapsedSessionRail.module.css';
-import { SessionGroup } from './SessionList';
 
 interface CollapsedSessionRailProps {
   onExpand: () => void;
@@ -28,14 +28,8 @@ const CollapsedSessionRail: React.FC<CollapsedSessionRailProps> = ({ onExpand })
   const historyButtonRef = useRef<HTMLButtonElement>(null);
   const flyoutRef = useRef<HTMLDivElement>(null);
 
-  const {
-    pinned,
-    recent,
-    draftSessionId,
-    selectedSessionId,
-    selectAndNavigate,
-    createAndNavigate,
-  } = useSessionGroups();
+  const { pinned, recent, draftSessionId, selectedSessionId, selectAndNavigate, createAndNavigate } =
+    useSessionGroups();
 
   const handleSelectSession = (id: string) => {
     selectAndNavigate(id);
@@ -70,7 +64,7 @@ const CollapsedSessionRail: React.FC<CollapsedSessionRailProps> = ({ onExpand })
       return;
     }
     const focusable = flyoutRef.current?.querySelectorAll<HTMLElement>(
-      'button, [href], input, [tabindex]:not([tabindex="-1"])',
+      'button, [href], input, [tabindex]:not([tabindex="-1"])'
     );
     if (!focusable || focusable.length === 0) {
       return;
@@ -196,7 +190,7 @@ const CollapsedSessionRail: React.FC<CollapsedSessionRailProps> = ({ onExpand })
                 </div>
               </div>
             </>,
-            document.body,
+            document.body
           )}
       </div>
     </div>

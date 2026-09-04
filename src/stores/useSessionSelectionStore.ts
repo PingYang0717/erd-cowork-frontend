@@ -36,13 +36,11 @@ export const useSessionSelectionStore = create<SessionSelectionState>()(
             draftStartedAt: id === state.selectedSessionId ? state.draftStartedAt : null,
           }),
           false,
-          'selectSession',
+          'selectSession'
         ),
-      startDraft: (id, startedAt) =>
-        set({ selectedSessionId: id, draftStartedAt: startedAt }, false, 'startDraft'),
-      clearSelection: () =>
-        set({ selectedSessionId: null, draftStartedAt: null }, false, 'clearSelection'),
+      startDraft: (id, startedAt) => set({ selectedSessionId: id, draftStartedAt: startedAt }, false, 'startDraft'),
+      clearSelection: () => set({ selectedSessionId: null, draftStartedAt: null }, false, 'clearSelection'),
     }),
-    { name: 'SessionSelection' },
-  ),
+    { name: 'SessionSelection' }
+  )
 );

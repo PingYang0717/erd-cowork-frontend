@@ -1,5 +1,4 @@
 import type { Artifact, ArtifactShareUpdate, DirectoryEntry } from '@/types/api';
-
 import { apiClient } from './apiClient';
 
 export const listArtifacts = () => apiClient.get<Artifact[]>('/artifacts');
@@ -43,8 +42,7 @@ export interface ArtifactPinResult {
  *
  *  PATCH, not POST: the call edits one field of something that already exists rather than
  *  creating anything. */
-export const toggleArtifactPin = (id: string) =>
-  apiClient.patch<ArtifactPinResult>(`/artifacts/${id}/pin`);
+export const toggleArtifactPin = (id: string) => apiClient.patch<ArtifactPinResult>(`/artifacts/${id}/pin`);
 
 /** Publishing is what makes an Artifact available to other people — and what sharing
  *  rests on. It carries the title the Artifact goes on the shelf under: the Gallery names

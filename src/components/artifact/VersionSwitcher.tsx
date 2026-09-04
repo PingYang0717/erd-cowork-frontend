@@ -1,5 +1,5 @@
-import { CheckOutlined, DownOutlined, HistoryOutlined } from '@ant-design/icons';
 import React, { useEffect, useRef, useState } from 'react';
+import { CheckOutlined, DownOutlined, HistoryOutlined } from '@ant-design/icons';
 
 import Tooltip from '@/components/common/Tooltip';
 import { useTranslations } from '@/i18n/useTranslations';
@@ -68,9 +68,7 @@ const VersionSwitcher: React.FC<VersionSwitcherProps> = ({
     if (!isOpen) {
       return;
     }
-    const currentIndex = itemRefs.current.findIndex(
-      (item) => item?.getAttribute('aria-current') === 'true',
-    );
+    const currentIndex = itemRefs.current.findIndex((item) => item?.getAttribute('aria-current') === 'true');
     (itemRefs.current[currentIndex === -1 ? 0 : currentIndex] ?? itemRefs.current[0])?.focus();
   }, [isOpen]);
 
@@ -127,9 +125,7 @@ const VersionSwitcher: React.FC<VersionSwitcherProps> = ({
         >
           <HistoryOutlined aria-hidden />
           {showOrdinal && artifactVersionLabel(activeVersion?.version) !== null && (
-            <span className={styles.versionTriggerN}>
-              {artifactVersionLabel(activeVersion?.version)}
-            </span>
+            <span className={styles.versionTriggerN}>{artifactVersionLabel(activeVersion?.version)}</span>
           )}
           <span className={styles.versionTriggerLabel}>{activeVersion?.title ?? ''}</span>
           <DownOutlined aria-hidden className={styles.versionTriggerChevron} />
@@ -156,9 +152,7 @@ const VersionSwitcher: React.FC<VersionSwitcherProps> = ({
                   role="menuitem"
                   aria-current={isCurrent ? 'true' : undefined}
                   className={
-                    isCurrent
-                      ? `${styles.versionMenuItem} ${styles.versionMenuItemCurrent}`
-                      : styles.versionMenuItem
+                    isCurrent ? `${styles.versionMenuItem} ${styles.versionMenuItemCurrent}` : styles.versionMenuItem
                   }
                   onClick={() => {
                     onSelect(v.artifactId);
@@ -166,9 +160,7 @@ const VersionSwitcher: React.FC<VersionSwitcherProps> = ({
                   }}
                 >
                   {showOrdinal && artifactVersionLabel(v.version) !== null && (
-                    <span className={styles.versionMenuItemN}>
-                      {artifactVersionLabel(v.version)}
-                    </span>
+                    <span className={styles.versionMenuItemN}>{artifactVersionLabel(v.version)}</span>
                   )}
                   <span className={styles.versionMenuItemLabel}>{v.title}</span>
                   {/* Before the time, not after it. The label takes the slack, so

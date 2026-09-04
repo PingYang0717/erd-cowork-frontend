@@ -1,11 +1,10 @@
+import { Suspense } from 'react';
+import { describe, expect, it } from 'vitest';
 import { QueryClient } from '@tanstack/react-query';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { Suspense } from 'react';
-import { describe, expect, it } from 'vitest';
 
 import { appWrapper } from '@/test/appHarness';
-
 import ConnectorsPanel from './ConnectorsPanel';
 
 const renderPanel = (sessionId = 'session-1', seedDraft = false) => {
@@ -27,7 +26,7 @@ const renderPanel = (sessionId = 'session-1', seedDraft = false) => {
     <Suspense fallback={null}>
       <ConnectorsPanel sessionId={sessionId} open onClose={() => {}} />
     </Suspense>,
-    { wrapper: appWrapper({ queryClient }) },
+    { wrapper: appWrapper({ queryClient }) }
   );
 };
 
@@ -113,21 +112,14 @@ describe('ConnectorsPanel', () => {
     const first = renderPanel();
 
     await screen.findByRole('button', { name: 'Connect Lot Info' });
-    await user.type(
-      screen.getByRole('textbox', { name: 'Add a custom data source' }),
-      'My Team DB',
-    );
+    await user.type(screen.getByRole('textbox', { name: 'Add a custom data source' }), 'My Team DB');
     await user.click(screen.getByRole('button', { name: /Add/ }));
 
     // Added and picked, but not yet written.
-    expect(
-      await screen.findByRole('button', { name: 'Disconnect My Team DB' }),
-    ).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Disconnect My Team DB' })).toBeInTheDocument();
     await submitSelection(user);
     first.unmount();
     renderPanel();
-    expect(
-      await screen.findByRole('button', { name: 'Disconnect My Team DB' }),
-    ).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Disconnect My Team DB' })).toBeInTheDocument();
   });
 });

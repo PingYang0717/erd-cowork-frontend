@@ -1,13 +1,12 @@
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { describe, expect, it, vi } from 'vitest';
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import { en } from '@/i18n/en';
 import { server } from '@/mocks/server';
 import { appWrapper } from '@/test/appHarness';
 import { artifactFixture } from '@/test/artifactFixture';
-
 import ShareArtifactDialog from './ShareArtifactDialog';
 
 const artifact = artifactFixture();
@@ -29,7 +28,7 @@ const renderDialog = (onClose = vi.fn()) => {
 const selected = async (): Promise<string[]> => {
   return waitFor(() => {
     const tags = Array.from(document.querySelectorAll('.ant-select-selection-item')).map(
-      (node) => node.getAttribute('title') ?? '',
+      (node) => node.getAttribute('title') ?? ''
     );
     expect(tags.length).toBeGreaterThan(0);
     return tags;
@@ -50,7 +49,7 @@ describe('Sharing an Artifact: picking recipients', () => {
         return HttpResponse.json([]);
       }),
       // Not an array — the shape that cannot be written into the cache directly.
-      http.patch('/api/artifacts/:id/shares', () => HttpResponse.json({ ok: true })),
+      http.patch('/api/artifacts/:id/shares', () => HttpResponse.json({ ok: true }))
     );
     const { onClose } = renderDialog();
 
@@ -77,7 +76,7 @@ describe('Sharing an Artifact: picking recipients', () => {
       http.get('/api/hr/employeesAndOrgs', ({ request }) => {
         sent = new URL(request.url);
         return HttpResponse.json({ content: [] });
-      }),
+      })
     );
     renderDialog();
 
@@ -101,18 +100,14 @@ describe('Sharing an Artifact: picking recipients', () => {
     const writeText = vi.fn().mockResolvedValue(undefined);
     navigator.clipboard.writeText = writeText;
     await user.click(screen.getByRole('button', { name: /Copy/ }));
-    expect(writeText).toHaveBeenCalledWith(
-      expect.stringContaining('/#/cowork/artifact/artifact-1'),
-    );
+    expect(writeText).toHaveBeenCalledWith(expect.stringContaining('/#/cowork/artifact/artifact-1'));
   });
 
   /** A body that is not a list — an error rendered as JSON, a shape change — must not
    *  take the dialog down. It must not read as "nobody yet" either: that is a different
    *  fact, and the one the user would act on. */
   it('says so when the share list comes back in a shape it cannot read', async () => {
-    server.use(
-      http.get('/api/artifacts/:id/shares', () => HttpResponse.json({ message: 'unexpected' })),
-    );
+    server.use(http.get('/api/artifacts/:id/shares', () => HttpResponse.json({ message: 'unexpected' })));
     renderDialog();
 
     expect(await screen.findByText(en.share.unavailable)).toBeInTheDocument();
@@ -124,9 +119,7 @@ describe('Sharing an Artifact: picking recipients', () => {
    *  Gallery card may be showing a Shared badge from the same data. Reading one as the
    *  other tells the user an Artifact is private when it may be shared org-wide. */
   it('says so when the share list cannot be fetched, and will not let it be edited', async () => {
-    server.use(
-      http.get('/api/artifacts/:id/shares', () => new HttpResponse(null, { status: 500 })),
-    );
+    server.use(http.get('/api/artifacts/:id/shares', () => new HttpResponse(null, { status: 500 })));
     renderDialog();
 
     expect(await screen.findByText(en.share.unavailable)).toBeInTheDocument();
@@ -187,7 +180,7 @@ describe('Sharing an Artifact: picking recipients', () => {
       http.patch('/api/artifacts/:id/shares', async ({ request }) => {
         body = await request.json();
         return HttpResponse.json([]);
-      }),
+      })
     );
     renderDialog();
 
@@ -201,9 +194,7 @@ describe('Sharing an Artifact: picking recipients', () => {
 
     await user.click(screen.getByRole('button', { name: 'Submit' }));
 
-    await waitFor(() =>
-      expect(body).toEqual({ add: [{ type: 'EMPLOYEE', id: 'CHXXGHYC' }], remove: [] }),
-    );
+    await waitFor(() => expect(body).toEqual({ add: [{ type: 'EMPLOYEE', id: 'CHXXGHYC' }], remove: [] }));
   });
 
   /** Sharing is an edit to a list that already exists, so the dialog opens on it — and
@@ -213,14 +204,12 @@ describe('Sharing an Artifact: picking recipients', () => {
     let body: unknown;
     server.use(
       http.get('/api/artifacts/:id/shares', () =>
-        HttpResponse.json([
-          { type: 'ORG', orgId: 'INTD-1', orgName: '整合技術一課', orgLevel: 'SECTION' },
-        ]),
+        HttpResponse.json([{ type: 'ORG', orgId: 'INTD-1', orgName: '整合技術一課', orgLevel: 'SECTION' }])
       ),
       http.patch('/api/artifacts/:id/shares', async ({ request }) => {
         body = await request.json();
         return HttpResponse.json([]);
-      }),
+      })
     );
     renderDialog();
 
@@ -231,19 +220,13 @@ describe('Sharing an Artifact: picking recipients', () => {
 
     // antd's own remove affordance on the tag; there is no accessible name on it to
     // query by, so the class is the only handle.
-    const remove = chip
-      .closest('.ant-select-selection-item')
-      ?.querySelector('.ant-select-selection-item-remove');
+    const remove = chip.closest('.ant-select-selection-item')?.querySelector('.ant-select-selection-item-remove');
     await user.click(remove as HTMLElement);
     // Removed, not merely clicked: the tag is gone before Submit is pressed.
-    await waitFor(() =>
-      expect(document.querySelectorAll('.ant-select-selection-item')).toHaveLength(0),
-    );
+    await waitFor(() => expect(document.querySelectorAll('.ant-select-selection-item')).toHaveLength(0));
     await user.click(screen.getByRole('button', { name: 'Submit' }));
 
-    await waitFor(() =>
-      expect(body).toEqual({ add: [], remove: [{ type: 'SECTION', id: 'INTD-1' }] }),
-    );
+    await waitFor(() => expect(body).toEqual({ add: [], remove: [{ type: 'SECTION', id: 'INTD-1' }] }));
   });
 
   /** A body whose `content` is missing used to reach a `for…of` and throw "entries is
@@ -257,9 +240,7 @@ describe('Sharing an Artifact: picking recipients', () => {
       // all: that one comes back as `undefined`, which the query layer rejects on its
       // own, so it would pass whether or not this client checked the shape. This is the
       // body that reaches the picker's `for…of` when nothing checks.
-      http.get('/api/hr/employeesAndOrgs', () =>
-        HttpResponse.json({ content: { message: 'unexpected' } }),
-      ),
+      http.get('/api/hr/employeesAndOrgs', () => HttpResponse.json({ content: { message: 'unexpected' } }))
     );
     renderDialog();
 
@@ -267,9 +248,7 @@ describe('Sharing an Artifact: picking recipients', () => {
     await user.click(field);
     await user.type(field, 'CHXXGHYC');
 
-    expect(
-      await screen.findByText(en.share.searchFailed, {}, { timeout: 3000 }),
-    ).toBeInTheDocument();
+    expect(await screen.findByText(en.share.searchFailed, {}, { timeout: 3000 })).toBeInTheDocument();
   });
 
   it('says the search failed when the directory cannot be reached', async () => {
@@ -281,9 +260,7 @@ describe('Sharing an Artifact: picking recipients', () => {
     await user.click(field);
     await user.type(field, 'CHXXGHYC');
 
-    expect(
-      await screen.findByText(en.share.searchFailed, {}, { timeout: 3000 }),
-    ).toBeInTheDocument();
+    expect(await screen.findByText(en.share.searchFailed, {}, { timeout: 3000 })).toBeInTheDocument();
   });
 
   /** The tick and the wording are the only confirmation a copy gets, so they have to be
@@ -321,8 +298,8 @@ describe('Sharing an Artifact: picking recipients', () => {
     // the same person (their org is INTD-1), so a document-wide text query would find the
     // option list and pass without the tag having survived at all.
     await waitFor(() => {
-      const chosen = Array.from(document.querySelectorAll('.ant-select-selection-item')).map(
-        (node) => node.getAttribute('title'),
+      const chosen = Array.from(document.querySelectorAll('.ant-select-selection-item')).map((node) =>
+        node.getAttribute('title')
       );
       expect(chosen).toContain('INTD-1 | CHXXGHYC | 鄭凱宇');
     });

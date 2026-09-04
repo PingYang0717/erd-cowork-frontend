@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
 import type { QuestionForm } from '@/types/api/agentEvent';
-
 import { composeAnswerText } from './composeAnswerText';
 
 const form: QuestionForm = {
@@ -50,7 +49,7 @@ const form: QuestionForm = {
 describe('composeAnswerText', () => {
   it('joins answered fields as label：value pairs, mapping values to option labels', () => {
     expect(composeAnswerText(form, { partIds: ['A14', 'N5'], timeRange: 'cp7d' })).toBe(
-      'Part ID：A14、N5；Time range：近 7 天',
+      'Part ID：A14、N5；Time range：近 7 天'
     );
   });
 
@@ -60,15 +59,11 @@ describe('composeAnswerText', () => {
 
   it('renders a true boolean as its option label and skips a false one', () => {
     expect(composeAnswerText(form, { mineOnly: true })).toBe('檢視：只看我送測的 (王小明)');
-    expect(composeAnswerText(form, { mineOnly: false, timeRange: 'cp7d' })).toBe(
-      'Time range：近 7 天',
-    );
+    expect(composeAnswerText(form, { mineOnly: false, timeRange: 'cp7d' })).toBe('Time range：近 7 天');
   });
 
   it('skips fields hidden by visibleWhen even if they somehow carry an answer', () => {
-    expect(composeAnswerText(form, { flow: 'FEOL', timeRange: 'cp7d' })).toBe(
-      'Time range：近 7 天',
-    );
+    expect(composeAnswerText(form, { flow: 'FEOL', timeRange: 'cp7d' })).toBe('Time range：近 7 天');
   });
 
   it('skips unanswered fields entirely', () => {

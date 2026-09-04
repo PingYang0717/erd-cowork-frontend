@@ -97,21 +97,16 @@ export const useRepairOfferStore = create<RepairOfferState>()(
       setStatus: (artifactId, status, failureMessage) =>
         set(
           (state) =>
-            state.offer?.artifactId === artifactId
-              ? { offer: { ...state.offer, status, failureMessage } }
-              : state,
+            state.offer?.artifactId === artifactId ? { offer: { ...state.offer, status, failureMessage } } : state,
           false,
-          'setStatus',
+          'setStatus'
         ),
 
       resolve: (artifactId) =>
         set(
-          (state) =>
-            state.offer?.artifactId === artifactId
-              ? promoteNext(state.queue, state.dismissed)
-              : state,
+          (state) => (state.offer?.artifactId === artifactId ? promoteNext(state.queue, state.dismissed) : state),
           false,
-          'resolve',
+          'resolve'
         ),
 
       dismiss: () =>
@@ -124,11 +119,11 @@ export const useRepairOfferStore = create<RepairOfferState>()(
             return { dismissed, ...promoteNext(state.queue, dismissed) };
           },
           false,
-          'dismiss',
+          'dismiss'
         ),
 
       reset: () => set({ offer: null, queue: [] }, false, 'reset'),
     }),
-    { name: 'RepairOffer' },
-  ),
+    { name: 'RepairOffer' }
+  )
 );

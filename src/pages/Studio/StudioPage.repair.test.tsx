@@ -1,7 +1,7 @@
-import { act, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { beforeEach, describe, expect, it } from 'vitest';
+import { act, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import { en } from '@/i18n/en';
 import { server } from '@/mocks/server';
@@ -28,7 +28,7 @@ const reportRuntimeError = (iframe: HTMLIFrameElement, message: string) => {
       new MessageEvent('message', {
         data: { type: 'erd-artifact-error', errors: [{ message, line: 42, col: 7 }] },
         source: iframe.contentWindow,
-      }),
+      })
     );
   });
 };
@@ -61,9 +61,7 @@ describe('Artifact repair', () => {
     reportRuntimeError(iframe, "Cannot read properties of undefined (reading 'series')");
 
     expect(await screen.findByText(en.repair.detected(1))).toBeInTheDocument();
-    expect(
-      screen.getByText("Cannot read properties of undefined (reading 'series')"),
-    ).toBeInTheDocument();
+    expect(screen.getByText("Cannot read properties of undefined (reading 'series')")).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Repair' }));
 
@@ -95,7 +93,7 @@ describe('Artifact repair', () => {
       http.post('/api/artifacts/:id/repair', () => {
         attempts += 1;
         return HttpResponse.json({ repaired: false });
-      }),
+      })
     );
     renderStudio();
 
@@ -118,8 +116,8 @@ describe('Artifact repair', () => {
     const user = userEvent.setup();
     server.use(
       http.post('/api/artifacts/:id/repair', () =>
-        HttpResponse.json({ code: 'FILES_EXPIRED', message: '檔案已過期' }, { status: 409 }),
-      ),
+        HttpResponse.json({ code: 'FILES_EXPIRED', message: '檔案已過期' }, { status: 409 })
+      )
     );
     renderStudio();
 

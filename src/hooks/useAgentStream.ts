@@ -1,12 +1,11 @@
-import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useReducer, useRef } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 
 import { AgentStreamHttpError, type SendMessageArgs, streamAgentMessage } from '@/api/agentApi';
 import { isCanceled } from '@/api/apiError';
 import { getTranslations } from '@/i18n/useTranslations';
 import type { AgentEvent, QuestionForm, StepItem, TableResult } from '@/types/api/agentEvent';
 import { liftQuestions } from '@/utils/liftQuestions';
-
 import { sessionsQueryKey } from './useSessions';
 
 /** Everything about a run except which session it belongs to and how it is cancelled. */
@@ -178,7 +177,7 @@ const reducer = (state: AgentStreamState, action: Action): AgentStreamState => {
 };
 
 export const useAgentStream = (
-  sessionId: string,
+  sessionId: string
 ): {
   state: AgentStreamState;
   send(input: SendInput): Promise<void>;
@@ -204,7 +203,7 @@ export const useAgentStream = (
   // them separately made the detail refetch get cancelled and reissued every time.
   const invalidateSessionData = useCallback(
     () => queryClient.invalidateQueries({ queryKey: sessionsQueryKey }),
-    [queryClient],
+    [queryClient]
   );
 
   // Syncing with an external system (an open HTTP connection) is the one thing
@@ -217,7 +216,7 @@ export const useAgentStream = (
         clearTimeout(timer);
       }
     },
-    [],
+    []
   );
 
   const send = useCallback(
@@ -251,9 +250,9 @@ export const useAgentStream = (
               abortRefetchTimersRef.current.push(
                 setTimeout(() => {
                   void invalidateSessionData();
-                }, 800),
+                }, 800)
               );
-            }, 800),
+            }, 800)
           );
           return;
         }
@@ -275,7 +274,7 @@ export const useAgentStream = (
       await invalidateSessionData();
       dispatch({ type: 'DONE', durationMs: Date.now() - startedAt });
     },
-    [sessionId, invalidateSessionData],
+    [sessionId, invalidateSessionData]
   );
 
   const stop = useCallback((): void => {

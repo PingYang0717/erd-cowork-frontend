@@ -1,3 +1,6 @@
+import React, { useState } from 'react';
+import { Button } from 'antd';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
   AppstoreOutlined,
   CaretDownOutlined,
@@ -6,17 +9,14 @@ import {
   MenuFoldOutlined,
   PlusOutlined,
 } from '@ant-design/icons';
-import { Button } from 'antd';
-import React, { useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
 
 import { useSessionGroups } from '@/hooks/useSessionGroups';
 import { useTranslations } from '@/i18n/useTranslations';
 import { usePublishCoachStore } from '@/stores/usePublishCoachStore';
 import type { Session } from '@/types/api/session';
+import SessionRow from './SessionRow';
 
 import styles from './SessionList.module.css';
-import SessionRow from './SessionRow';
 
 export interface SessionGroupProps {
   label: string;
@@ -86,14 +86,8 @@ interface SessionListProps {
 
 const SessionList: React.FC<SessionListProps> = ({ onCollapse, artifactsCount }) => {
   const t = useTranslations();
-  const {
-    pinned,
-    recent,
-    draftSessionId,
-    selectedSessionId,
-    selectAndNavigate,
-    createAndNavigate,
-  } = useSessionGroups();
+  const { pinned, recent, draftSessionId, selectedSessionId, selectAndNavigate, createAndNavigate } =
+    useSessionGroups();
   const navigate = useNavigate();
   const location = useLocation();
   const isCoaching = usePublishCoachStore((s) => s.isActive);

@@ -31,7 +31,7 @@ export interface FileLike {
  *  an unsupported extension only skips that file. */
 export const planFileAdditions = <T extends FileLike>(
   existing: UploadedFileInfo[],
-  incoming: Iterable<T>,
+  incoming: Iterable<T>
 ): { accepted: T[]; error: string } => {
   const t = getTranslations().files;
   const existingNames = new Set(existing.map((file) => file.name));

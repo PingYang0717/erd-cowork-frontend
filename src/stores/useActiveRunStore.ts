@@ -52,11 +52,9 @@ export const useActiveRunStore = create<ActiveRunState>()(
       // wipe the pick every time a run merely starts or the thread unmounts.
       setStreamedArtifact: (streamedArtifact) =>
         set(
-          streamedArtifact === null
-            ? { streamedArtifact }
-            : { streamedArtifact, pickedArtifactId: null },
+          streamedArtifact === null ? { streamedArtifact } : { streamedArtifact, pickedArtifactId: null },
           false,
-          'setStreamedArtifact',
+          'setStreamedArtifact'
         ),
       pickedArtifactId: null,
       pickArtifact: (pickedArtifactId) => set({ pickedArtifactId }, false, 'pickArtifact'),
@@ -64,16 +62,11 @@ export const useActiveRunStore = create<ActiveRunState>()(
       isRunStreaming: false,
       setRunStreaming: (isRunStreaming) => set({ isRunStreaming }, false, 'setRunStreaming'),
       displayedArtifactId: null,
-      setDisplayedArtifactId: (displayedArtifactId) =>
-        set({ displayedArtifactId }, false, 'setDisplayedArtifactId'),
+      setDisplayedArtifactId: (displayedArtifactId) => set({ displayedArtifactId }, false, 'setDisplayedArtifactId'),
       artifactReloadNonce: 0,
       bumpArtifactReload: () =>
-        set(
-          (state) => ({ artifactReloadNonce: state.artifactReloadNonce + 1 }),
-          false,
-          'bumpArtifactReload',
-        ),
+        set((state) => ({ artifactReloadNonce: state.artifactReloadNonce + 1 }), false, 'bumpArtifactReload'),
     }),
-    { name: 'ActiveRun' },
-  ),
+    { name: 'ActiveRun' }
+  )
 );

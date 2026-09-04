@@ -1,7 +1,7 @@
-import { screen, waitFor, within } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { beforeEach, describe, expect, it } from 'vitest';
+import { screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import { en } from '@/i18n/en';
 import { server } from '@/mocks/server';
@@ -32,8 +32,8 @@ describe('Session row actions', () => {
     const user = userEvent.setup();
     server.use(
       http.patch('/api/sessions/:id/pin', () =>
-        HttpResponse.json({ code: 'E_PIN', message: '釘選失敗:配額已滿' }, { status: 400 }),
-      ),
+        HttpResponse.json({ code: 'E_PIN', message: '釘選失敗:配額已滿' }, { status: 400 })
+      )
     );
     renderStudio();
 
@@ -50,9 +50,7 @@ describe('Session row actions', () => {
    *  reported as unbuilt, the reader waits for something that is already there. */
   it('names a server error as a failure, not as an unbuilt endpoint', async () => {
     const user = userEvent.setup();
-    server.use(
-      http.patch('/api/sessions/:id/soft-delete', () => new HttpResponse(null, { status: 500 })),
-    );
+    server.use(http.patch('/api/sessions/:id/soft-delete', () => new HttpResponse(null, { status: 500 })));
     renderStudio();
 
     await openMenuOf(user, 'Defect pareto — W12');
@@ -92,7 +90,7 @@ describe('Session row actions', () => {
       http.get('/api/sessions/session-1', () => {
         openDetailFetches += 1;
         return undefined;
-      }),
+      })
     );
     const user = userEvent.setup();
     renderStudio();
@@ -129,9 +127,9 @@ describe('Session row actions', () => {
     await screen.findByRole('button', { name: 'Vt tracking — Aug' });
 
     await user.click(screen.getByRole('button', { name: /^Artifacts/ }));
-    const card = (
-      await screen.findByRole('button', { name: 'SPC analysis — Vt (gate CD)' })
-    ).closest('[role="listitem"]') as HTMLElement;
+    const card = (await screen.findByRole('button', { name: 'SPC analysis — Vt (gate CD)' })).closest(
+      '[role="listitem"]'
+    ) as HTMLElement;
 
     expect(card).toHaveTextContent('Vt tracking — Aug');
     expect(card).not.toHaveTextContent('SPC — Vt (gate CD)');
@@ -142,17 +140,13 @@ describe('Session row actions', () => {
     renderStudio();
 
     const recents = await screen.findByRole('region', { name: 'Recents sessions' });
-    expect(
-      within(recents).getByRole('button', { name: 'Defect pareto — W12' }),
-    ).toBeInTheDocument();
+    expect(within(recents).getByRole('button', { name: 'Defect pareto — W12' })).toBeInTheDocument();
 
     await openMenuOf(user, 'Defect pareto — W12');
     await user.click(await screen.findByRole('menuitem', { name: 'Pin' }));
 
     const pinned = screen.getByRole('region', { name: 'Pinned sessions' });
-    expect(
-      await within(pinned).findByRole('button', { name: 'Defect pareto — W12' }),
-    ).toBeInTheDocument();
+    expect(await within(pinned).findByRole('button', { name: 'Defect pareto — W12' })).toBeInTheDocument();
   });
 
   /** Deleting the session you are *in* used to leave the selection pointing at it: the
@@ -173,9 +167,7 @@ describe('Session row actions', () => {
     // The destructive step now sits behind a confirm — click through it.
     await user.click(await screen.findByRole('button', { name: 'Delete' }));
 
-    await waitFor(() =>
-      expect(screen.queryByRole('button', { name: 'Defect pareto — W12' })).not.toBeInTheDocument(),
-    );
+    await waitFor(() => expect(screen.queryByRole('button', { name: 'Defect pareto — W12' })).not.toBeInTheDocument());
     // The selection must no longer be the deleted id. It does not go empty: the landing
     // effect in useSessionGroups opens the most recent remaining conversation, which is
     // the behaviour we want — what matters is that nothing still points at the deleted
@@ -200,23 +192,17 @@ describe('Session row actions', () => {
     await waitForComposer();
     const draftId = useSessionSelectionStore.getState().selectedSessionId;
 
-    await user.type(
-      screen.getByRole('textbox', { name: 'Message' }),
-      'Run an SPC analysis.{Enter}',
-    );
-    await waitFor(
-      () => expect(screen.getByRole('button', { name: 'Send message' })).toBeInTheDocument(),
-      { timeout: 5000 },
-    );
+    await user.type(screen.getByRole('textbox', { name: 'Message' }), 'Run an SPC analysis.{Enter}');
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Send message' })).toBeInTheDocument(), {
+      timeout: 5000,
+    });
 
     await openMenuOf(user, 'New analysis');
     await user.click(await screen.findByRole('menuitem', { name: 'Delete' }));
     // The destructive step now sits behind a confirm — click through it.
     await user.click(await screen.findByRole('button', { name: 'Delete' }));
 
-    await waitFor(() =>
-      expect(screen.queryByRole('button', { name: 'New analysis' })).not.toBeInTheDocument(),
-    );
+    await waitFor(() => expect(screen.queryByRole('button', { name: 'New analysis' })).not.toBeInTheDocument());
     const { selectedSessionId, draftStartedAt } = useSessionSelectionStore.getState();
     expect(selectedSessionId).not.toBe(draftId);
     expect(draftStartedAt).toBeNull();
@@ -233,26 +219,18 @@ describe('Session row actions', () => {
 
     await user.click(await screen.findByRole('button', { name: 'Defect pareto — W12' }));
     await waitForComposer();
-    expect(screen.getByRole('button', { name: 'Defect pareto — W12' })).toHaveAttribute(
-      'aria-current',
-      'true',
-    );
+    expect(screen.getByRole('button', { name: 'Defect pareto — W12' })).toHaveAttribute('aria-current', 'true');
 
     await user.click(screen.getByRole('button', { name: /^Artifacts/ }));
     await waitFor(() =>
-      expect(screen.getByRole('button', { name: 'Defect pareto — W12' })).not.toHaveAttribute(
-        'aria-current',
-      ),
+      expect(screen.getByRole('button', { name: 'Defect pareto — W12' })).not.toHaveAttribute('aria-current')
     );
     // The selection itself is untouched: the row is still what reopens.
     expect(useSessionSelectionStore.getState().selectedSessionId).toBe('session-2');
 
     await user.click(screen.getByRole('button', { name: 'Defect pareto — W12' }));
     await waitFor(() =>
-      expect(screen.getByRole('button', { name: 'Defect pareto — W12' })).toHaveAttribute(
-        'aria-current',
-        'true',
-      ),
+      expect(screen.getByRole('button', { name: 'Defect pareto — W12' })).toHaveAttribute('aria-current', 'true')
     );
   });
 
@@ -265,9 +243,7 @@ describe('Session row actions', () => {
     // The destructive step now sits behind a confirm — click through it.
     await user.click(await screen.findByRole('button', { name: 'Delete' }));
 
-    await waitFor(() =>
-      expect(screen.queryByRole('button', { name: 'Defect pareto — W12' })).not.toBeInTheDocument(),
-    );
+    await waitFor(() => expect(screen.queryByRole('button', { name: 'Defect pareto — W12' })).not.toBeInTheDocument());
   });
 
   /** The other half of the confirm: backing out is a real path, and it must leave

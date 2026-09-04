@@ -1,7 +1,7 @@
-import { screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { beforeEach, describe, expect, it } from 'vitest';
+import { screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import { server } from '@/mocks/server';
 import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
@@ -29,10 +29,7 @@ describe('Per-version Artifact publishing', () => {
     expect(await screen.findByText('Published')).toBeInTheDocument();
 
     // Regenerating produces a new, not-yet-published version.
-    await user.type(
-      await screen.findByRole('textbox', { name: 'Message' }),
-      'Regenerate the dashboard.{Enter}',
-    );
+    await user.type(await screen.findByRole('textbox', { name: 'Message' }), 'Regenerate the dashboard.{Enter}');
 
     await screen.findByRole('button', { name: 'Publish Artifact' });
     expect(screen.queryByText('Published')).not.toBeInTheDocument();
@@ -56,16 +53,13 @@ describe('Per-version Artifact publishing', () => {
       http.get('/api/artifacts/:id', () => {
         contentFetches += 1;
         return undefined;
-      }),
+      })
     );
 
     const user = userEvent.setup();
     renderStudio();
     await user.click(await screen.findByRole('button', { name: 'SPC — Vt (gate CD)' }));
-    await user.type(
-      await screen.findByRole('textbox', { name: 'Message' }),
-      'Regenerate the dashboard.{Enter}',
-    );
+    await user.type(await screen.findByRole('textbox', { name: 'Message' }), 'Regenerate the dashboard.{Enter}');
     await screen.findByRole('button', { name: 'Publish Artifact' });
     const fetchesBeforePublish = contentFetches;
 
@@ -73,9 +67,7 @@ describe('Per-version Artifact publishing', () => {
     await screen.findByText('Published');
     // The list refetch (publishedAt badge) has landed by now; give any stray content
     // refetch the same window before counting.
-    await waitFor(() =>
-      expect(screen.queryByRole('button', { name: 'Publish Artifact' })).toBeNull(),
-    );
+    await waitFor(() => expect(screen.queryByRole('button', { name: 'Publish Artifact' })).toBeNull());
 
     expect(contentFetches).toBe(fetchesBeforePublish);
   });
@@ -100,16 +92,13 @@ describe('Per-version Artifact publishing', () => {
       http.post('/api/artifacts/:id/publish', async ({ request }) => {
         published = await request.json();
         return new HttpResponse(null, { status: 200 });
-      }),
+      })
     );
     renderStudio();
 
     await user.click(await screen.findByRole('button', { name: 'SPC — Vt (gate CD)' }));
     await screen.findByText('Published');
-    await user.type(
-      await screen.findByRole('textbox', { name: 'Message' }),
-      'Regenerate the dashboard.{Enter}',
-    );
+    await user.type(await screen.findByRole('textbox', { name: 'Message' }), 'Regenerate the dashboard.{Enter}');
 
     await user.click(await screen.findByRole('button', { name: 'Publish Artifact' }));
     const nameField = await screen.findByLabelText('Name');
@@ -134,10 +123,7 @@ describe('Per-version Artifact publishing', () => {
 
     await user.click(await screen.findByRole('button', { name: 'SPC — Vt (gate CD)' }));
     await screen.findByText('Published');
-    await user.type(
-      await screen.findByRole('textbox', { name: 'Message' }),
-      'Regenerate the dashboard.{Enter}',
-    );
+    await user.type(await screen.findByRole('textbox', { name: 'Message' }), 'Regenerate the dashboard.{Enter}');
     await screen.findByRole('button', { name: 'Publish Artifact' });
 
     await user.click(await screen.findByRole('button', { name: 'Switch Artifact' }));
@@ -158,10 +144,7 @@ describe('Per-version Artifact publishing', () => {
     await user.click(await screen.findByRole('button', { name: 'SPC — Vt (gate CD)' }));
     await screen.findByText('Published');
 
-    await user.type(
-      await screen.findByRole('textbox', { name: 'Message' }),
-      'Regenerate the dashboard.{Enter}',
-    );
+    await user.type(await screen.findByRole('textbox', { name: 'Message' }), 'Regenerate the dashboard.{Enter}');
     await screen.findByRole('button', { name: 'Publish Artifact' });
 
     expect(screen.getByRole('button', { name: 'Share artifact' })).toBeDisabled();
@@ -176,10 +159,7 @@ describe('Per-version Artifact publishing', () => {
     await user.click(await screen.findByRole('button', { name: 'SPC — Vt (gate CD)' }));
     await screen.findByText('Published');
 
-    await user.type(
-      await screen.findByRole('textbox', { name: 'Message' }),
-      'Regenerate the dashboard.{Enter}',
-    );
+    await user.type(await screen.findByRole('textbox', { name: 'Message' }), 'Regenerate the dashboard.{Enter}');
     await screen.findByRole('button', { name: 'Publish Artifact' });
 
     // Switch back to the seeded, already-published first output: the chip returns.

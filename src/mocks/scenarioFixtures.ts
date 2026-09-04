@@ -39,8 +39,7 @@ export const SCENARIO_FIXTURES: Record<ScenarioKey, ScenarioFixture> = {
         status: 'SUCCESS',
       },
     ],
-    reply:
-      'Done — recomputed control limits and applied Western Electric rules. One out-of-control point remains.',
+    reply: 'Done — recomputed control limits and applied Western Electric rules. One out-of-control point remains.',
   },
   inline: {
     artifactName: 'Inline dashboard',
@@ -64,8 +63,7 @@ export const SCENARIO_FIXTURES: Record<ScenarioKey, ScenarioFixture> = {
         status: 'SUCCESS',
       },
     ],
-    reply:
-      'First version of the Inline dashboard is ready — review each item’s control chart and OOC wafers.',
+    reply: 'First version of the Inline dashboard is ready — review each item’s control chart and OOC wafers.',
   },
   daily: {
     artifactName: 'Daily Monitor Dashboard — A14',
@@ -89,8 +87,7 @@ export const SCENARIO_FIXTURES: Record<ScenarioKey, ScenarioFixture> = {
         status: 'SUCCESS',
       },
     ],
-    reply:
-      'Daily Monitor Dashboard — A14 generated, merging Approval Center, EXP Health, and Inline SPC data.',
+    reply: 'Daily Monitor Dashboard — A14 generated, merging Approval Center, EXP Health, and Inline SPC data.',
   },
   cptest: {
     artifactName: 'CP Test status',
@@ -114,8 +111,7 @@ export const SCENARIO_FIXTURES: Record<ScenarioKey, ScenarioFixture> = {
         status: 'SUCCESS',
       },
     ],
-    reply:
-      'CP Test status dashboard is ready — see current submissions grouped by site and progress.',
+    reply: 'CP Test status dashboard is ready — see current submissions grouped by site and progress.',
   },
 };
 

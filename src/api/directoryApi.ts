@@ -1,5 +1,4 @@
 import type { DirectoryEntry } from '@/types/api';
-
 import { apiClient } from './apiClient';
 
 /** How many characters the user must type before a search is worth making. The
@@ -23,10 +22,7 @@ interface DirectorySearchResponse {
  *  It raises rather than answering with an empty list. "No such person" is a real answer
  *  and a useful one; a broken response wearing that answer sends the user off to re-check
  *  a spelling that was never the problem. */
-export const searchDirectory = async (
-  keyword: string,
-  signal?: AbortSignal,
-): Promise<DirectoryEntry[]> => {
+export const searchDirectory = async (keyword: string, signal?: AbortSignal): Promise<DirectoryEntry[]> => {
   const body = await apiClient.get<DirectorySearchResponse>('/hr/employeesAndOrgs', {
     params: { keyword },
     signal,

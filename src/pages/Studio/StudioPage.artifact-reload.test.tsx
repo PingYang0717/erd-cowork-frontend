@@ -1,6 +1,6 @@
+import { beforeEach, describe, expect, it } from 'vitest';
 import { act, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, it } from 'vitest';
 
 import { useActiveRunStore } from '@/stores/useActiveRunStore';
 import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
@@ -13,7 +13,7 @@ import { answerAnalysisConditions } from '@/test/studioRun';
  *  leaving the stream open so the panel is observable mid-run. */
 const runSpcScenarioWithMockStream = async (
   user: ReturnType<typeof userEvent.setup>,
-  stream: ReturnType<typeof mockAgentStream>,
+  stream: ReturnType<typeof mockAgentStream>
 ) => {
   await user.click(await screen.findByRole('button', { name: 'New chat' }));
   await screen.findByRole('textbox', { name: 'Message' });
@@ -63,9 +63,7 @@ describe('Artifact Reload', () => {
     expect(screen.getByRole('button', { name: 'Reload artifact' })).toBeDisabled();
 
     act(() => stream.close());
-    await waitFor(() =>
-      expect(screen.getByRole('button', { name: 'Reload artifact' })).toBeEnabled(),
-    );
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Reload artifact' })).toBeEnabled());
   });
 
   it('mounts a fresh document once a repair has rebuilt the artifact', async () => {

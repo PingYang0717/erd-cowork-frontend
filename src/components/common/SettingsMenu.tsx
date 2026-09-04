@@ -1,6 +1,6 @@
-import { SettingOutlined } from '@ant-design/icons';
-import { Popover, Segmented } from 'antd';
 import React, { useCallback, useRef, useState } from 'react';
+import { Popover, Segmented } from 'antd';
+import { SettingOutlined } from '@ant-design/icons';
 
 import { useTranslations } from '@/i18n/useTranslations';
 import { type Language, useLanguageStore } from '@/stores/useLanguageStore';
@@ -34,14 +34,8 @@ const SettingsMenu: React.FC<SettingsMenuProps> = ({ variant }) => {
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
 
-  const handleLanguageChange = useCallback(
-    (value: string | number) => setLanguage(value as Language),
-    [setLanguage],
-  );
-  const handleThemeChange = useCallback(
-    (value: string | number) => setDarkMode(value === 'dark'),
-    [setDarkMode],
-  );
+  const handleLanguageChange = useCallback((value: string | number) => setLanguage(value as Language), [setLanguage]);
+  const handleThemeChange = useCallback((value: string | number) => setDarkMode(value === 'dark'), [setDarkMode]);
   /** The dialog keyboard contract this repo adopted (A-2/A-6): Escape closes and puts
    *  focus back on the opener. antd's Popover does neither for a custom child, so the
    *  panel and the trigger both carry it. */

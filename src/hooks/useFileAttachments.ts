@@ -1,11 +1,10 @@
-import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 
 import { errorMessage, isOffline } from '@/api/apiError';
 import { deleteFile, uploadFiles, type UploadProgress } from '@/api/fileApi';
 import { useActionErrorToast } from '@/hooks/useActionErrorToast';
 import { planFileAdditions } from '@/utils/uploadValidation';
-
 import { sessionDetailQueryKey, useSessionDetail } from './useSessionDetail';
 
 export {
@@ -52,10 +51,7 @@ export const useFileAttachments = (sessionId: string) => {
       // thrown away for the generic sentence. Offline gets named; only a reason-less
       // failure falls back to the generic wording.
       const t = getTranslations();
-      setError(
-        errorMessage(uploadError) ??
-          (isOffline(uploadError) ? t.errors.offlineAction : t.files.uploadFailed),
-      );
+      setError(errorMessage(uploadError) ?? (isOffline(uploadError) ? t.errors.offlineAction : t.files.uploadFailed));
     } finally {
       setUploadProgress(null);
     }

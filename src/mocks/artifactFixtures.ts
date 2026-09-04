@@ -78,7 +78,7 @@ const renderDashboardHtml = (content: ArtifactContent) => {
       <div class="stat-label">${stat.label}</div>
       <div class="stat-value">${stat.value}</div>
       <div class="stat-sub">${stat.sub}</div>
-    </div>`,
+    </div>`
     )
     .join('');
 
@@ -113,7 +113,7 @@ const renderSlidesHtml = (content: ArtifactContent) => {
         <span class="figure-value">${stat.value}</span>
         <span class="figure-label">${stat.label}</span>
         <span class="figure-sub">${stat.sub}</span>
-      </li>`,
+      </li>`
     )
     .join('');
 
@@ -164,8 +164,7 @@ const SCENARIO_CONTENT: Record<ScenarioKey, ArtifactContent> = {
   spc: {
     title: 'SPC analysis — Vt (gate CD)',
     subtitle: 'Inline DB · N5 line',
-    description:
-      'Control chart with CL / ±3σ limits and Western Electric rules applied to Vt (gate CD).',
+    description: 'Control chart with CL / ±3σ limits and Western Electric rules applied to Vt (gate CD).',
     tags: ['Control chart', 'Western Electric'],
     stats: [
       { label: 'Mean Vt', value: '0.421 V', sub: 'target 0.420' },
@@ -212,13 +211,8 @@ const SCENARIO_CONTENT: Record<ScenarioKey, ArtifactContent> = {
 // Every version of an Artifact renders its own content: the version number is
 // carried into the rendered subtitle, so regenerating an Artifact produces a
 // version that is visibly different from the one before it.
-export const buildArtifactFixture = (
-  scenario: ScenarioKey,
-  kind: ArtifactKind,
-  versionN?: number,
-): string => {
+export const buildArtifactFixture = (scenario: ScenarioKey, kind: ArtifactKind, versionN?: number): string => {
   const content = SCENARIO_CONTENT[scenario];
-  const versioned =
-    versionN == null ? content : { ...content, subtitle: `${content.subtitle} · v${versionN}` };
+  const versioned = versionN == null ? content : { ...content, subtitle: `${content.subtitle} · v${versionN}` };
   return buildFixture(versioned, kind);
 };

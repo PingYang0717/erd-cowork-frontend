@@ -3,7 +3,6 @@ import { http, HttpResponse } from 'msw';
 import type { Artifact } from '@/types/api/artifact';
 import type { DirectoryEntry, ShareTarget } from '@/types/api/directory';
 import type { ScenarioKey } from '@/types/api/scenario';
-
 import { type ArtifactKind, buildArtifactFixture } from './artifactFixtures';
 import { currentUser } from './currentUser';
 import { messages } from './handlers.messages';
@@ -57,7 +56,7 @@ const sharesOf = (artifactId: string): DirectoryEntry[] => {
     .map(({ type, id }) =>
       type === 'EMPLOYEE'
         ? { type: 'EMPLOYEE' as const, employeeNt: id, employeeName: id, employeeOrgName: '' }
-        : { type: 'ORG' as const, orgId: id, orgName: id, orgLevel: type },
+        : { type: 'ORG' as const, orgId: id, orgName: id, orgLevel: type }
     );
 };
 
@@ -126,18 +125,13 @@ const toArtifactDto = (stored: StoredArtifact): Artifact => {
     publishedAt: stored.publishedAt,
     createdAt: stored.createdAt,
     owner: stored.ownerId,
-    ownerDisplay: isOwn
-      ? currentUser.name
-      : (OWNER_DISPLAY_NAMES[stored.ownerId] ?? stored.ownerId),
+    ownerDisplay: isOwn ? currentUser.name : (OWNER_DISPLAY_NAMES[stored.ownerId] ?? stored.ownerId),
     isOwn,
     isShared: stored.isShared,
     hasPersonalCopy: false,
   };
 };
-const updateArtifact = (
-  id: string | readonly string[] | undefined,
-  change: Partial<StoredArtifact>,
-) => {
+const updateArtifact = (id: string | readonly string[] | undefined, change: Partial<StoredArtifact>) => {
   const all = artifacts.read();
   const existing = all.find((artifact) => artifact.id === id);
   if (!existing) {
@@ -155,9 +149,7 @@ const setPublished = (id: string | readonly string[] | undefined, published: boo
  *  does — by its position among the session's artifact-bearing messages — so the
  *  rendered "· vN" matches the menu. */
 const artifactVersionOrdinal = (artifact: { id: string; sessionId: string }): number => {
-  const artifactMessages = messages
-    .read()
-    .filter((m) => m.sessionId === artifact.sessionId && m.artifactId != null);
+  const artifactMessages = messages.read().filter((m) => m.sessionId === artifact.sessionId && m.artifactId != null);
   const index = artifactMessages.findIndex((m) => m.artifactId === artifact.id);
   return index >= 0 ? index + 1 : 1;
 };
@@ -178,9 +170,7 @@ export const artifactHandlers = [
       return new HttpResponse(null, { status: 404 });
     }
     const pinnedAt = existing.pinnedAt == null ? new Date().toISOString() : null;
-    artifacts.write(
-      all.map((artifact) => (artifact.id === params.id ? { ...artifact, pinnedAt } : artifact)),
-    );
+    artifacts.write(all.map((artifact) => (artifact.id === params.id ? { ...artifact, pinnedAt } : artifact)));
     // Answers with what the toggle settled, not with the whole Artifact — and names its
     // subject `artifactId`, not `id`. Kept faithful on purpose: a mock that answered
     // with a full DTO would let a client reading `id` pass here and fail in production,
@@ -205,10 +195,8 @@ export const artifactHandlers = [
     const publishedAt = new Date().toISOString();
     artifacts.write(
       all.map((artifact) =>
-        artifact.id === params.id
-          ? { ...artifact, publishedAt, ...(title ? { title } : {}) }
-          : artifact,
-      ),
+        artifact.id === params.id ? { ...artifact, publishedAt, ...(title ? { title } : {}) } : artifact
+      )
     );
     // Answers with what the call settled, not with the whole Artifact — and names its
     // subject `artifactId`, not `id`. Kept faithful on purpose: a mock that answered with
@@ -225,11 +213,7 @@ export const artifactHandlers = [
     if (!artifact) {
       return new HttpResponse(null, { status: 404 });
     }
-    const fixture = buildArtifactFixture(
-      artifact.scenario,
-      artifact.kind,
-      artifactVersionOrdinal(artifact),
-    );
+    const fixture = buildArtifactFixture(artifact.scenario, artifact.kind, artifactVersionOrdinal(artifact));
     // The backend serves text/html directly, not { html } JSON. The `r` cache-buster
     // (reload nonce) needs no reading — the same document simply goes out again.
     return new HttpResponse(fixture, { headers: { 'Content-Type': 'text/html' } });
@@ -242,11 +226,7 @@ export const artifactHandlers = [
     if (!artifact) {
       return new HttpResponse(null, { status: 404 });
     }
-    const fixture = buildArtifactFixture(
-      artifact.scenario,
-      artifact.kind,
-      artifactVersionOrdinal(artifact),
-    );
+    const fixture = buildArtifactFixture(artifact.scenario, artifact.kind, artifactVersionOrdinal(artifact));
     return new HttpResponse(fixture, { headers: { 'Content-Type': 'text/plain' } });
   }),
 
@@ -258,9 +238,7 @@ export const artifactHandlers = [
   // Reading is what the dialog opens on; the change is a delta, so two people editing
   // the same Artifact add and remove their own recipients instead of the second one
   // silently reverting the first.
-  http.get('/api/artifacts/:id/shares', ({ params }) =>
-    HttpResponse.json(sharesOf(params.id as string)),
-  ),
+  http.get('/api/artifacts/:id/shares', ({ params }) => HttpResponse.json(sharesOf(params.id as string))),
 
   http.patch('/api/artifacts/:id/shares', async ({ params, request }) => {
     const artifactId = params.id as string;
@@ -269,12 +247,8 @@ export const artifactHandlers = [
       remove?: ShareTarget[];
     };
     const removed = new Set(remove.map(targetKey));
-    const kept = shares
-      .read()
-      .filter((share) => share.artifactId !== artifactId || !removed.has(targetKey(share)));
-    const existing = new Set(
-      kept.filter((share) => share.artifactId === artifactId).map(targetKey),
-    );
+    const kept = shares.read().filter((share) => share.artifactId !== artifactId || !removed.has(targetKey(share)));
+    const existing = new Set(kept.filter((share) => share.artifactId === artifactId).map(targetKey));
     shares.write([
       ...kept,
       ...add
@@ -285,9 +259,7 @@ export const artifactHandlers = [
     // `isShared` is the owner's view of whether anyone holds it, so it follows the list.
     const all = artifacts.read();
     const isShared = sharesOf(artifactId).length > 0;
-    artifacts.write(
-      all.map((artifact) => (artifact.id === artifactId ? { ...artifact, isShared } : artifact)),
-    );
+    artifacts.write(all.map((artifact) => (artifact.id === artifactId ? { ...artifact, isShared } : artifact)));
     return HttpResponse.json(sharesOf(artifactId));
   }),
 

@@ -52,7 +52,7 @@ export const useResizablePane = <T extends HTMLElement>({
         paneRef.current.style.width = `${widthRef.current}px`;
       }
     },
-    [min, max],
+    [min, max]
   );
 
   const onDragEnd = useCallback(() => {

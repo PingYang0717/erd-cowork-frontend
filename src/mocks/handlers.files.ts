@@ -1,7 +1,6 @@
 import { http, HttpResponse } from 'msw';
 
 import type { UploadedFileInfo } from '@/types/api/upload';
-
 import { upsertSession } from './handlers.sessions';
 import { createPersistedResource } from './persistedResource';
 
@@ -22,9 +21,7 @@ export const sessionFiles = createPersistedResource<StoredFile>('erd-cowork:sess
  *  brand-checks File entries and rejects jsdom's File in tests. latin1 maps one char
  *  per byte, so part sizes stay exact. Only metadata is kept — the mock never stores
  *  file contents. */
-const parseMultipartFiles = async (
-  request: Request,
-): Promise<{ name: string; size: number; type: string }[]> => {
+const parseMultipartFiles = async (request: Request): Promise<{ name: string; size: number; type: string }[]> => {
   const contentType = request.headers.get('content-type') ?? '';
   const boundaryMatch = contentType.match(/boundary=(?:"([^"]+)"|([^;]+))/i);
   if (!boundaryMatch) {

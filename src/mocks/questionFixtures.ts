@@ -118,10 +118,7 @@ const cpTestConditions = (): QuestionForm => {
 
 /** The reask a Scenario opens with, or null when it runs straight away.
  *  Daily monitor needs nothing from the user — it is the whole-line morning report. */
-export const openingQuestion = (
-  scenarioKey: ScenarioKey,
-  connectors: Connector[],
-): QuestionForm | null => {
+export const openingQuestion = (scenarioKey: ScenarioKey, connectors: Connector[]): QuestionForm | null => {
   if (scenarioKey === 'spc' || scenarioKey === 'inline') {
     return spcConditions(connectors);
   }

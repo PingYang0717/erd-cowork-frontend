@@ -1,3 +1,5 @@
+import React, { type ReactNode, useRef, useState } from 'react';
+import { Dropdown, Input } from 'antd';
 import {
   ApiOutlined,
   ArrowUpOutlined,
@@ -10,8 +12,6 @@ import {
   PieChartOutlined,
   PlusOutlined,
 } from '@ant-design/icons';
-import { Dropdown, Input } from 'antd';
-import React, { type ReactNode, useRef, useState } from 'react';
 
 import ConnectorsPanel from '@/components/connectors/ConnectorsPanel';
 import AttachmentChip from '@/components/files/AttachmentChip';
@@ -73,13 +73,7 @@ interface ChatComposerProps {
   onStop: () => void;
 }
 
-const ChatComposer: React.FC<ChatComposerProps> = ({
-  sessionId,
-  onSend,
-  disabled,
-  isStreaming,
-  onStop,
-}) => {
+const ChatComposer: React.FC<ChatComposerProps> = ({ sessionId, onSend, disabled, isStreaming, onStop }) => {
   const t = useTranslations();
   const [draft, setDraft] = useState('');
   const [fileModalOpen, setFileModalOpen] = useState(false);
@@ -237,13 +231,7 @@ const ChatComposer: React.FC<ChatComposerProps> = ({
             }}
           />
           {isStreaming ? (
-            <button
-              type="button"
-              className={styles.stopButton}
-              onClick={onStop}
-              title="Stop"
-              aria-label="Stop"
-            >
+            <button type="button" className={styles.stopButton} onClick={onStop} title="Stop" aria-label="Stop">
               <BorderOutlined aria-hidden />
             </button>
           ) : (

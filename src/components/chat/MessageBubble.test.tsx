@@ -1,12 +1,11 @@
-import { act, render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { describe, expect, it, vi } from 'vitest';
+import { act, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import { INTERRUPTED_TEXTS, REPAIR_RECORD_PREFIXES } from '@/constants/wireStrings';
 import { server } from '@/mocks/server';
 import type { StepItem, TableResult } from '@/types/api';
-
 import MessageBubble, { type LiveRun } from './MessageBubble';
 
 const step = (overrides: Partial<StepItem> = {}): StepItem => ({
@@ -60,34 +59,21 @@ describe('MessageBubble', () => {
   });
 
   it('places a table where its marker sits in the answer', () => {
-    render(
-      <MessageBubble
-        sender="AI"
-        live={liveRun({ liveText: 'Before [[table:t1]] after', tables: [table()] })}
-      />,
-    );
+    render(<MessageBubble sender="AI" live={liveRun({ liveText: 'Before [[table:t1]] after', tables: [table()] })} />);
 
     expect(screen.getByRole('table', { name: 'Top offending lots' })).toBeInTheDocument();
     expect(screen.queryByText(/\[\[table:/)).not.toBeInTheDocument();
   });
 
   it('still shows a table that no marker placed', () => {
-    render(
-      <MessageBubble
-        sender="AI"
-        live={liveRun({ liveText: 'No markers here.', tables: [table()] })}
-      />,
-    );
+    render(<MessageBubble sender="AI" live={liveRun({ liveText: 'No markers here.', tables: [table()] })} />);
 
     expect(screen.getByRole('table', { name: 'Top offending lots' })).toBeInTheDocument();
   });
 
   it('shows the steps as they run, and collapses them into a recap once finished', async () => {
     const { rerender } = render(
-      <MessageBubble
-        sender="AI"
-        live={liveRun({ isStreaming: true, steps: [step({ status: 'RUNNING' })] })}
-      />,
+      <MessageBubble sender="AI" live={liveRun({ isStreaming: true, steps: [step({ status: 'RUNNING' })] })} />
     );
 
     expect(screen.getByText('Scanning lots')).toBeInTheDocument();
@@ -105,9 +91,7 @@ describe('MessageBubble', () => {
     vi.useFakeTimers();
     try {
       const startedAt = Date.now();
-      const { rerender } = render(
-        <MessageBubble sender="AI" live={liveRun({ isStreaming: true, startedAt })} />,
-      );
+      const { rerender } = render(<MessageBubble sender="AI" live={liveRun({ isStreaming: true, startedAt })} />);
 
       act(() => {
         vi.advanceTimersByTime(3000);
@@ -122,14 +106,10 @@ describe('MessageBubble', () => {
   });
 
   it('distinguishes a user-initiated stop from a dropped connection', () => {
-    const { rerender } = render(
-      <MessageBubble sender="AI" live={liveRun({ liveText: 'Partial', stopped: true })} />,
-    );
+    const { rerender } = render(<MessageBubble sender="AI" live={liveRun({ liveText: 'Partial', stopped: true })} />);
     expect(screen.getByText('⏹ Generation stopped')).toBeInTheDocument();
 
-    rerender(
-      <MessageBubble sender="AI" live={liveRun({ liveText: 'Partial', networkError: true })} />,
-    );
+    rerender(<MessageBubble sender="AI" live={liveRun({ liveText: 'Partial', networkError: true })} />);
     expect(screen.queryByText('⏹ Generation stopped')).not.toBeInTheDocument();
     expect(screen.getByText('⚠ Connection lost — please send again')).toBeInTheDocument();
   });
@@ -147,11 +127,7 @@ describe('MessageBubble', () => {
 
   it('offers the artifact it produced, and a way to read its HTML', () => {
     render(
-      <MessageBubble
-        sender="AI"
-        text="Here it is."
-        artifact={{ artifactId: 'artifact-1', title: 'SPC dashboard' }}
-      />,
+      <MessageBubble sender="AI" text="Here it is." artifact={{ artifactId: 'artifact-1', title: 'SPC dashboard' }} />
     );
 
     expect(screen.getByText('SPC dashboard')).toBeInTheDocument();
@@ -168,7 +144,7 @@ describe('MessageBubble', () => {
           codeText: '<html>',
           artifact: { artifactId: 'artifact-1', title: 'SPC dashboard' },
         })}
-      />,
+      />
     );
 
     expect(screen.getAllByRole('button', { name: /HTML/ })).toHaveLength(1);
@@ -180,13 +156,7 @@ describe('MessageBubble', () => {
   it('says the source is absent only when the backend answered 404', async () => {
     const user = userEvent.setup();
     server.use(http.get('/api/artifacts/:id/raw', () => new HttpResponse(null, { status: 404 })));
-    render(
-      <MessageBubble
-        sender="AI"
-        text="Done."
-        artifact={{ artifactId: 'artifact-1', title: 'SPC dashboard' }}
-      />,
-    );
+    render(<MessageBubble sender="AI" text="Done." artifact={{ artifactId: 'artifact-1', title: 'SPC dashboard' }} />);
 
     await user.click(screen.getByRole('button', { name: 'View HTML' }));
 
@@ -196,18 +166,10 @@ describe('MessageBubble', () => {
   it('reports a failed source load as a failure, not as an absence', async () => {
     const user = userEvent.setup();
     server.use(http.get('/api/artifacts/:id/raw', () => new HttpResponse(null, { status: 500 })));
-    render(
-      <MessageBubble
-        sender="AI"
-        text="Done."
-        artifact={{ artifactId: 'artifact-1', title: 'SPC dashboard' }}
-      />,
-    );
+    render(<MessageBubble sender="AI" text="Done." artifact={{ artifactId: 'artifact-1', title: 'SPC dashboard' }} />);
 
     await user.click(screen.getByRole('button', { name: 'View HTML' }));
 
-    expect(
-      await screen.findByText('Could not load the source — please try again shortly'),
-    ).toBeInTheDocument();
+    expect(await screen.findByText('Could not load the source — please try again shortly')).toBeInTheDocument();
   });
 });

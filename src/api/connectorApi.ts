@@ -1,6 +1,5 @@
 import { CONNECTOR_PREFS_STORAGE_KEY } from '@/constants/storage';
 import type { Connector } from '@/types/api';
-
 import { apiClient } from './apiClient';
 
 /** What this browser remembers about the user's own preferences.
