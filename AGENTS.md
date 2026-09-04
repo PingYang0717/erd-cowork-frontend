@@ -37,7 +37,8 @@ Lint 是 **oxlint + ESLint 並存**(`npm run lint` 依序跑兩個),格式走 Pr
 5. **元件內部依序寫:非 `react` 匯入的 hook → useRef → useState → useMemo → useEffect →
    useCallback → render 用的衍生值 → JSX。** 頂部那組的判準是語法不是語意——看 import 行
    寫不寫得出來,`useDebouncedValue` 這種純本地計算的自訂 hook 也算。**衍生值與唯一消費它的
-   effect/callback 不拆開**,只有一個消費者的 `useRef` 跟著那個消費者走。依賴是硬約束,
+   effect/callback 不拆開**(指中間不插入別的宣告;型別不同所以仍空一行),只有一個消費者
+   的 `useRef` 跟著那個消費者走。**不同型別的宣告之間一律空一行。**依賴是硬約束,
    行長升冪只是沒有依賴時的 tiebreaker。完整規則與「為何不用純型別分組」見 ADR-0010 的
    補充(2026-09-04)。目前只有 `ThreadPanel.tsx` 依此排列,是可以指著看的範本;這條規則
    沒有 lint 能強制,靠 review 把關。
