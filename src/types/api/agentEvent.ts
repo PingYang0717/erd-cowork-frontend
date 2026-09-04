@@ -78,7 +78,7 @@ export type AgentEvent =
   | { type: 'ARTIFACT'; artifactId: string; title: string }
   | { type: 'ERROR'; code: string; message: string }
   | { type: 'THINKING'; delta: string }
-  // `questions` is the wire truth; `form` is a 前端-only extension the mock rides
+  // `questions` is the wire truth; `form` is a frontend-only extension the mock rides
   // along so the rich condition forms (six field kinds, visibleWhen) keep working —
   // a real backend sends only the flat list, which the UI lifts (utils/liftQuestions).
   | { type: 'QUESTION'; questions: Question[]; form?: QuestionForm }

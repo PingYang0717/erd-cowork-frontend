@@ -21,6 +21,8 @@ const mountApp = (): void => {
   );
 };
 
-// internal 環境的初始化 MUST 在 mount 前完成(SSO 決定 X-User-Id);預設環境是 no-op 立即 resolve。
-// 刻意不 catch:初始化失敗時讓 rejection 浮上 console 且不 mount,NEVER 以匿名身分繼續。
+// Internal-environment initialisation MUST finish before mount (SSO decides X-User-Id);
+// the default environment is a no-op that resolves immediately. Deliberately not caught:
+// if initialisation fails, the rejection surfaces in the console and the app does NOT
+// mount. It must NEVER carry on under an anonymous identity.
 void initInternalRuntime().then(mountApp);

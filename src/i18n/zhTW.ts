@@ -59,7 +59,8 @@ export const zhTW = {
      *  siblings, not a chain (artifact-model-decisions Q2) — but that decision was about
      *  not implying a lineage, not about coining a second name for the thing itself. */
     switchVersion: '切換 Artifact',
-    /** 個人副本不能再往下分享——分享只有原擁有者做得到(CONTEXT.md)。 */
+    /** A personal copy cannot be shared onwards — sharing is the original owner's to do
+     *  (CONTEXT.md). */
     shareNotOwner: '只有原擁有者可以分享',
     /** The full-page view's menu, which lists one Artifact's own versions rather than
      *  a session's outputs. Those are different things and the count belongs to the
@@ -119,8 +120,9 @@ export const zhTW = {
     emptyPinned: '你還沒有釘選任何 Artifact。',
     linkCopied: '已複製連結',
     linkCopyFailed: '無法複製連結，請開啟分享視窗手動複製。',
-    /** 對使用者而言是刪除(卡片消失);底下是取消發布,並收回分享對象的存取權——
-     *  後果溢出到別人身上,所以動作前先問。 */
+    /** To the user this is a delete (the card disappears); underneath it unpublishes and
+     *  withdraws access from everyone it was shared with. The consequences spill onto
+     *  other people, so the action asks first. */
     removeConfirmTitle: '從 Artifacts 移除？',
     removeConfirmBody: (title: string) =>
       `「${title}」會取消發布，所有分享對象都將失去存取權；它仍會留在產生它的對話中。`,
@@ -138,12 +140,13 @@ export const zhTW = {
     htmlLive: '產生中的 HTML',
     htmlLabel: 'HTML',
     loading: '載入中…',
-    /** 後端明說 404——真的沒有原始碼。 */
+    /** The backend said 404 outright — there really is no source. */
     noSource: '此版本無原始碼可檢視',
-    /** 讀取失敗但原始碼可能好端端的——不對泛型失敗聲稱「沒有」。 */
+    /** The read failed but the source may be perfectly fine — do not claim "there is
+     *  none" on a generic failure. */
     sourceLoadFailed: '原始碼載入失敗，請稍後重試',
-    /** TABLE 只送 truncated: boolean,不送筆數——所以這裡不報數字(後端待辦:
-     *  希望 TABLE 帶 rowLimit)。 */
+    /** TABLE sends `truncated: boolean` only, never a row count — so this reports no
+     *  number (open with the backend: we would like TABLE to carry rowLimit). */
     truncated: '(結果已截斷)',
     manageConnections: '管理連線',
     selectedCount: (n: number) => `已選 ${n} 項`,
@@ -153,7 +156,8 @@ export const zhTW = {
     questionTitle: '分析條件',
     questionSubmit: '送出',
     questionDisabledHint: '請先回答上面的問題',
-    /** 檔案集合還在變動時說明為何不能送——輸入框仍可打字,只有送出被擋。 */
+    /** Explains why sending is blocked while the file set is still settling — the input
+     *  stays typable, only the send is held. */
     uploadingWait: '檔案處理中，完成後即可送出',
     thinking: '思考過程',
     workedThrough: (n: number) => `共執行 ${n} 個步驟`,
@@ -186,8 +190,9 @@ export const zhTW = {
     tooManyFiles: (count: number) => `最多 ${count} 個檔案`,
     tooLarge: (total: string) => `總計上限 ${total}`,
     duplicateName: '已附加過同名檔案',
-    /** 位元組送完之後、後端回應之前的那段等待。進度條停在 90% 是誠實的——
-     *  後端還要多久前端無從得知,不編一條會動的進度。 */
+    /** The wait after the bytes are sent but before the backend answers. Parking the bar
+     *  at 90% is the honest thing to do: the frontend has no way to know how much longer
+     *  the backend needs, so it does not invent a moving one. */
     processing: '伺服器處理中…',
   },
 
