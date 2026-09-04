@@ -12,7 +12,7 @@ describe('showOptimisticBubble', () => {
     expect(showOptimisticBubble(4, 2)).toBe(false);
   });
 
-  /** C-3: sending the same text twice. The history ends with the previous identical
+  /** ADR-0015 §optimistic-bubble: sending the same text twice. The history ends with the previous identical
    *  message (length unchanged at send time), so a text comparison would suppress the
    *  second bubble. Length does not: same length as at send -> still shown. */
   it('shows a repeat of the same text as a second bubble', () => {

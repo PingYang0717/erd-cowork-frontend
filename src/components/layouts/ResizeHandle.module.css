@@ -23,7 +23,7 @@
   background: var(--erd-color-primary, #1677ff);
 }
 
-/* 鍵盤聚焦時把 1px 線亮成主色,與 hover/拖曳同一語彙(A-4)。 */
+/* 鍵盤聚焦時把 1px 線亮成主色,與 hover/拖曳同一語彙(ADR-0014 §divider-keyboard)。 */
 .handle:focus-visible {
   outline: none;
 }

@@ -58,8 +58,8 @@ beforeAll(() => {
 // languageSwitch.test.tsx proving the toggle works); every other test is about
 // behavior, and pinning one language keeps its assertions from tracking copy edits
 // in the other. beforeEach, not beforeAll: a test that switches language must not
-// leak its choice into the next one. (Revises ADR-0012's "tests stay on the Chinese
-// default" — that held only while these strings were not in the dictionary at all.)
+// leak its choice into the next one. (ADR-0012, supplement 2026-09-04 — which is where
+// this decision now lives, rather than in this comment.)
 beforeEach(() => {
   useLanguageStore.setState({ language: 'en' });
 });

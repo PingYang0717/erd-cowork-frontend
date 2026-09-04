@@ -5,7 +5,7 @@
  *  history has grown past where it was when the message was sent — that growth is the
  *  refetch bringing the message home. Comparing the last history text instead breaks on
  *  a message sent twice in a row, where the previous identical message looks like the
- *  refetch already landing and the second bubble is wrongly suppressed (C-3).
+ *  refetch already landing and the second bubble is wrongly suppressed (ADR-0015 §optimistic-bubble).
  */
 export const showOptimisticBubble = (historyLength: number, historyLengthAtSend: number): boolean => {
   return historyLength <= historyLengthAtSend;

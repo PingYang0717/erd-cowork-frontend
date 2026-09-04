@@ -37,14 +37,14 @@ const CollapsedSessionRail: React.FC<CollapsedSessionRailProps> = ({ onExpand })
   };
 
   /** Closing must hand focus back to the button that opened it — a dialog that
-   *  drops focus to <body> loses the keyboard user's place entirely (A-6). */
+   *  drops focus to <body> loses the keyboard user's place entirely (ADR-0014 §dialog-focus). */
   const closeHistory = () => {
     setHistoryOpen(false);
     historyButtonRef.current?.focus();
   };
 
   // A dialog receives focus when it opens; without this the keyboard user is still
-  // standing on the button behind the backdrop (A-6). Syncing focus — an external
+  // standing on the button behind the backdrop (ADR-0014 §dialog-focus). Syncing focus — an external
   // system — is what useEffect is for.
   useEffect(() => {
     if (historyOpen) {
@@ -53,7 +53,7 @@ const CollapsedSessionRail: React.FC<CollapsedSessionRailProps> = ({ onExpand })
   }, [historyOpen]);
 
   /** The dialog keyboard contract: Escape closes and restores focus; Tab cycles
-   *  within rather than escaping into the page behind the backdrop (A-6). */
+   *  within rather than escaping into the page behind the backdrop (ADR-0014 §dialog-focus). */
   const handleFlyoutKeyDown = (event: React.KeyboardEvent) => {
     if (event.key === 'Escape') {
       event.preventDefault();
