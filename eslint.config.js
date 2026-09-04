@@ -1,13 +1,6 @@
-import js from '@eslint/js';
-import prettierConfig from 'eslint-config-prettier';
-import jsxA11y from 'eslint-plugin-jsx-a11y';
-import oxlint from 'eslint-plugin-oxlint';
-import react from 'eslint-plugin-react';
 import reactHooks from 'eslint-plugin-react-hooks';
-import reactRefresh from 'eslint-plugin-react-refresh';
 import simpleImportSort from 'eslint-plugin-simple-import-sort';
-import globals from 'globals';
-import tseslint from 'typescript-eslint';
+import typescriptEslintParser from '@typescript-eslint/parser';
 
 // oxlint and ESLint run side by side, in that order (`npm run lint`).
 //
@@ -18,45 +11,55 @@ import tseslint from 'typescript-eslint';
 //
 // `oxlint.configs['flat/recommended']` goes LAST and switches off every ESLint rule
 // oxlint already covers, so a finding is reported once, by whichever tool owns it.
-export default tseslint.config(
+export default [
   { ignores: ['dist', 'coverage', 'node_modules'] },
-  js.configs.recommended,
-  ...tseslint.configs.recommended,
   {
-    files: ['**/*.{ts,tsx}'],
+    files: ['**/*.{js,jsx,ts,tsx}'],
     languageOptions: {
-      ecmaVersion: 2022,
-      globals: globals.browser,
+      parser: typescriptEslintParser,
+      parserOptions: {
+        ecmaVersion: 'latest',
+        sourceType: 'module',
+        ecmaFeatures: { jsx: true },
+      },
     },
     plugins: {
-      react,
       'react-hooks': reactHooks,
-      'react-refresh': reactRefresh,
       'simple-import-sort': simpleImportSort,
-      'jsx-a11y': jsxA11y,
-    },
-    settings: {
-      react: { version: 'detect' },
     },
     rules: {
-      ...reactHooks.configs.recommended.rules,
-      'react/react-in-jsx-scope': 'off',
-      'react-refresh/only-export-components': 'warn',
-      '@typescript-eslint/no-explicit-any': 'error',
-      '@typescript-eslint/no-unused-vars': 'warn',
-      'simple-import-sort/imports': 'error',
-      'simple-import-sort/exports': 'error',
+      // recommended 的 16 條裡有 13 條是 error(rules-of-hooks、set-state-in-render、
+      // refs……),這裡一律降為 warn。用鍵去映射而不是逐條列出:升級後多出來的規則會
+      // 自動跟著降級,不會有人漏改一條而讓它以 error 溜進來。
+      ...Object.fromEntries(Object.keys(reactHooks.configs.recommended.rules).map((rule) => [rule, 'warn'])),
+      // oxlint 也在跑這一條,而且是 error(.oxlintrc.json)。兩邊都開會讓同一個問題出現
+      // 兩則訊息,所以這裡讓給它——擋不擋得住由 oxlint 那條決定,這裡只是重複。
+      'react-hooks/rules-of-hooks': 'off',
+      // 順序照 AGENTS.md:專案只有 `@/` 一個 alias,同資料夾的檔案走相對路徑。
+      // 這五組寫出來的正是先前靠預設值得到的排列——`@/` 之所以落在套件之後,是因為
+      // `@` 後面接的是 `/` 而不是字元,不符 `^@?\w`,於是掉進預設的 catch-all。
+      // 寫明之後就不再靠那個巧合。
+      'simple-import-sort/imports': [
+        'error',
+        {
+          groups: [
+            ['^react$', '^[a-z]', '^@[^/]'],
+            [
+              '^@/',
+              '^\\.\\.(?!/?$)',
+              // 指定的 '^\\.\\,/?$' 在 u flag 下是 invalid escape(\\, 不是合法跳脫),
+              // 改用 README 對應的父目錄寫法。
+              '^\\.\\./?$',
+              '^\\./(?=.*/)(?!/?$)',
+              // 指定的 '^\\/(?!/?$' 少一個右括號,無法編譯;同樣改用 README 的寫法。
+              '^\\.(?!/?$)',
+              '^\\./?$',
+            ],
+            ['^.+\\.s?css$'],
+            ['^\\u0000'],
+          ],
+        },
+      ],
     },
   },
-  prettierConfig,
-  ...oxlint.configs['flat/recommended'],
-  {
-    // setup.ts 的 seedTestIdentity 是 side-effect import 且必須是第一行;部分環境的
-    // lint 會對它報排序,所以掛了 disable directive。這台若沒觸發,預設的
-    // reportUnusedDisableDirectives 會讓 --fix(pre-commit hook)把「沒用到的」
-    // directive 自動拔掉——在會觸發的機器上就又紅了。對這一個檔關閉回報,directive
-    // 才能在兩種環境都活著。
-    files: ['src/test/setup.ts'],
-    linterOptions: { reportUnusedDisableDirectives: 'off' },
-  },
-);
+];

@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
 import type { UploadedFileInfo } from '@/types/api';
-
 import { planFileAdditions } from './uploadValidation';
 
 const GB = 1024 * 1024 * 1024;
@@ -25,7 +24,7 @@ describe('planFileAdditions', () => {
       [
         { name: 'a.csv', size: 100 },
         { name: 'b.xlsx', size: 200 },
-      ],
+      ]
     );
 
     // Re-dragging the same file is usually an attempt to replace it; the message is
@@ -40,7 +39,7 @@ describe('planFileAdditions', () => {
       [
         { name: 'notes.pdf', size: 100 },
         { name: 'lots.csv', size: 100 },
-      ],
+      ]
     );
 
     expect(plan.accepted.map((file) => file.name)).toEqual(['lots.csv']);
@@ -50,7 +49,7 @@ describe('planFileAdditions', () => {
   it('caps the total at 5 files', () => {
     const plan = planFileAdditions(
       [],
-      Array.from({ length: 6 }, (_, i) => ({ name: `file-${i}.csv`, size: 100 })),
+      Array.from({ length: 6 }, (_, i) => ({ name: `file-${i}.csv`, size: 100 }))
     );
 
     expect(plan.accepted).toHaveLength(5);
@@ -58,10 +57,7 @@ describe('planFileAdditions', () => {
   });
 
   it('rejects a file that would push the total over 5 GB', () => {
-    const plan = planFileAdditions(
-      [existingFile('big-1.csv', 4 * GB)],
-      [{ name: 'big-2.csv', size: 2 * GB }],
-    );
+    const plan = planFileAdditions([existingFile('big-1.csv', 4 * GB)], [{ name: 'big-2.csv', size: 2 * GB }]);
 
     expect(plan.accepted).toHaveLength(0);
     expect(plan.error).toBe('5 GB in total');

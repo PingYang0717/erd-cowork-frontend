@@ -1,5 +1,5 @@
-import { ThunderboltFilled } from '@ant-design/icons';
 import React, { type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
+import { ThunderboltFilled } from '@ant-design/icons';
 
 import DataBoundary from '@/components/common/DataBoundary';
 import { type SendInput, useAgentStream } from '@/hooks/useAgentStream';
@@ -12,11 +12,11 @@ import { useRepairOfferStore } from '@/stores/useRepairOfferStore';
 import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
 import { composeAnswerText } from '@/utils/composeAnswerText';
 import { showOptimisticBubble } from '@/utils/optimisticBubble';
-
 import ChatComposer from './ChatComposer';
 import MessageList, { type LiveRun } from './MessageList';
 import type { Answers } from './QuestionFormCard';
 import RepairOfferCard from './RepairOfferCard';
+
 import styles from './ThreadPanel.module.css';
 
 const ThreadHeader: React.FC = () => {
@@ -71,10 +71,7 @@ const ThreadPanel: React.FC = () => {
         </DataBoundary>
       ) : (
         <div className={styles.body}>
-          <EmptyState
-            heading={t.studio.emptyNoSessionHeading}
-            subtitle={t.studio.emptyNoSessionSubtitle}
-          />
+          <EmptyState heading={t.studio.emptyNoSessionHeading} subtitle={t.studio.emptyNoSessionSubtitle} />
         </div>
       )}
     </div>
@@ -167,14 +164,7 @@ const ThreadView: React.FC<ThreadViewProps> = ({ sessionId }) => {
       await applyRememberedDataSources(detail.dataSourceIds ?? []);
       await send({ baseArtifactId: displayedArtifactId ?? undefined, ...input });
     },
-    [
-      send,
-      displayedArtifactId,
-      isStreaming,
-      messages.length,
-      applyRememberedDataSources,
-      detail.dataSourceIds,
-    ],
+    [send, displayedArtifactId, isStreaming, messages.length, applyRememberedDataSources, detail.dataSourceIds]
   );
 
   // The backend body is question-only, so a reask's answers travel as one prose
@@ -187,7 +177,7 @@ const ThreadView: React.FC<ThreadViewProps> = ({ sessionId }) => {
       }
       await handleSend({ question: composeAnswerText(question, answers) });
     },
-    [handleSend, question],
+    [handleSend, question]
   );
 
   // A run that ended cleanly hands over to the refetched history — the bubble it left
@@ -203,9 +193,7 @@ const ThreadView: React.FC<ThreadViewProps> = ({ sessionId }) => {
   // Suppress the optimistic bubble once the refetched history has grown past the point
   // it was sent from — that growth is the refetch carrying the message home (C-3).
   const optimisticUserText =
-    pending !== null && showOptimisticBubble(messages.length, pending.atLength)
-      ? pending.text
-      : null;
+    pending !== null && showOptimisticBubble(messages.length, pending.atLength) ? pending.text : null;
 
   const hasContent = messages.length > 0 || live !== null || optimisticUserText !== null;
 

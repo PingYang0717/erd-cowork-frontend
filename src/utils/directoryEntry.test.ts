@@ -1,13 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import type { DirectoryEntry } from '@/types/api';
-
-import {
-  directoryEntryKey,
-  directoryEntryLabel,
-  directoryEntryMatches,
-  directoryShareTarget,
-} from './directoryEntry';
+import { directoryEntryKey, directoryEntryLabel, directoryEntryMatches, directoryShareTarget } from './directoryEntry';
 
 const org: DirectoryEntry = {
   type: 'ORG',
@@ -57,7 +51,7 @@ describe('directoryEntryKey', () => {
    *  a number that happens to be shared. */
   it('keeps an org and a person apart even on the same underlying id', () => {
     expect(directoryEntryKey({ type: 'ORG', orgId: 'X1' })).not.toBe(
-      directoryEntryKey({ type: 'EMPLOYEE', employeeNt: 'X1' }),
+      directoryEntryKey({ type: 'EMPLOYEE', employeeNt: 'X1' })
     );
   });
 });

@@ -1,22 +1,17 @@
-import {
-  AppstoreOutlined,
-  LoadingOutlined,
-  ThunderboltFilled,
-  ToolOutlined,
-} from '@ant-design/icons';
 import React, { useDeferredValue, useMemo } from 'react';
+import { AppstoreOutlined, LoadingOutlined, ThunderboltFilled, ToolOutlined } from '@ant-design/icons';
 
 import { INTERRUPTED_TEXTS, REPAIR_RECORD_PREFIXES } from '@/constants/wireStrings';
 import type { AgentStreamState } from '@/hooks/useAgentStream';
 import type { QuestionForm, StepItem } from '@/types/api';
 import { splitAnswerByTableMarkers } from '@/utils/tableMarkers';
-
 import CollapsiblePanel from './CollapsiblePanel';
 import { Elapsed, LiveElapsed } from './Elapsed';
 import HtmlCodePanel from './HtmlCodePanel';
-import styles from './MessageBubble.module.css';
 import QuestionFormCard, { type Answers } from './QuestionFormCard';
 import { StepRow, StepsRecap } from './StepList';
+
+import styles from './MessageBubble.module.css';
 
 /** The slice of a run's state this bubble renders. A `Pick` rather than its own shape:
  *  the reducer's state is the single source of truth for what a run carries, so a new
@@ -38,7 +33,6 @@ export type LiveRun = Pick<
 >;
 import { useTranslations } from '@/i18n/useTranslations';
 import type { Translations } from '@/i18n/zhTW';
-
 import ReplyText from './ReplyText';
 import ResultTable from './ResultTable';
 
@@ -128,7 +122,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
   // appear somewhere, so it goes after the text rather than vanishing.
   const segments = useMemo(
     () => (recordKind ? [] : splitAnswerByTableMarkers(deferredText, tables)),
-    [recordKind, deferredText, tables],
+    [recordKind, deferredText, tables]
   );
 
   if (sender === 'USER') {
@@ -148,7 +142,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
   // bubble carrying it is settled.
   const turnInPlay = streaming || stopped || (question != null && !questionDisabled);
   const placedTableIds = new Set(
-    segments.flatMap((segment) => (segment.type === 'table' ? [segment.table.tableId] : [])),
+    segments.flatMap((segment) => (segment.type === 'table' ? [segment.table.tableId] : []))
   );
   const unplacedTables = (tables ?? []).filter((table) => !placedTableIds.has(table.tableId));
 
@@ -166,12 +160,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
             arriving step row is announced on its own, instead of the whole panel
             being re-read every time a step is appended (A-3). */}
         {streaming && (
-          <div
-            role="status"
-            aria-atomic="false"
-            aria-label="eRD AI is working"
-            className={styles.workingSteps}
-          >
+          <div role="status" aria-atomic="false" aria-label="eRD AI is working" className={styles.workingSteps}>
             {/* The run says it is running from inside the step panel, where the steps it
                 is producing appear — rather than from the label above, which names who is
                 speaking and should read the same whether or not they are mid-sentence. */}
@@ -220,7 +209,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
             <ResultTable key={`table-${segment.table.tableId}-${index}`} table={segment.table} />
           ) : (
             <ReplyText key={`text-${index}`} text={segment.content} />
-          ),
+          )
         )}
         {unplacedTables.map((table) => (
           <ResultTable key={table.tableId} table={table} />
@@ -246,9 +235,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
             >
               <AppstoreOutlined aria-hidden className={styles.artifactChipIcon} />
               <span className={styles.artifactChipTitle}>{artifact.title}</span>
-              <span className={styles.artifactChipHint}>
-                {artifactShown ? t.chat.shownRight : t.chat.showRight}
-              </span>
+              <span className={styles.artifactChipHint}>{artifactShown ? t.chat.shownRight : t.chat.showRight}</span>
             </button>
           ) : (
             <div className={styles.artifactChip}>
@@ -261,19 +248,11 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
             still arriving, the live panel above is the same content. */}
         {artifact && !codeText && <HtmlCodePanel artifactId={artifact.artifactId} />}
 
-        {question && (
-          <QuestionFormCard
-            form={question}
-            disabled={questionDisabled}
-            onSubmit={onAnswer ?? (() => {})}
-          />
-        )}
+        {question && <QuestionFormCard form={question} disabled={questionDisabled} onSubmit={onAnswer ?? (() => {})} />}
 
         {/* Keyed on the start: a new turn gets a fresh timer rather than inheriting the
             last one's reading for up to a second. */}
-        {streaming && timerStartedAt != null && (
-          <LiveElapsed key={timerStartedAt} startedAt={timerStartedAt} />
-        )}
+        {streaming && timerStartedAt != null && <LiveElapsed key={timerStartedAt} startedAt={timerStartedAt} />}
         {!streaming && durationMs != null && <Elapsed ms={durationMs} />}
 
         {stopped && <p className={styles.stateNote}>{t.chat.stopped}</p>}

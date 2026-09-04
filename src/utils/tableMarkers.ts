@@ -20,10 +20,7 @@ export type AnswerSegment = AnswerTextSegment | AnswerTableSegment;
 /** Splits an answer on its `[[table:<tableId>]]` markers, resolving each id against the
  *  TABLE events the run produced. A marker whose table never arrived is dropped — the
  *  raw marker text must never reach the reader. */
-export const splitAnswerByTableMarkers = (
-  text: string,
-  tables: TableResult[] | undefined,
-): AnswerSegment[] => {
+export const splitAnswerByTableMarkers = (text: string, tables: TableResult[] | undefined): AnswerSegment[] => {
   const tablesById = new Map((tables ?? []).map((table) => [table.tableId, table]));
   const segments: AnswerSegment[] = [];
   let cursor = 0;

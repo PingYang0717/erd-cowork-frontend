@@ -1,5 +1,5 @@
-import { LoadingOutlined } from '@ant-design/icons';
 import React, { type ReactNode, Suspense } from 'react';
+import { LoadingOutlined } from '@ant-design/icons';
 
 import styles from './SuspenseLoader.module.css';
 

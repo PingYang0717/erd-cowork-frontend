@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
 import type { Message } from '@/types/api';
-
 import { deriveArtifactVersions } from './deriveArtifactVersions';
 
 const message = (overrides: Partial<Message>): Message => {
@@ -69,9 +68,7 @@ describe('deriveArtifactVersions', () => {
   });
 
   it('falls back to the first 50 chars of the message text when artifactTitle is null', () => {
-    const versions = deriveArtifactVersions([
-      message({ artifactId: 'a1', artifactTitle: null, text: 'x'.repeat(80) }),
-    ]);
+    const versions = deriveArtifactVersions([message({ artifactId: 'a1', artifactTitle: null, text: 'x'.repeat(80) })]);
 
     expect(versions[0].title).toBe('x'.repeat(50));
   });

@@ -20,14 +20,7 @@ export const directoryEntryLabel = (entry: DirectoryEntry): string => {
  *  its code or its name. Matching on the label alone would quietly make some of these
  *  unsearchable, which reads as "that person is not in the directory". */
 export const directoryEntryHaystack = (entry: DirectoryEntry): string => {
-  return [
-    entry.employeeName,
-    entry.employeeNt,
-    entry.employeeOrgName,
-    entry.orgName,
-    entry.orgId,
-    entry.orgLevel,
-  ]
+  return [entry.employeeName, entry.employeeNt, entry.employeeOrgName, entry.orgName, entry.orgId, entry.orgLevel]
     .filter(Boolean)
     .join(' ')
     .toLowerCase();

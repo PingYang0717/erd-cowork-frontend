@@ -75,11 +75,7 @@ const Tooltip: React.FC<TooltipProps> = ({ content, children, wrapperClassName }
     >
       {describedChild}
       {open && (
-        <span
-          role="tooltip"
-          id={tipId}
-          className={below ? `${styles.tip} ${styles.tipBelow}` : styles.tip}
-        >
+        <span role="tooltip" id={tipId} className={below ? `${styles.tip} ${styles.tipBelow}` : styles.tip}>
           {content}
         </span>
       )}

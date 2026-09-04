@@ -1,5 +1,5 @@
-import { InfoCircleOutlined, SendOutlined } from '@ant-design/icons';
 import React, { useState } from 'react';
+import { InfoCircleOutlined, SendOutlined } from '@ant-design/icons';
 
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { useTranslations } from '@/i18n/useTranslations';
@@ -24,12 +24,7 @@ const countAnswers = (answers: Answers): number => {
 
 /** A chip's label carries its spec limits when the field has them, so an engineer can
  *  judge an item without opening anything. */
-const optionLabel = (option: {
-  label: string;
-  unit?: string;
-  lo?: number;
-  hi?: number;
-}): string => {
+const optionLabel = (option: { label: string; unit?: string; lo?: number; hi?: number }): string => {
   if (option.lo === undefined || option.hi === undefined || option.unit === undefined) {
     return option.label;
   }
@@ -82,7 +77,7 @@ const ChipGroup: React.FC<ChipGroupProps> = ({ field, answers, search, onToggle 
 
   const needle = search.trim().toLowerCase();
   const options = (field.options ?? []).filter(
-    (option) => needle === '' || option.label.toLowerCase().includes(needle),
+    (option) => needle === '' || option.label.toLowerCase().includes(needle)
   );
 
   return (
@@ -136,11 +131,7 @@ interface QuestionFormCardProps {
 /** One reask from the agent: the fields it needs answered before it can carry on.
  *  Which fields appear is the Scenario's contract; what is in `options` is resolved
  *  when the run happens (ADR-0004). */
-const QuestionFormCard: React.FC<QuestionFormCardProps> = ({
-  form,
-  onSubmit,
-  disabled = false,
-}) => {
+const QuestionFormCard: React.FC<QuestionFormCardProps> = ({ form, onSubmit, disabled = false }) => {
   const t = useTranslations();
   const [answers, setAnswers] = useState<Answers>({});
   const [searches, setSearches] = useState<Record<string, string>>({});
@@ -184,9 +175,7 @@ const QuestionFormCard: React.FC<QuestionFormCardProps> = ({
   const selectedCount = countAnswers(answers);
   const submitLabel = form.submitLabel.replace('{count}', String(selectedCount));
   const visibleFields = form.fields.filter((field) => isVisible(field, answers));
-  const canSubmit = visibleFields
-    .filter((field) => field.required)
-    .every((field) => isAnswered(field, answers));
+  const canSubmit = visibleFields.filter((field) => field.required).every((field) => isAnswered(field, answers));
 
   return (
     <fieldset className={styles.card} disabled={disabled}>
@@ -195,8 +184,7 @@ const QuestionFormCard: React.FC<QuestionFormCardProps> = ({
 
       {visibleFields.map((field) => {
         const options = field.options ?? [];
-        const isSearchable =
-          (field.kind === 'multi' || field.kind === 'dcitem') && options.length > SEARCHABLE_FROM;
+        const isSearchable = (field.kind === 'multi' || field.kind === 'dcitem') && options.length > SEARCHABLE_FROM;
         const answer = answers[field.key];
         // A typed value that no chip offers — the mockup highlights the input for it.
         const isCustom =
@@ -215,9 +203,7 @@ const QuestionFormCard: React.FC<QuestionFormCardProps> = ({
                 placeholder={field.placeholder}
                 value={searches[field.key] ?? ''}
                 className={styles.searchInput}
-                onChange={(event) =>
-                  setSearches((previous) => ({ ...previous, [field.key]: event.target.value }))
-                }
+                onChange={(event) => setSearches((previous) => ({ ...previous, [field.key]: event.target.value }))}
               />
             )}
 
@@ -257,12 +243,7 @@ const QuestionFormCard: React.FC<QuestionFormCardProps> = ({
           button next to a hint about a decision that is already made. */}
       {!disabled && (
         <div className={styles.footer}>
-          <button
-            type="button"
-            className={styles.submit}
-            disabled={!canSubmit}
-            onClick={() => onSubmit(answers)}
-          >
+          <button type="button" className={styles.submit} disabled={!canSubmit} onClick={() => onSubmit(answers)}>
             <SendOutlined aria-hidden />
             {submitLabel}
           </button>

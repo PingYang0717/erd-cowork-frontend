@@ -1,9 +1,8 @@
-import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it } from 'vitest';
+import { fireEvent, render, screen } from '@testing-library/react';
 
 import { useActiveRunStore } from '@/stores/useActiveRunStore';
 import type { Message } from '@/types/api';
-
 import MessageList, { type LiveRun } from './MessageList';
 
 const message = (id: string, sender: 'USER' | 'AI', text: string): Message => ({
@@ -41,7 +40,7 @@ const renderList = (live: LiveRun | null = null, optimisticUserText: string | nu
       optimisticUserText={optimisticUserText}
       lastRunDurationMs={null}
       onAnswer={() => {}}
-    />,
+    />
   );
 };
 
@@ -75,7 +74,7 @@ describe('MessageList auto-scroll', () => {
         optimisticUserText={null}
         lastRunDurationMs={null}
         onAnswer={() => {}}
-      />,
+      />
     );
 
     expect(log.scrollTop).toBe(100);
@@ -96,7 +95,7 @@ describe('MessageList auto-scroll', () => {
         optimisticUserText={null}
         lastRunDurationMs={null}
         onAnswer={() => {}}
-      />,
+      />
     );
 
     expect(log.scrollTop).toBe(1000);
@@ -117,7 +116,7 @@ describe('MessageList auto-scroll', () => {
         optimisticUserText="One more thing"
         lastRunDurationMs={null}
         onAnswer={() => {}}
-      />,
+      />
     );
 
     expect(log.scrollTop).toBe(1000);

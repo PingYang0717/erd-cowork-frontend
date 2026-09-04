@@ -1,5 +1,5 @@
-import { Table, type TableColumnsType } from 'antd';
 import React, { useMemo } from 'react';
+import { Table, type TableColumnsType } from 'antd';
 
 import { useTranslations } from '@/i18n/useTranslations';
 import type { TableCellValue, TableResult } from '@/types/api';
@@ -66,7 +66,7 @@ const ResultTable: React.FC<ResultTableProps> = ({ table }) => {
         key: `col_${columnIndex}`,
         render: (value: TableCellValue) => formatCellValue(value),
       })),
-    [table.columns],
+    [table.columns]
   );
 
   const dataSource: ResultTableRecord[] = useMemo(
@@ -78,7 +78,7 @@ const ResultTable: React.FC<ResultTableProps> = ({ table }) => {
         });
         return record;
       }),
-    [table.rows],
+    [table.rows]
   );
 
   return (

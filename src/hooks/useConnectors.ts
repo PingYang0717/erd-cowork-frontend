@@ -1,9 +1,8 @@
-import { useSuspenseQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
+import { useSuspenseQuery } from '@tanstack/react-query';
 
 import { listCatalogue } from '@/api/connectorApi';
 import type { Connector } from '@/types/api';
-
 import { useSessionDetail } from './useSessionDetail';
 
 export const connectorsQueryKey = ['connectors'] as const;
@@ -36,8 +35,8 @@ export const useConnectors = (sessionId: string) => {
             // `expired` and `no_access` are the catalogue's word and outrank attachment.
             connector.status === 'connected'
             ? { ...connector, status: 'available' }
-            : connector,
+            : connector
       ),
-    [catalogue, attached],
+    [catalogue, attached]
   );
 };

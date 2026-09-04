@@ -1,5 +1,5 @@
-import { ClockCircleOutlined } from '@ant-design/icons';
 import React, { useEffect, useState } from 'react';
+import { ClockCircleOutlined } from '@ant-design/icons';
 
 import { formatDuration } from '@/utils/formatDuration';
 

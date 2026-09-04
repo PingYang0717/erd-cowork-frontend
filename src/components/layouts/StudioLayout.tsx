@@ -4,13 +4,9 @@ import ArtifactPanel from '@/components/artifact/ArtifactPanel';
 import ThreadPanel from '@/components/chat/ThreadPanel';
 import DataBoundary from '@/components/common/DataBoundary';
 import { useResizablePane } from '@/hooks/useResizablePane';
-import {
-  THREAD_MAX_WIDTH,
-  THREAD_MIN_WIDTH,
-  useStudioLayoutStore,
-} from '@/stores/useStudioLayoutStore';
-
+import { THREAD_MAX_WIDTH, THREAD_MIN_WIDTH, useStudioLayoutStore } from '@/stores/useStudioLayoutStore';
 import ResizeHandle from './ResizeHandle';
+
 import styles from './StudioLayout.module.css';
 
 // The thread + Artifact panel two-pane layout — mounted as the /cowork
@@ -29,12 +25,7 @@ const StudioLayout: React.FC = () => {
 
   return (
     <div className={styles.studio}>
-      <section
-        ref={paneRef}
-        aria-label="Thread"
-        className={styles.thread}
-        style={{ width: threadWidth }}
-      >
+      <section ref={paneRef} aria-label="Thread" className={styles.thread} style={{ width: threadWidth }}>
         <DataBoundary label="Thread">
           <ThreadPanel />
         </DataBoundary>

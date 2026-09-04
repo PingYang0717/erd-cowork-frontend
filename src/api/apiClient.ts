@@ -56,19 +56,17 @@ httpClient.interceptors.request.use((config) => {
 // AxiosError, and swallowing it here would leave them nothing to read.
 httpClient.interceptors.response.use(
   (response) => response.data,
-  (error) => Promise.reject(error),
+  (error) => Promise.reject(error)
 );
 
 /** The interceptor above unwraps `response.data`, so axios's own return types
  *  (`AxiosResponse<T>`) no longer describe what callers receive. This wrapper corrects
  *  the type once, here, rather than having every endpoint module cast. */
 export const apiClient = {
-  get: <T>(url: string, config?: AxiosRequestConfig) =>
-    httpClient.get(url, config) as unknown as Promise<T>,
+  get: <T>(url: string, config?: AxiosRequestConfig) => httpClient.get(url, config) as unknown as Promise<T>,
   post: <T>(url: string, data?: unknown, config?: AxiosRequestConfig) =>
     httpClient.post(url, data, config) as unknown as Promise<T>,
   patch: <T>(url: string, data?: unknown, config?: AxiosRequestConfig) =>
     httpClient.patch(url, data, config) as unknown as Promise<T>,
-  delete: <T>(url: string, config?: AxiosRequestConfig) =>
-    httpClient.delete(url, config) as unknown as Promise<T>,
+  delete: <T>(url: string, config?: AxiosRequestConfig) => httpClient.delete(url, config) as unknown as Promise<T>,
 };

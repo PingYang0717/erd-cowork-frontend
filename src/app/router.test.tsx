@@ -1,6 +1,6 @@
+import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeAll, describe, expect, it, vi } from 'vitest';
 
 // The router reads window.location once at module-evaluation time, so each test puts
 // its URL there first and then re-imports the module tree fresh — this doubles as the
@@ -40,7 +40,7 @@ describe('Routing shell', () => {
 
       expect(await screen.findByRole('button', { name: 'New chat' })).toBeInTheDocument();
     },
-    RESET_MODULES_TIMEOUT,
+    RESET_MODULES_TIMEOUT
   );
 
   it(
@@ -51,7 +51,7 @@ describe('Routing shell', () => {
       expect(await screen.findByRole('button', { name: 'New chat' })).toBeInTheDocument();
       expect(window.location.hash).toBe('#/cowork');
     },
-    RESET_MODULES_TIMEOUT,
+    RESET_MODULES_TIMEOUT
   );
 
   it(
@@ -61,12 +61,9 @@ describe('Routing shell', () => {
 
       expect(await screen.findByRole('heading', { name: 'Artifacts' })).toBeInTheDocument();
       expect(await screen.findByRole('button', { name: 'New chat' })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /^Artifacts/ })).toHaveAttribute(
-        'aria-current',
-        'page',
-      );
+      expect(screen.getByRole('button', { name: /^Artifacts/ })).toHaveAttribute('aria-current', 'page');
     },
-    RESET_MODULES_TIMEOUT,
+    RESET_MODULES_TIMEOUT
   );
 
   it(
@@ -76,12 +73,9 @@ describe('Routing shell', () => {
 
       expect(await screen.findByRole('heading', { name: 'Schedule' })).toBeInTheDocument();
       expect(await screen.findByRole('button', { name: 'New chat' })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /^Schedule/ })).toHaveAttribute(
-        'aria-current',
-        'page',
-      );
+      expect(screen.getByRole('button', { name: /^Schedule/ })).toHaveAttribute('aria-current', 'page');
     },
-    RESET_MODULES_TIMEOUT,
+    RESET_MODULES_TIMEOUT
   );
 
   it(
@@ -92,7 +86,7 @@ describe('Routing shell', () => {
       // A direct visit has no recorded origin, so the toolbar leads with Home.
       expect(await screen.findByRole('button', { name: 'Home' })).toBeInTheDocument();
     },
-    RESET_MODULES_TIMEOUT,
+    RESET_MODULES_TIMEOUT
   );
 
   it(
@@ -104,7 +98,7 @@ describe('Routing shell', () => {
       // updates to the real seeded count; findByRole polls until that happens.
       expect(await screen.findByRole('button', { name: /^Artifacts3$/ })).toBeInTheDocument();
     },
-    RESET_MODULES_TIMEOUT,
+    RESET_MODULES_TIMEOUT
   );
 
   it(
@@ -120,6 +114,6 @@ describe('Routing shell', () => {
       expect(await screen.findByRole('button', { name: 'New chat' })).toBeInTheDocument();
       expect(window.location.hash).toBe('#/cowork/artifacts');
     },
-    RESET_MODULES_TIMEOUT,
+    RESET_MODULES_TIMEOUT
   );
 });

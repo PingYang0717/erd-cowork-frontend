@@ -14,9 +14,7 @@ export const installFormDataWire = (): void => {
     for (const [name, value] of config.data.entries()) {
       if (typeof value === 'string') {
         chunks.push(
-          encoder.encode(
-            `--${boundary}\r\nContent-Disposition: form-data; name="${name}"\r\n\r\n${value}\r\n`,
-          ),
+          encoder.encode(`--${boundary}\r\nContent-Disposition: form-data; name="${name}"\r\n\r\n${value}\r\n`)
         );
         continue;
       }
@@ -25,8 +23,8 @@ export const installFormDataWire = (): void => {
         encoder.encode(
           `--${boundary}\r\n` +
             `Content-Disposition: form-data; name="${name}"; filename="${filename}"\r\n` +
-            `Content-Type: ${value.type || 'application/octet-stream'}\r\n\r\n`,
-        ),
+            `Content-Type: ${value.type || 'application/octet-stream'}\r\n\r\n`
+        )
       );
       chunks.push(new Uint8Array(await value.arrayBuffer()));
       chunks.push(encoder.encode('\r\n'));

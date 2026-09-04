@@ -1,12 +1,11 @@
+import { act } from 'react';
+import { AxiosError } from 'axios';
+import { describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { AxiosError } from 'axios';
-import { act } from 'react';
-import { describe, expect, it, vi } from 'vitest';
 
 import { en } from '@/i18n/en';
 import { useLanguageStore } from '@/stores/useLanguageStore';
-
 import ErrorBoundary from './ErrorBoundary';
 
 const Explode = ({ shouldThrow }: { shouldThrow: boolean }) => {
@@ -23,7 +22,7 @@ describe('ErrorBoundary', () => {
     render(
       <ErrorBoundary>
         <Explode shouldThrow />
-      </ErrorBoundary>,
+      </ErrorBoundary>
     );
 
     expect(screen.getByRole('alert')).toHaveTextContent('This section failed to load');
@@ -42,7 +41,7 @@ describe('ErrorBoundary', () => {
     render(
       <ErrorBoundary>
         <ExplodeOffline />
-      </ErrorBoundary>,
+      </ErrorBoundary>
     );
 
     expect(screen.getByRole('alert')).toHaveTextContent('Cannot reach the backend');
@@ -64,7 +63,7 @@ describe('ErrorBoundary', () => {
     render(
       <ErrorBoundary>
         <Subject />
-      </ErrorBoundary>,
+      </ErrorBoundary>
     );
     expect(screen.getByRole('alert')).toBeInTheDocument();
 
@@ -81,7 +80,7 @@ describe('ErrorBoundary', () => {
     render(
       <ErrorBoundary fallback={(error) => <p>壞掉了：{error.message}</p>}>
         <Explode shouldThrow />
-      </ErrorBoundary>,
+      </ErrorBoundary>
     );
 
     expect(screen.getByText('壞掉了：連線中斷')).toBeInTheDocument();
@@ -97,7 +96,7 @@ describe('ErrorBoundary', () => {
     render(
       <ErrorBoundary>
         <Explode shouldThrow />
-      </ErrorBoundary>,
+      </ErrorBoundary>
     );
     expect(screen.getByRole('button', { name: en.common.retry })).toBeInTheDocument();
 

@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 
 import { streamAgentMessage } from '@/api/agentApi';
 import type { AgentEvent } from '@/types/api/agentEvent';
-
 import { SCENARIO_FIXTURES } from './scenarioFixtures';
 
 const collect = async (sessionId: string, question: string, baseArtifactId?: string) => {

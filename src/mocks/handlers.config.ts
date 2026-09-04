@@ -15,6 +15,6 @@ export const configHandlers = [
         xlsx: 200 * BYTES_PER_MB,
         xls: 200 * BYTES_PER_MB,
       },
-    }),
+    })
   ),
 ];

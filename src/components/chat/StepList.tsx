@@ -1,11 +1,5 @@
-import {
-  CheckCircleFilled,
-  CloseCircleFilled,
-  DownOutlined,
-  LoadingOutlined,
-  UpOutlined,
-} from '@ant-design/icons';
 import React, { useState } from 'react';
+import { CheckCircleFilled, CloseCircleFilled, DownOutlined, LoadingOutlined, UpOutlined } from '@ant-design/icons';
 
 import { useTranslations } from '@/i18n/useTranslations';
 import type { StepItem, StepStatus } from '@/types/api';
@@ -55,9 +49,7 @@ export const StepRow: React.FC<StepRowProps> = ({ step }) => {
       <StepStatusIcon status={step.status} />
       <span className={styles.stepText}>
         <span className={styles.stepTitle}>{step.title}</span>
-        {step.description !== null && (
-          <span className={styles.stepDescription}>{step.description}</span>
-        )}
+        {step.description !== null && <span className={styles.stepDescription}>{step.description}</span>}
       </span>
     </div>
   );
@@ -88,15 +80,9 @@ export const StepsRecap: React.FC<StepsRecapProps> = ({ steps }) => {
             name has to stay exactly its label, and each step's own status is announced
             by `StepStatusIcon` once expanded. */}
         {hasFailure ? (
-          <CloseCircleFilled
-            aria-hidden
-            className={`${styles.stepsRecapStatus} ${styles.stepIconError}`}
-          />
+          <CloseCircleFilled aria-hidden className={`${styles.stepsRecapStatus} ${styles.stepIconError}`} />
         ) : (
-          <CheckCircleFilled
-            aria-hidden
-            className={`${styles.stepsRecapStatus} ${styles.stepIconSuccess}`}
-          />
+          <CheckCircleFilled aria-hidden className={`${styles.stepsRecapStatus} ${styles.stepIconSuccess}`} />
         )}
         {t.chat.workedThrough(steps.length)}
         {isExpanded ? (

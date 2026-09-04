@@ -1,5 +1,5 @@
-import { Button, Input, Modal } from 'antd';
 import React, { useState } from 'react';
+import { Button, Input, Modal } from 'antd';
 
 import { useTranslations } from '@/i18n/useTranslations';
 
@@ -43,14 +43,7 @@ const PublishArtifactDialog: React.FC<PublishArtifactDialogProps> = ({
   const trimmed = title.trim();
 
   return (
-    <Modal
-      open={open}
-      onCancel={onCancel}
-      title={t.artifact.publish}
-      width={420}
-      footer={null}
-      destroyOnHidden
-    >
+    <Modal open={open} onCancel={onCancel} title={t.artifact.publish} width={420} footer={null} destroyOnHidden>
       <p className={styles.subtitle}>{t.publishDialog.subtitle}</p>
       <div className={styles.field}>
         <label className={styles.label} htmlFor="publish-artifact-title">

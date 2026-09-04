@@ -1,11 +1,10 @@
+import { beforeEach, describe, expect, it } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, it } from 'vitest';
 
 import SettingsMenu from '@/components/common/SettingsMenu';
 import { useLanguageStore } from '@/stores/useLanguageStore';
 import { appWrapper } from '@/test/appHarness';
-
 import { en } from './en';
 import { zhTW } from './zhTW';
 
@@ -114,10 +113,7 @@ describe('Switching the interface language', () => {
    *  untranslated compiles perfectly and is invisible until someone switches. */
   it('has no English entry left as a copy of the Chinese one', () => {
     const untranslated = Object.entries(zhTW.share)
-      .filter(
-        ([key, value]) =>
-          typeof value === 'string' && value === (en.share as Record<string, unknown>)[key],
-      )
+      .filter(([key, value]) => typeof value === 'string' && value === (en.share as Record<string, unknown>)[key])
       // `Submit` is the same word in both — a label the product uses as-is, not a gap.
       .filter(([key]) => key !== 'submit');
 

@@ -1,6 +1,6 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
 import { useStudioLayoutStore } from '@/stores/useStudioLayoutStore';
@@ -35,11 +35,7 @@ describe('Artifact panel toolbar', () => {
 
     // Absolute, and carrying the `#` — window.open bypasses the router, so a bare path
     // here would be a link that silently fails to open (ADR-0011).
-    expect(openSpy).toHaveBeenCalledWith(
-      artifactHref('artifact-1'),
-      '_blank',
-      'noopener,noreferrer',
-    );
+    expect(openSpy).toHaveBeenCalledWith(artifactHref('artifact-1'), '_blank', 'noopener,noreferrer');
     expect(artifactHref('artifact-1')).toContain('/#/');
 
     openSpy.mockRestore();
@@ -75,10 +71,7 @@ describe('Artifact panel toolbar', () => {
 
     // An iteration typed into the composer streams a new run whose artifact becomes
     // v2 and takes over (it rides baseArtifactId, so the scenario is inherited).
-    await user.type(
-      await screen.findByRole('textbox', { name: 'Message' }),
-      'Regenerate the dashboard.{Enter}',
-    );
+    await user.type(await screen.findByRole('textbox', { name: 'Message' }), 'Regenerate the dashboard.{Enter}');
     await screen.findByRole('button', { name: 'Publish Artifact' });
 
     await user.click(await screen.findByRole('button', { name: 'Switch Artifact' }));

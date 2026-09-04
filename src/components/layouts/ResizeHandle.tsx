@@ -26,15 +26,7 @@ interface ResizeHandleProps {
   onDragEnd: () => void;
 }
 
-const ResizeHandle: React.FC<ResizeHandleProps> = ({
-  label,
-  value,
-  min,
-  max,
-  onDragStart,
-  onDrag,
-  onDragEnd,
-}) => {
+const ResizeHandle: React.FC<ResizeHandleProps> = ({ label, value, min, max, onDragStart, onDrag, onDragEnd }) => {
   const { onPointerDown, isDragging } = useHorizontalDrag({ onDragStart, onDrag, onDragEnd });
 
   /** A key press is a complete one-step drag: read the committed width, move it,

@@ -1,7 +1,7 @@
-import { fireEvent, screen, waitFor, within } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { beforeEach, describe, expect, it } from 'vitest';
+import { fireEvent, screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import { en } from '@/i18n/en';
 import { server } from '@/mocks/server';
@@ -155,9 +155,7 @@ describe('Composer periphery failures', () => {
 
     // The seeded history is still on screen…
     expect(
-      await within(screen.getByRole('log', { name: 'Messages' })).findByText(
-        /Control chart with CL/,
-      ),
+      await within(screen.getByRole('log', { name: 'Messages' })).findByText(/Control chart with CL/)
     ).toBeInTheDocument();
     // …and the failure is contained to the composer strip, card and retry included.
     expect(screen.getByText(en.errors.loadFailedHeading)).toBeInTheDocument();
@@ -202,13 +200,11 @@ describe('Scenario matching', () => {
       await runScenario(user, label);
 
       // Scoped to the thread: the sr-only announcement region (A-1) holds the same text.
-      expect(
-        within(screen.getByRole('log', { name: 'Messages' })).getByText(replyMatch),
-      ).toBeInTheDocument();
+      expect(within(screen.getByRole('log', { name: 'Messages' })).getByText(replyMatch)).toBeInTheDocument();
       const chip = screen.getByText('shown right →').closest('div') as HTMLElement;
       expect(within(chip).getByText(artifactName)).toBeInTheDocument();
       expect(screen.queryByRole('status', { name: 'eRD AI is working' })).not.toBeInTheDocument();
-    },
+    }
   );
 
   it('keeps a collapsible recap of the run once it has finished', async () => {
@@ -300,12 +296,10 @@ describe('Scenario matching', () => {
 
       expect(screen.getByText(text)).toBeInTheDocument();
       // Scoped to the thread: the sr-only announcement region (A-1) holds the same text.
-      expect(
-        within(screen.getByRole('log', { name: 'Messages' })).getByText(replyMatch),
-      ).toBeInTheDocument();
+      expect(within(screen.getByRole('log', { name: 'Messages' })).getByText(replyMatch)).toBeInTheDocument();
       const chip = screen.getByText('shown right →').closest('div') as HTMLElement;
       expect(within(chip).getByText(artifactName)).toBeInTheDocument();
       expect(screen.queryByRole('status', { name: 'eRD AI is working' })).not.toBeInTheDocument();
-    },
+    }
   );
 });

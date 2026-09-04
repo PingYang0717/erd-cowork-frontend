@@ -14,8 +14,7 @@ import { AgentStreamHttpError } from '@/api/agentApi';
 /** Nothing came back at all: the backend is not answering (or the request never
  *  left). Note a cancelled axios request also has no response — callers that care
  *  about the difference check `isCanceled` first. */
-export const isOffline = (error: unknown): boolean =>
-  axios.isAxiosError(error) && error.response === undefined;
+export const isOffline = (error: unknown): boolean => axios.isAxiosError(error) && error.response === undefined;
 
 /** By `name` rather than `instanceof Error`: a fetch abort arrives as a
  *  `DOMException`, which fails `instanceof` across realms (jsdom in tests, a frame's
@@ -32,9 +31,7 @@ const errorName = (error: unknown): string | null =>
  *  keystroke. Covers axios (`CanceledError`) and fetch (`AbortError`) spellings,
  *  so no caller has to know which transport it rode. Never a failure to report. */
 export const isCanceled = (error: unknown): boolean =>
-  axios.isCancel(error) ||
-  errorName(error) === 'AbortError' ||
-  errorName(error) === 'CanceledError';
+  axios.isCancel(error) || errorName(error) === 'AbortError' || errorName(error) === 'CanceledError';
 
 /** Whether the backend answered "this is not here" as opposed to failing to answer.
  *

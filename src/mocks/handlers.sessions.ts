@@ -2,7 +2,6 @@ import { http, HttpResponse } from 'msw';
 
 import { DRAFT_SESSION_TITLE } from '@/constants/wireStrings';
 import type { Session } from '@/types/api/session';
-
 import { currentUser } from './currentUser';
 import { sessionFiles, toFileDto } from './handlers.files';
 import { messages, toMessageDto } from './handlers.messages';
@@ -51,16 +50,11 @@ export const upsertSession = (sessionId: string): void => {
   const now = new Date().toISOString();
 
   if (existing) {
-    sessions.write(
-      all.map((session) => (session.id === sessionId ? { ...session, updatedAt: now } : session)),
-    );
+    sessions.write(all.map((session) => (session.id === sessionId ? { ...session, updatedAt: now } : session)));
     return;
   }
 
-  sessions.write([
-    ...all,
-    { id: sessionId, title: DRAFT_SESSION_TITLE, pinnedAt: null, updatedAt: now },
-  ]);
+  sessions.write([...all, { id: sessionId, title: DRAFT_SESSION_TITLE, pinnedAt: null, updatedAt: now }]);
 };
 
 export const sessionHandlers = [
@@ -119,9 +113,7 @@ export const sessionHandlers = [
     const sessionId = params.sessionId as string;
     upsertSession(sessionId);
     sessionDataSources.write(
-      sessionDataSources
-        .read()
-        .filter((link) => !(link.sessionId === sessionId && link.connectorId === connectorId)),
+      sessionDataSources.read().filter((link) => !(link.sessionId === sessionId && link.connectorId === connectorId))
     );
     return new HttpResponse(null, { status: 200 });
   }),
@@ -150,9 +142,7 @@ export const sessionHandlers = [
       return new HttpResponse(null, { status: 404 });
     }
     const pinnedAt = session.pinnedAt === null ? new Date().toISOString() : null;
-    sessions.write(
-      all.map((stored) => (stored.id === session.id ? { ...stored, pinnedAt } : stored)),
-    );
+    sessions.write(all.map((stored) => (stored.id === session.id ? { ...stored, pinnedAt } : stored)));
     // Answers with what the toggle settled, not with the whole Session — and names its
     // subject `sessionId`, not `id`.
     return HttpResponse.json({

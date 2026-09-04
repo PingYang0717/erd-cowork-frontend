@@ -1,11 +1,10 @@
-﻿import { QueryClient } from '@tanstack/react-query';
+﻿import { describe, expect, it, vi } from 'vitest';
+import { QueryClient } from '@tanstack/react-query';
 import { act, renderHook, waitFor } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
 
 import { en } from '@/i18n/en';
 import { mockAgentStream, mockAgentStreamRejection } from '@/test/agentStream';
 import { appWrapper } from '@/test/appHarness';
-
 import { useAgentStream } from './useAgentStream';
 
 /** The hook now owns the post-run invalidation, so it needs a QueryClient around it. */
@@ -241,9 +240,7 @@ describe('useAgentStream', () => {
     });
 
     stream.push({ type: 'ERROR', code: 'QUERY_TIMEOUT', message: '查詢逾時' });
-    await waitFor(() =>
-      expect(result.current.state.error).toEqual({ code: 'QUERY_TIMEOUT', message: '查詢逾時' }),
-    );
+    await waitFor(() => expect(result.current.state.error).toEqual({ code: 'QUERY_TIMEOUT', message: '查詢逾時' }));
     expect(result.current.state.isStreaming).toBe(true);
 
     stream.push({

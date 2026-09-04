@@ -1,3 +1,5 @@
+import React, { type ReactNode, useMemo, useState } from 'react';
+import { Button, Input, Modal } from 'antd';
 import {
   ApiOutlined,
   AppstoreOutlined,
@@ -18,8 +20,6 @@ import {
   ToolOutlined,
   WarningOutlined,
 } from '@ant-design/icons';
-import { Button, Input, Modal } from 'antd';
-import React, { type ReactNode, useMemo, useState } from 'react';
 
 import { useAddConnector, useSetSessionDataSource } from '@/hooks/useConnectorMutations';
 import { useConnectors } from '@/hooks/useConnectors';
@@ -52,9 +52,7 @@ const STATUS_FILTERS: StatusFilter[] = ['All', 'Connected', 'Not Connected'];
 
 const matchesFilter = (connector: Connector, filter: StatusFilter): boolean => {
   if (filter === 'All') return true;
-  return filter === 'Connected'
-    ? connector.status === 'connected'
-    : connector.status !== 'connected';
+  return filter === 'Connected' ? connector.status === 'connected' : connector.status !== 'connected';
 };
 
 /** Takes the copy rather than reaching for it, so the lookup stays a pure function
@@ -109,7 +107,7 @@ const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ sessionId, open, onCl
 
   const attachedIds = useMemo(
     () => selectConnected(sessionConnectors).map((connector) => connector.id),
-    [sessionConnectors],
+    [sessionConnectors]
   );
 
   // What the user has picked but not yet submitted. Choosing sources is one decision made
@@ -137,9 +135,9 @@ const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ sessionId, open, onCl
       sessionConnectors.map((connector) =>
         connector.status === 'expired' || connector.status === 'no_access'
           ? connector
-          : { ...connector, status: draftIds.includes(connector.id) ? 'connected' : 'available' },
+          : { ...connector, status: draftIds.includes(connector.id) ? 'connected' : 'available' }
       ),
-    [sessionConnectors, draftIds],
+    [sessionConnectors, draftIds]
   );
 
   const connectedConnectors = selectConnected(connectors);
@@ -155,9 +153,7 @@ const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ sessionId, open, onCl
     (connector) =>
       matchesFilter(connector, statusFilter) &&
       (!normalizedSearch ||
-        `${connector.name} ${connector.description} ${connector.category}`
-          .toLowerCase()
-          .includes(normalizedSearch)),
+        `${connector.name} ${connector.description} ${connector.category}`.toLowerCase().includes(normalizedSearch))
   );
 
   const toggle = (connector: Connector) => {
@@ -165,9 +161,7 @@ const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ sessionId, open, onCl
       return;
     }
     setDraftIds((previous) =>
-      previous.includes(connector.id)
-        ? previous.filter((id) => id !== connector.id)
-        : [...previous, connector.id],
+      previous.includes(connector.id) ? previous.filter((id) => id !== connector.id) : [...previous, connector.id]
     );
   };
 
@@ -227,12 +221,7 @@ const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ sessionId, open, onCl
             {t.connectors.showing(visibleConnectors.length, connectors.length)}
           </span>
           <Button onClick={onClose}>{t.common.cancel}</Button>
-          <Button
-            type="primary"
-            loading={setDataSource.isPending}
-            disabled={!isDirty}
-            onClick={() => void submit()}
-          >
+          <Button type="primary" loading={setDataSource.isPending} disabled={!isDirty} onClick={() => void submit()}>
             {t.connectors.submit}
           </Button>
         </div>
@@ -290,12 +279,7 @@ const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ sessionId, open, onCl
           onChange={(e) => setSearch(e.target.value)}
         />
         {search && (
-          <button
-            type="button"
-            className={styles.searchClear}
-            aria-label="Clear search"
-            onClick={() => setSearch('')}
-          >
+          <button type="button" className={styles.searchClear} aria-label="Clear search" onClick={() => setSearch('')}>
             <CloseCircleFilled aria-hidden />
           </button>
         )}
@@ -327,8 +311,7 @@ const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ sessionId, open, onCl
       <ul className={styles.list}>
         {visibleConnectors.length ? (
           visibleConnectors.map((connector) => {
-            const isPending =
-              setDataSource.isPending && setDataSource.variables?.id === connector.id;
+            const isPending = setDataSource.isPending && setDataSource.variables?.id === connector.id;
             const meta = statusMeta(connector.status, isPending, t.connectors);
             const isConnected = connector.status === 'connected';
             return (
@@ -343,11 +326,7 @@ const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ sessionId, open, onCl
                     {connector.custom && <span className={styles.customTag}>custom</span>}
                   </span>
                   <span className={styles.description}>{connector.description}</span>
-                  <span
-                    className={styles.status}
-                    data-status={connector.status}
-                    style={{ color: meta.color }}
-                  >
+                  <span className={styles.status} data-status={connector.status} style={{ color: meta.color }}>
                     <span className={styles.statusDot} style={{ background: meta.color }} />
                     {meta.label}
                   </span>
@@ -358,9 +337,7 @@ const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ sessionId, open, onCl
                   shape="circle"
                   size="small"
                   disabled={connector.status === 'no_access'}
-                  aria-label={
-                    isConnected ? `Disconnect ${connector.name}` : `Connect ${connector.name}`
-                  }
+                  aria-label={isConnected ? `Disconnect ${connector.name}` : `Connect ${connector.name}`}
                   icon={toggleIcon(connector.status, isPending)}
                   onClick={() => toggle(connector)}
                 />

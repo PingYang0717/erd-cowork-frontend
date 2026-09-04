@@ -1,8 +1,9 @@
+import { describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
 
 import Tooltip from './Tooltip';
+
 import styles from './Tooltip.module.css';
 
 /** jsdom gives every element a zero rect, so the trigger's distance from the top of the
@@ -28,7 +29,7 @@ describe('Tooltip', () => {
     render(
       <Tooltip content="重新生成">
         <button type="button">R</button>
-      </Tooltip>,
+      </Tooltip>
     );
 
     await user.hover(screen.getByRole('button', { name: 'R' }));
@@ -45,7 +46,7 @@ describe('Tooltip', () => {
     render(
       <Tooltip content="重新生成">
         <button type="button">R</button>
-      </Tooltip>,
+      </Tooltip>
     );
 
     await user.hover(screen.getByRole('button', { name: 'R' }));
@@ -59,7 +60,7 @@ describe('Tooltip', () => {
     render(
       <Tooltip content="重新生成">
         <button type="button">R</button>
-      </Tooltip>,
+      </Tooltip>
     );
 
     await user.hover(screen.getByRole('button', { name: 'R' }));
@@ -79,7 +80,7 @@ describe('Tooltip', () => {
     render(
       <Tooltip content="重新整理">
         <button type="button">R</button>
-      </Tooltip>,
+      </Tooltip>
     );
 
     await user.tab();

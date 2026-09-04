@@ -16,7 +16,7 @@ import type { Translations } from '@/i18n/zhTW';
  */
 export const describeLoadError = (
   error: Error,
-  t: Translations['errors'] = getTranslations().errors,
+  t: Translations['errors'] = getTranslations().errors
 ): { heading: string; detail: string } => {
   if (isOffline(error)) {
     return { heading: t.offlineHeading, detail: t.offlineDetail };

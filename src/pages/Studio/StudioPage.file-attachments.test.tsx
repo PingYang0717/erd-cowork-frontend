@@ -1,13 +1,7 @@
-import {
-  fireEvent,
-  screen,
-  waitFor,
-  waitForElementToBeRemoved,
-  within,
-} from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { beforeEach, describe, expect, it } from 'vitest';
+import { fireEvent, screen, waitFor, waitForElementToBeRemoved, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import { server } from '@/mocks/server';
 import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
@@ -75,25 +69,19 @@ describe('File attachments', () => {
 
     expect(screen.getByRole('progressbar', { name: 'Uploading' })).toBeInTheDocument();
     expect(screen.getByLabelText('Choose files')).toBeDisabled();
-    expect(screen.getByRole('button', { name: /Click to choose/ })).toHaveAttribute(
-      'aria-disabled',
-      'true',
-    );
+    expect(screen.getByRole('button', { name: /Click to choose/ })).toHaveAttribute('aria-disabled', 'true');
     // Done claims the set is settled — mid-upload it is not.
     expect(screen.getByRole('button', { name: 'Done' })).toBeDisabled();
 
     await waitForElementToBeRemoved(() => screen.queryByRole('progressbar', { name: 'Uploading' }));
 
     expect(screen.getByLabelText('Choose files')).toBeEnabled();
-    expect(screen.getByRole('button', { name: /Click to choose/ })).not.toHaveAttribute(
-      'aria-disabled',
-      'true',
-    );
+    expect(screen.getByRole('button', { name: /Click to choose/ })).not.toHaveAttribute('aria-disabled', 'true');
     // The just-uploaded file can be removed again now that nothing is in flight.
     expect(
       within(screen.getByRole('dialog', { name: 'Attach files' })).getByRole('button', {
         name: /Remove/,
-      }),
+      })
     ).toBeEnabled();
     void user;
   });
@@ -108,11 +96,8 @@ describe('File attachments', () => {
     const user = userEvent.setup();
     server.use(
       http.post('/api/sessions/:sessionId/files', () =>
-        HttpResponse.json(
-          { code: 'TOO_LARGE', message: '單一檔案超過 2 GB 上限' },
-          { status: 413 },
-        ),
-      ),
+        HttpResponse.json({ code: 'TOO_LARGE', message: '單一檔案超過 2 GB 上限' }, { status: 413 })
+      )
     );
     renderStudio();
     await selectASessionAndOpenFileModal(user);
@@ -134,7 +119,7 @@ describe('File attachments', () => {
           releaseDelete = resolve;
         });
         return new HttpResponse(null, { status: 200 });
-      }),
+      })
     );
     renderStudio();
     await selectASessionAndOpenFileModal(user);
@@ -162,7 +147,7 @@ describe('File attachments', () => {
           releaseDelete = resolve;
         });
         return new HttpResponse(null, { status: 200 });
-      }),
+      })
     );
     renderStudio();
     await selectASessionAndOpenFileModal(user);
@@ -176,18 +161,12 @@ describe('File attachments', () => {
     expect(composer).toBeEnabled();
 
     // The composer's own chip row, not the modal's copy of it (which is still mounted).
-    await user.click(
-      within(composerAttachments()).getByRole('button', { name: /^Remove lots\.csv/ }),
-    );
+    await user.click(within(composerAttachments()).getByRole('button', { name: /^Remove lots\.csv/ }));
     // Typing stays open — a gigabyte upload locks the box for minutes otherwise.
     // Only SENDING waits for the file set to settle, and the notice says why.
-    await waitFor(() =>
-      expect(screen.getByRole('button', { name: 'Send message' })).toBeDisabled(),
-    );
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Send message' })).toBeDisabled());
     expect(composer).toBeEnabled();
-    expect(
-      screen.getByText('Files are still being processed — sending resumes once they finish'),
-    ).toBeInTheDocument();
+    expect(screen.getByText('Files are still being processed — sending resumes once they finish')).toBeInTheDocument();
 
     releaseDelete?.();
     await waitFor(() => expect(screen.getByRole('button', { name: 'Send message' })).toBeEnabled());
@@ -220,9 +199,7 @@ describe('File attachments', () => {
 
     await user.upload(input, fileOfSize('notes.pdf', 1024));
 
-    expect(await within(dialog).findByRole('alert')).toHaveTextContent(
-      'Only .csv / .xlsx are supported',
-    );
+    expect(await within(dialog).findByRole('alert')).toHaveTextContent('Only .csv / .xlsx are supported');
     expect(within(dialog).queryByText('notes.pdf')).not.toBeInTheDocument();
 
     // Supported types still go through afterwards.
@@ -254,19 +231,12 @@ describe('File attachments', () => {
     const dialog = await selectASessionAndOpenFileModal(user);
 
     const input = screen.getByLabelText('Choose files');
-    await user.upload(input, [
-      fileOfSize('lot-genealogy.csv', 1024),
-      fileOfSize('yields.xlsx', 2048),
-    ]);
+    await user.upload(input, [fileOfSize('lot-genealogy.csv', 1024), fileOfSize('yields.xlsx', 2048)]);
 
-    const csvRow = (await within(dialog).findByText('lot-genealogy.csv')).closest(
-      'li',
-    ) as HTMLElement;
+    const csvRow = (await within(dialog).findByText('lot-genealogy.csv')).closest('li') as HTMLElement;
     expect(within(csvRow).getByText('CSV · 1.0 KB')).toBeInTheDocument();
     expect(within(csvRow).getByTestId('file-type-icon')).toHaveAttribute('data-file-type', 'csv');
-    expect(
-      within(csvRow).getByRole('button', { name: 'Remove lot-genealogy.csv' }),
-    ).toBeInTheDocument();
+    expect(within(csvRow).getByRole('button', { name: 'Remove lot-genealogy.csv' })).toBeInTheDocument();
 
     const xlsxRow = within(dialog).getByText('yields.xlsx').closest('li') as HTMLElement;
     expect(within(xlsxRow).getByText('XLSX · 2.0 KB')).toBeInTheDocument();
@@ -290,9 +260,7 @@ describe('File attachments', () => {
     await user.keyboard('{Enter}');
 
     await screen.findByText('Check this lot data');
-    await waitFor(() =>
-      expect(screen.queryByRole('list', { name: 'Attached files' })).not.toBeInTheDocument(),
-    );
+    await waitFor(() => expect(screen.queryByRole('list', { name: 'Attached files' })).not.toBeInTheDocument());
   });
 
   it('removes an attached file from the composer', async () => {
@@ -305,9 +273,7 @@ describe('File attachments', () => {
     await within(dialog).findByText('lot-genealogy.csv');
     await within(composerAttachments()).findByText('lot-genealogy.csv');
 
-    await user.click(
-      within(composerAttachments()).getByRole('button', { name: 'Remove lot-genealogy.csv' }),
-    );
+    await user.click(within(composerAttachments()).getByRole('button', { name: 'Remove lot-genealogy.csv' }));
     expect(screen.queryByRole('list', { name: 'Attached files' })).not.toBeInTheDocument();
   });
 });

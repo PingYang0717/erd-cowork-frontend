@@ -200,8 +200,7 @@ export const zhTW = {
     yesterday: '昨天',
     weekday: (day: number) => ['週日', '週一', '週二', '週三', '週四', '週五', '週六'][day],
     monthDay: (month: number, date: number) => `${month + 1} 月 ${date} 日`,
-    monthDayYear: (month: number, date: number, year: number) =>
-      `${year} 年 ${month + 1} 月 ${date} 日`,
+    monthDayYear: (month: number, date: number, year: number) => `${year} 年 ${month + 1} 月 ${date} 日`,
   },
 
   connectors: {

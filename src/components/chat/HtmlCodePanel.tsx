@@ -1,5 +1,5 @@
-import { CodeOutlined, DownOutlined, UpOutlined } from '@ant-design/icons';
 import React, { useEffect, useRef, useState } from 'react';
+import { CodeOutlined, DownOutlined, UpOutlined } from '@ant-design/icons';
 
 import { isCanceled, isNotFound } from '@/api/apiError';
 import { getArtifactRawHtml } from '@/api/artifactApi';
@@ -42,9 +42,7 @@ const HtmlCodePanel: React.FC<HtmlCodePanelProps> = ({ code, artifactId, autoScr
   const hasLiveCode = code !== undefined && code !== '';
   // Both being undefined is not a match: a panel with no artifact has nothing fetched.
   const resolved =
-    outcome !== null && artifactId !== undefined && outcome.artifactId === artifactId
-      ? outcome.result
-      : null;
+    outcome !== null && artifactId !== undefined && outcome.artifactId === artifactId ? outcome.result : null;
 
   // Lazy: nothing is fetched until the reader asks to see it, and the answer is kept per
   // artifact so re-expanding does not re-fetch while switching versions does.
@@ -101,9 +99,7 @@ const HtmlCodePanel: React.FC<HtmlCodePanelProps> = ({ code, artifactId, autoScr
         <div className={styles.body}>
           {isLoading && <p className={styles.note}>{t.chat.loading}</p>}
           {resolved?.status === 'error' && (
-            <p className={styles.note}>
-              {resolved.missing ? t.chat.noSource : t.chat.sourceLoadFailed}
-            </p>
+            <p className={styles.note}>{resolved.missing ? t.chat.noSource : t.chat.sourceLoadFailed}</p>
           )}
           {shownCode !== null && (
             <pre ref={codeRef} className={styles.code}>

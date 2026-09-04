@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
 import type { SessionDetail, StepItem } from '@/types/api';
-
 import { SCENARIO_FIXTURES } from './scenarioFixtures';
 
 const API_BASE = '/api';

@@ -1,8 +1,8 @@
-import { render, screen, within } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
+import { render, screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import StudioShell from '@/components/layouts/StudioShell';
 import { en } from '@/i18n/en';
@@ -11,7 +11,6 @@ import ArtifactsGalleryPage from '@/pages/ArtifactsGallery/ArtifactsGalleryPage'
 import StudioPage from '@/pages/Studio/StudioPage';
 import { appWrapper } from '@/test/appHarness';
 import { artifactHref } from '@/utils/artifactUrl';
-
 import ArtifactPage from './ArtifactPage';
 
 const renderArtifactPageAt = (path: string) => {
@@ -27,7 +26,7 @@ const renderArtifactPageAt = (path: string) => {
         <Route path="/cowork/artifact/:artifactId" element={<ArtifactPage />} />
       </Routes>
     </MemoryRouter>,
-    { wrapper: appWrapper() },
+    { wrapper: appWrapper() }
   );
 };
 
@@ -163,11 +162,7 @@ describe('Artifact full-page view', () => {
     await user.click(openInNewTab);
     // Absolute, and carrying the `#` — window.open bypasses the router, so a bare path
     // here would be a link that silently fails to open (ADR-0011).
-    expect(openSpy).toHaveBeenCalledWith(
-      artifactHref('artifact-1'),
-      '_blank',
-      'noopener,noreferrer',
-    );
+    expect(openSpy).toHaveBeenCalledWith(artifactHref('artifact-1'), '_blank', 'noopener,noreferrer');
     expect(artifactHref('artifact-1')).toContain('/#/');
 
     openSpy.mockRestore();

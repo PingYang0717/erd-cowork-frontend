@@ -1,6 +1,6 @@
+import { beforeEach, describe, expect, it } from 'vitest';
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, it } from 'vitest';
 
 import { useActiveRunStore } from '@/stores/useActiveRunStore';
 import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
@@ -17,10 +17,7 @@ const artifactSrcdoc = () => {
 const threadWithTwoArtifacts = async (user: ReturnType<typeof userEvent.setup>) => {
   await user.click(await screen.findByRole('button', { name: 'SPC — Vt (gate CD)' }));
   await screen.findByTitle('Artifact preview');
-  await user.type(
-    await screen.findByRole('textbox', { name: 'Message' }),
-    'Regenerate the dashboard.{Enter}',
-  );
+  await user.type(await screen.findByRole('textbox', { name: 'Message' }), 'Regenerate the dashboard.{Enter}');
   await expect.poll(artifactSrcdoc, { timeout: 5000 }).toContain('· v2');
 };
 
@@ -59,9 +56,7 @@ describe("A past reply's Artifact chip", () => {
 
     // Still exactly one — the label moved to the chip the user picked.
     expect(screen.getAllByRole('button', { name: /shown in the Artifact panel$/ })).toHaveLength(1);
-    expect(
-      screen.getByRole('button', { name: /^Show .* in the Artifact panel$/ }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^Show .* in the Artifact panel$/ })).toBeInTheDocument();
   });
 
   it('hands the pane back to a new run, so a stale pick cannot outlive it', async () => {
@@ -72,10 +67,7 @@ describe("A past reply's Artifact chip", () => {
     await user.click(screen.getByRole('button', { name: /^Show .* in the Artifact panel$/ }));
     await expect.poll(artifactSrcdoc).toContain('· v1');
 
-    await user.type(
-      await screen.findByRole('textbox', { name: 'Message' }),
-      'Regenerate the dashboard.{Enter}',
-    );
+    await user.type(await screen.findByRole('textbox', { name: 'Message' }), 'Regenerate the dashboard.{Enter}');
     await expect.poll(artifactSrcdoc, { timeout: 5000 }).toContain('· v3');
   });
 });
