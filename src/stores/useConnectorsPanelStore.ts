@@ -21,6 +21,6 @@ export const useConnectorsPanelStore = create<ConnectorsPanelState>()(
       open: () => set({ isOpen: true }, false, 'open'),
       close: () => set({ isOpen: false }, false, 'close'),
     }),
-    { name: 'ConnectorsPanel' },
-  ),
+    { name: 'ConnectorsPanel' }
+  )
 );

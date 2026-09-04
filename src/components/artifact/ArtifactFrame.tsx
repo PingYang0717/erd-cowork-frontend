@@ -23,10 +23,7 @@ const ArtifactFrame: React.FC<ArtifactFrameProps> = ({ html, artifactId }) => {
   // Only messages from THIS iframe count — any page can postMessage at us.
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
-      if (
-        event.data?.type !== 'erd-artifact-error' ||
-        event.source !== iframeRef.current?.contentWindow
-      ) {
+      if (event.data?.type !== 'erd-artifact-error' || event.source !== iframeRef.current?.contentWindow) {
         return;
       }
       report(artifactId, (event.data.errors ?? []) as BrowserJsError[]);

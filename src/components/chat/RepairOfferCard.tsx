@@ -1,5 +1,5 @@
-import { LoadingOutlined } from '@ant-design/icons';
 import React from 'react';
+import { LoadingOutlined } from '@ant-design/icons';
 
 import { useTranslations } from '@/i18n/useTranslations';
 import type { RepairOffer } from '@/stores/useRepairOfferStore';
@@ -20,8 +20,7 @@ interface RepairOfferCardProps {
 const RepairOfferCard: React.FC<RepairOfferCardProps> = ({ offer, onConfirm, onDismiss }) => {
   const t = useTranslations();
   const firstMessage = offer.errors[0]?.message ?? '';
-  const shown =
-    firstMessage.length > MAX_MESSAGE ? `${firstMessage.slice(0, MAX_MESSAGE)}…` : firstMessage;
+  const shown = firstMessage.length > MAX_MESSAGE ? `${firstMessage.slice(0, MAX_MESSAGE)}…` : firstMessage;
 
   return (
     <div className={styles.card}>

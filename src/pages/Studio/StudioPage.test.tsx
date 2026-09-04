@@ -1,8 +1,8 @@
-import { fireEvent, render, screen, within } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { fireEvent, render, screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import { en } from '@/i18n/en';
 import { server } from '@/mocks/server';
@@ -27,7 +27,7 @@ const renderReloadedStudioPage = async () => {
         </Route>
       </Routes>
     </MemoryRouter>,
-    { wrapper: appWrapper({ retry: true }) },
+    { wrapper: appWrapper({ retry: true }) }
   );
 };
 
@@ -106,9 +106,7 @@ describe('StudioPage three-pane layout', () => {
     expect(screen.getByRole('button', { name: 'Artifacts' })).toBeInTheDocument();
     expect(screen.queryByRole('region', { name: 'Pinned sessions' })).not.toBeInTheDocument();
     expect(rail.style.width).toBe('52px');
-    expect(
-      screen.queryByRole('separator', { name: 'Resize session rail' }),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByRole('separator', { name: 'Resize session rail' })).not.toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Expand session list' }));
 
@@ -214,9 +212,7 @@ describe('StudioPage three-pane layout', () => {
 
     await renderReloadedStudioPage();
 
-    expect(screen.getAllByRole('navigation', { name: 'Session list' })[1].style.width).toBe(
-      '330px',
-    );
+    expect(screen.getAllByRole('navigation', { name: 'Session list' })[1].style.width).toBe('330px');
   });
 });
 
@@ -260,8 +256,8 @@ describe('Session rail', () => {
             pinnedAt: '2026-08-20T09:05:00.000Z',
             updatedAt: '2026-08-20T09:00:00.000Z',
           },
-        ]),
-      ),
+        ])
+      )
     );
     renderStudio();
 

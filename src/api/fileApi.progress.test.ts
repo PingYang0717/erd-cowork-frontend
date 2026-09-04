@@ -2,7 +2,6 @@ import { http, HttpResponse } from 'msw';
 import { describe, expect, it } from 'vitest';
 
 import { server } from '@/mocks/server';
-
 import { uploadFiles, type UploadProgress } from './fileApi';
 
 const csv = (name: string, sizeBytes: number): File => {
@@ -37,8 +36,8 @@ describe('fileApi.uploadFiles progress', () => {
   it('rejects when the backend refuses the upload', async () => {
     server.use(
       http.post('/api/sessions/:sessionId/files', () =>
-        HttpResponse.json({ code: 'TOO_LARGE', message: 'nope' }, { status: 413 }),
-      ),
+        HttpResponse.json({ code: 'TOO_LARGE', message: 'nope' }, { status: 413 })
+      )
     );
 
     await expect(uploadFiles('session-2', [csv('lots.csv', 16)])).rejects.toThrow();

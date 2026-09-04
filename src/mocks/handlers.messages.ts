@@ -5,7 +5,6 @@ import type { Connector } from '@/types/api/connector';
 import type { DcItem } from '@/types/api/dcItem';
 import type { Message } from '@/types/api/message';
 import type { ScenarioKey } from '@/types/api/scenario';
-
 import type { ArtifactKind } from './artifactFixtures';
 import { currentUser } from './currentUser';
 import { DC_ITEM_FIXTURES, ROWS_PER_DC_ITEM } from './dcItemFixtures';
@@ -63,7 +62,7 @@ const attachedConnectors = (sessionId: string): Connector[] => {
     sessionDataSources
       .read()
       .filter((link) => link.sessionId === sessionId)
-      .map((link) => link.connectorId),
+      .map((link) => link.connectorId)
   );
   return CATALOGUE.filter((connector) => attached.has(connector.id)).map((connector) => ({
     ...connector,
@@ -165,11 +164,10 @@ const streamRun = (
   sessionId: string,
   scenarioKey: ScenarioKey,
   artifactKind: ArtifactKind,
-  leadingSteps: StepItem[] = [],
+  leadingSteps: StepItem[] = []
 ) => {
   const fixture = SCENARIO_FIXTURES[scenarioKey];
-  const artifactName =
-    artifactKind === 'slides' ? `${fixture.artifactName} (slides)` : fixture.artifactName;
+  const artifactName = artifactKind === 'slides' ? `${fixture.artifactName} (slides)` : fixture.artifactName;
   const scenarioSteps = artifactKind === 'slides' ? [...fixture.steps, SLIDES_STEP] : fixture.steps;
   const steps = [...leadingSteps, ...scenarioSteps];
 
@@ -227,10 +225,7 @@ export const messageHandlers = [
 
     const question = body.question?.trim();
     if (!question) {
-      return HttpResponse.json(
-        { code: 'EMPTY_MESSAGE', message: 'Message is empty' },
-        { status: 400 },
-      );
+      return HttpResponse.json({ code: 'EMPTY_MESSAGE', message: 'Message is empty' }, { status: 400 });
     }
 
     // Sending is what creates a session: the id comes from the client and this is an

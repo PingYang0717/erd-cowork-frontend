@@ -17,6 +17,6 @@ export const usePublishCoachStore = create<PublishCoachState>()(
       start: () => set({ isActive: true }, false, 'start'),
       dismiss: () => set({ isActive: false }, false, 'dismiss'),
     }),
-    { name: 'PublishCoach' },
-  ),
+    { name: 'PublishCoach' }
+  )
 );

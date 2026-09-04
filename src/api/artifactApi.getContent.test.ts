@@ -2,7 +2,6 @@ import { http, HttpResponse } from 'msw';
 import { describe, expect, it } from 'vitest';
 
 import { server } from '@/mocks/server';
-
 import { getArtifactContent } from './artifactApi';
 
 const API_BASE = '/api';
@@ -16,7 +15,7 @@ const captureContentRequest = (): { url: () => URL } => {
       return new HttpResponse('<!doctype html><html></html>', {
         headers: { 'Content-Type': 'text/html' },
       });
-    }),
+    })
   );
   return {
     url: () => {

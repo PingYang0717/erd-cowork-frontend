@@ -3,12 +3,12 @@ import React, { type ReactNode, useEffect, useMemo, useRef } from 'react';
 import { useActiveRunStore } from '@/stores/useActiveRunStore';
 import type { Message, QuestionForm, StepItem } from '@/types/api';
 import { liftQuestions } from '@/utils/liftQuestions';
-
 import MessageBubble, { type LiveRun } from './MessageBubble';
 
 export type { LiveRun } from './MessageBubble';
-import styles from './MessageList.module.css';
 import type { Answers } from './QuestionFormCard';
+
+import styles from './MessageList.module.css';
 
 /** What the current run has produced so far. Null once nothing is streaming. */
 /** The wire carries steps as the backend's JSON string; a malformed one renders as no
@@ -84,8 +84,7 @@ const MessageList: React.FC<MessageListProps> = ({
   const handleScroll = () => {
     const container = containerRef.current;
     if (container) {
-      isNearBottomRef.current =
-        container.scrollHeight - container.scrollTop - container.clientHeight < 80;
+      isNearBottomRef.current = container.scrollHeight - container.scrollTop - container.clientHeight < 80;
     }
   };
 
@@ -134,7 +133,7 @@ const MessageList: React.FC<MessageListProps> = ({
           ? { artifactId: message.artifactId, title: message.artifactTitle ?? message.text }
           : null,
       })),
-    [messages],
+    [messages]
   );
 
   const lastIndex = messages.length - 1;
@@ -166,11 +165,7 @@ const MessageList: React.FC<MessageListProps> = ({
           questionDisabled
           // The turn that just finished is the tail of the history once the live bubble
           // has handed over; nothing older has a duration to show.
-          durationMs={
-            live === null && index === lastIndex && message.sender === 'AI'
-              ? lastRunDurationMs
-              : null
-          }
+          durationMs={live === null && index === lastIndex && message.sender === 'AI' ? lastRunDurationMs : null}
         />
       ))}
       {optimisticUserText !== null && <MessageBubble sender="USER" text={optimisticUserText} />}

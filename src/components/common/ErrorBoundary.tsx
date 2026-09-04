@@ -2,9 +2,9 @@ import { Component, type ErrorInfo, type ReactNode } from 'react';
 
 import { useTranslations } from '@/i18n/useTranslations';
 import { describeLoadError } from '@/utils/describeLoadError';
+import SettingsMenu from './SettingsMenu';
 
 import styles from './ErrorBoundary.module.css';
-import SettingsMenu from './SettingsMenu';
 
 interface Props {
   children: ReactNode;

@@ -1,12 +1,6 @@
-import {
-  AppstoreOutlined,
-  CheckOutlined,
-  ExportOutlined,
-  ReloadOutlined,
-  ShareAltOutlined,
-} from '@ant-design/icons';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { AppstoreOutlined, CheckOutlined, ExportOutlined, ReloadOutlined, ShareAltOutlined } from '@ant-design/icons';
 
 import { isNotFound } from '@/api/apiError';
 import Tooltip from '@/components/common/Tooltip';
@@ -21,13 +15,13 @@ import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
 import type { ArtifactVersion } from '@/types/api';
 import { artifactHref } from '@/utils/artifactUrl';
 import { deriveArtifactVersions } from '@/utils/deriveArtifactVersions';
-
 import ArtifactFrame from './ArtifactFrame';
-import styles from './ArtifactPanel.module.css';
 import ArtifactToolbarButton, { ARTIFACT_TOOLBAR_LABELS } from './ArtifactToolbarButton';
 import PublishArtifactDialog from './PublishArtifactDialog';
 import ShareArtifactDialog from './ShareArtifactDialog';
 import VersionSwitcher from './VersionSwitcher';
+
+import styles from './ArtifactPanel.module.css';
 
 const EmptyPanel: React.FC = () => {
   const t = useTranslations();
@@ -175,7 +169,7 @@ const ArtifactPanelContent: React.FC<ArtifactPanelContentProps> = ({
           publishedAt: listed?.publishedAt,
         };
       }),
-    [versions, artifacts],
+    [versions, artifacts]
   );
 
   // 發布 = 把這個 Artifact 開放給別人使用。The mockup's button says 生成 Artifact;
@@ -279,17 +273,11 @@ const ArtifactPanelContent: React.FC<ArtifactPanelContentProps> = ({
                 setIsPublishOpen(false);
                 startCoach();
               },
-            },
+            }
           )
         }
       />
-      {artifact && (
-        <ShareArtifactDialog
-          open={isShareOpen}
-          onClose={() => setIsShareOpen(false)}
-          artifact={artifact}
-        />
-      )}
+      {artifact && <ShareArtifactDialog open={isShareOpen} onClose={() => setIsShareOpen(false)} artifact={artifact} />}
       <PublishedToast />
     </div>
   );

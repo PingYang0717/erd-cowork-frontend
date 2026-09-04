@@ -1,3 +1,5 @@
+import React, { useRef } from 'react';
+import { Button, Modal, Progress } from 'antd';
 import {
   CloseOutlined,
   CloudUploadOutlined,
@@ -5,15 +7,9 @@ import {
   FileExcelOutlined,
   FileTextOutlined,
 } from '@ant-design/icons';
-import { Button, Modal, Progress } from 'antd';
-import React, { useRef } from 'react';
 
 import type { UploadProgress } from '@/api/fileApi';
-import {
-  ACCEPT_ATTRIBUTE,
-  MAX_ATTACHMENT_COUNT,
-  MAX_ATTACHMENT_TOTAL_LABEL,
-} from '@/hooks/useFileAttachments';
+import { ACCEPT_ATTRIBUTE, MAX_ATTACHMENT_COUNT, MAX_ATTACHMENT_TOTAL_LABEL } from '@/hooks/useFileAttachments';
 import { useTranslations } from '@/i18n/useTranslations';
 import type { UploadedFileInfo } from '@/types/api';
 import { formatBytes } from '@/utils/formatBytes';
@@ -39,12 +35,7 @@ const FileRow: React.FC<FileRowProps> = ({ upload, disabled, onRemove }) => {
   const ext = fileExtension(upload.name);
   return (
     <span className={styles.fileRow}>
-      <span
-        className={styles.fileRowIcon}
-        data-testid="file-type-icon"
-        data-file-type={ext}
-        aria-hidden="true"
-      >
+      <span className={styles.fileRowIcon} data-testid="file-type-icon" data-file-type={ext} aria-hidden="true">
         {ext === 'csv' ? <FileTextOutlined /> : <FileExcelOutlined />}
       </span>
       <span className={styles.fileRowInfo}>
@@ -147,9 +138,7 @@ const FileAttachmentModal: React.FC<FileAttachmentModalProps> = ({
         <div>
           <span className={styles.dropzoneLink}>{t.files.dropzoneLink}</span> {t.files.dropzoneRest}
         </div>
-        <div className={styles.dropzoneHint}>
-          {t.files.limits(MAX_ATTACHMENT_COUNT, MAX_ATTACHMENT_TOTAL_LABEL)}
-        </div>
+        <div className={styles.dropzoneHint}>{t.files.limits(MAX_ATTACHMENT_COUNT, MAX_ATTACHMENT_TOTAL_LABEL)}</div>
       </div>
 
       {uploadProgress !== null && (
@@ -182,19 +171,13 @@ const FileAttachmentModal: React.FC<FileAttachmentModalProps> = ({
       <div className={styles.attachedSection}>
         <div className={styles.attachedHeader}>
           <span>{t.fileModal.attached}</span>
-          {attachments.length > 0 && (
-            <span className={styles.attachedCount}>{attachments.length}</span>
-          )}
+          {attachments.length > 0 && <span className={styles.attachedCount}>{attachments.length}</span>}
         </div>
         {attachments.length > 0 ? (
           <ul className={styles.attachedList}>
             {attachments.map((upload) => (
               <li key={upload.id}>
-                <FileRow
-                  upload={upload}
-                  disabled={isMutating}
-                  onRemove={() => onRemoveFile(upload.id)}
-                />
+                <FileRow upload={upload} disabled={isMutating} onRemove={() => onRemoveFile(upload.id)} />
               </li>
             ))}
           </ul>

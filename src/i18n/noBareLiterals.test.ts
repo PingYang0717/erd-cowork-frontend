@@ -1,6 +1,5 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
-
 import { describe, expect, it } from 'vitest';
 
 /** Guards the dictionary's completeness the type system cannot: ADR-0012's "a missed

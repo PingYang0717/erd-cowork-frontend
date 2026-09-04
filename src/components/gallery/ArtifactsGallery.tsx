@@ -1,3 +1,6 @@
+import React, { useEffect, useMemo, useState } from 'react';
+import { Dropdown } from 'antd';
+import { useNavigate } from 'react-router-dom';
 import {
   CheckOutlined,
   ClockCircleOutlined,
@@ -5,17 +8,14 @@ import {
   PushpinOutlined,
   SortAscendingOutlined,
 } from '@ant-design/icons';
-import { Dropdown } from 'antd';
-import React, { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 
 import { useArtifacts } from '@/hooks/useArtifacts';
 import { useTranslations } from '@/i18n/useTranslations';
 import { usePublishCoachStore } from '@/stores/usePublishCoachStore';
 import type { Artifact } from '@/types/api';
 import { artifactRoute } from '@/utils/artifactUrl';
-
 import ArtifactCard from './ArtifactCard';
+
 import styles from './ArtifactsGallery.module.css';
 
 type FilterCategory = 'all' | 'yours' | 'shared' | 'pinned';
@@ -29,10 +29,7 @@ const SORT_OPTIONS = [
 
 /** Which line the empty grid shows, by key rather than by copy — the copy itself lives
  *  in the dictionary so it can change language without this table knowing. */
-const EMPTY_MESSAGE_KEYS: Record<
-  FilterCategory,
-  'emptyAll' | 'emptyYours' | 'emptyShared' | 'emptyPinned'
-> = {
+const EMPTY_MESSAGE_KEYS: Record<FilterCategory, 'emptyAll' | 'emptyYours' | 'emptyShared' | 'emptyPinned'> = {
   all: 'emptyAll',
   yours: 'emptyYours',
   shared: 'emptyShared',
@@ -110,12 +107,9 @@ const ArtifactsGallery: React.FC = () => {
       shared: dedupeById(artifacts.filter((artifact) => !artifact.isOwn)).length,
       pinned: artifacts.filter((artifact) => artifact.pinnedAt !== null).length,
     }),
-    [artifacts],
+    [artifacts]
   );
-  const visible = useMemo(
-    () => sortArtifacts(filterArtifacts(artifacts, category), sort),
-    [artifacts, category, sort],
-  );
+  const visible = useMemo(() => sortArtifacts(filterArtifacts(artifacts, category), sort), [artifacts, category, sort]);
   const activeSortOption = SORT_OPTIONS.find((option) => option.key === sort) ?? SORT_OPTIONS[0];
 
   const sortMenuItems = SORT_OPTIONS.map((option) => ({
@@ -139,10 +133,7 @@ const ArtifactsGallery: React.FC = () => {
           <h1 className={styles.title}>{t.galleryHeader.title}</h1>
           <p className={styles.subtitle}>{t.galleryHeader.subtitle}</p>
         </div>
-        <Dropdown
-          trigger={['click']}
-          menu={{ items: sortMenuItems, onClick: ({ key }) => setSort(key as SortKey) }}
-        >
+        <Dropdown trigger={['click']} menu={{ items: sortMenuItems, onClick: ({ key }) => setSort(key as SortKey) }}>
           <button type="button" className={styles.sortTrigger}>
             {/* The chosen option's own icon, not a fixed one. It was hardcoded to the
                 A→Z glyph, so picking "Pinned first" left the trigger claiming the list

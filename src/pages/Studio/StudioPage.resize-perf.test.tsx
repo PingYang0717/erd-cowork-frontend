@@ -1,7 +1,7 @@
-import { fireEvent, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { fireEvent, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
 import { useStudioLayoutStore } from '@/stores/useStudioLayoutStore';
@@ -15,7 +15,7 @@ const renderCounts = { ArtifactFrame: 0, MessageList: 0 };
 
 vi.mock('@/components/artifact/ArtifactFrame', async () => {
   const actual = await vi.importActual<typeof import('@/components/artifact/ArtifactFrame')>(
-    '@/components/artifact/ArtifactFrame',
+    '@/components/artifact/ArtifactFrame'
   );
   const Real = actual.default;
   const Counted: React.FC<React.ComponentProps<typeof Real>> = (props) => {
@@ -26,9 +26,7 @@ vi.mock('@/components/artifact/ArtifactFrame', async () => {
 });
 
 vi.mock('@/components/chat/MessageList', async () => {
-  const actual = await vi.importActual<typeof import('@/components/chat/MessageList')>(
-    '@/components/chat/MessageList',
-  );
+  const actual = await vi.importActual<typeof import('@/components/chat/MessageList')>('@/components/chat/MessageList');
   const Real = actual.default;
   const Counted: React.FC<React.ComponentProps<typeof Real>> = (props) => {
     renderCounts.MessageList += 1;

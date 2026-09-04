@@ -1,6 +1,6 @@
+import { beforeEach, describe, expect, it } from 'vitest';
 import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, it } from 'vitest';
 
 import { useConnectorsPanelStore } from '@/stores/useConnectorsPanelStore';
 import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
@@ -43,7 +43,7 @@ describe('Streaming a run in the Studio', () => {
         title: 'Connect data source',
         description: 'Inline DB · Vt (gate CD)',
         status: 'RUNNING',
-      }),
+      })
     );
 
     expect(await screen.findByText('Connect data source')).toBeInTheDocument();
@@ -94,9 +94,7 @@ describe('Streaming a run in the Studio', () => {
 
     act(() => stream.push({ type: 'TOKEN', delta: 'One OOC point remains.' }));
 
-    expect(
-      await screen.findByText('Recomputed control limits. One OOC point remains.'),
-    ).toBeInTheDocument();
+    expect(await screen.findByText('Recomputed control limits. One OOC point remains.')).toBeInTheDocument();
     expect(working).toBeInTheDocument();
   });
 
@@ -128,7 +126,7 @@ describe('Streaming a run in the Studio', () => {
         type: 'ARTIFACT',
         artifactId: 'artifact-9',
         title: 'SPC analysis — Vt (gate CD)',
-      }),
+      })
     );
     act(() => stream.close());
     // The composer re-enables once the run (and its awaited refetch) is done.
@@ -162,12 +160,10 @@ describe('Streaming a run in the Studio', () => {
 
     await user.click(stop);
 
-    await waitFor(() =>
-      expect(screen.queryByRole('status', { name: 'eRD AI is working' })).not.toBeInTheDocument(),
-    );
+    await waitFor(() => expect(screen.queryByRole('status', { name: 'eRD AI is working' })).not.toBeInTheDocument());
     // Scoped to the thread: the sr-only announcement region (A-1) holds the same text.
     expect(
-      within(screen.getByRole('log', { name: 'Messages' })).getByText('Recomputed control limits.'),
+      within(screen.getByRole('log', { name: 'Messages' })).getByText('Recomputed control limits.')
     ).toBeInTheDocument();
     expect(screen.getByText('eRD AI · stopped')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Send message' })).toBeInTheDocument();
@@ -184,9 +180,7 @@ describe('Streaming a run in the Studio', () => {
 
     act(() => stream.disconnect());
 
-    expect(await screen.findByRole('alert')).toHaveTextContent(
-      '⚠ Connection lost — please send again',
-    );
+    expect(await screen.findByRole('alert')).toHaveTextContent('⚠ Connection lost — please send again');
     expect(screen.queryByRole('status', { name: 'eRD AI is working' })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Send message' })).toBeInTheDocument();
     // The user's own words survive the failure: the history refetch never ran, so
@@ -232,7 +226,7 @@ describe('Streaming a run in the Studio', () => {
           ['A14-004', 11, null],
         ],
         truncated: true,
-      }),
+      })
     );
 
     const table = await screen.findByRole('table', { name: 'OOC wafers on A14' });
@@ -273,7 +267,7 @@ describe('Streaming a run in the Studio', () => {
         type: 'ARTIFACT',
         artifactId: 'artifact-1',
         title: 'SPC analysis — Vt (gate CD)',
-      }),
+      })
     );
 
     expect(await screen.findByTitle('Artifact preview')).toBeInTheDocument();
@@ -348,7 +342,7 @@ describe('Streaming a run in the Studio', () => {
           disabledHint: '請先選 part id',
           summaryLabel: '已設定 1 項 分析條件',
         },
-      }),
+      })
     );
 
     expect(await screen.findByText('分析條件')).toBeInTheDocument();
@@ -408,7 +402,7 @@ describe('Streaming a run in the Studio', () => {
           disabledHint: '請先選角色',
           summaryLabel: '已設定 1 項 分析條件',
         },
-      }),
+      })
     );
 
     await screen.findByRole('group', { name: '你的角色' });
@@ -469,7 +463,7 @@ describe('Streaming a run in the Studio', () => {
           disabledHint: '請先選 part id、time range',
           summaryLabel: '已設定 2 項 分析條件',
         },
-      }),
+      })
     );
 
     // The backend closes the stream after a reask — the run pauses on the user.
@@ -528,9 +522,7 @@ describe('Streaming a run in the Studio', () => {
       await screen.findByRole('button', { name: /^Worked through \d+ steps$/ });
       // Scoped to the thread: the sr-only announcement region (A-1) holds the same text.
       expect(
-        within(screen.getByRole('log', { name: 'Messages' })).getByText(
-          /Done — recomputed control limits/,
-        ),
+        within(screen.getByRole('log', { name: 'Messages' })).getByText(/Done — recomputed control limits/)
       ).toBeInTheDocument();
     });
 
@@ -544,9 +536,7 @@ describe('Streaming a run in the Studio', () => {
 
       // First conversation: grant Defect on top of what is there.
       await selectASession(user);
-      await user.click(
-        screen.getByRole('button', { name: 'Attach files or connect a data source' }),
-      );
+      await user.click(screen.getByRole('button', { name: 'Attach files or connect a data source' }));
       await user.click(await screen.findByRole('menuitem', { name: /^Connectors/ }));
       await user.click(await screen.findByRole('button', { name: 'Connect Defect' }));
       // Nothing is written until Submit: picking sources is one decision, not one per
@@ -562,17 +552,14 @@ describe('Streaming a run in the Studio', () => {
       // open (useSessionGroups), so it has to have been sent to before a second one can
       // be started.
       await user.type(screen.getByRole('textbox', { name: 'Message' }), 'Anything at all.{Enter}');
-      await waitFor(
-        () => expect(screen.getByRole('button', { name: 'Send message' })).toBeInTheDocument(),
-        { timeout: 5000 },
-      );
+      await waitFor(() => expect(screen.getByRole('button', { name: 'Send message' })).toBeInTheDocument(), {
+        timeout: 5000,
+      });
 
       // A second, entirely fresh conversation — nothing attached to it of its own.
       const firstSessionId = useSessionSelectionStore.getState().selectedSessionId;
       await user.click(screen.getByRole('button', { name: 'New chat' }));
-      await waitFor(() =>
-        expect(useSessionSelectionStore.getState().selectedSessionId).not.toBe(firstSessionId),
-      );
+      await waitFor(() => expect(useSessionSelectionStore.getState().selectedSessionId).not.toBe(firstSessionId));
       await waitForComposer();
       await user.click(screen.getByRole('button', { name: 'SPC analysis' }));
       await screen.findByText('分析條件');
@@ -591,9 +578,7 @@ describe('Streaming a run in the Studio', () => {
       renderStudio();
 
       await selectASession(user);
-      await user.click(
-        screen.getByRole('button', { name: 'Attach files or connect a data source' }),
-      );
+      await user.click(screen.getByRole('button', { name: 'Attach files or connect a data source' }));
       await user.click(await screen.findByRole('menuitem', { name: /^Connectors/ }));
       await user.click(await screen.findByRole('button', { name: 'Connect Defect' }));
       // Nothing is written until Submit: picking sources is one decision, not one per
@@ -637,18 +622,13 @@ describe('Streaming a run in the Studio', () => {
 
       // Typing a custom range answers the field, so the chips let go of their choice.
       const chips = screen.getByRole('group', { name: 'Time range' });
-      expect(within(chips).getByRole('button', { name: 'Last 7 days' })).toHaveAttribute(
-        'aria-pressed',
-        'false',
-      );
+      expect(within(chips).getByRole('button', { name: 'Last 7 days' })).toHaveAttribute('aria-pressed', 'false');
 
-      await user.click(
-        within(screen.getByRole('group', { name: 'Part ID' })).getByRole('button', { name: 'A14' }),
-      );
+      await user.click(within(screen.getByRole('group', { name: 'Part ID' })).getByRole('button', { name: 'A14' }));
       await user.click(
         within(screen.getByRole('group', { name: 'Data type' })).getByRole('button', {
           name: 'Inline',
-        }),
+        })
       );
       expect(screen.getByRole('button', { name: '送出' })).toBeEnabled();
     });
@@ -666,9 +646,7 @@ describe('Streaming a run in the Studio', () => {
       await user.type(screen.getByRole('textbox', { name: 'Search Part ID' }), 'A14');
 
       // Filtering is debounced, so the narrowed list arrives a beat after the keystrokes.
-      await waitFor(() =>
-        expect(within(partIds).queryByRole('button', { name: 'N5' })).not.toBeInTheDocument(),
-      );
+      await waitFor(() => expect(within(partIds).queryByRole('button', { name: 'N5' })).not.toBeInTheDocument());
       expect(within(partIds).getByRole('button', { name: 'A14' })).toBeInTheDocument();
     });
 
@@ -707,9 +685,7 @@ describe('Streaming a run in the Studio', () => {
       await screen.findByRole('button', { name: /^Worked through \d+ steps$/ });
       // Scoped to the thread: the sr-only announcement region (A-1) holds the same text.
       expect(
-        within(screen.getByRole('log', { name: 'Messages' })).getByText(
-          /CP Test status dashboard is ready/,
-        ),
+        within(screen.getByRole('log', { name: 'Messages' })).getByText(/CP Test status dashboard is ready/)
       ).toBeInTheDocument();
     });
 
@@ -741,7 +717,7 @@ describe('Streaming a run in the Studio', () => {
             disabledHint: '',
             summaryLabel: '分析條件',
           },
-        }),
+        })
       );
 
       // The backend closes the stream after a reask — the run pauses on the user.
@@ -773,18 +749,16 @@ describe('Streaming a run in the Studio', () => {
 
       // Answer only the opening conditions — the second reask is what this is about.
       await screen.findByText('分析條件');
-      await user.click(
-        within(screen.getByRole('group', { name: 'Part ID' })).getByRole('button', { name: 'A14' }),
-      );
+      await user.click(within(screen.getByRole('group', { name: 'Part ID' })).getByRole('button', { name: 'A14' }));
       await user.click(
         within(screen.getByRole('group', { name: 'Time range' })).getByRole('button', {
           name: 'Last 7 days',
-        }),
+        })
       );
       await user.click(
         within(screen.getByRole('group', { name: 'Data type' })).getByRole('button', {
           name: 'Inline',
-        }),
+        })
       );
       await user.click(screen.getByRole('button', { name: '送出' }));
 
@@ -798,14 +772,10 @@ describe('Streaming a run in the Studio', () => {
 
       // Each item carries the spec limits an engineer needs to judge it.
       const items = screen.getByRole('group', { name: 'DC item' });
-      expect(within(items).getByRole('button', { name: /Vt \(gate CD\)/ })).toHaveAccessibleName(
-        /0\.28 – 0\.34 V/,
-      );
+      expect(within(items).getByRole('button', { name: /Vt \(gate CD\)/ })).toHaveAccessibleName(/0\.28 – 0\.34 V/);
 
       await user.type(screen.getByRole('textbox', { name: 'Search DC item' }), 'Vt');
-      await waitFor(() =>
-        expect(within(items).queryByRole('button', { name: /Idsat/ })).not.toBeInTheDocument(),
-      );
+      await waitFor(() => expect(within(items).queryByRole('button', { name: /Idsat/ })).not.toBeInTheDocument());
 
       await user.click(within(items).getByRole('button', { name: /Vt \(gate CD\)/ }));
       expect(screen.getByRole('button', { name: '先產生這 1 項' })).toBeEnabled();
@@ -816,9 +786,7 @@ describe('Streaming a run in the Studio', () => {
       await screen.findByRole('button', { name: /^Worked through \d+ steps$/ });
       // Scoped to the thread: the sr-only announcement region (A-1) holds the same text.
       expect(
-        within(screen.getByRole('log', { name: 'Messages' })).getByText(
-          /Done — recomputed control limits/,
-        ),
+        within(screen.getByRole('log', { name: 'Messages' })).getByText(/Done — recomputed control limits/)
       ).toBeInTheDocument();
     });
 
@@ -833,9 +801,7 @@ describe('Streaming a run in the Studio', () => {
       // The form is gone; the answers went over the wire as one prose question and
       // come back from history as an ordinary user message.
       expect(screen.queryByRole('button', { name: '送出' })).not.toBeInTheDocument();
-      expect(
-        screen.getByText('Part ID：A14；Time range：Last 7 days；Data type：Inline'),
-      ).toBeInTheDocument();
+      expect(screen.getByText('Part ID：A14；Time range：Last 7 days；Data type：Inline')).toBeInTheDocument();
     });
   });
 });

@@ -1,6 +1,6 @@
-import { screen, within } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import { beforeEach, describe, expect, it } from 'vitest';
+import { screen, within } from '@testing-library/react';
 
 import { server } from '@/mocks/server';
 import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
@@ -29,8 +29,8 @@ const sessionWithAnExpiredFile = () => {
             expired: true,
           },
         ],
-      }),
-    ),
+      })
+    )
   );
 };
 

@@ -1,5 +1,4 @@
 import { useLanguageStore } from '@/stores/useLanguageStore';
-
 import { en } from './en';
 import { type Translations, zhTW } from './zhTW';
 

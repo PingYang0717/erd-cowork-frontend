@@ -1,14 +1,13 @@
+import React from 'react';
+import { http, HttpResponse } from 'msw';
+import { describe, expect, it } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { http, HttpResponse } from 'msw';
-import React from 'react';
-import { describe, expect, it } from 'vitest';
 
 import { useSessions } from '@/hooks/useSessions';
 import { en } from '@/i18n/en';
 import { server } from '@/mocks/server';
 import { appWrapper } from '@/test/appHarness';
-
 import DataBoundary from './DataBoundary';
 
 const Probe: React.FC = () => {
@@ -24,16 +23,14 @@ describe('DataBoundary + a failed suspense query', () => {
     const user = userEvent.setup();
     let failing = true;
     server.use(
-      http.get('/api/sessions', () =>
-        failing ? new HttpResponse(null, { status: 500 }) : HttpResponse.json([]),
-      ),
+      http.get('/api/sessions', () => (failing ? new HttpResponse(null, { status: 500 }) : HttpResponse.json([])))
     );
 
     render(
       <DataBoundary label="Sessions">
         <Probe />
       </DataBoundary>,
-      { wrapper: appWrapper() },
+      { wrapper: appWrapper() }
     );
 
     expect(await screen.findByText(en.errors.loadFailedHeading)).toBeInTheDocument();
@@ -54,7 +51,7 @@ describe('DataBoundary + a failed suspense query', () => {
       <DataBoundary label="Sessions">
         <Probe />
       </DataBoundary>,
-      { wrapper: appWrapper() },
+      { wrapper: appWrapper() }
     );
 
     expect(await screen.findByText(en.errors.loadFailedHeading)).toBeInTheDocument();

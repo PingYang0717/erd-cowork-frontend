@@ -1,5 +1,4 @@
 import type { Session, SessionDetail } from '@/types/api/session';
-
 import { apiClient } from './apiClient';
 
 export const listSessions = () => apiClient.get<Session[]>('/sessions');
@@ -39,8 +38,7 @@ export interface SessionPinResult {
 /** Toggles the pin: no body, the backend decides the direction and stamps the time.
  *
  *  PATCH, not POST: it edits one field of something that already exists. */
-export const toggleSessionPin = (id: string) =>
-  apiClient.patch<SessionPinResult>(`/sessions/${id}/pin`);
+export const toggleSessionPin = (id: string) => apiClient.patch<SessionPinResult>(`/sessions/${id}/pin`);
 
 /** Removes a session from the user's list.
  *

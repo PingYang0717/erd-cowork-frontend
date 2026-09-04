@@ -1,6 +1,6 @@
-import { render, screen } from '@testing-library/react';
 import { Dropdown, Modal } from 'antd';
 import { describe, expect, it } from 'vitest';
+import { render, screen } from '@testing-library/react';
 
 import AppProviders from './providers';
 
@@ -47,7 +47,7 @@ describe('overlays open without a perceptible enter animation', () => {
         <Modal open title="Attach files">
           body
         </Modal>
-      </AppProviders>,
+      </AppProviders>
     );
     await screen.findByText('Attach files');
 
@@ -57,9 +57,7 @@ describe('overlays open without a perceptible enter animation', () => {
     expect(scope).not.toBeNull();
     expect(scope?.contains(document.querySelector('.ant-modal-mask'))).toBe(true);
     expect(scope?.contains(document.querySelector('.ant-modal-wrap'))).toBe(true);
-    expect(instantDurationScopes().some((selector) => selector.includes('ant-modal-css-var'))).toBe(
-      true,
-    );
+    expect(instantDurationScopes().some((selector) => selector.includes('ant-modal-css-var'))).toBe(true);
     // The regression that made this file worth having: `0s` leaves the mask behind.
     expect(zeroDurationTokens()).toEqual([]);
   });
@@ -70,7 +68,7 @@ describe('overlays open without a perceptible enter animation', () => {
         <Dropdown open menu={{ items: [{ key: 'rename', label: 'Rename' }] }}>
           <button type="button">More</button>
         </Dropdown>
-      </AppProviders>,
+      </AppProviders>
     );
     await screen.findByText('Rename');
 
@@ -78,9 +76,7 @@ describe('overlays open without a perceptible enter animation', () => {
     // carries the slide-up animation classes.
     const menu = document.querySelector('.ant-dropdown');
     expect(menu?.className).toContain('ant-dropdown-css-var');
-    expect(
-      instantDurationScopes().some((selector) => selector.includes('ant-dropdown-css-var')),
-    ).toBe(true);
+    expect(instantDurationScopes().some((selector) => selector.includes('ant-dropdown-css-var'))).toBe(true);
     expect(zeroDurationTokens()).toEqual([]);
   });
 });

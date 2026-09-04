@@ -1,5 +1,5 @@
-import { QueryErrorResetBoundary } from '@tanstack/react-query';
 import React, { type ReactNode } from 'react';
+import { QueryErrorResetBoundary } from '@tanstack/react-query';
 
 import ErrorBoundary from './ErrorBoundary';
 import SuspenseLoader from './SuspenseLoader';

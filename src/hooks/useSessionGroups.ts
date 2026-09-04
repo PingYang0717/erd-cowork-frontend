@@ -1,11 +1,10 @@
-import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 
 import { DRAFT_SESSION_TITLE } from '@/constants/wireStrings';
 import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
 import type { Session, SessionDetail } from '@/types/api/session';
-
 import { sessionDetailQueryKey } from './useSessionDetail';
 import { useSessions } from './useSessions';
 
@@ -63,10 +62,7 @@ export const useSessionGroups = () => {
   const openDraft = useCallback(() => {
     const draftSessionId = crypto.randomUUID();
     const startedAt = new Date().toISOString();
-    queryClient.setQueryData(
-      sessionDetailQueryKey(draftSessionId),
-      emptySessionDetail(draftSessionId, startedAt),
-    );
+    queryClient.setQueryData(sessionDetailQueryKey(draftSessionId), emptySessionDetail(draftSessionId, startedAt));
     startDraft(draftSessionId, startedAt);
   }, [queryClient, startDraft]);
 
@@ -96,7 +92,7 @@ export const useSessionGroups = () => {
       selectSession(id);
       navigate('/cowork');
     },
-    [selectSession, navigate],
+    [selectSession, navigate]
   );
 
   /** Opens a draft session. The backend has no POST /sessions — the id is this client's

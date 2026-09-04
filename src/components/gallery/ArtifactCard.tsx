@@ -1,3 +1,5 @@
+import React, { useState } from 'react';
+import { App, Dropdown } from 'antd';
 import {
   CopyOutlined,
   DashboardOutlined,
@@ -9,8 +11,6 @@ import {
   UsergroupAddOutlined,
   UserOutlined,
 } from '@ant-design/icons';
-import { App, Dropdown } from 'antd';
-import React, { useState } from 'react';
 
 import ShareArtifactDialog from '@/components/artifact/ShareArtifactDialog';
 import { useToggleArtifactPin, useUnpublishArtifact } from '@/hooks/useArtifactMutations';
@@ -129,9 +129,7 @@ const ArtifactCard: React.FC<ArtifactCardProps> = ({ artifact, onOpen }) => {
           )}
           <span className={styles.metaRow} aria-hidden="true">
             <span className={styles.time}>{formatRelativeTime(artifact.createdAt)}</span>
-            {artifact.isShared && (
-              <span className={styles.sharedBadge}>{t.galleryHeader.sharedBadge}</span>
-            )}
+            {artifact.isShared && <span className={styles.sharedBadge}>{t.galleryHeader.sharedBadge}</span>}
             {isSharedToMe && (
               <span className={styles.sharedByBadge}>
                 <UserOutlined /> {artifact.ownerDisplay}
@@ -167,11 +165,7 @@ const ArtifactCard: React.FC<ArtifactCardProps> = ({ artifact, onOpen }) => {
           <MoreOutlined aria-hidden />
         </button>
       </Dropdown>
-      <ShareArtifactDialog
-        open={isShareOpen}
-        onClose={() => setIsShareOpen(false)}
-        artifact={artifact}
-      />
+      <ShareArtifactDialog open={isShareOpen} onClose={() => setIsShareOpen(false)} artifact={artifact} />
     </div>
   );
 };

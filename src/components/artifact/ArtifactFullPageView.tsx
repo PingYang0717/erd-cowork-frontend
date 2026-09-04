@@ -1,3 +1,5 @@
+import React, { useMemo, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
   ArrowLeftOutlined,
   ExportOutlined,
@@ -6,8 +8,6 @@ import {
   ShareAltOutlined,
   UserOutlined,
 } from '@ant-design/icons';
-import React, { useMemo, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
 
 import { isNotFound } from '@/api/apiError';
 import SettingsMenu from '@/components/common/SettingsMenu';
@@ -17,12 +17,12 @@ import { useTranslations } from '@/i18n/useTranslations';
 import { useActiveRunStore } from '@/stores/useActiveRunStore';
 import type { Artifact, ArtifactVersion } from '@/types/api';
 import { artifactHref } from '@/utils/artifactUrl';
-
 import ArtifactFrame from './ArtifactFrame';
-import styles from './ArtifactFullPageView.module.css';
 import ArtifactToolbarButton, { ARTIFACT_TOOLBAR_LABELS } from './ArtifactToolbarButton';
 import ShareArtifactDialog from './ShareArtifactDialog';
 import VersionSwitcher from './VersionSwitcher';
+
+import styles from './ArtifactFullPageView.module.css';
 
 // Where the viewer came from, recorded as router state by in-app navigations
 // (the gallery card sets 'gallery'). A direct open — a shared link, or the
@@ -144,24 +144,14 @@ const ArtifactFullPageView: React.FC<ArtifactFullPageViewProps> = ({ artifactId 
             whether this Artifact exists, and telling the reader it was deleted is a
             claim they act on by not looking for it again. */}
         {isError && (
-          <div className={styles.empty}>
-            {isNotFound(error) ? t.studio.artifactNotFound : t.artifact.loadFailed}
-          </div>
+          <div className={styles.empty}>{isNotFound(error) ? t.studio.artifactNotFound : t.artifact.loadFailed}</div>
         )}
         {data && displayedArtifactId && (
-          <ArtifactFrame
-            key={`${displayedArtifactId}-${reloadNonce}`}
-            html={data}
-            artifactId={displayedArtifactId}
-          />
+          <ArtifactFrame key={`${displayedArtifactId}-${reloadNonce}`} html={data} artifactId={displayedArtifactId} />
         )}
       </div>
       {displayedArtifact && (
-        <ShareArtifactDialog
-          open={isShareOpen}
-          onClose={() => setIsShareOpen(false)}
-          artifact={displayedArtifact}
-        />
+        <ShareArtifactDialog open={isShareOpen} onClose={() => setIsShareOpen(false)} artifact={displayedArtifact} />
       )}
     </div>
   );
@@ -197,7 +187,7 @@ const ArtifactVersions: React.FC<ArtifactVersionsProps> = ({ artifact, onSelect 
         publishedAt: artifact.publishedAt,
       },
     ],
-    [artifact],
+    [artifact]
   );
 
   return (

@@ -13,8 +13,8 @@ import {
   SESSION_RAIL_MIN_WIDTH,
   useStudioLayoutStore,
 } from '@/stores/useStudioLayoutStore';
-
 import ResizeHandle from './ResizeHandle';
+
 import styles from './StudioShell.module.css';
 
 // The Cowork app shell: the session rail persists across Studio, Artifacts,
@@ -56,12 +56,7 @@ const StudioShell: React.FC = () => {
 
   return (
     <div className={styles.shell}>
-      <nav
-        ref={paneRef}
-        aria-label="Session list"
-        className={styles.sessionRail}
-        style={{ width: railWidth }}
-      >
+      <nav ref={paneRef} aria-label="Session list" className={styles.sessionRail} style={{ width: railWidth }}>
         {/* BOTH branches sit behind the boundary: the collapsed rail reads the same
             suspense query (useSessionGroups → useSessions), and the collapse state is
             persisted now — so "reload while collapsed" is an ordinary path, and without

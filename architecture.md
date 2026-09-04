@@ -253,8 +253,8 @@ export const useThemeStore = create<ThemeState>()(
       isDarkMode: false,
       toggleTheme: () => set((state) => ({ isDarkMode: !state.isDarkMode })),
     }),
-    { name: 'theme-storage' }, // localStorage key,跨 session 記住使用者選擇
-  ),
+    { name: 'theme-storage' } // localStorage key,跨 session 記住使用者選擇
+  )
 );
 ```
 
@@ -289,8 +289,7 @@ import type { UserDTO } from '@/types/api/user';
 
 export const userApi = {
   getUser: (id: string) => apiClient.get<UserDTO>(`/users/${id}`),
-  updateUser: (id: string, payload: Partial<UserDTO>) =>
-    apiClient.patch<UserDTO>(`/users/${id}`, payload),
+  updateUser: (id: string, payload: Partial<UserDTO>) => apiClient.patch<UserDTO>(`/users/${id}`, payload),
 };
 ```
 

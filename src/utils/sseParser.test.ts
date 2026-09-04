@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
 import type { AgentEvent } from '@/types/api/agentEvent';
-
 import { createSseParser } from './sseParser';
 
 const collect = () => {
@@ -25,7 +24,7 @@ describe('SSE parser', () => {
     parser.feed(
       'data: {"type":"TOKEN","delta":"Vt "}\n\n' +
         'data: {"type":"TOKEN","delta":"is drifting"}\n\n' +
-        'data: {"type":"ANSWER","text":"Vt is drifting"}\n\n',
+        'data: {"type":"ANSWER","text":"Vt is drifting"}\n\n'
     );
 
     expect(events).toEqual([
@@ -60,7 +59,7 @@ describe('SSE parser', () => {
     parser.feed(
       'data: {"type":"TOKEN","delta":"ok"}\n\n' +
         'data: {"type":"TOKEN","delta":\n\n' +
-        'data: {"type":"ANSWER","text":"done"}\n\n',
+        'data: {"type":"ANSWER","text":"done"}\n\n'
     );
 
     expect(events).toEqual([

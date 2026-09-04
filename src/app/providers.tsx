@@ -1,8 +1,8 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import React, { type CSSProperties, type ReactNode, useEffect, useMemo } from 'react';
 import { App as AntdApp, ConfigProvider } from 'antd';
 import enUS from 'antd/locale/en_US';
 import zhTW from 'antd/locale/zh_TW';
-import React, { type CSSProperties, type ReactNode, useEffect, useMemo } from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 import { useLanguageStore } from '@/stores/useLanguageStore';
 import { useThemeStore } from '@/stores/useThemeStore';

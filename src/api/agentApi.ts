@@ -29,9 +29,7 @@ export interface SendMessageArgs {
 /** POSTs a message and yields decoded agent events until the stream closes.
  *  Goes through raw `fetch` rather than `api/apiClient.ts`: axios cannot
  *  surface a response body incrementally. */
-export const streamAgentMessage = async function* (
-  args: SendMessageArgs,
-): AsyncGenerator<AgentEvent, void, void> {
+export const streamAgentMessage = async function* (args: SendMessageArgs): AsyncGenerator<AgentEvent, void, void> {
   const response = await fetch(`${API_BASE_URL}/sessions/${args.sessionId}/messages`, {
     method: 'POST',
     headers: {

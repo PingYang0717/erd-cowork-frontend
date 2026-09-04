@@ -6,15 +6,13 @@ export const en: Translations = {
   share: {
     subtitle: 'This Artifact is published and ready to share.',
     recipientsLabel: 'Share with',
-    recipientsHint:
-      'Mix departments (A10INTD1-1), sections (INTD-1) and people (CHXXGHYC · 鄭凱宇)',
+    recipientsHint: 'Mix departments (A10INTD1-1), sections (INTD-1) and people (CHXXGHYC · 鄭凱宇)',
     unavailable: 'Could not load the current recipients. Please try again.',
     searchFailed: 'Search failed. Please try again.',
     searching: 'Searching…',
     noMatch: 'No match',
     minChars: (n) => `Type at least ${n} characters`,
-    searchPlaceholder: (n) =>
-      `Type ${n}+ characters to search departments, sections, NT accounts or names`,
+    searchPlaceholder: (n) => `Type ${n}+ characters to search departments, sections, NT accounts or names`,
     linkLabel: 'Share link',
     copy: 'Copy',
     copied: 'Copied',
@@ -38,8 +36,7 @@ export const en: Translations = {
     shareBlocked: 'Publish before sharing',
     reload: 'Reload',
     openInNewTab: 'Open preview in a new tab',
-    missing:
-      'This Artifact is no longer available — it may have been deleted. Pick another from the menu above.',
+    missing: 'This Artifact is no longer available — it may have been deleted. Pick another from the menu above.',
     loadFailed: 'This Artifact could not be loaded. Please try again shortly.',
     publishedToast: 'Published — added to Artifacts on the left.',
     goToArtifacts: 'Go to Artifacts',
@@ -130,8 +127,7 @@ export const en: Translations = {
   },
 
   repair: {
-    detected: (count: number) =>
-      `⚠ ${count} runtime error${count === 1 ? '' : 's'} in this Artifact`,
+    detected: (count: number) => `⚠ ${count} runtime error${count === 1 ? '' : 's'} in this Artifact`,
     repair: 'Repair',
     ignore: 'Ignore',
     repairing: 'Repairing…',
@@ -241,8 +237,7 @@ export const en: Translations = {
     offlineHeading: 'Cannot reach the backend',
     offlineDetail: 'Check that the service is running, then retry.',
     loadFailedHeading: 'This section failed to load',
-    loadFailedDetail: (status: number) =>
-      `The server answered ${status}. Please try again shortly.`,
+    loadFailedDetail: (status: number) => `The server answered ${status}. Please try again shortly.`,
     offlineAction: 'Cannot reach the backend. Check that the service is running, then retry.',
     notReady: 'The backend is not ready yet. Please try again shortly.',
     actionFailed: 'That did not go through. Please try again shortly.',

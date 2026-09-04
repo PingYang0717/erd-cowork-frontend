@@ -1,7 +1,7 @@
-import { act, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { act, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import type MessageBubbleModule from '@/components/chat/MessageBubble';
 import { mockAgentStream } from '@/test/agentStream';
@@ -13,9 +13,7 @@ import { renderStudio } from '@/test/renderStudio';
 const renderCounts = { history: 0, live: 0 };
 
 vi.mock('@/components/chat/MessageBubble', async () => {
-  const actual = await vi.importActual<{ default: typeof MessageBubbleModule }>(
-    '@/components/chat/MessageBubble',
-  );
+  const actual = await vi.importActual<{ default: typeof MessageBubbleModule }>('@/components/chat/MessageBubble');
   const Real = actual.default;
   type Props = React.ComponentProps<typeof Real>;
   // Re-create the memo boundary around a counting wrapper: the count increments only
@@ -78,9 +76,7 @@ describe('streaming does not re-render settled bubbles', () => {
    *  TextArea autoSize, the "+" Dropdown, two modals) from re-rendering 10-40×/s
    *  during a stream, and removing it is a one-line change nothing else would catch. */
   it('ChatComposer stays memoised', async () => {
-    const { default: RealComposer } = await vi.importActual<{ default: object }>(
-      '@/components/chat/ChatComposer',
-    );
+    const { default: RealComposer } = await vi.importActual<{ default: object }>('@/components/chat/ChatComposer');
     expect((RealComposer as { $$typeof?: symbol }).$$typeof).toBe(Symbol.for('react.memo'));
   });
 
@@ -90,9 +86,7 @@ describe('streaming does not re-render settled bubbles', () => {
    *  into "no Markdown parse at all". Remove it and the deferral silently buys nothing
    *  (jsdom cannot observe the difference; act() flushes deferred renders synchronously). */
   it('ReplyText stays memoised — the deferred parse depends on it', async () => {
-    const { default: RealReplyText } = await vi.importActual<{ default: object }>(
-      '@/components/chat/ReplyText',
-    );
+    const { default: RealReplyText } = await vi.importActual<{ default: object }>('@/components/chat/ReplyText');
     expect((RealReplyText as { $$typeof?: symbol }).$$typeof).toBe(Symbol.for('react.memo'));
   });
 });

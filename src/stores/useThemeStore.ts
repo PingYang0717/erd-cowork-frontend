@@ -20,8 +20,8 @@ export const useThemeStore = create<ThemeState>()(
         isDarkMode: false,
         setDarkMode: (isDarkMode) => set({ isDarkMode }, false, 'setDarkMode'),
       }),
-      { name: THEME_STORAGE_KEY },
+      { name: THEME_STORAGE_KEY }
     ),
-    { name: 'Theme' },
-  ),
+    { name: 'Theme' }
+  )
 );

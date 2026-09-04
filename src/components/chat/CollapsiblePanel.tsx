@@ -1,5 +1,5 @@
-import { DownOutlined, RightOutlined } from '@ant-design/icons';
 import React, { type ReactNode, useState } from 'react';
+import { DownOutlined, RightOutlined } from '@ant-design/icons';
 
 import styles from './CollapsiblePanel.module.css';
 

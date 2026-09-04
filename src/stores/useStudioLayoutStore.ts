@@ -35,23 +35,19 @@ export const useStudioLayoutStore = create<StudioLayoutState>()(
           set(
             { sessionRailWidth: clamp(width, SESSION_RAIL_MIN_WIDTH, SESSION_RAIL_MAX_WIDTH) },
             false,
-            'setSessionRailWidth',
+            'setSessionRailWidth'
           ),
         setThreadWidth: (width) =>
-          set(
-            { threadWidth: clamp(width, THREAD_MIN_WIDTH, THREAD_MAX_WIDTH) },
-            false,
-            'setThreadWidth',
-          ),
+          set({ threadWidth: clamp(width, THREAD_MIN_WIDTH, THREAD_MAX_WIDTH) }, false, 'setThreadWidth'),
         toggleSessionRailCollapsed: () =>
           set(
             (state) => ({ isSessionRailCollapsed: !state.isSessionRailCollapsed }),
             false,
-            'toggleSessionRailCollapsed',
+            'toggleSessionRailCollapsed'
           ),
       }),
-      { name: STUDIO_LAYOUT_STORAGE_KEY },
+      { name: STUDIO_LAYOUT_STORAGE_KEY }
     ),
-    { name: 'StudioLayout' },
-  ),
+    { name: 'StudioLayout' }
+  )
 );
