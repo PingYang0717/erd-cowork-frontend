@@ -158,7 +158,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
             what a screen reader needs announced. */}
         {/* aria-atomic="false" overrides role="status"'s implicit atomic=true: each
             arriving step row is announced on its own, instead of the whole panel
-            being re-read every time a step is appended (A-3). */}
+            being re-read every time a step is appended (ADR-0014 §step-announcements). */}
         {streaming && (
           <div role="status" aria-atomic="false" aria-label="eRD AI is working" className={styles.workingSteps}>
             {/* The run says it is running from inside the step panel, where the steps it

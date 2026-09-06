@@ -36,7 +36,7 @@ const SettingsMenu: React.FC<SettingsMenuProps> = ({ variant }) => {
 
   const handleLanguageChange = useCallback((value: string | number) => setLanguage(value as Language), [setLanguage]);
   const handleThemeChange = useCallback((value: string | number) => setDarkMode(value === 'dark'), [setDarkMode]);
-  /** The dialog keyboard contract this repo adopted (A-2/A-6): Escape closes and puts
+  /** The dialog keyboard contract this repo adopted (ADR-0014 §menu-keyboard/§dialog-focus): Escape closes and puts
    *  focus back on the opener. antd's Popover does neither for a custom child, so the
    *  panel and the trigger both carry it. */
   const handleKeyDown = useCallback((event: React.KeyboardEvent) => {
@@ -86,7 +86,7 @@ const SettingsMenu: React.FC<SettingsMenuProps> = ({ variant }) => {
       {/* One button, not one per variant: the pair used to duplicate every attribute
           and drift was only a matter of time. aria-haspopup + aria-expanded because a
           reader has to hear that this opens a panel — antd adds nothing to a custom
-          child (the same contract VersionSwitcher's trigger keeps, A-2). */}
+          child (the same contract VersionSwitcher's trigger keeps, ADR-0014 §menu-keyboard). */}
       <button
         ref={triggerRef}
         type="button"

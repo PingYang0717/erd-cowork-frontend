@@ -4,7 +4,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { streamAgentMessage } from './agentApi';
 import { getUserId, httpClient, setAuthHeaderProvider } from './apiClient';
 
-/** 用 adapter 攔截:走完整的 interceptor 鏈,但不發出真實請求。 */
+/** Intercepts via the adapter: the full interceptor chain runs, but no real request goes
+ *  out. */
 const captureRequests = (): InternalAxiosRequestConfig[] => {
   const captured: InternalAxiosRequestConfig[] = [];
   httpClient.defaults.adapter = async (config) => {
@@ -87,7 +88,8 @@ describe('auth header provider', () => {
 
   it('agentStreamFetch_customProvider_carriesProviderHeadersInsteadOfXUserId', async () => {
     setAuthHeaderProvider(() => ({ 'Internal-Header-One': 'token-a' }));
-    // body: null 讓 streamAgentMessage 在建立 reader 前就結束,只驗證送出的 header。
+    // body: null ends streamAgentMessage before it builds a reader; only the headers it
+    // sent are under test here.
     const mockFetch = vi.fn().mockResolvedValue({ ok: true, body: null });
     vi.stubGlobal('fetch', mockFetch);
 

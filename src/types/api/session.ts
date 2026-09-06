@@ -4,7 +4,8 @@ import type { UploadedFileInfo } from './upload';
 export interface Session {
   id: string;
   title: string;
-  /** 前端-only extension：後端沒有釘選概念。釘選的時間戳（ISO 8601），未釘選為 null。 */
+  /** Frontend-only extension: the backend has no concept of pinning. When it was pinned
+   *  (ISO 8601); null when not pinned. */
   pinnedAt: string | null;
   updatedAt: string;
 }

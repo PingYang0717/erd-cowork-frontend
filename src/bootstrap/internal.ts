@@ -2,12 +2,15 @@ export interface InternalBootstrap {
   initialize: () => Promise<void>;
 }
 
-// internal 初始化接縫:internal.impl.ts 只存在於 internal 環境。import.meta.glob 對不存在的檔案
-// 回傳空物件而非 build error——這是本接縫在預設環境能成立的原因。
+// The internal bootstrap seam: internal.impl.ts exists only in the internal environment.
+// import.meta.glob returns an empty object for a missing file rather than a build error —
+// that is precisely why this seam holds up in the default environment.
 const impls = import.meta.glob<InternalBootstrap>('./internal.impl.ts');
 
-/** internal 環境的啟動初始化(例如 SSO 決定 X-User-Id);預設環境無實作檔時為 no-op。
- *  loaders 參數僅供測試注入,正式路徑一律走上面的 glob 結果。 */
+/** Startup initialisation for the internal environment (SSO deciding X-User-Id, for
+ *  one); a no-op in the default environment, where the implementation file is absent.
+ *  The loaders parameter exists for test injection only — the real path always uses the
+ *  glob result above. */
 export const initInternalRuntime = async (
   loaders: Record<string, () => Promise<InternalBootstrap>> = impls
 ): Promise<void> => {

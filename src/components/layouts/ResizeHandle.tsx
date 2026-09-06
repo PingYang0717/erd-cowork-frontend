@@ -14,7 +14,7 @@ const KEYBOARD_STEP_PX = 16;
 interface ResizeHandleProps {
   label: string;
   /** The pane's committed width and its limits — what aria-valuenow/min/max report,
-   *  so a reader hears where the boundary is and how far it can go (A-4). */
+   *  so a reader hears where the boundary is and how far it can go (ADR-0014 §divider-keyboard). */
   value: number;
   min: number;
   max: number;
@@ -31,7 +31,7 @@ const ResizeHandle: React.FC<ResizeHandleProps> = ({ label, value, min, max, onD
 
   /** A key press is a complete one-step drag: read the committed width, move it,
    *  commit. Going through the same start/drag/end protocol as the pointer keeps the
-   *  clamp and the store write in one place (A-4 — this control was pointer-only). */
+   *  clamp and the store write in one place (ADR-0014 §divider-keyboard — this control was pointer-only). */
   const stepBy = (deltaX: number) => {
     onDragStart();
     onDrag(deltaX);

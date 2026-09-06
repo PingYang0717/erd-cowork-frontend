@@ -21,9 +21,9 @@ export interface Artifact {
   /** The producing session's title, denormalised — the Gallery card no longer has to
    *  fetch the session list to name where an Artifact came from. */
   sessionTitle: string;
-  /** 釘選的時間戳（ISO 8601），未釘選為 null。 */
+  /** When it was pinned (ISO 8601); null when not pinned. */
   pinnedAt: string | null;
-  /** 發布的時間戳（ISO 8601），未發布為 null. Publishing is what makes an Artifact
+  /** When it was published (ISO 8601); null when not published. Publishing is what makes an Artifact
    *  available to other people — the button the mockup labels 生成 Artifact. Not to be
    *  confused with 重新生成, which asks the Agent for a whole new version. */
   publishedAt: string | null;

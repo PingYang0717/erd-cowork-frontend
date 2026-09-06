@@ -57,7 +57,7 @@ describe('Switching the interface language', () => {
   });
 
   /** The trigger opens a panel, and a reader has to hear that — the same contract
-   *  VersionSwitcher's trigger keeps (A-2). antd's Popover adds nothing to a custom
+   *  VersionSwitcher's trigger keeps (ADR-0014 §menu-keyboard). antd's Popover adds nothing to a custom
    *  child, so the button carries the state itself. */
   it('announces the popup and its open state on the trigger', async () => {
     const user = userEvent.setup();
@@ -72,7 +72,7 @@ describe('Switching the interface language', () => {
     expect(trigger).toHaveAttribute('aria-expanded', 'true');
   });
 
-  /** The dialog keyboard contract the repo adopted (A-2/A-6): Escape closes and puts
+  /** The dialog keyboard contract the repo adopted (ADR-0014 §menu-keyboard/§dialog-focus): Escape closes and puts
    *  focus back on the opener — antd's Popover does neither for a custom child. */
   it('closes on Escape and hands focus back to the trigger', async () => {
     const user = userEvent.setup();
