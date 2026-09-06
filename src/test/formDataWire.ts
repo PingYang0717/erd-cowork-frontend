@@ -1,9 +1,11 @@
 import { httpClient } from '@/api/apiClient';
 
-/** jsdom 的 File 經 MSW/undici 重組會降級成匿名 blob——檔名消失。真瀏覽器序列化
- *  FormData 時檔名當然都在;這個 test-only interceptor 把 FormData 預先序列化成
- *  與瀏覽器等價的 multipart bytes,讓 mock 後端讀到真實的 wire。app 原始碼
- *  (fileApi 的 FormData 路線)維持 cowork 同形,不為測試環境讓步(ADR-0007)。 */
+/** A jsdom File degrades to an anonymous blob when MSW/undici reassembles it — the
+ *  filename is lost. A real browser of course keeps filenames when it serialises
+ *  FormData, so this test-only interceptor pre-serialises FormData into the multipart
+ *  bytes a browser would send, letting the mock backend read the real wire. The app's own
+ *  source (fileApi's FormData path) stays file-identical to cowork and does not bend for
+ *  the test environment (ADR-0007). */
 export const installFormDataWire = (): void => {
   httpClient.interceptors.request.use(async (config) => {
     if (!(config.data instanceof FormData)) return config;

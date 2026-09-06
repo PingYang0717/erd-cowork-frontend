@@ -72,7 +72,7 @@ describe('Tooltip', () => {
   });
 
   /** Focus shows the tip immediately — the 0.35s delay is a pointer affordance, and a
-   *  keyboard user has already committed to the control (A-5). The open tip is wired
+   *  keyboard user has already committed to the control (ADR-0014 §tooltip-focus). The open tip is wired
    *  to the trigger with aria-describedby, which is what makes it announced at all. */
   it('shows on focus without the hover delay, and describes the trigger', async () => {
     const user = userEvent.setup();

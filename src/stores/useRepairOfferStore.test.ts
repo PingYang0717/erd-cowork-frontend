@@ -23,7 +23,7 @@ describe('useRepairOfferStore', () => {
     expect(useRepairOfferStore.getState().queue).toHaveLength(0);
   });
 
-  /** C-5: a second broken artifact used to be dropped while the first offer was up, so
+  /** ADR-0015 §artifact-scoped-offers: a second broken artifact used to be dropped while the first offer was up, so
    *  it had no way to be repaired. It is queued and surfaces once the first is gone. */
   it('queues a second broken artifact and promotes it on resolve', () => {
     const s = useRepairOfferStore.getState();
@@ -56,7 +56,7 @@ describe('useRepairOfferStore', () => {
     expect(useRepairOfferStore.getState().offer).toBeNull();
   });
 
-  /** C-4: a repair for A that lands after the user switched to C's offer must not write
+  /** ADR-0015 §artifact-scoped-offers: a repair for A that lands after the user switched to C's offer must not write
    *  A's status onto C. Every artifact-scoped mutation checks the id. */
   it('ignores setStatus for an artifact that is not the current offer', () => {
     const s = useRepairOfferStore.getState();

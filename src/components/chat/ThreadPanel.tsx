@@ -84,23 +84,33 @@ interface ThreadViewProps {
 
 const ThreadView: React.FC<ThreadViewProps> = ({ sessionId }) => {
   const t = useTranslations();
+  const repair = useArtifactRepair();
   const { data: detail } = useSessionDetail(sessionId);
   const messages = detail.messages;
   const { state, send, stop } = useAgentStream(sessionId);
-  const setStreamedArtifact = useActiveRunStore((s) => s.setStreamedArtifact);
+
+  const repairOffer = useRepairOfferStore((store) => store.offer);
+  const resetRepair = useRepairOfferStore((store) => store.reset);
+  const dismissRepair = useRepairOfferStore((store) => store.dismiss);
+
   const setRunStreaming = useActiveRunStore((s) => s.setRunStreaming);
+  const setStreamedArtifact = useActiveRunStore((s) => s.setStreamedArtifact);
   const displayedArtifactId = useActiveRunStore((s) => s.displayedArtifactId);
+
+  const applyRememberedDataSources = useApplyRememberedDataSources(sessionId);
+
+  /** What the screen reader hears when a run finishes: the complete reply, once. The
+   *  thread itself is aria-live="off" (every token used to be re-read; ADR-0014 §live-region), so this
+   *  sr-only region is the one place a finished answer is announced from. */
+  const [announcement, setAnnouncement] = useState('');
+
   // The user's words go on screen the moment they send; cleared once the refetched
   // history carries them (streaming flips false after the hook's await-then-DONE).
   // The optimistically-shown message plus the history length at the moment it was sent:
   // the bubble is suppressed once the refetched history has grown past `atLength` — i.e.
   // now carries it. Comparing lengths, not text, is what makes sending the same words
   // twice in a row show two bubbles (an equal last-history text would falsely suppress).
-  const [pending, setPending] = useState<{ text: string; atLength: number } | null>(null);
-  /** What the screen reader hears when a run finishes: the complete reply, once. The
-   *  thread itself is aria-live="off" (every token used to be re-read; A-1), so this
-   *  sr-only region is the one place a finished answer is announced from. */
-  const [announcement, setAnnouncement] = useState('');
+  //
   // No setPending(null) on run end — deliberately. The success path never needed it:
   // the bubble is suppressed by derivation the moment the refetched history grows past
   // `atLength` (showOptimisticBubble), and the awaited refetch lands before DONE. And
@@ -108,7 +118,10 @@ const ThreadView: React.FC<ThreadViewProps> = ({ sessionId }) => {
   // made the user's own words vanish with only the error left. The pending text
   // lingers in state, suppressed or visible as the derivation decides, until the next
   // send replaces it or the session remount retires it.
+  const [pending, setPending] = useState<{ text: string; atLength: number } | null>(null);
+
   const prevStreamingRef = useRef(false);
+
   useEffect(() => {
     if (prevStreamingRef.current && !state.isStreaming) {
       setAnnouncement(state.liveText || state.answer || '');
@@ -117,27 +130,11 @@ const ThreadView: React.FC<ThreadViewProps> = ({ sessionId }) => {
     // liveText/answer are stable once streaming has ended; the transition guard makes
     // the extra runs their presence in deps causes no-ops.
   }, [state.isStreaming, state.liveText, state.answer]);
-  const repairOffer = useRepairOfferStore((store) => store.offer);
-  const dismissRepair = useRepairOfferStore((store) => store.dismiss);
-  const resetRepair = useRepairOfferStore((store) => store.reset);
-  const repair = useArtifactRepair();
-  const applyRememberedDataSources = useApplyRememberedDataSources(sessionId);
-
-  // An offer belongs to one artifact in one session. Moving away from that session
-  // leaves it pointing at something the user is no longer looking at.
-  useEffect(() => resetRepair, [sessionId, resetRepair]);
-
-  // The Artifact pane refuses a Reload while a run is open; like the artifact itself
-  // this is state another tree needs, so it goes through the store.
-  const isRunStreaming = state.isStreaming;
-  useEffect(() => {
-    setRunStreaming(isRunStreaming);
-    return () => setRunStreaming(false);
-  }, [isRunStreaming, setRunStreaming]);
 
   // Publishing to the Artifact pane is syncing with something outside this tree, and it
   // has to happen the moment the ARTIFACT event lands rather than when the run ends.
   const streamedArtifact = state.artifact;
+
   useEffect(() => {
     setStreamedArtifact(streamedArtifact);
     // Leaving the thread must not leave the Artifact pane pointing at a run that is no
@@ -145,10 +142,24 @@ const ThreadView: React.FC<ThreadViewProps> = ({ sessionId }) => {
     return () => setStreamedArtifact(null);
   }, [streamedArtifact, setStreamedArtifact]);
 
+  // The Artifact pane refuses a Reload while a run is open; like the artifact itself
+  // this is state another tree needs, so it goes through the store.
+  const isRunStreaming = state.isStreaming;
+
+  useEffect(() => {
+    setRunStreaming(isRunStreaming);
+    return () => setRunStreaming(false);
+  }, [isRunStreaming, setRunStreaming]);
+
+  // An offer belongs to one artifact in one session. Moving away from that session
+  // leaves it pointing at something the user is no longer looking at.
+  useEffect(() => resetRepair, [sessionId, resetRepair]);
+
   // Handed to ChatComposer; a fresh identity every render would defeat its memoisation.
   // Refetching after the run lives inside useAgentStream (awaited before DONE); the
   // artifact on display rides along as baseArtifactId so the run builds on it.
   const isStreaming = state.isStreaming;
+
   const handleSend = useCallback(
     async (input: SendInput) => {
       if (isStreaming) {
@@ -170,6 +181,7 @@ const ThreadView: React.FC<ThreadViewProps> = ({ sessionId }) => {
   // The backend body is question-only, so a reask's answers travel as one prose
   // sentence composed from the form (labels stand in for values on the wire).
   const question = state.question;
+
   const handleAnswer = useCallback(
     async (answers: Answers) => {
       if (!question) {
@@ -191,7 +203,7 @@ const ThreadView: React.FC<ThreadViewProps> = ({ sessionId }) => {
   const live: LiveRun | null = state.isStreaming || runEndedVisibly ? state : null;
 
   // Suppress the optimistic bubble once the refetched history has grown past the point
-  // it was sent from — that growth is the refetch carrying the message home (C-3).
+  // it was sent from — that growth is the refetch carrying the message home (ADR-0015 §optimistic-bubble).
   const optimisticUserText =
     pending !== null && showOptimisticBubble(messages.length, pending.atLength) ? pending.text : null;
 

@@ -41,7 +41,7 @@ const VersionSwitcher: React.FC<VersionSwitcherProps> = ({
   const itemRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
   /** Closing by keyboard must put the reader back where they were: in a three-pane
-   *  layout, focus dropped to <body> is a position lost entirely (A-2). */
+   *  layout, focus dropped to <body> is a position lost entirely (ADR-0014 §menu-keyboard). */
   const closeAndRefocus = () => {
     setIsOpen(false);
     triggerRef.current?.focus();
@@ -134,7 +134,7 @@ const VersionSwitcher: React.FC<VersionSwitcherProps> = ({
       {isOpen && (
         // The header sits inside the popup but OUTSIDE the element carrying
         // role="menu": a menu's children may only be items, and the title div was
-        // an illegal child that some readers skip the whole menu over (A-2).
+        // an illegal child that some readers skip the whole menu over (ADR-0014 §menu-keyboard).
         <div className={styles.versionMenu}>
           <div className={styles.versionMenuHeader}>{heading}</div>
           {/* The keydown handler implements the menu keyboard contract; focus lives

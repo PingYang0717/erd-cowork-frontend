@@ -153,7 +153,7 @@ describe('StudioPage three-pane layout', () => {
   });
 
   /** The divider used to be pointer-only: role="separator" with no tabIndex and no
-   *  keys, so a keyboard user could not move any boundary at all (A-4). One arrow
+   *  keys, so a keyboard user could not move any boundary at all (ADR-0014 §divider-keyboard). One arrow
    *  press is a complete one-step drag through the same read→move→commit protocol. */
   it('resizes the rail by keyboard, and reports its position as a separator value', async () => {
     const user = userEvent.setup();
@@ -175,7 +175,7 @@ describe('StudioPage three-pane layout', () => {
   });
 
   /** The collapsed rail's history flyout claims role="dialog"; a dialog receives
-   *  focus, closes on Escape, and hands focus back to its opener (A-6) — before
+   *  focus, closes on Escape, and hands focus back to its opener (ADR-0014 §dialog-focus) — before
    *  this, focus stayed on the button behind the backdrop and Escape did nothing. */
   it('treats the chat-history flyout as a real dialog: focus in, Escape out', async () => {
     const user = userEvent.setup();
