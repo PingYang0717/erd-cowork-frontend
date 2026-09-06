@@ -125,7 +125,12 @@ const ArtifactPanelContent: React.FC<ArtifactPanelContentProps> = ({
 }) => {
   const t = useTranslations();
   const [isShareOpen, setIsShareOpen] = useState(false);
-  const [isPublishOpen, setIsPublishOpen] = useState(false);
+  // The publish target is frozen at the moment the dialog opens, not read at confirm
+  // time. `artifactId` can change under an open dialog: a run finishing mid-edit swaps
+  // the panel to the artifact it streamed in (`setStreamedArtifact` drops the pick), and
+  // a confirm that read the prop then published the new arrival under the title the
+  // user wrote for the old one.
+  const [publishTarget, setPublishTarget] = useState<{ artifactId: string; suggestedTitle: string } | null>(null);
   const reloadNonce = useActiveRunStore((s) => s.artifactReloadNonce);
   const bumpArtifactReload = useActiveRunStore((s) => s.bumpArtifactReload);
   const isRunStreaming = useActiveRunStore((s) => s.isRunStreaming);
@@ -204,7 +209,7 @@ const ArtifactPanelContent: React.FC<ArtifactPanelContentProps> = ({
             type="button"
             className={styles.generateButton}
             disabled={publishArtifact.isPending}
-            onClick={() => setIsPublishOpen(true)}
+            onClick={() => setPublishTarget({ artifactId, suggestedTitle: activeVersion.title })}
           >
             {t.artifact.publish}
           </button>
@@ -259,23 +264,26 @@ const ArtifactPanelContent: React.FC<ArtifactPanelContentProps> = ({
         ) : null}
       </div>
       <PublishArtifactDialog
-        open={isPublishOpen}
+        open={publishTarget !== null}
         // The version's own name is only a suggestion: what the Gallery will show is
         // whatever the user settles on here.
-        suggestedTitle={activeVersion.title}
+        suggestedTitle={publishTarget?.suggestedTitle ?? ''}
         isPublishing={publishArtifact.isPending}
-        onCancel={() => setIsPublishOpen(false)}
-        onConfirm={(title) =>
+        onCancel={() => setPublishTarget(null)}
+        onConfirm={(title) => {
+          if (!publishTarget) {
+            return;
+          }
           publishArtifact.mutate(
-            { id: artifactId, title },
+            { id: publishTarget.artifactId, title },
             {
               onSuccess: () => {
-                setIsPublishOpen(false);
+                setPublishTarget(null);
                 startCoach();
               },
             }
-          )
-        }
+          );
+        }}
       />
       {artifact && <ShareArtifactDialog open={isShareOpen} onClose={() => setIsShareOpen(false)} artifact={artifact} />}
       <PublishedToast />
