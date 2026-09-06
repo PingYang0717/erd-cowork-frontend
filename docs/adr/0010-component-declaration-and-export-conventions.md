@@ -134,8 +134,14 @@ effect 走(但它開頭講的是那個值)。用可讀性換規則的簡單,在�
 
 - **沒有 lint 能強制這條規則**,oxlint 與 ESLint 都沒有對等能力。它靠 code review 把關,
   所以推廣速度取決於有多少人記得。
-- 目前**只有 `ThreadPanel.tsx` 依此排列**,作為可以指著看的範本。其餘 23 個含 3 個以上 hook
-  呼叫的元件維持舊排列,倉庫在推廣完成前會有兩種風格並存。
+- **推廣已完成(2026-09-06)**:`ThreadPanel.tsx` 是最初的範本,其餘 23 個含 3 個以上 hook
+  呼叫的元件已全數依此排列。逐檔套用時發現規則需要一個明說的讓步——**依賴優先於分組**:
+  `useDebouncedValue(search)`、`useArtifactContent(displayedArtifactId, …)`、
+  `useResizablePane({ read: readRailWidth, … })` 這類 hook 的輸入是 state、衍生值或
+  callback,只能排在它的輸入之後,進不了頂部區。這正是第四點「依賴是硬約束」的字面意思,
+  每個這樣的位置都留了一行註解說明它為何不在頂部。
 - **重排 `useEffect` 會改變執行順序,以及反序的 cleanup 順序。** 只有在確認彼此沒有隱性先後
   (一個寫 store、另一個讀)時才可以動。`ThreadView` 的四個 effect 寫的是不同的 store 欄位,
-  重排後 377 個測試全過。往後套用到其他檔案時,這個確認要逐檔做一次,不能假設。
+  重排後 377 個測試全過。這次推廣中含多個 effect 的檔案
+  (`MessageList`、`VersionSwitcher`、`HtmlCodePanel`)都維持了 effect 彼此的相對順序,
+  只移動它們相對於其他宣告的位置;逐檔驗證由測試把關。

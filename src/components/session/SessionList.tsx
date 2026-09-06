@@ -86,11 +86,11 @@ interface SessionListProps {
 
 const SessionList: React.FC<SessionListProps> = ({ onCollapse, artifactsCount }) => {
   const t = useTranslations();
-  const { pinned, recent, draftSessionId, selectedSessionId, selectAndNavigate, createAndNavigate } =
-    useSessionGroups();
   const navigate = useNavigate();
   const location = useLocation();
   const isCoaching = usePublishCoachStore((s) => s.isActive);
+  const { pinned, recent, draftSessionId, selectedSessionId, selectAndNavigate, createAndNavigate } =
+    useSessionGroups();
 
   return (
     <div className={styles.sessionList}>

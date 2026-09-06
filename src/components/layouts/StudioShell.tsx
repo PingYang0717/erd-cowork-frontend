@@ -40,11 +40,14 @@ const ExpandedSessionRail: React.FC<ExpandedSessionRailProps> = ({ onCollapse })
 
 const StudioShell: React.FC = () => {
   const sessionRailWidth = useStudioLayoutStore((s) => s.sessionRailWidth);
-  const isSessionRailCollapsed = useStudioLayoutStore((s) => s.isSessionRailCollapsed);
   const setSessionRailWidth = useStudioLayoutStore((s) => s.setSessionRailWidth);
+  const isSessionRailCollapsed = useStudioLayoutStore((s) => s.isSessionRailCollapsed);
   const toggleSessionRailCollapsed = useStudioLayoutStore((s) => s.toggleSessionRailCollapsed);
 
+  // The pane hook consumes the callback above it — a dependency the top-block grouping
+  // yields to.
   const readRailWidth = useCallback(() => useStudioLayoutStore.getState().sessionRailWidth, []);
+
   const { paneRef, onDragStart, onDrag, onDragEnd } = useResizablePane<HTMLElement>({
     min: SESSION_RAIL_MIN_WIDTH,
     max: SESSION_RAIL_MAX_WIDTH,

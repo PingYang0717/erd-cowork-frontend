@@ -23,25 +23,14 @@ const CollapsedSessionRail: React.FC<CollapsedSessionRailProps> = ({ onExpand })
   const t = useTranslations();
   const navigate = useNavigate();
   const location = useLocation();
-  const [historyOpen, setHistoryOpen] = useState(false);
-  const [flyoutPosition, setFlyoutPosition] = useState({ top: 0, left: 0 });
-  const historyButtonRef = useRef<HTMLButtonElement>(null);
-  const flyoutRef = useRef<HTMLDivElement>(null);
-
   const { pinned, recent, draftSessionId, selectedSessionId, selectAndNavigate, createAndNavigate } =
     useSessionGroups();
 
-  const handleSelectSession = (id: string) => {
-    selectAndNavigate(id);
-    closeHistory();
-  };
+  const flyoutRef = useRef<HTMLDivElement>(null);
+  const historyButtonRef = useRef<HTMLButtonElement>(null);
 
-  /** Closing must hand focus back to the button that opened it — a dialog that
-   *  drops focus to <body> loses the keyboard user's place entirely (ADR-0014 §dialog-focus). */
-  const closeHistory = () => {
-    setHistoryOpen(false);
-    historyButtonRef.current?.focus();
-  };
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [flyoutPosition, setFlyoutPosition] = useState({ top: 0, left: 0 });
 
   // A dialog receives focus when it opens; without this the keyboard user is still
   // standing on the button behind the backdrop (ADR-0014 §dialog-focus). Syncing focus — an external
@@ -51,6 +40,18 @@ const CollapsedSessionRail: React.FC<CollapsedSessionRailProps> = ({ onExpand })
       flyoutRef.current?.focus();
     }
   }, [historyOpen]);
+
+  /** Closing must hand focus back to the button that opened it — a dialog that
+   *  drops focus to <body> loses the keyboard user's place entirely (ADR-0014 §dialog-focus). */
+  const closeHistory = () => {
+    setHistoryOpen(false);
+    historyButtonRef.current?.focus();
+  };
+
+  const handleSelectSession = (id: string) => {
+    selectAndNavigate(id);
+    closeHistory();
+  };
 
   /** The dialog keyboard contract: Escape closes and restores focus; Tab cycles
    *  within rather than escaping into the page behind the backdrop (ADR-0014 §dialog-focus). */

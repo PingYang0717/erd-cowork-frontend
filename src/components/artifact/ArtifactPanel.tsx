@@ -52,11 +52,12 @@ interface ArtifactPanelViewProps {
 
 const ArtifactPanelView: React.FC<ArtifactPanelViewProps> = ({ sessionId }) => {
   const { data: detail } = useSessionDetail(sessionId);
+
+  const pickArtifact = useActiveRunStore((s) => s.pickArtifact);
   const streamedArtifact = useActiveRunStore((s) => s.streamedArtifact);
   // The pick lives in the store rather than here because the version menu is no longer
   // the only thing that makes one: a past reply's Artifact chip picks too.
   const selectedArtifactId = useActiveRunStore((s) => s.pickedArtifactId);
-  const pickArtifact = useActiveRunStore((s) => s.pickArtifact);
   const clearPickedArtifact = useActiveRunStore((s) => s.clearPickedArtifact);
 
   // Every artifact-bearing message is a version; a live-stream artifact that the
@@ -79,16 +80,16 @@ const ArtifactPanelView: React.FC<ArtifactPanelViewProps> = ({ sessionId }) => {
     ];
   }, [detail.messages, streamedArtifact]);
 
+  // A pick belongs to the thread it was made in. This view is keyed by session, so the
+  // unmount that a session switch causes is what retires it.
+  useEffect(() => clearPickedArtifact, [clearPickedArtifact]);
+
   // A newly produced artifact takes over ONCE (the user asked for it); after that a
   // manual pick wins again — continuous streamed priority would pin the panel to the
   // last run forever and make the version menu inert. The take-over happens where the
   // artifact arrives (`setStreamedArtifact` drops the pick), so nothing needs
   // adjusting during render here.
   const streamedId = streamedArtifact?.artifactId ?? null;
-
-  // A pick belongs to the thread it was made in. This view is keyed by session, so the
-  // unmount that a session switch causes is what retires it.
-  useEffect(() => clearPickedArtifact, [clearPickedArtifact]);
 
   const activeVersion =
     versions.find((v) => v.artifactId === selectedArtifactId) ??
@@ -124,37 +125,25 @@ const ArtifactPanelContent: React.FC<ArtifactPanelContentProps> = ({
   onSelectVersion,
 }) => {
   const t = useTranslations();
+  const { data: artifacts } = useArtifacts();
+  const publishArtifact = usePublishArtifact();
+  const startCoach = usePublishCoachStore((s) => s.start);
+
+  const isRunStreaming = useActiveRunStore((s) => s.isRunStreaming);
+  const reloadNonce = useActiveRunStore((s) => s.artifactReloadNonce);
+  const bumpArtifactReload = useActiveRunStore((s) => s.bumpArtifactReload);
+  const setDisplayedArtifactId = useActiveRunStore((s) => s.setDisplayedArtifactId);
+
+  const { data, isError, error } = useArtifactContent(artifactId, reloadNonce);
+
   const [isShareOpen, setIsShareOpen] = useState(false);
+
   // The publish target is frozen at the moment the dialog opens, not read at confirm
   // time. `artifactId` can change under an open dialog: a run finishing mid-edit swaps
   // the panel to the artifact it streamed in (`setStreamedArtifact` drops the pick), and
   // a confirm that read the prop then published the new arrival under the title the
   // user wrote for the old one.
   const [publishTarget, setPublishTarget] = useState<{ artifactId: string; suggestedTitle: string } | null>(null);
-  const reloadNonce = useActiveRunStore((s) => s.artifactReloadNonce);
-  const bumpArtifactReload = useActiveRunStore((s) => s.bumpArtifactReload);
-  const isRunStreaming = useActiveRunStore((s) => s.isRunStreaming);
-  const { data, isError, error } = useArtifactContent(artifactId, reloadNonce);
-  const { data: artifacts } = useArtifacts();
-  const setDisplayedArtifactId = useActiveRunStore((s) => s.setDisplayedArtifactId);
-  const artifact = artifacts?.find((a) => a.id === artifactId);
-  const publishArtifact = usePublishArtifact();
-  const startCoach = usePublishCoachStore((s) => s.start);
-
-  // The thread sends the artifact on display as `baseArtifactId`, so a follow-up
-  // question iterates on what the user is looking at. Published from here, where the
-  // fetch result is known, rather than from the version resolution above: an artifact
-  // that has been deleted still appears in the version list (versions come from the
-  // messages, which keep their artifactId), and announcing it as "displayed" would send
-  // the backend off to iterate on something it no longer has.
-  // Gated on `isError`, not on `data`: a freshly produced Artifact has no content in
-  // hand for a moment, and refusing to announce it then would drop `baseArtifactId`
-  // from the very next question — the iteration case this exists for. Only a fetch that
-  // has actually failed means the Artifact is not there to iterate on.
-  useEffect(() => {
-    setDisplayedArtifactId(isError ? null : artifactId);
-    return () => setDisplayedArtifactId(null);
-  }, [artifactId, isError, setDisplayedArtifactId]);
 
   // Enrich the derived versions with each artifact's published state for the menu's
   // green check; the artifacts list is the mock's frontend-only source for it.
@@ -176,6 +165,23 @@ const ArtifactPanelContent: React.FC<ArtifactPanelContentProps> = ({
       }),
     [versions, artifacts]
   );
+
+  // The thread sends the artifact on display as `baseArtifactId`, so a follow-up
+  // question iterates on what the user is looking at. Published from here, where the
+  // fetch result is known, rather than from the version resolution above: an artifact
+  // that has been deleted still appears in the version list (versions come from the
+  // messages, which keep their artifactId), and announcing it as "displayed" would send
+  // the backend off to iterate on something it no longer has.
+  // Gated on `isError`, not on `data`: a freshly produced Artifact has no content in
+  // hand for a moment, and refusing to announce it then would drop `baseArtifactId`
+  // from the very next question — the iteration case this exists for. Only a fetch that
+  // has actually failed means the Artifact is not there to iterate on.
+  useEffect(() => {
+    setDisplayedArtifactId(isError ? null : artifactId);
+    return () => setDisplayedArtifactId(null);
+  }, [artifactId, isError, setDisplayedArtifactId]);
+
+  const artifact = artifacts?.find((a) => a.id === artifactId);
 
   // Publishing means making this Artifact available to other people. The mockup's button
   // says 生成 Artifact; what it does is publish, and `publishedAt` is where that lives now.
@@ -297,8 +303,9 @@ const ArtifactPanelContent: React.FC<ArtifactPanelContentProps> = ({
 const PublishedToast: React.FC = () => {
   const t = useTranslations();
   const navigate = useNavigate();
-  const isActive = usePublishCoachStore((s) => s.isActive);
+
   const dismiss = usePublishCoachStore((s) => s.dismiss);
+  const isActive = usePublishCoachStore((s) => s.isActive);
 
   if (!isActive) {
     return null;

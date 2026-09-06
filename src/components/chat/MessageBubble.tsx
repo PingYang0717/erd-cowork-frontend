@@ -95,6 +95,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
   live,
 }) => {
   const t = useTranslations();
+
   // One source per field: a live run's own state, else the settled message's.
   const text = live ? live.liveText : (settledText ?? '');
   const steps = live ? live.steps : settledSteps;
@@ -117,6 +118,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
   // so the test doctrine (src/test/README.md: the test decides when events arrive, every
   // state observable) is untouched — act() flushes deferred renders synchronously.
   const deferredText = useDeferredValue(text);
+
   const recordKind = systemRecordKind(text);
   // Markers say where a table belongs in the answer. A table nobody placed still has to
   // appear somewhere, so it goes after the text rather than vanishing.

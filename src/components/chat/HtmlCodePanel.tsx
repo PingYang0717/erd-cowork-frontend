@@ -35,9 +35,11 @@ interface FetchOutcome {
  *  says whether the source is still being written (ADR-0002). */
 const HtmlCodePanel: React.FC<HtmlCodePanelProps> = ({ code, artifactId, autoScroll = false }) => {
   const t = useTranslations();
+
+  const codeRef = useRef<HTMLPreElement>(null);
+
   const [isExpanded, setIsExpanded] = useState(false);
   const [outcome, setOutcome] = useState<FetchOutcome | null>(null);
-  const codeRef = useRef<HTMLPreElement>(null);
 
   const hasLiveCode = code !== undefined && code !== '';
   // Both being undefined is not a match: a panel with no artifact has nothing fetched.

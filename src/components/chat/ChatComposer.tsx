@@ -75,14 +75,8 @@ interface ChatComposerProps {
 
 const ChatComposer: React.FC<ChatComposerProps> = ({ sessionId, onSend, disabled, isStreaming, onStop }) => {
   const t = useTranslations();
-  const [draft, setDraft] = useState('');
-  const [fileModalOpen, setFileModalOpen] = useState(false);
-  // An input method (注音, 拼音, かな) is mid-word for most of the time a Chinese or
-  // Japanese user spends typing, and its Enter means "take this candidate", not "send".
-  // A ref rather than state: nothing renders differently, and a re-render between
-  // compositionend and keydown would be a race.
-  const isComposingRef = useRef(false);
-
+  const { retentionDays } = useAppConfig();
+  const connectors = useConnectors(sessionId);
   const {
     attachments,
     error: attachmentError,
@@ -91,17 +85,25 @@ const ChatComposer: React.FC<ChatComposerProps> = ({ sessionId, onSend, disabled
     addFiles,
     removeFile,
   } = useFileAttachments(sessionId);
-  const connectors = useConnectors(sessionId);
-  const { retentionDays } = useAppConfig();
-  const connectorsOpen = useConnectorsPanelStore((store) => store.isOpen);
+
   const openConnectors = useConnectorsPanelStore((store) => store.open);
+  const connectorsOpen = useConnectorsPanelStore((store) => store.isOpen);
   const closeConnectors = useConnectorsPanelStore((store) => store.close);
-  const connectedConnectorCount = selectConnected(connectors).length;
+
+  // An input method (注音, 拼音, かな) is mid-word for most of the time a Chinese or
+  // Japanese user spends typing, and its Enter means "take this candidate", not "send".
+  // A ref rather than state: nothing renders differently, and a re-render between
+  // compositionend and keydown would be a race.
+  const isComposingRef = useRef(false);
+
+  const [draft, setDraft] = useState('');
+  const [fileModalOpen, setFileModalOpen] = useState(false);
 
   // Retention has already deleted these files server-side. Anything sent now runs
   // against data that is not there, so the composer closes until they are cleared —
   // the same call the backend makes when it answers FILES_EXPIRED.
   const hasExpiredFiles = attachments.some((upload) => upload.expired);
+
   // Also shut while the session's files are being written to: a question sent then is
   // answered against a set that is still changing under it.
   const isBlocked = disabled || hasExpiredFiles || isMutatingFiles;
@@ -120,6 +122,8 @@ const ChatComposer: React.FC<ChatComposerProps> = ({ sessionId, onSend, disabled
     send(text);
     setDraft('');
   };
+
+  const connectedConnectorCount = selectConnected(connectors).length;
 
   return (
     <div>

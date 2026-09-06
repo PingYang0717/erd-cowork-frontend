@@ -12,8 +12,9 @@ interface ArtifactFrameProps {
  *  Reload: React drops the element and mounts a new one, so the document restarts from
  *  scratch (ADR-0001). */
 const ArtifactFrame: React.FC<ArtifactFrameProps> = ({ html, artifactId }) => {
-  const iframeRef = useRef<HTMLIFrameElement>(null);
   const report = useRepairOfferStore((store) => store.report);
+
+  const iframeRef = useRef<HTMLIFrameElement>(null);
 
   // The sandbox keeps the artifact out of this app; the policy keeps it off the network.
   // Injected here rather than served with the document — a srcdoc never sees a header.

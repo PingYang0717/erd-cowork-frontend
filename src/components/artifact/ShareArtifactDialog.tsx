@@ -27,11 +27,12 @@ interface ShareArtifactDialogProps {
 
 const ShareArtifactDialog: React.FC<ShareArtifactDialogProps> = ({ open, onClose, artifact }) => {
   const t = useTranslations();
-  const { shares, isLoading, isUnavailable } = useArtifactShares(artifact.id, open);
   const updateShares = useUpdateArtifactShares();
-  const [recipients, setRecipients] = useState<DirectoryEntry[]>([]);
+  const { shares, isLoading, isUnavailable } = useArtifactShares(artifact.id, open);
+
   const [copied, setCopied] = useState(false);
-  const shareUrl = artifactHref(artifact.id);
+  const [edited, setEdited] = useState(false);
+  const [recipients, setRecipients] = useState<DirectoryEntry[]>([]);
 
   // Opening loads who it is already shared with, and the picker starts from them: this
   // is an edit to a list, not a fresh act each time. Adjusted during render on the
@@ -48,8 +49,8 @@ const ShareArtifactDialog: React.FC<ShareArtifactDialogProps> = ({ open, onClose
   // The share list comes back in the picker's own shape, so it is already what the field
   // works in — recipients read with their names, and nothing has to be mapped.
   const alreadyShared = shares;
-  const [edited, setEdited] = useState(false);
   const chosen = edited ? recipients : alreadyShared;
+  const shareUrl = artifactHref(artifact.id);
 
   const handleChoose = (next: DirectoryEntry[]) => {
     setEdited(true);
@@ -188,7 +189,11 @@ interface RecipientSelectProps {
  *  it — so chosen entries are remembered here and merged back into the options. */
 const RecipientSelect: React.FC<RecipientSelectProps> = ({ value, loading, disabled, onChange }) => {
   const t = useTranslations();
+
   const [keyword, setKeyword] = useState('');
+
+  // Below the state it feeds from, against the top-block rule: the search hook's input
+  // is the debounced keyword, and a dependency is a hard constraint the grouping yields to.
   const { entries, isSearching, isError, enabled } = useDirectorySearch(useDebouncedValue(keyword));
 
   // Every option the field can currently show: what the search just returned, plus

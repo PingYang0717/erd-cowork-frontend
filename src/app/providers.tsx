@@ -52,7 +52,7 @@ const AppProviders: React.FC<AppProvidersProps> = ({ children }) => {
   // everything around them switched, which reads as a half-finished translation rather
   // than as a choice.
   const language = useLanguageStore((s) => s.language);
-  const tokens = THEME_TOKENS[isDarkMode ? 'dark' : 'light'];
+
   // Built once per theme, not once per render. antd caches its derived tokens and the
   // CSS it generates against this object's identity, so handing it a fresh one — which
   // `buildAntdTheme(isDarkMode)` inline did — throws that cache away for a value that
@@ -66,6 +66,8 @@ const AppProviders: React.FC<AppProvidersProps> = ({ children }) => {
   useEffect(() => {
     document.documentElement.lang = language === 'en' ? 'en' : 'zh-Hant';
   }, [language]);
+
+  const tokens = THEME_TOKENS[isDarkMode ? 'dark' : 'light'];
 
   return (
     <QueryClientProvider client={queryClient}>

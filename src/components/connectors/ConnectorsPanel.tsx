@@ -98,12 +98,19 @@ interface ConnectorsPanelProps {
 
 const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ sessionId, open, onClose }) => {
   const t = useTranslations();
+  const addConnector = useAddConnector();
   const sessionConnectors = useConnectors(sessionId);
   const setDataSource = useSetSessionDataSource(sessionId);
-  const addConnector = useAddConnector();
+
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>('All');
   const [addValue, setAddValue] = useState('');
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('All');
+
+  // Below the state it feeds from, against the top-block rule: the debounce's input is
+  // `search`, and a dependency is a hard constraint the grouping yields to. The list
+  // filters on the settled value while the input stays on the raw one, so typing never
+  // feels delayed — only the filtering behind it is.
+  const normalizedSearch = useDebouncedValue(search).trim().toLowerCase();
 
   const attachedIds = useMemo(
     () => selectConnected(sessionConnectors).map((connector) => connector.id),
@@ -115,6 +122,7 @@ const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ sessionId, open, onCl
   // would leave a half-made choice on the server every time someone changed their mind
   // mid-way, and Cancel would have nothing to cancel.
   const [draftIds, setDraftIds] = useState<string[]>(attachedIds);
+
   // Opening starts a fresh decision from whatever the session currently has. Adjusting
   // during render (React's documented pattern for state derived from a prop change)
   // rather than in an effect, so the first paint of an opened panel already shows the
@@ -138,22 +146,6 @@ const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ sessionId, open, onCl
           : { ...connector, status: draftIds.includes(connector.id) ? 'connected' : 'available' }
       ),
     [sessionConnectors, draftIds]
-  );
-
-  const connectedConnectors = selectConnected(connectors);
-  const connectedCount = connectedConnectors.length;
-  const isDirty =
-    connectedConnectors.length !== attachedIds.length ||
-    connectedConnectors.some((connector) => !attachedIds.includes(connector.id));
-
-  // The list filters on the settled value while the input stays on the raw one, so
-  // typing never feels delayed — only the filtering behind it is.
-  const normalizedSearch = useDebouncedValue(search).trim().toLowerCase();
-  const visibleConnectors = connectors.filter(
-    (connector) =>
-      matchesFilter(connector, statusFilter) &&
-      (!normalizedSearch ||
-        `${connector.name} ${connector.description} ${connector.category}`.toLowerCase().includes(normalizedSearch))
   );
 
   const toggle = (connector: Connector) => {
@@ -195,6 +187,18 @@ const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ sessionId, open, onCl
     });
     setAddValue('');
   };
+
+  const connectedConnectors = selectConnected(connectors);
+  const connectedCount = connectedConnectors.length;
+  const isDirty =
+    connectedConnectors.length !== attachedIds.length ||
+    connectedConnectors.some((connector) => !attachedIds.includes(connector.id));
+  const visibleConnectors = connectors.filter(
+    (connector) =>
+      matchesFilter(connector, statusFilter) &&
+      (!normalizedSearch ||
+        `${connector.name} ${connector.description} ${connector.category}`.toLowerCase().includes(normalizedSearch))
+  );
 
   return (
     <Modal
