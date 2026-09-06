@@ -68,25 +68,37 @@ const MessageList: React.FC<MessageListProps> = ({
   onAnswer,
   bottomSlot,
 }) => {
+  // Zustand's setter identity is stable, so passing it down does not defeat
+  // MessageBubble's memoisation on every streamed token.
+  const pickArtifact = useActiveRunStore((s) => s.pickArtifact);
+  // Published by the Artifact pane, so a chip's "shown right →" is decided by what is
+  // actually on the right rather than by a guess the two could disagree on.
+  const displayedArtifactId = useActiveRunStore((s) => s.displayedArtifactId);
+
   const containerRef = useRef<HTMLDivElement>(null);
   // Where the reader last was: following the newest turn only holds while they are at
   // the bottom. Scrolling up is how they read an earlier reply (or click its chip), and
   // yanking them back down on every re-render made that impossible. A ref, not state —
   // scroll position must never cause a render.
   const isNearBottomRef = useRef(true);
-  // Published by the Artifact pane, so a chip's "shown right →" is decided by what is
-  // actually on the right rather than by a guess the two could disagree on.
-  const displayedArtifactId = useActiveRunStore((s) => s.displayedArtifactId);
-  // Zustand's setter identity is stable, so passing it down does not defeat
-  // MessageBubble's memoisation on every streamed token.
-  const pickArtifact = useActiveRunStore((s) => s.pickArtifact);
 
-  const handleScroll = () => {
-    const container = containerRef.current;
-    if (container) {
-      isNearBottomRef.current = container.scrollHeight - container.scrollTop - container.clientHeight < 80;
-    }
-  };
+  // Parsed per settled message and memoised together: a streaming run re-renders this
+  // list on every token, and re-parsing the whole history each time is O(history × tokens).
+  // The artifact object lives here for the same reason — built inline in the JSX it
+  // would be a fresh object every token, and a fresh object prop is all it takes to
+  // defeat MessageBubble's memo (probe-measured: bubbles with an artifact re-rendered
+  // once per token; text-only bubbles not at all).
+  const parsedHistory = useMemo(
+    () =>
+      messages.map((message) => ({
+        steps: message.sender === 'AI' ? parseSteps(message.stepsJson) : [],
+        question: message.sender === 'AI' ? parseQuestion(message.questionsJson) : null,
+        artifact: message.artifactId
+          ? { artifactId: message.artifactId, title: message.artifactTitle ?? message.text }
+          : null,
+      })),
+    [messages]
+  );
 
   // Deps are the pieces of content that can change the log's height — not the `live`
   // object itself, whose identity is fresh on every parent render and would force a
@@ -118,23 +130,12 @@ const MessageList: React.FC<MessageListProps> = ({
     }
   }, [optimisticUserText]);
 
-  // Parsed per settled message and memoised together: a streaming run re-renders this
-  // list on every token, and re-parsing the whole history each time is O(history × tokens).
-  // The artifact object lives here for the same reason — built inline in the JSX it
-  // would be a fresh object every token, and a fresh object prop is all it takes to
-  // defeat MessageBubble's memo (probe-measured: bubbles with an artifact re-rendered
-  // once per token; text-only bubbles not at all).
-  const parsedHistory = useMemo(
-    () =>
-      messages.map((message) => ({
-        steps: message.sender === 'AI' ? parseSteps(message.stepsJson) : [],
-        question: message.sender === 'AI' ? parseQuestion(message.questionsJson) : null,
-        artifact: message.artifactId
-          ? { artifactId: message.artifactId, title: message.artifactTitle ?? message.text }
-          : null,
-      })),
-    [messages]
-  );
+  const handleScroll = () => {
+    const container = containerRef.current;
+    if (container) {
+      isNearBottomRef.current = container.scrollHeight - container.scrollTop - container.clientHeight < 80;
+    }
+  };
 
   const lastIndex = messages.length - 1;
 

@@ -83,16 +83,12 @@ const sortArtifacts = (artifacts: Artifact[], sort: SortKey) => {
 
 const ArtifactsGallery: React.FC = () => {
   const t = useTranslations();
-  // The coach highlight on the rail is asking the user to come here; arriving is what it
-  // was asking for, so this is where it ends — whichever way they got here, the toast's
-  // shortcut or the rail entry itself.
-  const dismissCoach = usePublishCoachStore((store) => store.dismiss);
-  useEffect(dismissCoach, [dismissCoach]);
-
-  const { data } = useArtifacts();
   const navigate = useNavigate();
-  const [category, setCategory] = useState<FilterCategory>('all');
+  const { data } = useArtifacts();
+  const dismissCoach = usePublishCoachStore((store) => store.dismiss);
+
   const [sort, setSort] = useState<SortKey>('pinned');
+  const [category, setCategory] = useState<FilterCategory>('all');
 
   // The Gallery is a shelf of published work, not an index of everything ever made.
   // An unpublished Artifact lives in its session's thread; publishing is the deliberate
@@ -110,6 +106,12 @@ const ArtifactsGallery: React.FC = () => {
     [artifacts]
   );
   const visible = useMemo(() => sortArtifacts(filterArtifacts(artifacts, category), sort), [artifacts, category, sort]);
+
+  // The coach highlight on the rail is asking the user to come here; arriving is what it
+  // was asking for, so this is where it ends — whichever way they got here, the toast's
+  // shortcut or the rail entry itself.
+  useEffect(dismissCoach, [dismissCoach]);
+
   const activeSortOption = SORT_OPTIONS.find((option) => option.key === sort) ?? SORT_OPTIONS[0];
 
   const sortMenuItems = SORT_OPTIONS.map((option) => ({

@@ -15,7 +15,10 @@ const StudioLayout: React.FC = () => {
   const threadWidth = useStudioLayoutStore((s) => s.threadWidth);
   const setThreadWidth = useStudioLayoutStore((s) => s.setThreadWidth);
 
+  // The pane hook consumes the callback above it — a dependency the top-block grouping
+  // yields to.
   const readThreadWidth = useCallback(() => useStudioLayoutStore.getState().threadWidth, []);
+
   const { paneRef, onDragStart, onDrag, onDragEnd } = useResizablePane<HTMLElement>({
     min: THREAD_MIN_WIDTH,
     max: THREAD_MAX_WIDTH,

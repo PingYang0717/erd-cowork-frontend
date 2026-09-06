@@ -31,40 +31,13 @@ interface SessionRowProps {
 
 const SessionRow: React.FC<SessionRowProps> = ({ session, isSelected, isDraft, onSelect }) => {
   const t = useTranslations();
-  const confirmDestructive = useConfirmDestructive();
-  const toggleSessionPin = useToggleSessionPin();
   const renameSession = useRenameSession();
   const deleteSession = useDeleteSession();
+  const toggleSessionPin = useToggleSessionPin();
+  const confirmDestructive = useConfirmDestructive();
+
   const [isRenaming, setIsRenaming] = useState(false);
   const [renameDraft, setRenameDraft] = useState(session.title);
-  const isPinned = session.pinnedAt !== null;
-
-  // Dividers between every item, per the mockup's session menu. The Pin icon
-  // deliberately keeps its filled-when-pinned variant (spec exception).
-  //
-  // All three are disabled: the backend has no rename, pin or delete for a session
-  // Live against the backend: nothing here is disabled up front. An endpoint that has
-  // not landed answers with an error the mutation toasts to the user instead.
-  const menuItems = [
-    {
-      key: 'pin',
-      label: isPinned ? t.session.unpin : t.session.pin,
-      icon: isPinned ? <PushpinFilled aria-hidden /> : <PushpinOutlined aria-hidden />,
-    },
-    { type: 'divider' as const },
-    {
-      key: 'rename',
-      label: t.session.rename,
-      icon: <EditOutlined aria-hidden />,
-    },
-    { type: 'divider' as const },
-    {
-      key: 'delete',
-      label: t.session.delete,
-      danger: true,
-      icon: <DeleteOutlined aria-hidden />,
-    },
-  ];
 
   const handleMenuClick = (key: string) => {
     dispatchMenuAction(key, {
@@ -96,6 +69,35 @@ const SessionRow: React.FC<SessionRowProps> = ({ session, isSelected, isDraft, o
   const cancelRename = () => {
     setIsRenaming(false);
   };
+
+  const isPinned = session.pinnedAt !== null;
+
+  // Dividers between every item, per the mockup's session menu. The Pin icon
+  // deliberately keeps its filled-when-pinned variant (spec exception).
+  //
+  // All three are disabled: the backend has no rename, pin or delete for a session
+  // Live against the backend: nothing here is disabled up front. An endpoint that has
+  // not landed answers with an error the mutation toasts to the user instead.
+  const menuItems = [
+    {
+      key: 'pin',
+      label: isPinned ? t.session.unpin : t.session.pin,
+      icon: isPinned ? <PushpinFilled aria-hidden /> : <PushpinOutlined aria-hidden />,
+    },
+    { type: 'divider' as const },
+    {
+      key: 'rename',
+      label: t.session.rename,
+      icon: <EditOutlined aria-hidden />,
+    },
+    { type: 'divider' as const },
+    {
+      key: 'delete',
+      label: t.session.delete,
+      danger: true,
+      icon: <DeleteOutlined aria-hidden />,
+    },
+  ];
 
   if (isRenaming) {
     return (

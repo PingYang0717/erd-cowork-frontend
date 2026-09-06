@@ -35,17 +35,12 @@ const VersionSwitcher: React.FC<VersionSwitcherProps> = ({
   showOrdinal,
 }) => {
   const t = useTranslations();
-  const [isOpen, setIsOpen] = useState(false);
+
   const rootRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const itemRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
-  /** Closing by keyboard must put the reader back where they were: in a three-pane
-   *  layout, focus dropped to <body> is a position lost entirely (ADR-0014 §menu-keyboard). */
-  const closeAndRefocus = () => {
-    setIsOpen(false);
-    triggerRef.current?.focus();
-  };
+  const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
     if (!isOpen) {
@@ -71,6 +66,13 @@ const VersionSwitcher: React.FC<VersionSwitcherProps> = ({
     const currentIndex = itemRefs.current.findIndex((item) => item?.getAttribute('aria-current') === 'true');
     (itemRefs.current[currentIndex === -1 ? 0 : currentIndex] ?? itemRefs.current[0])?.focus();
   }, [isOpen]);
+
+  /** Closing by keyboard must put the reader back where they were: in a three-pane
+   *  layout, focus dropped to <body> is a position lost entirely (ADR-0014 §menu-keyboard). */
+  const closeAndRefocus = () => {
+    setIsOpen(false);
+    triggerRef.current?.focus();
+  };
 
   /** The menu-button keyboard contract: arrows move (wrapping), Home/End jump,
    *  Escape closes and restores focus, Tab closes and lets focus move on. */

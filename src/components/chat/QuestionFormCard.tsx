@@ -133,9 +133,13 @@ interface QuestionFormCardProps {
  *  when the run happens (ADR-0004). */
 const QuestionFormCard: React.FC<QuestionFormCardProps> = ({ form, onSubmit, disabled = false }) => {
   const t = useTranslations();
+
   const [answers, setAnswers] = useState<Answers>({});
   const [searches, setSearches] = useState<Record<string, string>>({});
-  // One debounce for the whole card: only one field is ever searchable at a time.
+
+  // Below the state it feeds from, against the top-block rule: a dependency is a hard
+  // constraint the grouping yields to. One debounce for the whole card: only one field
+  // is ever searchable at a time.
   const settledSearches = useDebouncedValue(searches);
 
   const setFieldText = (field: QuestionField, value: string) => {

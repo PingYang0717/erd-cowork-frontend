@@ -39,6 +39,8 @@ const ArtifactFullPageView: React.FC<ArtifactFullPageViewProps> = ({ artifactId 
   const t = useTranslations();
   const navigate = useNavigate();
   const location = useLocation();
+  const { data: artifacts } = useArtifacts();
+
   // A Reload here means the same thing it does in the Studio panel (ADR-0001):
   // throw the document away and mount a fresh one. The shared nonce is that channel —
   // it feeds the content query key AND the iframe key below, so bumping it both
@@ -48,18 +50,20 @@ const ArtifactFullPageView: React.FC<ArtifactFullPageViewProps> = ({ artifactId 
   const reloadNonce = useActiveRunStore((s) => s.artifactReloadNonce);
   const bumpArtifactReload = useActiveRunStore((s) => s.bumpArtifactReload);
 
-  const [selectedArtifactId, setSelectedArtifactId] = useState<string | null>(null);
   const [isShareOpen, setIsShareOpen] = useState(false);
-  const { data: artifacts } = useArtifacts();
-  const routeArtifact = artifacts?.find((a) => a.id === artifactId);
+  const [selectedArtifactId, setSelectedArtifactId] = useState<string | null>(null);
 
   // Versions are the artifact-bearing messages of the artifact's own session, so
   // the switcher can jump between sibling artifacts (each version IS an artifact).
   const displayedArtifactId = selectedArtifactId ?? artifactId;
-  const displayedArtifact = artifacts?.find((a) => a.id === displayedArtifactId);
+
+  // Below the state its id derives from, against the top-block rule: a dependency is a
+  // hard constraint the grouping yields to.
   const { data, isError, error } = useArtifactContent(displayedArtifactId, reloadNonce);
 
   const origin = (location.state as FullPageLocationState | null)?.from;
+  const routeArtifact = artifacts?.find((a) => a.id === artifactId);
+  const displayedArtifact = artifacts?.find((a) => a.id === displayedArtifactId);
 
   return (
     <div className={styles.page}>

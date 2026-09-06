@@ -54,6 +54,7 @@ interface ResultTableProps {
  *  past 20 rows and scrolls sideways instead of widening the thread (ADR-0002). */
 const ResultTable: React.FC<ResultTableProps> = ({ table }) => {
   const t = useTranslations();
+
   // The `?? []` fallbacks are defensive: the wire contract guarantees both fields, but
   // a contract violation (e.g. Jackson nulling a missing field upstream) must not crash
   // the live bubble. They live inside the memos so the deps are the wire fields

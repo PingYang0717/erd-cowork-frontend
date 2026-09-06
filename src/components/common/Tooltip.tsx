@@ -26,11 +26,13 @@ interface TooltipProps {
  * was never announced.
  */
 const Tooltip: React.FC<TooltipProps> = ({ content, children, wrapperClassName }) => {
+  const tipId = useId();
+
+  const wrapperRef = useRef<HTMLSpanElement>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+
   const [open, setOpen] = useState(false);
   const [below, setBelow] = useState(false);
-  const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
-  const wrapperRef = useRef<HTMLSpanElement>(null);
-  const tipId = useId();
 
   useEffect(() => () => clearTimeout(timerRef.current), []);
 

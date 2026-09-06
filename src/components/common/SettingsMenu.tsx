@@ -27,15 +27,20 @@ interface SettingsMenuProps {
 
 const SettingsMenu: React.FC<SettingsMenuProps> = ({ variant }) => {
   const t = useTranslations();
+
   const language = useLanguageStore((state) => state.language);
   const setLanguage = useLanguageStore((state) => state.setLanguage);
+
   const isDarkMode = useThemeStore((state) => state.isDarkMode);
   const setDarkMode = useThemeStore((state) => state.setDarkMode);
-  const [open, setOpen] = useState(false);
+
   const triggerRef = useRef<HTMLButtonElement>(null);
 
-  const handleLanguageChange = useCallback((value: string | number) => setLanguage(value as Language), [setLanguage]);
+  const [open, setOpen] = useState(false);
+
   const handleThemeChange = useCallback((value: string | number) => setDarkMode(value === 'dark'), [setDarkMode]);
+  const handleLanguageChange = useCallback((value: string | number) => setLanguage(value as Language), [setLanguage]);
+
   /** The dialog keyboard contract this repo adopted (ADR-0014 §menu-keyboard/§dialog-focus): Escape closes and puts
    *  focus back on the opener. antd's Popover does neither for a custom child, so the
    *  panel and the trigger both carry it. */

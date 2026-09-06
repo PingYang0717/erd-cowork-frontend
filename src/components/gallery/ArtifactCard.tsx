@@ -35,6 +35,39 @@ const ArtifactCard: React.FC<ArtifactCardProps> = ({ artifact, onOpen }) => {
   const toggleArtifactPin = useToggleArtifactPin();
   const unpublishArtifact = useUnpublishArtifact();
   const [isShareOpen, setIsShareOpen] = useState(false);
+
+  /** The menu closes the moment it is clicked, so a toast is the only place this
+   *  action can speak from — and it used to say nothing either way: an awaited-nowhere
+   *  promise, success indistinguishable from a clipboard refusal. `message.*?.` —
+   *  outside AppProviders (component tests) `useApp` returns an empty object. */
+  const copyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(artifactHref(artifact.id));
+      message.success?.(t.gallery.linkCopied);
+    } catch {
+      // Not describeActionError: the clipboard refusing is not a backend problem,
+      // and "the backend is not ready" would send the user to the wrong place.
+      message.error?.(t.gallery.linkCopyFailed);
+    }
+  };
+
+  const handleMenuClick = (key: string) => {
+    dispatchMenuAction(key, {
+      pin: () => toggleArtifactPin.mutate(artifact.id),
+      copyLink: () => void copyLink(),
+      share: () => setIsShareOpen(true),
+      // Confirmed first: the consequence lands on other people — every recipient
+      // loses access — which is exactly the sentence the dialog makes the user read.
+      unpublish: () =>
+        confirmDestructive({
+          title: t.gallery.removeConfirmTitle,
+          body: t.gallery.removeConfirmBody(artifact.title),
+          confirmLabel: t.gallery.removeConfirm,
+          onConfirm: () => unpublishArtifact.mutate(artifact.id),
+        }),
+    });
+  };
+
   const isPinned = artifact.pinnedAt !== null;
   // Shared *to me*: someone else owns it. `isShared` is the opposite direction —
   // whether this Artifact has been shared out, which the meta row badges below.
@@ -71,38 +104,6 @@ const ArtifactCard: React.FC<ArtifactCardProps> = ({ artifact, onOpen }) => {
         ]
       : []),
   ];
-
-  /** The menu closes the moment it is clicked, so a toast is the only place this
-   *  action can speak from — and it used to say nothing either way: an awaited-nowhere
-   *  promise, success indistinguishable from a clipboard refusal. `message.*?.` —
-   *  outside AppProviders (component tests) `useApp` returns an empty object. */
-  const copyLink = async () => {
-    try {
-      await navigator.clipboard.writeText(artifactHref(artifact.id));
-      message.success?.(t.gallery.linkCopied);
-    } catch {
-      // Not describeActionError: the clipboard refusing is not a backend problem,
-      // and "the backend is not ready" would send the user to the wrong place.
-      message.error?.(t.gallery.linkCopyFailed);
-    }
-  };
-
-  const handleMenuClick = (key: string) => {
-    dispatchMenuAction(key, {
-      pin: () => toggleArtifactPin.mutate(artifact.id),
-      copyLink: () => void copyLink(),
-      share: () => setIsShareOpen(true),
-      // Confirmed first: the consequence lands on other people — every recipient
-      // loses access — which is exactly the sentence the dialog makes the user read.
-      unpublish: () =>
-        confirmDestructive({
-          title: t.gallery.removeConfirmTitle,
-          body: t.gallery.removeConfirmBody(artifact.title),
-          confirmLabel: t.gallery.removeConfirm,
-          onConfirm: () => unpublishArtifact.mutate(artifact.id),
-        }),
-    });
-  };
 
   return (
     <div className={styles.card} role="listitem">

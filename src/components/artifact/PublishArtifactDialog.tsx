@@ -29,7 +29,9 @@ const PublishArtifactDialog: React.FC<PublishArtifactDialogProps> = ({
   onConfirm,
 }) => {
   const t = useTranslations();
+
   const [title, setTitle] = useState(suggestedTitle);
+
   // Reset to the suggestion each time it opens: a title abandoned last time should not
   // come back as the default for a different Artifact.
   const [wasOpen, setWasOpen] = useState(open);
