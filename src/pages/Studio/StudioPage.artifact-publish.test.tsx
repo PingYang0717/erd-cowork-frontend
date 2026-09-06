@@ -1,12 +1,14 @@
 import { http, HttpResponse } from 'msw';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { screen, waitFor } from '@testing-library/react';
+import { act, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { server } from '@/mocks/server';
+import { useActiveRunStore } from '@/stores/useActiveRunStore';
 import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
 import { useStudioLayoutStore } from '@/stores/useStudioLayoutStore';
 import { useThemeStore } from '@/stores/useThemeStore';
+import { mockAgentStream } from '@/test/agentStream';
 import { renderStudio } from '@/test/renderStudio';
 import { publishArtifactAs } from '@/test/studioRun';
 
@@ -150,6 +152,54 @@ describe('Per-version Artifact publishing', () => {
     expect(screen.getByRole('button', { name: 'Share artifact' })).toBeDisabled();
     await user.click(screen.getByRole('button', { name: 'Share artifact' }));
     expect(screen.queryByRole('dialog', { name: /分享/ })).not.toBeInTheDocument();
+  });
+
+  /** The regression this pins down: `artifactId` can change under an open publish
+   *  dialog — a run finishing mid-edit swaps the panel to the artifact it streamed in
+   *  (`setStreamedArtifact` drops the pick). The confirm once read the prop at click
+   *  time, so the publish landed on the new arrival under the title the user wrote for
+   *  the one they were looking at. The target is frozen when the dialog opens. */
+  it('publishes the artifact the dialog was opened for, not the one that streamed in meanwhile', async () => {
+    const publishedIds: string[] = [];
+    server.use(
+      http.post('/api/artifacts/:id/publish', ({ params }) => {
+        publishedIds.push(params.id as string);
+        return new HttpResponse(null, { status: 200 });
+      })
+    );
+
+    const user = userEvent.setup();
+    renderStudio();
+
+    await user.click(await screen.findByRole('button', { name: 'SPC — Vt (gate CD)' }));
+    await screen.findByText('Published');
+
+    // Produce a fresh, unpublished artifact through the default mock run.
+    await user.type(await screen.findByRole('textbox', { name: 'Message' }), 'Regenerate the dashboard.{Enter}');
+    await screen.findByRole('button', { name: 'Publish Artifact' });
+    await waitFor(() => expect(useActiveRunStore.getState().displayedArtifactId).not.toBeNull());
+    const onDisplayId = useActiveRunStore.getState().displayedArtifactId as string;
+
+    // Start the next run on a hand-driven stream so its timing is the test's.
+    const stream = mockAgentStream();
+    await user.type(screen.getByRole('textbox', { name: 'Message' }), 'Same analysis, next period.{Enter}');
+
+    // While that run is still open, publish the artifact on display.
+    await user.click(await screen.findByRole('button', { name: 'Publish Artifact' }));
+    const nameField = await screen.findByLabelText('Name');
+
+    // The new artifact arrives while the dialog is open and takes over the panel.
+    act(() => stream.push({ type: 'ARTIFACT', artifactId: 'streamed-artifact', title: 'SPC analysis (next period)' }));
+    await waitFor(() => expect(useActiveRunStore.getState().streamedArtifact?.artifactId).toBe('streamed-artifact'));
+
+    // The user finishes what they started: naming and publishing the one they opened.
+    await user.clear(nameField);
+    await user.type(nameField, '八月良率追蹤');
+    await user.click(screen.getByRole('button', { name: /^Publish$/ }));
+
+    await waitFor(() => expect(publishedIds).toEqual([onDisplayId]));
+
+    act(() => stream.close());
   });
 
   it('keeps each version’s published state independent when switching versions', async () => {
