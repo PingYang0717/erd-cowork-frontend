@@ -16,8 +16,9 @@
 | **localStorage 偏好** | Connector 的選取與自訂來源       | 目錄本身走 `GET /connectors`;選了哪些、自訂了哪些存 localStorage |
 | **無入口**            | `DELETE /artifacts/{id}/publish` | 契約與函式都在,UI 上還沒有觸發點                                 |
 
-其餘端點都已接上真後端。後端補上 stub 那幾條時:把 `src/api/` 裡的固定資料換回
-`apiClient` 呼叫即可(函式與型別都已就位)。
+其餘端點都已接上真後端,執行時沒有任何不發請求的讀取。上表那兩條不是等後端的 stub:
+Connector 偏好是刻意存在本機的使用者選擇,`DELETE /artifacts/{id}/publish` 則是契約與
+函式都在、只缺 UI 入口。
 
 ## 2. 網路層:讓 `/api` 到得了後端
 

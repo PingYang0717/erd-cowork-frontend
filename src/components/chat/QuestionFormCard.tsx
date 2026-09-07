@@ -255,7 +255,7 @@ const QuestionFormCard: React.FC<QuestionFormCardProps> = ({ form, onSubmit, dis
             {field.allowCustom && (
               <input
                 aria-label={field.label}
-                placeholder={field.customPlaceholder ?? field.placeholder}
+                placeholder={field.placeholder}
                 value={isCustom ? String(answer) : ''}
                 className={isCustom ? styles.customInputActive : styles.customInput}
                 onChange={(event) => setFieldText(field, event.target.value)}

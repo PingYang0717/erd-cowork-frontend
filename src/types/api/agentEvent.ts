@@ -27,8 +27,6 @@ export interface QuestionField {
   options?: QuestionOption[];
   required: boolean;
   placeholder?: string;
-  /** Placeholder for the free-text box a field with `allowCustom` offers. */
-  customPlaceholder?: string;
   hint?: string;
   allowCustom?: boolean;
   // Field dependency: CP Test's Flow only shows when role === 'baseline'.

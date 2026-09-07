@@ -85,7 +85,7 @@ client abort,前端會在 abort 後兩段 800ms invalidate 追後端非同步落
 | --- | -------------------------- | ----------- | ---------------------------------------------------------------------------------------- | ------- | --------------------------- |
 | 19  | `GET /hr/employeesAndOrgs` | `?keyword=` | `{ content: DirectoryEntry[] }`:`{ id, kind: 'department'\|'section'\|'person', label }` | ✅ 已接 | 回應包在 `content` 信封裡   |
 
-分享本身已接真後端,只有收件者名單還是 `artifactApi.listDirectory` 回的固定資料。
+分享與收件者名單都已接真後端。名單是搜尋式查詢(`directoryApi.searchDirectory`,少於 `DIRECTORY_SEARCH_MIN_LENGTH` 個字不發請求),沒有一份固定名單。
 
 ## 7. Connector
 
@@ -95,9 +95,9 @@ client abort,前端會在 abort 後兩段 800ms invalidate 追後端非同步落
 | 21  | `PATCH /connectors/{id}` | `{ status: ConnectorStatus }` | `Connector`                                                                                                   | 前端未呼叫(選取是 localStorage 偏好)    |                             |
 | 22  | `POST /connectors`       | `{ name: string }`            | `Connector`                                                                                                   | 前端未呼叫(自訂來源寫 localStorage)     |                             |
 
-Connector 目前完全不發請求:目錄是 `connectorApi` 裡的常數,使用者的選擇疊在上面並存
-`erd-cowork:connector-prefs`。UI 是可操作的(這與其他 stub 不同)——因為「選了哪些資料
-來源」對使用者是真的偏好,只是還沒有帳號層級的歸屬。
+目錄本身走 `GET /connectors`(`connectorApi.listCatalogue`);使用者選了哪些、自訂了哪些疊在
+上面,存 `erd-cowork:connector-prefs`。那份 localStorage 不是等後端補的 stub——「選了哪些資料
+來源」對使用者是真的偏好,只是還沒有帳號層級的歸屬,所以 PATCH / POST 這兩條前端沒有呼叫端。
 
 ## 8. 尚無前端呼叫
 
@@ -106,7 +106,6 @@ Connector 目前完全不發請求:目錄是 `connectorApi` 裡的常數,使用�
 ## 狀態圖例
 
 - ✅ 已接:前端現在就會打,後端已有實作
-- 🔧 前端 stub / 偏好:不發請求,`src/api/` 直接回資料;後端就緒後改回真呼叫
 - 📝 合約已定:函式存在但沒有 UI 入口
 
 型別出處速查:`Session`/`SessionDetail` → `types/api/session.ts`、`Message` →
