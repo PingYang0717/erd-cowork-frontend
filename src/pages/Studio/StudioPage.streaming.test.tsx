@@ -677,23 +677,6 @@ describe('Streaming a run in the Studio', () => {
       expect(await screen.findByText(/07\/01–07\/31/)).toBeInTheDocument();
     });
 
-    it('narrows a long option list with a search box', async () => {
-      const user = userEvent.setup();
-      renderStudio();
-
-      await startAnalysis(user);
-      await screen.findByText('分析條件');
-
-      const partIds = screen.getByRole('group', { name: 'Part ID' });
-      expect(within(partIds).getByRole('button', { name: 'N5' })).toBeInTheDocument();
-
-      await user.type(screen.getByRole('textbox', { name: 'Search Part ID' }), 'A14');
-
-      // Filtering is debounced, so the narrowed list arrives a beat after the keystrokes.
-      await waitFor(() => expect(within(partIds).queryByRole('button', { name: 'N5' })).not.toBeInTheDocument());
-      expect(within(partIds).getByRole('button', { name: 'A14' })).toBeInTheDocument();
-    });
-
     it('asks CP Test for its own conditions, swapping the field that depends on the role', async () => {
       const user = userEvent.setup();
       renderStudio();

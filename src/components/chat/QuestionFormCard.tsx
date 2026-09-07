@@ -2,15 +2,11 @@ import React, { useState } from 'react';
 import { Select } from 'antd';
 import { InfoCircleOutlined, SendOutlined } from '@ant-design/icons';
 
-import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { useTranslations } from '@/i18n/useTranslations';
 import { useConnectorsPanelStore } from '@/stores/useConnectorsPanelStore';
 import type { QuestionAnswer, QuestionField, QuestionForm } from '@/types/api';
 
 import styles from './QuestionFormCard.module.css';
-
-/** Above this many options a field gets a search box rather than a wall of chips. */
-const SEARCHABLE_FROM = 4;
 
 /** Past either of these a chip row stops fitting in the two lines the card allows for it,
  *  and the field is offered as a dropdown instead. Two limits rather than one because a
@@ -65,11 +61,12 @@ const isAnswered = (field: QuestionField, answers: Answers): boolean => {
 interface ChipGroupProps {
   field: QuestionField;
   answers: Answers;
-  search: string;
   onToggle: (value: string) => void;
 }
 
-const ChipGroup: React.FC<ChipGroupProps> = ({ field, answers, search, onToggle }) => {
+/** Chips are only ever offered for a handful of short options — anything long enough to
+ *  need narrowing is a dropdown, which searches itself — so this shows all of them. */
+const ChipGroup: React.FC<ChipGroupProps> = ({ field, answers, onToggle }) => {
   const selected = answers[field.key];
   const isSelected = (value: string) => {
     if (Array.isArray(selected)) {
@@ -82,10 +79,7 @@ const ChipGroup: React.FC<ChipGroupProps> = ({ field, answers, search, onToggle 
     return selected === value;
   };
 
-  const needle = search.trim().toLowerCase();
-  const options = (field.options ?? []).filter(
-    (option) => needle === '' || option.label.toLowerCase().includes(needle)
-  );
+  const options = field.options ?? [];
 
   return (
     <div className={styles.chipRow} role="group" aria-label={field.label}>
@@ -142,12 +136,6 @@ const QuestionFormCard: React.FC<QuestionFormCardProps> = ({ form, onSubmit, dis
   const t = useTranslations();
 
   const [answers, setAnswers] = useState<Answers>({});
-  const [searches, setSearches] = useState<Record<string, string>>({});
-
-  // Below the state it feeds from, against the top-block rule: a dependency is a hard
-  // constraint the grouping yields to. One debounce for the whole card: only one field
-  // is ever searchable at a time.
-  const settledSearches = useDebouncedValue(searches);
 
   const setFieldText = (field: QuestionField, value: string) => {
     setAnswers((previous) => ({ ...previous, [field.key]: value }));
@@ -205,8 +193,6 @@ const QuestionFormCard: React.FC<QuestionFormCardProps> = ({ form, onSubmit, dis
       {visibleFields.map((field) => {
         const options = field.options ?? [];
         const asDropdown = rendersAsDropdown(field);
-        // A dropdown does its own searching, so the standalone box would be a second one.
-        const isSearchable = !asDropdown && field.kind === 'multi' && options.length > SEARCHABLE_FROM;
         const answer = answers[field.key];
         // A typed value that no chip offers — the mockup highlights the input for it.
         const isCustom =
@@ -218,16 +204,6 @@ const QuestionFormCard: React.FC<QuestionFormCardProps> = ({ form, onSubmit, dis
         return (
           <div key={field.key} className={styles.field}>
             <p className={styles.fieldLabel}>{field.label}</p>
-
-            {isSearchable && (
-              <input
-                aria-label={`Search ${field.label}`}
-                placeholder={field.placeholder}
-                value={searches[field.key] ?? ''}
-                className={styles.searchInput}
-                onChange={(event) => setSearches((previous) => ({ ...previous, [field.key]: event.target.value }))}
-              />
-            )}
 
             {field.kind === 'text' ? (
               <input
@@ -273,12 +249,7 @@ const QuestionFormCard: React.FC<QuestionFormCardProps> = ({ form, onSubmit, dis
                 }))}
               />
             ) : (
-              <ChipGroup
-                field={field}
-                answers={answers}
-                search={isSearchable ? (settledSearches[field.key] ?? '') : ''}
-                onToggle={(value) => toggle(field, value)}
-              />
+              <ChipGroup field={field} answers={answers} onToggle={(value) => toggle(field, value)} />
             )}
 
             {field.allowCustom && (

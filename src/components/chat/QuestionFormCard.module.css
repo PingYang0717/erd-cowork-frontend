@@ -112,7 +112,6 @@
   cursor: pointer;
 }
 
-.searchInput,
 .textInput,
 .customInput,
 .customInputActive {
@@ -125,11 +124,6 @@
   color: var(--erd-color-text, rgba(0, 0, 0, 0.88));
   background: var(--erd-color-bg-container, #fff);
   outline: none;
-}
-
-.searchInput {
-  margin-bottom: 7px;
-  border: 1px solid var(--erd-color-border, #d9d9d9);
 }
 
 .textInput {

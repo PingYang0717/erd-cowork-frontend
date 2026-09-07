@@ -104,6 +104,32 @@ describe('QuestionFormCard: how a field is offered', () => {
     expect(onSubmit).toHaveBeenCalledWith({ range: 'Last 7 days' });
   });
 
+  /** Narrowing a long list is the dropdown's own job. The card used to put a search box
+   *  above the chips for the same reason, but a field long enough to need one is now
+   *  offered as a dropdown — which searches without a second input to maintain. */
+  it('narrows a long option list by typing into the dropdown', async () => {
+    const user = userEvent.setup();
+    renderCard(
+      formOf(
+        field({
+          key: 'part',
+          label: 'Part ID',
+          kind: 'multi',
+          options: options('A14', 'A14-B', 'A16', 'N5', 'N5-P', 'N3', 'N3-X', 'P22'),
+        })
+      )
+    );
+
+    const dropdown = screen.getByRole('combobox', { name: 'Part ID' });
+    await user.click(dropdown);
+    expect(await screen.findByTitle('N5')).toBeInTheDocument();
+
+    await user.type(dropdown, 'A14');
+
+    expect(await screen.findByTitle('A14-B')).toBeInTheDocument();
+    expect(screen.queryByTitle('N5')).not.toBeInTheDocument();
+  });
+
   /** `multi` is the flag that says more than one answer is allowed, so the dropdown it
    *  becomes has to keep taking them rather than replacing the last. */
   it('keeps taking answers when the field allows more than one', async () => {
