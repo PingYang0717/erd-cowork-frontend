@@ -186,7 +186,13 @@ export const zhTW = {
     limits: (count: number, total: string) => `最多 ${count} 個檔案 · 總計上限 ${total}`,
     expired: '已過期',
     uploadFailed: '上傳失敗，請再試一次。',
-    onlySpreadsheets: '僅支援 .csv / .xlsx',
+    /** Which types are accepted is `GET /config`'s answer, not a fact this app owns —
+     *  the sentence takes the list rather than naming them, so a type the backend starts
+     *  accepting does not need this line edited too. */
+    unsupportedType: (extensions: string) => `僅支援 ${extensions}`,
+    /** Each type has its own cap (a CSV may run to gigabytes, a spreadsheet not), so the
+     *  file is named — "over the limit" alone leaves the reader guessing which one. */
+    fileTooLarge: (name: string, limit: string) => `${name} 超過 ${limit} 上限`,
     tooManyFiles: (count: number) => `最多 ${count} 個檔案`,
     tooLarge: (total: string) => `總計上限 ${total}`,
     duplicateName: '已附加過同名檔案',

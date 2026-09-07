@@ -5,19 +5,11 @@ import { isAccessDenied } from '@/api/accessDenied';
 import { isOffline } from '@/api/apiError';
 import { deleteFile, uploadFiles, type UploadProgress } from '@/api/fileApi';
 import { useActionErrorToast } from '@/hooks/useActionErrorToast';
+import { getTranslations, useTranslations } from '@/i18n/useTranslations';
 import { describeErrorCode } from '@/utils/describeErrorCode';
-import { planFileAdditions } from '@/utils/uploadValidation';
+import { acceptAttribute, planFileAdditions, totalLimitLabel } from '@/utils/uploadValidation';
 import { useAppConfig } from './useAppConfig';
 import { sessionDetailQueryKey, useSessionDetail } from './useSessionDetail';
-
-export {
-  ACCEPT_ATTRIBUTE,
-  ACCEPTED_FILE_EXTENSIONS,
-  MAX_ATTACHMENT_COUNT,
-  MAX_ATTACHMENT_TOTAL_BYTES,
-  MAX_ATTACHMENT_TOTAL_LABEL,
-} from '@/utils/uploadValidation';
-import { getTranslations, useTranslations } from '@/i18n/useTranslations';
 
 /** Session-level attachments per the backend contract: files live on the session
  *  (POST /sessions/{id}/files) and surface through SessionDetail.files. Count, size
@@ -34,12 +26,13 @@ export const useFileAttachments = (sessionId: string) => {
   const [isRemoving, setIsRemoving] = useState(false);
   const toastError = useActionErrorToast(useTranslations().errors.notFound.file);
   const queryClient = useQueryClient();
-  const { retentionDays } = useAppConfig();
+  const config = useAppConfig();
+  const { retentionDays } = config;
   const { data: detail } = useSessionDetail(sessionId);
   const attachments = detail.files;
 
   const addFiles = async (files: Iterable<File>) => {
-    const plan = planFileAdditions(attachments, files);
+    const plan = planFileAdditions(attachments, files, config);
     setError(plan.error);
 
     if (plan.accepted.length === 0) {
@@ -92,5 +85,12 @@ export const useFileAttachments = (sessionId: string) => {
     isMutating: uploadProgress !== null || isRemoving,
     addFiles,
     removeFile,
+    /** The caps the modal states, from the same config the validator enforces — so the
+     *  sentence on screen and the rule that rejects a file cannot disagree. */
+    limits: {
+      maxFiles: config.maxFiles,
+      totalLabel: totalLimitLabel(config),
+      accept: acceptAttribute(config),
+    },
   };
 };
