@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useReducer, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 
-import { AgentStreamHttpError, type SendMessageArgs, streamAgentMessage } from '@/api/agentApi';
+import { isAccessDenied } from '@/api/accessDenied';
+import { type SendMessageArgs, streamAgentMessage } from '@/api/agentApi';
+import { AgentStreamHttpError } from '@/api/agentStreamError';
 import { isCanceled } from '@/api/apiError';
 import { getTranslations } from '@/i18n/useTranslations';
 import type { AgentEvent, QuestionForm, StepItem, TableResult } from '@/types/api/agentEvent';
@@ -258,6 +260,15 @@ export const useAgentStream = (
               );
             }, 800)
           );
+          return;
+        }
+
+        // The gate is already covering the screen with the backend's own explanation of
+        // the refusal. A failure bubble underneath is the same thing said twice, in the
+        // vocabulary ADR-0016 exists to keep off the screen, and it sits where nobody can
+        // read it. The run simply ends — the same treatment a user-initiated stop gets.
+        if (isAccessDenied(error)) {
+          dispatch({ type: 'DONE', durationMs: Date.now() - startedAt });
           return;
         }
 

@@ -1,12 +1,12 @@
 import { http, HttpResponse } from 'msw';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { screen } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { en } from '@/i18n/en';
 import { server } from '@/mocks/server';
 import { useAccessDeniedStore } from '@/stores/useAccessDeniedStore';
-import { renderStudio } from '@/test/renderStudio';
+import { renderStudio, waitForComposer } from '@/test/renderStudio';
 
 /** A refused account is not a failed pane. Every other request will be refused for the
  *  same reason, so the app stops rather than letting the user keep pressing things that
@@ -51,6 +51,36 @@ describe('Studio when the account is refused', () => {
     await screen.findByRole('alert', { name: 'Access denied' });
 
     expect(screen.queryByText(en.errors.actionFailedWithStatus(403))).not.toBeInTheDocument();
+  });
+
+  /** The stream is the app's other transport, and it reaches the network through raw
+   *  `fetch` — it never passes the axios interceptor. "Was this a refusal?" was asked of
+   *  axios alone, so a refused run answered no, took the failure path, and printed the
+   *  backend's own sentence into the thread: server vocabulary on screen, which is the one
+   *  thing ADR-0016 exists to prevent, in the one place nobody could read it. */
+  it('says nothing in the thread when the run itself is refused', async () => {
+    const user = userEvent.setup();
+    server.use(
+      http.post('/api/sessions/:id/messages', () =>
+        HttpResponse.json(
+          { code: 'ENTITLEMENT_DENIED', message: 'NullPointerException at SessionService.java:214' },
+          { status: 403 }
+        )
+      )
+    );
+    renderStudio();
+
+    await user.click(await screen.findByRole('button', { name: 'New chat' }));
+    await screen.findByRole('button', { name: 'New analysis' });
+    await waitForComposer();
+    await user.click(screen.getByRole('button', { name: 'SPC analysis' }));
+
+    const denial = await screen.findByRole('alert', { name: 'Access denied' });
+    expect(denial).toHaveTextContent('NullPointerException at SessionService.java:214');
+
+    // The overlay is the only thing saying it. A run error renders as its own alert
+    // inside the thread, so an empty thread of alerts is the whole assertion.
+    expect(within(screen.getByRole('log')).queryByRole('alert')).not.toBeInTheDocument();
   });
 
   /** Nothing dismisses it: closing would return the user to a screen whose every request

@@ -9,7 +9,7 @@
  *  named per-transport, each caller knowing only its own. */
 import axios from 'axios';
 
-import { AgentStreamHttpError } from '@/api/agentApi';
+import { AgentStreamHttpError } from '@/api/agentStreamError';
 
 /** Nothing came back at all: the backend is not answering (or the request never
  *  left). Note a cancelled axios request also has no response — callers that care
@@ -41,9 +41,18 @@ export const isCanceled = (error: unknown): boolean =>
  *  someone acts on by giving up looking for it. */
 export const isNotFound = (error: unknown): boolean => httpStatus(error) === 404;
 
-/** The HTTP status the backend answered with, or null when there was no answer. */
-export const httpStatus = (error: unknown): number | null =>
-  axios.isAxiosError(error) && error.response !== undefined ? error.response.status : null;
+/** The HTTP status the backend answered with, or null when there was no answer.
+ *
+ *  Both transports, like everything else here. The stream used to drop the status at the
+ *  point it threw, so every question asked of a stream failure by status — is this a
+ *  refusal, is this a 404 — was answered "no answer came back" for a request the backend
+ *  had in fact answered. */
+export const httpStatus = (error: unknown): number | null => {
+  if (error instanceof AgentStreamHttpError) {
+    return error.status;
+  }
+  return axios.isAxiosError(error) && error.response !== undefined ? error.response.status : null;
+};
 
 /** The backend's own error code (`FILES_EXPIRED` and friends), wherever it rode. */
 export const errorCode = (error: unknown): string | null => {

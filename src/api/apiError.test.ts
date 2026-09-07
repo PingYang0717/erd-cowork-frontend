@@ -1,7 +1,7 @@
 import { AxiosError, AxiosHeaders, CanceledError } from 'axios';
 import { describe, expect, it } from 'vitest';
 
-import { AgentStreamHttpError } from './agentApi';
+import { AgentStreamHttpError } from './agentStreamError';
 import { errorCode, errorMessage, httpStatus, isCanceled, isOffline } from './apiError';
 
 const axiosErrorWith = (status: number, data: unknown): AxiosError =>
@@ -41,7 +41,7 @@ describe('apiError', () => {
     expect(errorCode(axiosErr)).toBe('FILES_EXPIRED');
     expect(errorMessage(axiosErr)).toBe('檔案已過期');
 
-    const streamErr = new AgentStreamHttpError('SESSION_BUSY', 'busy');
+    const streamErr = new AgentStreamHttpError(409, 'SESSION_BUSY', 'busy');
     expect(errorCode(streamErr)).toBe('SESSION_BUSY');
     expect(errorMessage(streamErr)).toBe('busy');
 

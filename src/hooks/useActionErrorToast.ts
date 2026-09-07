@@ -1,6 +1,7 @@
 import { App } from 'antd';
 
 import { isAccessDenied } from '@/api/accessDenied';
+import { useOptionalAppConfig } from '@/hooks/useAppConfig';
 import { describeActionError } from '@/utils/describeLoadError';
 
 /** Surfaces a failed write to the user as a toast.
@@ -17,11 +18,15 @@ import { describeActionError } from '@/utils/describeLoadError';
  *  object, and a missing toast is better than a crashed test. */
 export const useActionErrorToast = (notFoundCopy?: string) => {
   const { message } = App.useApp();
+  const config = useOptionalAppConfig();
+
   return (error: unknown) => {
     // The gate has this one, and says it better. See `isAccessDenied`.
     if (isAccessDenied(error)) {
       return;
     }
-    message.error?.(describeActionError(error, notFoundCopy));
+    // The retention period travels with the error: a FILES_EXPIRED toast says how many
+    // days, and only a component can reach the config that knows.
+    message.error?.(describeActionError(error, notFoundCopy, { retentionDays: config?.retentionDays }));
   };
 };

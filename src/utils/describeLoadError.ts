@@ -1,7 +1,7 @@
 import { errorMessage, httpStatus, isOffline } from '@/api/apiError';
 import { getTranslations } from '@/i18n/useTranslations';
 import type { Translations } from '@/i18n/zhTW';
-import { describeErrorCode } from '@/utils/describeErrorCode';
+import { describeErrorCode, type ErrorCodeContext } from '@/utils/describeErrorCode';
 
 /**
  * What to tell the user about a failed load.
@@ -14,6 +14,12 @@ import { describeErrorCode } from '@/utils/describeErrorCode';
  * `apiClient` sets no timeout (ADR-0007), so `ECONNABORTED` no longer means "took too
  * long" — it is an aborted request. Both land here as a response-less AxiosError and both
  * are, from the user's side, the same thing: nothing came back.
+ *
+ * No `ErrorCodeContext` here, unlike `describeActionError`. This renders inside an
+ * ErrorBoundary's fallback — the last thing standing when something already failed — and
+ * reaching the config means reaching the query client, which a boundary mounted above the
+ * provider does not have. A card also keeps the backend's own sentence as small print, so
+ * a `FILES_EXPIRED` without its day count is still legible here.
  */
 export interface LoadErrorCopy {
   heading: string;
@@ -68,6 +74,11 @@ export const describeLoadError = (
  *
  *  A backend that is not answering gets named. After that the status decides:
  *
+ *  `context` carries what the copy needs and the error does not: the retention period a
+ *  `FILES_EXPIRED` sentence states. Only a component can reach `GET /config`, so the hook
+ *  that calls this supplies it — without it that entry falls back to its no-number wording
+ *  on every path but the upload modal, which is every path a repair takes.
+ *
  *  404 says the thing is gone, and `notFoundCopy` is how the call site names which thing.
  *  It used to share "not ready yet" with 501, from the decision that nothing is disabled
  *  up front, so an error was how a user learned an endpoint had not landed (ADR-0006).
@@ -76,12 +87,12 @@ export const describeLoadError = (
  *  on by waiting for something that is already there. 501 keeps that wording: it is the
  *  status that actually means unimplemented.
  */
-export const describeActionError = (error: unknown, notFoundCopy?: string): string => {
+export const describeActionError = (error: unknown, notFoundCopy?: string, context: ErrorCodeContext = {}): string => {
   const t = getTranslations().errors;
   if (isOffline(error)) {
     return t.offlineAction;
   }
-  const byCode = describeErrorCode(error);
+  const byCode = describeErrorCode(error, context);
   if (byCode !== null) {
     return byCode;
   }
