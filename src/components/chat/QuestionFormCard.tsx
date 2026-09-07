@@ -137,6 +137,18 @@ const QuestionFormCard: React.FC<QuestionFormCardProps> = ({ form, onSubmit, dis
 
   const [answers, setAnswers] = useState<Answers>({});
 
+  // Changing a trigger discards whatever was answered beneath it. Hiding the answer but
+  // keeping it would submit a Flow the user can no longer see, under a role it does not
+  // belong to. Mutates `next`, which is always a copy the caller just made.
+  const clearDependentsOf = (changed: QuestionField, next: Answers): Answers => {
+    for (const dependent of form.fields) {
+      if (dependent.visibleWhen?.field === changed.key && !isVisible(dependent, next)) {
+        delete next[dependent.key];
+      }
+    }
+    return next;
+  };
+
   const setFieldText = (field: QuestionField, value: string) => {
     setAnswers((previous) => ({ ...previous, [field.key]: value }));
   };
@@ -166,18 +178,6 @@ const QuestionFormCard: React.FC<QuestionFormCardProps> = ({ form, onSubmit, dis
    *  one-value-at-a-time toggling. */
   const setFieldValue = (field: QuestionField, value: QuestionAnswer) => {
     setAnswers((previous) => clearDependentsOf(field, { ...previous, [field.key]: value }));
-  };
-
-  // Changing a trigger discards whatever was answered beneath it. Hiding the answer but
-  // keeping it would submit a Flow the user can no longer see, under a role it does not
-  // belong to. Mutates `next`, which is always a copy the caller just made.
-  const clearDependentsOf = (changed: QuestionField, next: Answers): Answers => {
-    for (const dependent of form.fields) {
-      if (dependent.visibleWhen?.field === changed.key && !isVisible(dependent, next)) {
-        delete next[dependent.key];
-      }
-    }
-    return next;
   };
 
   const selectedCount = countAnswers(answers);

@@ -35,16 +35,24 @@ export const describeLoadError = (
   // which is how untranslated server prose ("E11000 duplicate key…") became the main thing
   // a user was told. A card has two lines, so it does not have to choose.
   const technical = errorMessage(error) ?? undefined;
+  // Never the same sentence twice: a backend whose message happens to match the copy
+  // would otherwise print it as heading, detail, and small print.
+  const failed = (detail: string): LoadErrorCopy => ({
+    heading: t.loadFailedHeading,
+    detail,
+    technical: technical === detail ? undefined : technical,
+  });
+
   const byCode = describeErrorCode(error);
   if (byCode !== null) {
-    return { heading: t.loadFailedHeading, detail: byCode, technical };
+    return failed(byCode);
   }
   // No code to look up. The status is worth showing; axios's own sentence around it is
   // not — it arrives as `Request failed with status code 500`, English whatever the
   // interface is set to, and about axios rather than about what the reader should do.
   const status = httpStatus(error);
   if (status !== null) {
-    return { heading: t.loadFailedHeading, detail: t.loadFailedDetail(status), technical };
+    return failed(t.loadFailedDetail(status));
   }
   // Not a request at all. This boundary also catches errors thrown while rendering, and
   // for those the message is the only thing that says what happened.

@@ -14,7 +14,7 @@ import { useAccessDeniedStore } from '@/stores/useAccessDeniedStore';
  *  network through raw `fetch` and imports `apiClient` for the base URL, so putting this
  *  there would have both transports importing in a circle.
  */
-export const noteAccessDenial = (status: number, code: string, message: string): void => {
+export const noteAccessDenial = (status: number, code: string | null, message: string): void => {
   if (status !== 403) {
     return;
   }
@@ -30,7 +30,9 @@ export const noteAccessDenial = (status: number, code: string, message: string):
  *  promise is a failure to report. */
 export const isAccessDenied = (error: unknown): boolean => axios.isAxiosError(error) && error.response?.status === 403;
 
-/** The same check for a failure that rode axios. */
+/** Records a refusal that rode axios, digging the backend's `{ code, message }` out of the
+ *  response body. This is the interceptor's way in; the agent stream, which has the parsed
+ *  body already, calls `noteAccessDenial` direct. */
 export const noteIfAccessDenied = (error: unknown): void => {
   if (!axios.isAxiosError(error) || error.response === undefined) {
     return;
@@ -39,7 +41,7 @@ export const noteIfAccessDenied = (error: unknown): void => {
   const body = error.response.data as { code?: unknown; message?: unknown } | undefined;
   noteAccessDenial(
     error.response.status,
-    typeof body?.code === 'string' ? body.code : '',
+    typeof body?.code === 'string' ? body.code : null,
     typeof body?.message === 'string' ? body.message : ''
   );
 };

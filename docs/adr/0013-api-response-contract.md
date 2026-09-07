@@ -42,6 +42,12 @@ export const listArtifacts = () => apiClient.get<Artifact[]>('/artifacts');
 `types/api` 的 interface 回到唯一防線(編譯期,不驗 runtime)。要重新引入驗證時
 先讀這一節——上一輪撤回的原因是呼叫端形狀,不是保護本身沒有價值。
 
+**唯一的例外(2026-09-07)**:`uploadValidation.ts` 的 `withDefaults` 會檢查
+`GET /config` 的 `singleFileLimits` 是不是一個非空物件,不是就退回
+`DEFAULT_UPLOAD_LIMITS`。這不是重新引入回應驗證——它是逐欄位的保底,而且理由是這一欄
+的失效方向特別壞:少了它,可接受的副檔名清單會變成空的,前端於是拒絕每一個檔案,
+使用者在那個畫面上什麼都做不了。其餘欄位仍然照契約直接相信。
+
 ## 撤回時保留的周邊修正(與 contract 無關)
 
 - `listArtifactShares` 與 `searchDirectory` 原有的手寫形狀防守(raise 而非空清單)
