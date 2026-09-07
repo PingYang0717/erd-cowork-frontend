@@ -50,6 +50,8 @@
 - **`BROWSER_REPAIR_UNSUPPORTED` 這次不做**(2026-09-07 決定延後),所以它目前落在未知 code 的泛用文案:使用者會看到「操作失敗,請稍後再試」,而不知道這個環境永遠不支援瀏覽器錯誤修復。
 - **上傳限制的漂移沒有修。** `uploadValidation.ts` 仍然寫死 5 個檔 / 5 GB / `.csv,.xlsx,.xls`,而 `GET /config` 早已發布 `maxFiles` / `maxSessionBytes` / `singleFileLimits`。`UPLOAD_LIMIT` 與 `UNSUPPORTED_TYPE` 正是這份漂移的產物,這次只給它們文案兜底,見 `backend-feedback.md`。
 
+  **2026-09-07 追記:已修。** `53f3f89` 讓 `planFileAdditions` 收 `GET /config` 的上限,可接受的副檔名就是 `singleFileLimits` 的 key,並補上前端從來沒做過的逐檔上限檢查;`DEFAULT_UPLOAD_LIMITS` 只在 config 形狀不可用時當保底。上面那句在寫下的當時成立,依慣例保留原文。
+
 ## 未採納
 
 **逐 code 決定呈現位置(toast / 卡片 / 對話串)。** 對照表只管文案,呈現由呼叫端決定——每個呼叫端的 UI 形狀不同,把兩件事塞進同一張表會讓它同時決定文字和流程。唯一例外是 403 的遮罩,那本來就是全域行為。

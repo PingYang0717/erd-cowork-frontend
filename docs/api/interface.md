@@ -139,7 +139,7 @@ QuestionField {
   visibleWhen?: { field: string; equals: string }
 }
 
-QuestionOption { value: string; label: string; hint?: string; unit?: string; lo?: number; hi?: number }
+QuestionOption { value: string; label: string; hint?: string }
 ```
 
 **欄位組成是契約，選項值是資料。** 哪些欄位要問由 Scenario 固定，但 `options` 在執行時才
