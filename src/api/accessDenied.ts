@@ -21,6 +21,15 @@ export const noteAccessDenial = (status: number, code: string, message: string):
   useAccessDeniedStore.getState().deny({ code, message });
 };
 
+/** Whether this failure is the account being refused.
+ *
+ *  Callers that report a failure to the user check this and stay quiet: `AccessDeniedGate`
+ *  is already saying it, with the backend's own explanation and at full size. A toast
+ *  underneath is a second, worse telling of the same thing — and one nobody can read,
+ *  since the overlay covers it. The same reasoning `isCanceled` gets: not every rejected
+ *  promise is a failure to report. */
+export const isAccessDenied = (error: unknown): boolean => axios.isAxiosError(error) && error.response?.status === 403;
+
 /** The same check for a failure that rode axios. */
 export const noteIfAccessDenied = (error: unknown): void => {
   if (!axios.isAxiosError(error) || error.response === undefined) {
