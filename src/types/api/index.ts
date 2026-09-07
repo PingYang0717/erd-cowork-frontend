@@ -12,7 +12,6 @@ export type {
 } from './agentEvent';
 export type { Artifact, ArtifactVersion } from './artifact';
 export type { Connector, ConnectorStatus } from './connector';
-export type { DcItem } from './dcItem';
 export type { ArtifactShareUpdate, DirectoryEntry, DirectoryEntryType, ShareTarget } from './directory';
 export type { Message } from './message';
 export type { Scenario, ScenarioKey } from './scenario';

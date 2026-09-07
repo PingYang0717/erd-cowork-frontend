@@ -4,7 +4,7 @@ import type userEvent from '@testing-library/user-event';
 
 type User = ReturnType<typeof userEvent.setup>;
 
-const SUBMIT_LABEL = /^(送出|開始分析|先產生這 \d+ 項)$/;
+const SUBMIT_LABEL = /^(送出|開始分析|先產生這 \d+ 個)$/;
 
 const waitForForm = async (): Promise<HTMLElement | null> => {
   try {
@@ -55,8 +55,8 @@ const answerOneForm = async (user: User, submit: HTMLElement): Promise<void> => 
   } else if (hasField('你的角色')) {
     await answerField(user, '你的角色', 'INT Baseline');
     await answerField(user, '時間區間', '近 7 天');
-  } else if (hasField('DC item')) {
-    await answerField(user, 'DC item', /Vt \(gate CD\)/);
+  } else if (hasField('Lot')) {
+    await answerField(user, 'Lot', 'A14-0731');
   }
 
   // The submit label carries a live count, so re-read it rather than reusing the node.
@@ -65,7 +65,7 @@ const answerOneForm = async (user: User, submit: HTMLElement): Promise<void> => 
 };
 
 /** Answers every reask a run raises, in order, with a plausible set of conditions.
- *  SPC asks twice (conditions, then which DC items to chart first); Inline and CP Test
+ *  SPC asks twice (conditions, then which lots to chart first); Inline and CP Test
  *  ask once; Daily monitor does not ask at all, so this is a no-op there. */
 export const answerAnalysisConditions = async (user: User): Promise<void> => {
   for (let round = 0; round < 3; round += 1) {

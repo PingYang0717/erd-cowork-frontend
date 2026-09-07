@@ -788,7 +788,10 @@ describe('Streaming a run in the Studio', () => {
       });
     });
 
-    it('stops mid-run to ask which DC items to chart first', async () => {
+    /** One run can ask more than once (docs/api/interface.md): the opening conditions, and
+     *  then — once the scan has seen how much data matched — which slice to chart first.
+     *  This drives both rounds through to a finished artifact. */
+    it('stops mid-run to ask which lots to chart first', async () => {
       const user = userEvent.setup();
       renderStudio();
 
@@ -802,24 +805,19 @@ describe('Streaming a run in the Studio', () => {
       await user.click(screen.getByRole('button', { name: '送出' }));
 
       // The scan step ran, found too much, and handed back to the user.
-      expect(await screen.findByText(/要先看哪些 DC Item/)).toBeInTheDocument();
+      expect(await screen.findByText(/要先看哪幾個 Lot/)).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: /^Worked through/ })).not.toBeInTheDocument();
 
-      const submit = screen.getByRole('button', { name: '先產生這 0 項' });
+      const submit = screen.getByRole('button', { name: '先產生這 0 個' });
       expect(submit).toBeDisabled();
-      expect(screen.getByText('至少選一項')).toBeInTheDocument();
+      expect(screen.getByText('至少選一個')).toBeInTheDocument();
 
-      // A dropdown here, because each label carries the item's spec limits and reads long
-      // — but the limits still ride the option itself, so an engineer judges an item
-      // without leaving the list.
-      await user.click(screen.getByRole('combobox', { name: 'DC item' }));
-      const vt = await screen.findByText(/Vt \(gate CD\)/, { selector: '.ant-select-item-option-content' });
-      expect(vt).toHaveTextContent(/0\.28 – 0\.34 V/);
-      await user.click(vt);
-      expect(screen.getByRole('button', { name: '先產生這 1 項' })).toBeEnabled();
+      // Six lots, so the field is offered as a dropdown.
+      await answerField(user, 'Lot', 'A14-0731');
+      expect(screen.getByRole('button', { name: '先產生這 1 個' })).toBeEnabled();
       expect(screen.getByText('1 selected')).toBeInTheDocument();
 
-      await user.click(screen.getByRole('button', { name: '先產生這 1 項' }));
+      await user.click(screen.getByRole('button', { name: '先產生這 1 個' }));
 
       await screen.findByRole('button', { name: /^Worked through \d+ steps$/ });
       // Scoped to the thread: the sr-only announcement region (ADR-0014 §live-region) holds the same text.

@@ -1,6 +1,5 @@
 import type { Question, QuestionField, QuestionForm } from '@/types/api/agentEvent';
 import type { Connector } from '@/types/api/connector';
-import type { DcItem } from '@/types/api/dcItem';
 import type { ScenarioKey } from '@/types/api/scenario';
 
 // eRDWorkspace20260819.html:9315
@@ -128,40 +127,31 @@ export const openingQuestion = (scenarioKey: ScenarioKey, connectors: Connector[
   return null;
 };
 
-/** The reask an SPC run raises mid-flight: the scan found more DC items than are worth
- *  charting in one go, so the user picks which to see first
- *  (eRDWorkspace20260819.html:10290-10312, :83224-83480). */
-export const dcItemQuestion = (dcItems: DcItem[], rowsPerItem: number): QuestionForm => {
-  const total = dcItems.length;
-  const rows = (total * rowsPerItem).toLocaleString('en-US');
+/** The reask an SPC run raises mid-flight: the scan matched more lots than are worth
+ *  charting in one go, so the user picks which to see first.
+ *
+ *  Deliberately a shape a real backend can send — a plain multi-select over string
+ *  options — because what this exercises is that ONE RUN CAN ASK TWICE
+ *  (docs/api/interface.md), not any particular field kind. */
+export const lotScopeQuestion = (lots: string[], rowsPerLot: number): QuestionForm => {
+  const rows = (lots.length * rowsPerLot).toLocaleString('en-US');
 
   return {
-    formKey: 'dc-item-scope',
-    title: 'DC item',
-    intro:
-      `約 ${total} 個 DC item(約 ${rows} 筆),資料量偏大。要先看哪些 DC Item?可勾選或自行輸入。` +
-      `建議先選 3–5 項快速出圖確認;沒問題我再一次幫你補上其餘或全部 ${total} 項。`,
+    formKey: 'lot-scope',
+    title: 'Lot',
+    intro: `掃描到 ${lots.length} 個 Lot(約 ${rows} 筆),資料量偏大。要先看哪幾個 Lot?`,
     fields: [
       {
-        key: 'dcItems',
-        label: 'DC item',
-        kind: 'dcitem',
+        key: 'lots',
+        label: 'Lot',
+        kind: 'multi',
         required: true,
-        allowCustom: true,
-        placeholder: '搜尋 DC item…',
-        customPlaceholder: '自訂 DC item…',
-        options: dcItems.map((item) => ({
-          value: item.id,
-          label: item.name,
-          unit: item.unit,
-          lo: item.lo,
-          hi: item.hi,
-        })),
+        options: asOptions(lots),
       },
     ],
-    submitLabel: '先產生這 {count} 項',
-    disabledHint: '至少選一項',
-    summaryLabel: 'DC item',
+    submitLabel: '先產生這 {count} 個',
+    disabledHint: '至少選一個',
+    summaryLabel: 'Lot',
   };
 };
 
@@ -172,6 +162,6 @@ export const flattenQuestionForm = (form: QuestionForm): Question[] => {
   return form.fields.map((field) => ({
     text: field.label,
     options: (field.options ?? []).map((option) => option.label),
-    multiSelect: field.kind === 'multi' || field.kind === 'dcitem',
+    multiSelect: field.kind === 'multi',
   }));
 };

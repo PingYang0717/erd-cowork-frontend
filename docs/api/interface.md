@@ -169,7 +169,6 @@ code 得到泛用文案，後端原話降級成錯誤卡的小字。「端點還
 
 | 類別                  | 端點/功能                     | 前端行為                                                            |
 | --------------------- | ----------------------------- | ------------------------------------------------------------------- |
-| **stub**（讀取）      | `GET /connectors`（目錄）     | `src/api/` 直接回固定資料，不發請求                                 |
 | **localStorage 偏好** | Connector 的連線/自訂來源選取 | 使用者偏好存 localStorage（`erd-cowork:connector-prefs`），不打後端 |
 
 **Regenerate 已移除**：後端沒有 regenerate 概念；迭代＝對話裡再送一句話（自動帶
@@ -289,11 +288,11 @@ departments/sections, `"<NT account> · <中文名>"` for people).
 
 ## Connector
 
-| Method | Path              | Request                       | Response          | 後端狀態 |
-| ------ | ----------------- | ----------------------------- | ----------------- | -------- |
-| GET    | `/connectors`     | —                             | `Connector[]`     | stub     |
-| PATCH  | `/connectors/:id` | `{ status: ConnectorStatus }` | `Connector`       | stub     |
-| POST   | `/connectors`     | `{ name: string }`            | `Connector` (201) | stub     |
+| Method | Path              | Request                       | Response          | 後端狀態   |
+| ------ | ----------------- | ----------------------------- | ----------------- | ---------- |
+| GET    | `/connectors`     | —                             | `Connector[]`     | ✅ 已接    |
+| PATCH  | `/connectors/:id` | `{ status: ConnectorStatus }` | `Connector`       | 前端未呼叫 |
+| POST   | `/connectors`     | `{ name: string }`            | `Connector` (201) | 前端未呼叫 |
 
 `Connector.status` is one of `connected` / `available` / `expired` / `no_access`.
 `PATCH /connectors/:id` connects or disconnects a data source from the Studio

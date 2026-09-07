@@ -214,7 +214,7 @@ describe('Scenario matching', () => {
 
     const recap = await runScenario(user, 'SPC analysis');
 
-    // Scan and filter are added by the DC item reask the SPC run raises mid-flight.
+    // Scan and filter are added by the lot-narrowing reask the SPC run raises mid-flight.
     expect(recap).toHaveAccessibleName('Worked through 5 steps');
     expect(recap).toHaveAttribute('aria-expanded', 'false');
     expect(screen.queryByText('Inline DB · Vt (gate CD)')).not.toBeInTheDocument();
