@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Select } from 'antd';
 import { InfoCircleOutlined, SendOutlined } from '@ant-design/icons';
 
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
@@ -10,6 +11,13 @@ import styles from './QuestionFormCard.module.css';
 
 /** Above this many options a field gets a search box rather than a wall of chips. */
 const SEARCHABLE_FROM = 4;
+
+/** Past either of these a chip row stops fitting in the two lines the card allows for it,
+ *  and the field is offered as a dropdown instead. Two limits rather than one because a
+ *  row grows two ways: more chips, or longer ones. Counted against the label as rendered
+ *  — what the reader sees is what has to fit. */
+const CHIP_MAX_OPTIONS = 5;
+const CHIP_MAX_LABEL_LENGTH = 8;
 
 /** How many values the user has picked across the whole form. Drives the submit label
  *  of a form that asks "how many first?" — the DC item reask counts what it will chart. */
@@ -32,6 +40,20 @@ const optionLabel = (option: { label: string; unit?: string; lo?: number; hi?: n
     return option.label;
   }
   return `${option.label} · ${option.lo} – ${option.hi} ${option.unit}`;
+};
+
+/** Whether this field is offered as a dropdown rather than as a row of chips.
+ *
+ *  `text` has its own input, and `boolean` is a single switch whose chip IS the value —
+ *  a dropdown for either would be a worse control, however long the wording. */
+const rendersAsDropdown = (field: QuestionField): boolean => {
+  if (field.kind === 'text' || field.kind === 'boolean') {
+    return false;
+  }
+  const options = field.options ?? [];
+  return (
+    options.length > CHIP_MAX_OPTIONS || options.some((option) => optionLabel(option).length > CHIP_MAX_LABEL_LENGTH)
+  );
 };
 
 export type Answers = Record<string, QuestionAnswer>;
@@ -163,17 +185,26 @@ const QuestionFormCard: React.FC<QuestionFormCardProps> = ({ form, onSubmit, dis
               })()
             : { ...previous, [field.key]: value };
 
-      // Changing a trigger discards whatever was answered beneath it. Hiding the answer
-      // but keeping it would submit a Flow the user can no longer see, under a role it
-      // does not belong to.
-      for (const dependent of form.fields) {
-        if (dependent.visibleWhen?.field === field.key && !isVisible(dependent, next)) {
-          delete next[dependent.key];
-        }
-      }
-
-      return next;
+      return clearDependentsOf(field, next);
     });
+  };
+
+  /** Writes a field's whole answer at once — what a dropdown reports, against the chips'
+   *  one-value-at-a-time toggling. */
+  const setFieldValue = (field: QuestionField, value: QuestionAnswer) => {
+    setAnswers((previous) => clearDependentsOf(field, { ...previous, [field.key]: value }));
+  };
+
+  // Changing a trigger discards whatever was answered beneath it. Hiding the answer but
+  // keeping it would submit a Flow the user can no longer see, under a role it does not
+  // belong to. Mutates `next`, which is always a copy the caller just made.
+  const clearDependentsOf = (changed: QuestionField, next: Answers): Answers => {
+    for (const dependent of form.fields) {
+      if (dependent.visibleWhen?.field === changed.key && !isVisible(dependent, next)) {
+        delete next[dependent.key];
+      }
+    }
+    return next;
   };
 
   const selectedCount = countAnswers(answers);
@@ -188,7 +219,10 @@ const QuestionFormCard: React.FC<QuestionFormCardProps> = ({ form, onSubmit, dis
 
       {visibleFields.map((field) => {
         const options = field.options ?? [];
-        const isSearchable = (field.kind === 'multi' || field.kind === 'dcitem') && options.length > SEARCHABLE_FROM;
+        const asDropdown = rendersAsDropdown(field);
+        // A dropdown does its own searching, so the standalone box would be a second one.
+        const isSearchable =
+          !asDropdown && (field.kind === 'multi' || field.kind === 'dcitem') && options.length > SEARCHABLE_FROM;
         const answer = answers[field.key];
         // A typed value that no chip offers — the mockup highlights the input for it.
         const isCustom =
@@ -218,6 +252,41 @@ const QuestionFormCard: React.FC<QuestionFormCardProps> = ({ form, onSubmit, dis
                 value={typeof answer === 'string' ? answer : ''}
                 className={styles.textInput}
                 onChange={(event) => setFieldText(field, event.target.value)}
+              />
+            ) : asDropdown ? (
+              <Select
+                // An id of its own rather than one from rc-util's `useId`, which returns a
+                // constant under test: a second component asking for one gets the same
+                // string, and any `aria-labelledby` pointing at it then resolves to
+                // whichever element comes first in the document. The Connectors dialog
+                // lost its accessible name that way.
+                id={`question-${form.formKey}-${field.key}`}
+                aria-label={field.label}
+                mode={field.kind === 'multi' ? 'multiple' : undefined}
+                // Same reason ShareArtifactDialog turns it off: the virtual list renders a
+                // window of rows and drops each one's `title`, so a row is neither fully
+                // present for assistive tech nor findable by the name it reads as.
+                virtual={false}
+                // The card sits in a thread pane the reader can narrow to a column; a
+                // dropdown that keeps its own width would push the conversation sideways.
+                className={styles.select}
+                placeholder={field.placeholder}
+                showSearch
+                optionFilterProp="label"
+                value={
+                  field.kind === 'multi' ? ((answer as string[] | undefined) ?? []) : ((answer as string) ?? undefined)
+                }
+                onChange={(value: string | string[]) => setFieldValue(field, value)}
+                // `title` mirrors the label rather than carrying the option's hint: antd
+                // uses it for the row's tooltip AND as its accessible fallback, so a hint
+                // there would make the row announce something other than what it reads as.
+                // The hint is a chip-only affordance — a dropdown row has no room beside
+                // its text for one.
+                options={options.map((option) => ({
+                  value: option.value,
+                  label: optionLabel(option),
+                  title: optionLabel(option),
+                }))}
               />
             ) : (
               <ChipGroup

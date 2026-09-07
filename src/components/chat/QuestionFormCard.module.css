@@ -149,3 +149,9 @@
 .customInputActive {
   border: 1px solid var(--erd-color-primary-border, #91caff);
 }
+
+/* Full width of the field: the thread pane is resizable, and a dropdown that kept an
+   intrinsic width would either overflow a narrowed pane or float in a widened one. */
+.select {
+  width: 100%;
+}
