@@ -410,7 +410,7 @@ describe('Streaming a run in the Studio', () => {
       })
     );
 
-    await screen.findByRole('combobox', { name: '你的角色' });
+    await screen.findByRole('group', { name: '你的角色' });
     expect(screen.queryByRole('group', { name: 'Flow' })).not.toBeInTheDocument();
     expect(screen.queryByRole('group', { name: 'Loop' })).not.toBeInTheDocument();
 
@@ -539,8 +539,7 @@ describe('Streaming a run in the Studio', () => {
 
       expect(await screen.findByText('分析條件')).toBeInTheDocument();
       expect(screen.getByRole('group', { name: 'Part ID' })).toBeInTheDocument();
-      // Offered as a dropdown: its options read too long to sit on chips.
-      expect(screen.getByRole('combobox', { name: 'Time range' })).toBeInTheDocument();
+      expect(screen.getByRole('group', { name: 'Time range' })).toBeInTheDocument();
 
       // A connector is a capability the user MAY grant the agent, not a precondition for
       // talking to it: a fresh conversation has none attached, and the form still offers
@@ -703,8 +702,8 @@ describe('Streaming a run in the Studio', () => {
       await user.click(screen.getByRole('button', { name: 'CP Test status' }));
 
       await screen.findByText('分析條件');
-      expect(screen.getByRole('combobox', { name: '你的角色' })).toBeInTheDocument();
-      // Flow and Loop are dropdowns too: one flow reads 整段 flow (全流程), and there are
+      expect(screen.getByRole('group', { name: '你的角色' })).toBeInTheDocument();
+      // Flow and Loop are still dropdowns: one flow reads 整段 flow (全流程), and there are
       // six loops.
       expect(screen.queryByRole('combobox', { name: 'Flow' })).not.toBeInTheDocument();
       expect(screen.getByRole('button', { name: '開始分析' })).toBeDisabled();

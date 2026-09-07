@@ -50,11 +50,17 @@ describe('QuestionFormCard: how a field is offered', () => {
     expect(screen.queryByRole('group', { name: 'Part ID' })).not.toBeInTheDocument();
   });
 
-  /** Five options still, but one of them is a sentence — the row would wrap well past two
-   *  lines on a narrow thread pane. */
+  /** Three options still, but one of them reads as a phrase — the row would wrap well past
+   *  two lines on a narrow thread pane. */
   it('switches to a dropdown when an option is too long to sit on a chip', async () => {
     renderCard(
-      formOf(field({ key: 'range', label: 'Time range', options: options('Today', 'Last 7 days', 'This quarter') }))
+      formOf(
+        field({
+          key: 'range',
+          label: 'Time range',
+          options: options('Today', 'Last 7 days', 'Since the last maintenance window'),
+        })
+      )
     );
 
     expect(screen.getByRole('combobox', { name: 'Time range' })).toBeInTheDocument();
@@ -82,7 +88,13 @@ describe('QuestionFormCard: how a field is offered', () => {
   it('answers a single-choice dropdown, and submits what was picked', async () => {
     const user = userEvent.setup();
     const { onSubmit } = renderCard(
-      formOf(field({ key: 'range', label: 'Time range', options: options('Today', 'Last 7 days', 'This quarter') }))
+      formOf(
+        field({
+          key: 'range',
+          label: 'Time range',
+          options: options('Today', 'Last 7 days', 'Since the last maintenance window'),
+        })
+      )
     );
 
     await user.click(screen.getByRole('combobox', { name: 'Time range' }));

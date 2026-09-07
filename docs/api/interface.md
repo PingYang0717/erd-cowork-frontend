@@ -118,11 +118,11 @@ entitlement）在 axios interceptor 與這條 raw fetch 各接一次（`api/acce
 
 ```
 QuestionForm {
-  formKey: string          // 'spc-conditions' | 'cptest-conditions' | 'dc-item-scope'
-  title: string            // 「分析條件」/「DC item」
-  intro?: string           // 「約 N 個 DC item(約 M 筆),資料量偏大。要先看哪些 DC Item?…」
+  formKey: string          // 'spc-conditions' | 'cptest-conditions' | 'lot-scope'
+  title: string            // 「分析條件」/「Lot」
+  intro?: string           // 「掃描到 N 個 Lot(約 M 筆),資料量偏大。要先看哪幾個 Lot?」
   fields: QuestionField[]
-  submitLabel: string      // 「送出」/「開始分析」/「先產生這 N 項」
+  submitLabel: string      // 「送出」/「開始分析」/「先產生這 N 個」
   disabledHint: string     // 「請先選 part id、time range、data type」
   summaryLabel: string     // 「已設定 N 項 分析條件」
 }
@@ -130,12 +130,12 @@ QuestionForm {
 QuestionField {
   key: string
   label: string
-  kind: 'single' | 'multi' | 'text' | 'boolean' | 'daterange' | 'dcitem'
+  kind: 'single' | 'multi' | 'text' | 'boolean' | 'daterange'
   options?: QuestionOption[]
   required: boolean
   placeholder?: string
   hint?: string            // 「可多選,只顯示已連線的來源。」
-  allowCustom?: boolean    // Time range 自訂輸入、DC item 自訂新增
+  allowCustom?: boolean    // Time range 自訂輸入
   visibleWhen?: { field: string; equals: string }
 }
 
@@ -144,13 +144,13 @@ QuestionOption { value: string; label: string; hint?: string; unit?: string; lo?
 
 **欄位組成是契約，選項值是資料。** 哪些欄位要問由 Scenario 固定，但 `options` 在執行時才
 填：SPC 條件表單的 `Data type` 選項是當下 `status === 'connected'` 的 Connector 名稱（無任何
-連線時 fallback `["Inline"]`），DC item 卡的選項來自 DC Item 清單。這是「Connector 與情境按鈕
+連線時 fallback `["Inline"]`）。這是「Connector 與情境按鈕
 連動」的實際機制——Connector 狀態決定反問卡上有哪些選項，而不是按鈕去設定 Connector。
 
 `visibleWhen` 表達欄位相依：CP Test 的 `Flow` 只在 `role === 'baseline'` 時顯示、`Loop` 只在
 `role === 'loop'` 時顯示。上游欄位值改變時，所有依賴它的下游欄位答案清空。
 
-**一次執行可以反問多次。** SPC 開場問一次分析條件，執行途中發現 DC Item 過多時再問一次。
+**一次執行可以反問多次。** SPC 開場問一次分析條件，執行途中發現資料量過大時再問一次（要先看哪幾個 Lot）。
 執行結束後「補齊全部 N 項」的提議不是反問，不走 QUESTION。
 
 ### 後端還沒有的端點怎麼辦
@@ -189,8 +189,8 @@ upsert（[ADR-0005](../adr/0005-new-chat-is-a-client-side-draft.md)）。
 ### QUESTION 事件與反問表單的降級
 
 QUESTION 的線路承載是後端的扁平 `Question[]`（純字串選項、`multiSelect`、無欄位種類與
-相依）。mock 額外帶上 `form?: QuestionForm` extension，讓分析條件表單（六種欄位、
-`visibleWhen`、DC item 規格上下限）維持運作；真後端只送扁平清單時，
+相依）。mock 額外帶上 `form?: QuestionForm` extension，讓分析條件表單（五種欄位、
+`visibleWhen`、選項附帶說明）維持運作；真後端只送扁平清單時，
 `utils/liftQuestions.ts` 把它抬升成一排 chip 的表單——**單向且失真**。
 
 **要驅動完整的分析條件表單，後端必須改送 `QuestionForm` 本身**；連同結構化
@@ -306,12 +306,6 @@ returns that connector with 200 instead of creating a duplicate. Created connect
 are `custom: true`, category `Custom`, and start `connected`.
 
 ## Schedule
-
-| Method | Path | Request | Response |
-| ------ | ---- | ------- | -------- |
-|        |      |         |          |
-
-## DC Item
 
 | Method | Path | Request | Response |
 | ------ | ---- | ------- | -------- |

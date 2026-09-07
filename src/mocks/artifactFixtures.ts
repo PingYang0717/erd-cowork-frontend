@@ -175,11 +175,11 @@ const SCENARIO_CONTENT: Record<ScenarioKey, ArtifactContent> = {
   },
   inline: {
     title: 'Inline dashboard',
-    subtitle: 'Inline DB · selected DC items',
-    description: 'SPC cards for each selected DC item, with OOC wafers highlighted.',
+    subtitle: 'Inline DB · selected lots',
+    description: 'SPC cards for each selected lot, with OOC wafers highlighted.',
     tags: ['Multi-item', 'OOC highlight'],
     stats: [
-      { label: 'DC items', value: '5', sub: 'tracked' },
+      { label: 'Lots', value: '5', sub: 'tracked' },
       { label: 'OOC wafers', value: '3', sub: 'across items' },
       { label: 'Lots scanned', value: '42', sub: 'this week' },
     ],

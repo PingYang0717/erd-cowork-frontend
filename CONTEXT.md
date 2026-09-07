@@ -33,7 +33,7 @@ _Avoid_: Workflow, Flow, Intent, Prompt preset（Scenario 不只是一段預寫�
 _Avoid_: Parameter, Setting, Filter
 
 **反問（Question form）**:
-Agent 在條件不足時反過來詢問使用者的一張表單，以 QUESTION 事件送達，答案以結構化形式回傳。一次 Scenario 執行中可以反問多次——開場收集分析條件是一次，執行途中發現資料量過大而詢問要先看哪些 DC Item 是另一次。欄位可以互相依賴（例如 CP Test 的 Flow 只在角色為 INT Baseline 時出現）。
+Agent 在條件不足時反過來詢問使用者的一張表單，以 QUESTION 事件送達，答案以結構化形式回傳。一次 Scenario 執行中可以反問多次——開場收集分析條件是一次，執行途中發現資料量過大而詢問要先看哪幾個 Lot 是另一次。欄位可以互相依賴（例如 CP Test 的 Flow 只在角色為 INT Baseline 時出現）。
 _Avoid_: Prompt, Clarification, Dialog
 
 **Agent event**:
@@ -83,10 +83,6 @@ _Avoid_: Data source, Integration
 **保留期（Retention）**:
 上傳檔案與 workspace 依 Session 最後活動時間保留的期限（後端 `GET /config` 的 `retentionDays`）。逾期後後端清除檔案**內容**但保留那筆紀錄，這種檔案在畫面上標示「已過期」——它擋住送出，也讓修復（Repair）不可行，因為要重跑的資料已經不存在（FILES_EXPIRED）。
 _Avoid_: TTL, 過期刪除（紀錄沒有被刪，被清掉的只有內容——「還看得到名字但用不了」正是這個概念的核心）
-
-**DC Item**:
-SPC 分析中可選擇的管制項目（量測參數），例如 Idsat、Vt (gate CD)、Contact Rs，各自有上下限（`lo`/`hi`）。當一次 SPC 執行涉及的 DC Item 過多時，Agent 會以 DC item 卡反問使用者先看哪幾項。
-_Avoid_: Parameter, Metric
 
 **錯誤代碼（Error code）**:
 後端錯誤回應 `{ code, message }` 裡的 `code`。它是**前端唯一據以決定錯誤文案的東西**——同一個 code 在畫面上永遠是同一句話,由前端自己寫、中英雙語(`errors.byCode`)。`message` 是後端用自己的語彙描述那次失敗,給維運看的,只在兩個地方上畫面:錯誤卡的小字,以及 403 的存取遭拒畫面(那裡只有後端知道是哪個資源、哪個 entitlement)。
