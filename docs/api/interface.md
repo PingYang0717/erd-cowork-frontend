@@ -130,7 +130,7 @@ QuestionForm {
 QuestionField {
   key: string
   label: string
-  kind: 'single' | 'multi' | 'text' | 'boolean' | 'daterange'
+  kind: 'single' | 'multi' | 'text' | 'boolean'
   options?: QuestionOption[]
   required: boolean
   placeholder?: string
@@ -189,7 +189,7 @@ upsert（[ADR-0005](../adr/0005-new-chat-is-a-client-side-draft.md)）。
 ### QUESTION 事件與反問表單的降級
 
 QUESTION 的線路承載是後端的扁平 `Question[]`（純字串選項、`multiSelect`、無欄位種類與
-相依）。mock 額外帶上 `form?: QuestionForm` extension，讓分析條件表單（五種欄位、
+相依）。mock 額外帶上 `form?: QuestionForm` extension，讓分析條件表單（四種欄位、
 `visibleWhen`、選項附帶說明）維持運作；真後端只送扁平清單時，
 `utils/liftQuestions.ts` 把它抬升成一排 chip 的表單——**單向且失真**。
 

@@ -7,7 +7,7 @@
 ## 高 — 分析條件表單([ADR-0004](../adr/0004-scenario-drives-clarification.md) 的核心)
 
 1. **QUESTION 事件改送 `QuestionForm`**:目前扁平的 `Question[]` 表達不了欄位種類
-   (五種)、`visibleWhen` 相依、選項附帶的說明。前端現以
+   (四種)、`visibleWhen` 相依、選項附帶的說明。前端現以
    `utils/liftQuestions.ts` 降級成一排 chip。
 2. **`POST /sessions/{id}/messages` 接受結構化答案 `{ answers, inReplyTo }`**:目前
    答案組成自然語言送出,後端 LLM 需自行重新解析,且「已設定 N 項」摘要卡無法還原。

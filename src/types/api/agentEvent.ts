@@ -12,7 +12,7 @@ export interface StepItem {
   status: StepStatus;
 }
 
-export type QuestionFieldKind = 'single' | 'multi' | 'text' | 'boolean' | 'daterange';
+export type QuestionFieldKind = 'single' | 'multi' | 'text' | 'boolean';
 
 export interface QuestionOption {
   value: string;
