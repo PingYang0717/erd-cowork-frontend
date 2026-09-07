@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Button, Input, Modal, Select } from 'antd';
+import { App, Button, Input, Modal, Select } from 'antd';
 import { CheckOutlined, CopyOutlined, FundOutlined, LinkOutlined } from '@ant-design/icons';
 
 import { DIRECTORY_SEARCH_MIN_LENGTH } from '@/api/directoryApi';
@@ -27,6 +27,7 @@ interface ShareArtifactDialogProps {
 
 const ShareArtifactDialog: React.FC<ShareArtifactDialogProps> = ({ open, onClose, artifact }) => {
   const t = useTranslations();
+  const { message } = App.useApp();
   const updateShares = useUpdateArtifactShares();
   const { shares, isLoading, isUnavailable } = useArtifactShares(artifact.id, open);
 
@@ -68,18 +69,29 @@ const ShareArtifactDialog: React.FC<ShareArtifactDialogProps> = ({ open, onClose
     const key = (target: ShareTarget) => `${target.type}:${target.id}`;
     const beforeKeys = new Set(before.map(key));
     const afterKeys = new Set(after.map(key));
+    const add = after.filter((target) => !beforeKeys.has(key(target)));
+    const remove = before.filter((target) => !afterKeys.has(key(target)));
 
     updateShares.mutate(
-      {
-        id: artifact.id,
-        update: {
-          add: after.filter((target) => !beforeKeys.has(key(target))),
-          remove: before.filter((target) => !afterKeys.has(key(target))),
-        },
-      },
+      { id: artifact.id, update: { add, remove } },
       // Submitting is the end of the dialog: the recipient list was the thing being
       // edited, and once it is saved there is nothing left here to do.
-      { onSuccess: handleClose }
+      {
+        onSuccess: () => {
+          handleClose();
+          // Closing is not proof that anything was saved. Submit is also the way out —
+          // an unchanged list closes the dialog exactly the same way — and sharing is the
+          // one action here whose outcome lands on other people: nothing behind this
+          // dialog changes when it works, and the Gallery's Shared badge only knows
+          // shared-at-all from not-shared-at-all. So the toast is the only thing that can
+          // say who can see this now. `message.success?.` — outside `AppProviders`
+          // (component tests) `useApp` answers with an empty object.
+          if (add.length === 0 && remove.length === 0) {
+            return;
+          }
+          message.success?.(after.length > 0 ? t.share.sharedWith(after.length) : t.share.sharingRemoved);
+        },
+      }
     );
   };
 

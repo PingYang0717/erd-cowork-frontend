@@ -304,4 +304,45 @@ describe('Sharing an Artifact: picking recipients', () => {
       expect(chosen).toContain('INTD-1 | CHXXGHYC | 鄭凱宇');
     });
   });
+
+  /** Submit both saves and closes, so closing proves nothing — an unchanged list leaves
+   *  by the same door. And sharing is the one action here whose result lands on other
+   *  people: nothing behind the dialog changes when it works, and the Gallery's Shared
+   *  badge only knows shared-at-all from not-shared-at-all. The toast is the only thing
+   *  that can answer the question the user pressed the button with: who can see it now. */
+  it('says who can see it now, since nothing on the screen does', async () => {
+    const user = userEvent.setup();
+    server.use(
+      http.get('/api/artifacts/:id/shares', () => HttpResponse.json([])),
+      http.patch('/api/artifacts/:id/shares', () => HttpResponse.json([]))
+    );
+    renderDialog();
+
+    const field = screen.getByRole('combobox');
+    await user.click(field);
+    await user.type(field, 'CHXXGHYC');
+    await user.click(await screen.findByTitle(/鄭凱宇/, {}, { timeout: 3000 }));
+
+    await user.click(screen.getByRole('button', { name: 'Submit' }));
+
+    expect(await screen.findByText(en.share.sharedWith(1))).toBeInTheDocument();
+  });
+
+  /** Submit is also the way out for someone who only came to copy the link, so it is
+   *  pressable with nothing changed and sends an empty delta. Announcing a share there
+   *  would be claiming something happened when nothing did. */
+  it('stays quiet when the list was never changed', async () => {
+    const user = userEvent.setup();
+    server.use(
+      http.get('/api/artifacts/:id/shares', () => HttpResponse.json([])),
+      http.patch('/api/artifacts/:id/shares', () => HttpResponse.json([]))
+    );
+    const { onClose } = renderDialog();
+
+    await user.click(screen.getByRole('button', { name: 'Submit' }));
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
+
+    expect(screen.queryByText(en.share.sharedWith(0))).not.toBeInTheDocument();
+    expect(screen.queryByText(en.share.sharingRemoved)).not.toBeInTheDocument();
+  });
 });

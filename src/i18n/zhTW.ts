@@ -31,6 +31,11 @@ export const zhTW = {
     submit: 'Submit',
     title: '分享 Artifact',
     published: '已發布',
+    /** What is said after Submit. The final list, not what changed: the question a user
+     *  presses this button with is「現在誰看得到」, and the only place that answered it —
+     *  the picker — closes at the same moment. */
+    sharedWith: (count: number) => `已分享給 ${count} 個對象`,
+    sharingRemoved: '已取消分享,現在沒有其他人看得到。',
   },
 
   /** Words that appear in more than one place and mean the same thing in each. */
