@@ -4,7 +4,7 @@ import { AppstoreOutlined, LoadingOutlined, ThunderboltFilled, ToolOutlined } fr
 import { INTERRUPTED_TEXTS, REPAIR_RECORD_PREFIXES } from '@/constants/wireStrings';
 import type { AgentStreamState } from '@/hooks/useAgentStream';
 import type { QuestionForm, StepItem } from '@/types/api';
-import { splitAnswerByTableMarkers } from '@/utils/tableMarkers';
+import { splitAnswerByTableMarkers, stripTableMarkers } from '@/utils/tableMarkers';
 import CollapsiblePanel from './CollapsiblePanel';
 import { Elapsed, LiveElapsed } from './Elapsed';
 import HtmlCodePanel from './HtmlCodePanel';
@@ -148,7 +148,13 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
   const placedTableIds = new Set(
     segments.flatMap((segment) => (segment.type === 'table' ? [segment.table.tableId] : []))
   );
-  const unplacedTables = (tables ?? []).filter((table) => !placedTableIds.has(table.tableId));
+  // A table no marker claimed still has to appear — but not while the agent is only
+  // thinking. Until the reply starts there is nothing for it to belong to, and a query
+  // result dropped into the middle of the reasoning reads as an answer that has not been
+  // given yet. Once the run ends it appears regardless, so a run that produced a table
+  // and no prose never swallows it.
+  const replyHasStarted = !streaming || deferredText !== '';
+  const unplacedTables = replyHasStarted ? (tables ?? []).filter((table) => !placedTableIds.has(table.tableId)) : [];
 
   return (
     <div className={styles.aiRow}>
@@ -191,7 +197,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
             (ADR-0003). */}
         {thinking && (
           <CollapsiblePanel label={t.chat.thinking}>
-            <p className={styles.thinkingBody}>{thinking}</p>
+            <p className={styles.thinkingBody}>{stripTableMarkers(thinking)}</p>
           </CollapsiblePanel>
         )}
         {codeText && <HtmlCodePanel code={codeText} autoScroll={streaming} />}

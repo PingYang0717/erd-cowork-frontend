@@ -81,9 +81,9 @@ client abort,前端會在 abort 後兩段 800ms invalidate 追後端非同步落
 
 ## 6. Directory(分享收件者)
 
-| #   | Method + Path    | 前端送出 | 前端期望回應                                                                | 狀態                  | 後端實際 input/output(請補) |
-| --- | ---------------- | -------- | --------------------------------------------------------------------------- | --------------------- | --------------------------- |
-| 19  | `GET /directory` | —        | `DirectoryEntry[]`:`{ id, kind: 'department'\|'section'\|'person', label }` | 🔧 前端 stub 固定資料 |                             |
+| #   | Method + Path              | 前端送出    | 前端期望回應                                                                             | 狀態    | 後端實際 input/output(請補) |
+| --- | -------------------------- | ----------- | ---------------------------------------------------------------------------------------- | ------- | --------------------------- |
+| 19  | `GET /hr/employeesAndOrgs` | `?keyword=` | `{ content: DirectoryEntry[] }`:`{ id, kind: 'department'\|'section'\|'person', label }` | ✅ 已接 | 回應包在 `content` 信封裡   |
 
 分享本身已接真後端,只有收件者名單還是 `artifactApi.listDirectory` 回的固定資料。
 

@@ -71,6 +71,61 @@ describe('MessageBubble', () => {
     expect(screen.getByRole('table', { name: 'Top offending lots' })).toBeInTheDocument();
   });
 
+  /** While the agent is still thinking there is no reply for a table to belong to, and a
+   *  query result dropped into the middle of the reasoning reads as an answer that has
+   *  not been given yet. The thinking panel is for the reasoning and nothing else. */
+  it('holds a table back while the agent is still thinking', () => {
+    render(
+      <MessageBubble
+        sender="AI"
+        live={liveRun({ isStreaming: true, thinking: 'Scanning the lot table…', tables: [table()] })}
+      />
+    );
+
+    expect(screen.queryByRole('table')).not.toBeInTheDocument();
+  });
+
+  it('shows it as soon as the reply starts arriving', () => {
+    render(
+      <MessageBubble
+        sender="AI"
+        live={liveRun({
+          isStreaming: true,
+          thinking: 'Scanning…',
+          liveText: 'Here is what I found',
+          tables: [table()],
+        })}
+      />
+    );
+
+    expect(screen.getByRole('table', { name: 'Top offending lots' })).toBeInTheDocument();
+  });
+
+  /** A run that produced a table and no prose at all must not swallow it. */
+  it('shows it once the run has ended, even with no reply text', () => {
+    render(<MessageBubble sender="AI" live={liveRun({ isStreaming: false, thinking: 'Done.', tables: [table()] })} />);
+
+    expect(screen.getByRole('table', { name: 'Top offending lots' })).toBeInTheDocument();
+  });
+
+  /** `[[table:…]]` is display plumbing the reader must never see. That was guaranteed for
+   *  the answer, where the markers are resolved away — but the thinking panel prints its
+   *  text verbatim, so a marker mentioned there reached the screen raw. */
+  it('never shows a raw table marker in the thinking panel', async () => {
+    const user = userEvent.setup();
+    render(
+      <MessageBubble
+        sender="AI"
+        live={liveRun({ isStreaming: true, thinking: 'Building [[table:t1]] from the scan', tables: [table()] })}
+      />
+    );
+
+    await user.click(screen.getByRole('button', { name: /Thinking/i }));
+
+    expect(screen.queryByText(/\[\[table:/)).not.toBeInTheDocument();
+    expect(screen.getByText(/Building.*from the scan/)).toBeInTheDocument();
+  });
+
   it('shows the steps as they run, and collapses them into a recap once finished', async () => {
     const { rerender } = render(
       <MessageBubble sender="AI" live={liveRun({ isStreaming: true, steps: [step({ status: 'RUNNING' })] })} />
