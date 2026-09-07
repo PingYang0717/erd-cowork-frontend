@@ -85,14 +85,14 @@ const pendingRuns = new Map<string, PendingRun>();
 /** Steps an SPC run gets through before it has to ask which lots to narrow to. */
 const SCAN_STEP: StepItem = {
   stepKey: 'scan',
-  title: '掃描 wafer / DC item',
+  title: '掃描 wafer / lot',
   description: 'Inline DB · 近 7 天',
   status: 'SUCCESS',
 };
 
 const FILTER_STEP: StepItem = {
   stepKey: 'filter',
-  title: '過濾至選定 DC item',
+  title: '過濾至選定 Lot',
   description: null,
   status: 'SUCCESS',
 };

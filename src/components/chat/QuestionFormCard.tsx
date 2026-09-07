@@ -14,10 +14,9 @@ const SEARCHABLE_FROM = 4;
 
 /** Past either of these a chip row stops fitting in the two lines the card allows for it,
  *  and the field is offered as a dropdown instead. Two limits rather than one because a
- *  row grows two ways: more chips, or longer ones. Counted against the label as rendered
- *  — what the reader sees is what has to fit. */
+ *  row grows two ways: more chips, or longer ones. */
 const CHIP_MAX_OPTIONS = 5;
-const CHIP_MAX_LABEL_LENGTH = 8;
+const CHIP_MAX_LABEL_LENGTH = 12;
 
 /** How many values the user has picked across the whole form. Drives the submit label
  *  of a form that asks "how many first?" — a narrowing reask counts what it will chart. */

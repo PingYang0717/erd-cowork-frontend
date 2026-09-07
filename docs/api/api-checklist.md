@@ -102,7 +102,6 @@ Connector 目前完全不發請求:目錄是 `connectorApi` 裡的常數,使用�
 ## 8. 尚無前端呼叫
 
 - **Schedule**:頁面仍是佔位,無任何端點
-- **DC Item**:只作為 QUESTION 表單的欄位選項出現,無獨立端點
 
 ## 狀態圖例
 
