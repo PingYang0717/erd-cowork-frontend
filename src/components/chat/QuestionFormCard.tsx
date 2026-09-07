@@ -20,7 +20,7 @@ const CHIP_MAX_OPTIONS = 5;
 const CHIP_MAX_LABEL_LENGTH = 8;
 
 /** How many values the user has picked across the whole form. Drives the submit label
- *  of a form that asks "how many first?" — the DC item reask counts what it will chart. */
+ *  of a form that asks "how many first?" — a narrowing reask counts what it will chart. */
 const countAnswers = (answers: Answers): number => {
   return Object.values(answers).reduce<number>((total, answer) => {
     if (Array.isArray(answer)) {
@@ -28,18 +28,6 @@ const countAnswers = (answers: Answers): number => {
     }
     return answer === false || answer === '' || answer === undefined ? total : total + 1;
   }, 0);
-};
-
-/** A chip's label carries its spec limits when the field has them, so an engineer can
- *  judge an item without opening anything. */
-const optionLabel = (option: { label: string; unit?: string; lo?: number; hi?: number }): string => {
-  if (option.lo === undefined || option.hi === undefined || option.unit === undefined) {
-    return option.label;
-  }
-  if (option.unit === '') {
-    return option.label;
-  }
-  return `${option.label} · ${option.lo} – ${option.hi} ${option.unit}`;
 };
 
 /** Whether this field is offered as a dropdown rather than as a row of chips.
@@ -51,9 +39,7 @@ const rendersAsDropdown = (field: QuestionField): boolean => {
     return false;
   }
   const options = field.options ?? [];
-  return (
-    options.length > CHIP_MAX_OPTIONS || options.some((option) => optionLabel(option).length > CHIP_MAX_LABEL_LENGTH)
-  );
+  return options.length > CHIP_MAX_OPTIONS || options.some((option) => option.label.length > CHIP_MAX_LABEL_LENGTH);
 };
 
 export type Answers = Record<string, QuestionAnswer>;
@@ -113,7 +99,7 @@ const ChipGroup: React.FC<ChipGroupProps> = ({ field, answers, search, onToggle 
           className={isSelected(option.value) ? styles.chipSelected : styles.chip}
           onClick={() => onToggle(option.value)}
         >
-          {optionLabel(option)}
+          {option.label}
         </button>
       ))}
     </div>
@@ -221,8 +207,7 @@ const QuestionFormCard: React.FC<QuestionFormCardProps> = ({ form, onSubmit, dis
         const options = field.options ?? [];
         const asDropdown = rendersAsDropdown(field);
         // A dropdown does its own searching, so the standalone box would be a second one.
-        const isSearchable =
-          !asDropdown && (field.kind === 'multi' || field.kind === 'dcitem') && options.length > SEARCHABLE_FROM;
+        const isSearchable = !asDropdown && field.kind === 'multi' && options.length > SEARCHABLE_FROM;
         const answer = answers[field.key];
         // A typed value that no chip offers — the mockup highlights the input for it.
         const isCustom =
@@ -284,8 +269,8 @@ const QuestionFormCard: React.FC<QuestionFormCardProps> = ({ form, onSubmit, dis
                 // its text for one.
                 options={options.map((option) => ({
                   value: option.value,
-                  label: optionLabel(option),
-                  title: optionLabel(option),
+                  label: option.label,
+                  title: option.label,
                 }))}
               />
             ) : (

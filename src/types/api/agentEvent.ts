@@ -12,15 +12,12 @@ export interface StepItem {
   status: StepStatus;
 }
 
-export type QuestionFieldKind = 'single' | 'multi' | 'text' | 'boolean' | 'daterange' | 'dcitem';
+export type QuestionFieldKind = 'single' | 'multi' | 'text' | 'boolean' | 'daterange';
 
 export interface QuestionOption {
   value: string;
   label: string;
   hint?: string;
-  unit?: string;
-  lo?: number;
-  hi?: number;
 }
 
 export interface QuestionField {

@@ -89,11 +89,11 @@ client abort,前端會在 abort 後兩段 800ms invalidate 追後端非同步落
 
 ## 7. Connector
 
-| #   | Method + Path            | 前端送出                      | 前端期望回應                                                                                                  | 狀態                 | 後端實際 input/output(請補) |
-| --- | ------------------------ | ----------------------------- | ------------------------------------------------------------------------------------------------------------- | -------------------- | --------------------------- |
-| 20  | `GET /connectors`        | —                             | `Connector[]`:`{ id, name, description, category, status: 'connected'\|'available'\|'expired'\|'no_access' }` | 🔧 前端常數 + 偏好   |                             |
-| 21  | `PATCH /connectors/{id}` | `{ status: ConnectorStatus }` | `Connector`                                                                                                   | 🔧 寫進 localStorage |                             |
-| 22  | `POST /connectors`       | `{ name: string }`            | `Connector`                                                                                                   | 🔧 寫進 localStorage |                             |
+| #   | Method + Path            | 前端送出                      | 前端期望回應                                                                                                  | 狀態                                    | 後端實際 input/output(請補) |
+| --- | ------------------------ | ----------------------------- | ------------------------------------------------------------------------------------------------------------- | --------------------------------------- | --------------------------- |
+| 20  | `GET /connectors`        | —                             | `Connector[]`:`{ id, name, description, category, status: 'connected'\|'available'\|'expired'\|'no_access' }` | ✅ 已接(再併上 localStorage 的自訂來源) |                             |
+| 21  | `PATCH /connectors/{id}` | `{ status: ConnectorStatus }` | `Connector`                                                                                                   | 前端未呼叫(選取是 localStorage 偏好)    |                             |
+| 22  | `POST /connectors`       | `{ name: string }`            | `Connector`                                                                                                   | 前端未呼叫(自訂來源寫 localStorage)     |                             |
 
 Connector 目前完全不發請求:目錄是 `connectorApi` 裡的常數,使用者的選擇疊在上面並存
 `erd-cowork:connector-prefs`。UI 是可操作的(這與其他 stub 不同)——因為「選了哪些資料
