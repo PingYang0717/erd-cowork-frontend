@@ -27,7 +27,9 @@ export const DEFAULT_UPLOAD_LIMITS: UploadLimits = {
   singleFileLimits: { csv: 2 * BYTES_PER_GB, xlsx: 200 * BYTES_PER_MB, xls: 200 * BYTES_PER_MB },
 };
 
-const usable = (limits: UploadLimits | undefined): UploadLimits => {
+/** The caps to enforce: what `GET /config` published, with a default standing in for
+ *  anything it left out or sent in a shape this cannot read. */
+const withDefaults = (limits: UploadLimits | undefined): UploadLimits => {
   const perType = limits?.singleFileLimits;
   const hasTypes = typeof perType === 'object' && perType !== null && Object.keys(perType).length > 0;
 
@@ -45,13 +47,22 @@ const usable = (limits: UploadLimits | undefined): UploadLimits => {
 /** The accepted extensions, dotted and in the order the backend listed them — for the
  *  picker's `accept` attribute and for the sentence that names them. */
 export const acceptedExtensions = (limits: UploadLimits | undefined): string[] =>
-  Object.keys(usable(limits).singleFileLimits).map((extension) => `.${extension}`);
+  Object.keys(withDefaults(limits).singleFileLimits).map((extension) => `.${extension}`);
 
 export const acceptAttribute = (limits: UploadLimits | undefined): string => acceptedExtensions(limits).join(',');
 
 /** The session total, as the copy states it. */
 export const totalLimitLabel = (limits: UploadLimits | undefined): string =>
-  formatBytes(usable(limits).maxSessionBytes, 0);
+  formatBytes(withDefaults(limits).maxSessionBytes, 0);
+
+/** The same caps as `UploadLimits`, in the form a screen states them: a count and two
+ *  ready-made strings. One value rather than three loose props, so the sentence the modal
+ *  shows and the rule that rejects a file are visibly the same set. */
+export interface StatedUploadLimits {
+  maxFiles: number;
+  totalLabel: string;
+  accept: string;
+}
 
 const extensionOf = (fileName: string): string => {
   const dot = fileName.lastIndexOf('.');
@@ -74,7 +85,9 @@ export const planFileAdditions = <T extends FileLike>(
   limits: UploadLimits | undefined
 ): { accepted: T[]; error: string } => {
   const t = getTranslations().files;
-  const { maxFiles, maxSessionBytes, singleFileLimits } = usable(limits);
+  const { maxFiles, maxSessionBytes, singleFileLimits } = withDefaults(limits);
+  // Named once rather than rebuilt per rejected file: the list is the same every time.
+  const acceptedList = acceptedExtensions(limits).join(', ');
   const existingNames = new Set(existing.map((file) => file.name));
   let count = existing.length;
   let total = existing.reduce((sum, file) => sum + file.sizeBytes, 0);
@@ -97,7 +110,7 @@ export const planFileAdditions = <T extends FileLike>(
 
     const perTypeLimit = singleFileLimits[extensionOf(file.name)];
     if (perTypeLimit === undefined) {
-      say(t.unsupportedType(acceptedExtensions(limits).join(', ')));
+      say(t.unsupportedType(acceptedList));
       continue;
     }
     // The check the frontend never had. Each type is capped separately — a CSV may run to

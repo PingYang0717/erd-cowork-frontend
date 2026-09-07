@@ -11,8 +11,9 @@ import { sessionDetailQueryKey } from './useSessionDetail';
 import { sessionsQueryKey } from './useSessions';
 
 export const useRenameSession = () => {
+  const t = useTranslations();
   const queryClient = useQueryClient();
-  const toastError = useActionErrorToast(useTranslations().errors.notFound.session);
+  const toastError = useActionErrorToast(t.errors.notFound.session);
 
   return useMutation({
     mutationFn: ({ id, title }: { id: string; title: string }) => renameSession(id, title),
@@ -42,8 +43,9 @@ export const useRenameSession = () => {
 /** Toggle-style like the artifact pin: the backend decides the direction and stamps
  *  the time, so the call site sends nothing but the id. */
 export const useToggleSessionPin = () => {
+  const t = useTranslations();
   const queryClient = useQueryClient();
-  const toastError = useActionErrorToast(useTranslations().errors.notFound.session);
+  const toastError = useActionErrorToast(t.errors.notFound.session);
 
   return useMutation({
     mutationFn: (id: string) => toggleSessionPin(id),
@@ -58,8 +60,9 @@ export const useToggleSessionPin = () => {
 };
 
 export const useDeleteSession = () => {
+  const t = useTranslations();
   const queryClient = useQueryClient();
-  const toastError = useActionErrorToast(useTranslations().errors.notFound.session);
+  const toastError = useActionErrorToast(t.errors.notFound.session);
   const clearSelection = useSessionSelectionStore((store) => store.clearSelection);
 
   return useMutation({

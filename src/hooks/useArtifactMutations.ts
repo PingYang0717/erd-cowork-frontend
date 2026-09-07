@@ -14,8 +14,9 @@ import { artifactSharesQueryKey } from './useArtifactShares';
  *  pin went — waiting for a refetch to find out leaves the button showing the old state
  *  in the meantime, and shows the wrong one entirely if the refetch is slow or fails. */
 export const useToggleArtifactPin = () => {
+  const t = useTranslations();
   const queryClient = useQueryClient();
-  const toastError = useActionErrorToast(useTranslations().errors.notFound.artifact);
+  const toastError = useActionErrorToast(t.errors.notFound.artifact);
 
   return useMutation({
     mutationFn: (id: string) => toggleArtifactPin(id),
@@ -53,8 +54,9 @@ export const useToggleArtifactPin = () => {
  *  showing it stays right where it is. What ends is its listing — so the cached content
  *  and anything pointing at it are deliberately left alone. */
 export const useUnpublishArtifact = () => {
+  const t = useTranslations();
   const queryClient = useQueryClient();
-  const toastError = useActionErrorToast(useTranslations().errors.notFound.artifact);
+  const toastError = useActionErrorToast(t.errors.notFound.artifact);
 
   return useMutation({
     mutationFn: (id: string) => unpublishArtifact(id),
@@ -73,8 +75,9 @@ export const useUnpublishArtifact = () => {
 
 /** Applies a change to an Artifact's share list. */
 export const useUpdateArtifactShares = () => {
+  const t = useTranslations();
   const queryClient = useQueryClient();
-  const toastError = useActionErrorToast(useTranslations().errors.notFound.artifact);
+  const toastError = useActionErrorToast(t.errors.notFound.artifact);
 
   return useMutation({
     mutationFn: ({ id, update }: { id: string; update: ArtifactShareUpdate }) => updateArtifactShares(id, update),
@@ -107,8 +110,9 @@ export const useUpdateArtifactShares = () => {
 };
 
 export const usePublishArtifact = () => {
+  const t = useTranslations();
   const queryClient = useQueryClient();
-  const toastError = useActionErrorToast(useTranslations().errors.notFound.artifact);
+  const toastError = useActionErrorToast(t.errors.notFound.artifact);
 
   return useMutation({
     mutationFn: ({ id, title }: { id: string; title: string }) => publishArtifact(id, title),

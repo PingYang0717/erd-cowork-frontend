@@ -5,9 +5,9 @@ import { isAccessDenied } from '@/api/accessDenied';
 import { isOffline } from '@/api/apiError';
 import { deleteFile, uploadFiles, type UploadProgress } from '@/api/fileApi';
 import { useActionErrorToast } from '@/hooks/useActionErrorToast';
-import { getTranslations, useTranslations } from '@/i18n/useTranslations';
+import { useTranslations } from '@/i18n/useTranslations';
 import { describeErrorCode } from '@/utils/describeErrorCode';
-import { acceptAttribute, planFileAdditions, totalLimitLabel } from '@/utils/uploadValidation';
+import { acceptAttribute, planFileAdditions, type StatedUploadLimits, totalLimitLabel } from '@/utils/uploadValidation';
 import { useAppConfig } from './useAppConfig';
 import { sessionDetailQueryKey, useSessionDetail } from './useSessionDetail';
 
@@ -24,7 +24,8 @@ export const useFileAttachments = (sessionId: string) => {
   /** A removal in flight. Uploading has `uploadPercent` to say so; removing has no
    *  progress to report, only the fact that it is happening. */
   const [isRemoving, setIsRemoving] = useState(false);
-  const toastError = useActionErrorToast(useTranslations().errors.notFound.file);
+  const t = useTranslations();
+  const toastError = useActionErrorToast(t.errors.notFound.file);
   const queryClient = useQueryClient();
   const config = useAppConfig();
   const { retentionDays } = config;
@@ -51,7 +52,6 @@ export const useFileAttachments = (sessionId: string) => {
       // The backend's code decides the sentence — PARSE_ERROR, UPLOAD_LIMIT and
       // UNSUPPORTED_TYPE each name something the user can do. Its `message` used to be
       // shown verbatim, which put a parser position or a byte count in the modal.
-      const t = getTranslations();
       setError(
         describeErrorCode(uploadError, { retentionDays }) ??
           (isOffline(uploadError) ? t.errors.offlineAction : t.files.uploadFailed)
@@ -91,6 +91,6 @@ export const useFileAttachments = (sessionId: string) => {
       maxFiles: config.maxFiles,
       totalLabel: totalLimitLabel(config),
       accept: acceptAttribute(config),
-    },
+    } satisfies StatedUploadLimits,
   };
 };

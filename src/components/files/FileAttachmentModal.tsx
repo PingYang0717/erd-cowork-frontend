@@ -12,6 +12,7 @@ import type { UploadProgress } from '@/api/fileApi';
 import { useTranslations } from '@/i18n/useTranslations';
 import type { UploadedFileInfo } from '@/types/api';
 import { formatBytes } from '@/utils/formatBytes';
+import type { StatedUploadLimits } from '@/utils/uploadValidation';
 
 import styles from './FileAttachmentModal.module.css';
 
@@ -71,7 +72,7 @@ interface FileAttachmentModalProps {
   onRemoveFile: (fileId: string) => void;
   /** What the backend accepts, published by `GET /config`. Stated here and enforced in
    *  `planFileAdditions` from the same source, so the two cannot drift apart. */
-  limits: { maxFiles: number; totalLabel: string; accept: string };
+  limits: StatedUploadLimits;
 }
 
 const FileAttachmentModal: React.FC<FileAttachmentModalProps> = ({

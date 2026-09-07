@@ -26,8 +26,8 @@ interface AccessDeniedGateProps {
  *  resource or which entitlement. This client has no copy that could say it.
  */
 const AccessDeniedGate: React.FC<AccessDeniedGateProps> = ({ children }) => {
-  const denial = useAccessDeniedStore((state) => state.denial);
   const t = useTranslations();
+  const denial = useAccessDeniedStore((state) => state.denial);
 
   return (
     <>

@@ -6,7 +6,8 @@ import { devtools } from 'zustand/middleware';
  *  nowhere else — the screen shows the backend's own sentence, which already says which
  *  it was and what to do about it. The code is kept so a log can tell them apart. */
 export interface AccessDenial {
-  code: string;
+  /** Null when the refusal arrived without one — a 403 is still a refusal. */
+  code: string | null;
   message: string;
 }
 

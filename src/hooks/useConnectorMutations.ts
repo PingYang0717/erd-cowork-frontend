@@ -16,8 +16,9 @@ import { sessionDetailQueryKey } from './useSessionDetail';
  *  and not another. Invalidating the session detail is what refreshes the panel, since
  *  that is where attachment lives. */
 export const useSetSessionDataSource = (sessionId: string) => {
+  const t = useTranslations();
   const queryClient = useQueryClient();
-  const toastError = useActionErrorToast(useTranslations().errors.notFound.session);
+  const toastError = useActionErrorToast(t.errors.notFound.session);
 
   return useMutation({
     mutationFn: ({ id, attached }: { id: string; attached: boolean }) =>
@@ -81,8 +82,9 @@ export const useApplyRememberedDataSources = (sessionId: string) => {
  *  user submits, so the new source arrives pre-picked in the draft and reaches the session
  *  with everything else on Submit. */
 export const useAddConnector = () => {
+  const t = useTranslations();
   const queryClient = useQueryClient();
-  const toastError = useActionErrorToast(useTranslations().errors.notFound.connector);
+  const toastError = useActionErrorToast(t.errors.notFound.connector);
 
   return useMutation({
     mutationFn: (name: string) => addConnectorRequest(name),
