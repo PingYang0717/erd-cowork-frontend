@@ -9,7 +9,6 @@ import {
 } from '@ant-design/icons';
 
 import type { UploadProgress } from '@/api/fileApi';
-import { ACCEPT_ATTRIBUTE, MAX_ATTACHMENT_COUNT, MAX_ATTACHMENT_TOTAL_LABEL } from '@/hooks/useFileAttachments';
 import { useTranslations } from '@/i18n/useTranslations';
 import type { UploadedFileInfo } from '@/types/api';
 import { formatBytes } from '@/utils/formatBytes';
@@ -70,6 +69,9 @@ interface FileAttachmentModalProps {
   isMutating: boolean;
   onAddFiles: (files: FileList) => void;
   onRemoveFile: (fileId: string) => void;
+  /** What the backend accepts, published by `GET /config`. Stated here and enforced in
+   *  `planFileAdditions` from the same source, so the two cannot drift apart. */
+  limits: { maxFiles: number; totalLabel: string; accept: string };
 }
 
 const FileAttachmentModal: React.FC<FileAttachmentModalProps> = ({
@@ -81,6 +83,7 @@ const FileAttachmentModal: React.FC<FileAttachmentModalProps> = ({
   isMutating,
   onAddFiles,
   onRemoveFile,
+  limits,
 }) => {
   const t = useTranslations();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -97,7 +100,7 @@ const FileAttachmentModal: React.FC<FileAttachmentModalProps> = ({
         ref={inputRef}
         type="file"
         multiple
-        accept={ACCEPT_ATTRIBUTE}
+        accept={limits.accept}
         className={styles.hiddenInput}
         aria-label="Choose files"
         disabled={isMutating}
@@ -138,7 +141,7 @@ const FileAttachmentModal: React.FC<FileAttachmentModalProps> = ({
         <div>
           <span className={styles.dropzoneLink}>{t.files.dropzoneLink}</span> {t.files.dropzoneRest}
         </div>
-        <div className={styles.dropzoneHint}>{t.files.limits(MAX_ATTACHMENT_COUNT, MAX_ATTACHMENT_TOTAL_LABEL)}</div>
+        <div className={styles.dropzoneHint}>{t.files.limits(limits.maxFiles, limits.totalLabel)}</div>
       </div>
 
       {uploadProgress !== null && (
@@ -188,7 +191,7 @@ const FileAttachmentModal: React.FC<FileAttachmentModalProps> = ({
 
       <div className={styles.footer}>
         <span className={styles.footerSummary}>
-          {t.fileModal.summary(attachments.length, MAX_ATTACHMENT_COUNT, formatBytes(totalBytes))}
+          {t.fileModal.summary(attachments.length, limits.maxFiles, formatBytes(totalBytes))}
         </span>
         {/* Done says "the set is settled" — while a write is still in flight it is
             not, and closing on top of it hides the one place the progress shows. */}

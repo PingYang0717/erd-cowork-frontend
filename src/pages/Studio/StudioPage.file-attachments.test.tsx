@@ -193,18 +193,20 @@ describe('File attachments', () => {
     expect(await within(composerAttachments()).findByText('lot-genealogy.csv')).toBeInTheDocument();
   });
 
-  it('rejects unsupported file types with the Chinese error and an accept attribute on the input', async () => {
+  it('rejects unsupported file types, naming the ones the backend does accept', async () => {
     // applyAccept off simulates a file arriving past the picker (drag & drop).
     const user = userEvent.setup({ applyAccept: false });
     renderStudio();
     const dialog = await selectASessionAndOpenFileModal(user);
 
+    // Both the picker's filter and the sentence below come from `GET /config`'s
+    // `singleFileLimits` keys — the same source the validator refuses by.
     const input = screen.getByLabelText('Choose files');
     expect(input).toHaveAttribute('accept', '.csv,.xlsx,.xls');
 
     await user.upload(input, fileOfSize('notes.pdf', 1024));
 
-    expect(await within(dialog).findByRole('alert')).toHaveTextContent('Only .csv / .xlsx are supported');
+    expect(await within(dialog).findByRole('alert')).toHaveTextContent('Only .csv, .xlsx, .xls are supported');
     expect(within(dialog).queryByText('notes.pdf')).not.toBeInTheDocument();
 
     // Supported types still go through afterwards.

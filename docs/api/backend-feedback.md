@@ -76,16 +76,23 @@ session 會得到誤導訊息。
 只能給一句涵蓋三者的模糊話(「檔案超出可上傳的限制」),說不出實際撞到哪一條。拆成三個 code
 (或在 body 多帶一個欄位說明是哪一項)前端就能講清楚。
 
-## 前端的上傳限制與 `GET /config` 已經漂移(2026-09-07)
+## ~~前端的上傳限制與 `GET /config` 已經漂移~~ — 已解決(2026-09-07)
 
-`GET /config` 發布了 `maxFiles` / `maxSessionBytes` / `singleFileLimits`,而 `configApi.ts` 的
-註解也寫著這是「so the UI can state them rather than keep a second copy that drifts out of step
-with the server's」——但 `utils/uploadValidation.ts` 至今仍寫死 **5 個檔、5 GB、
-`.csv,.xlsx,.xls`**,三項都沒接上。
+原本:`utils/uploadValidation.ts` 寫死 5 個檔、5 GB、`.csv,.xlsx,.xls`,而 `GET /config`
+早已發布 `maxFiles` / `maxSessionBytes` / `singleFileLimits`。
 
-這份漂移正是 `UPLOAD_LIMIT` / `UNSUPPORTED_TYPE` 會被觸發的原因:前端放行了後端不收的檔案。
-2026-09-07 判斷維持原設計(前端理論上會先擋住),只補了這兩個 code 的兜底文案。**這是已知的、
-被接受的風險,不是疏漏**——後端調整任何一項限制而前端沒跟上,使用者就會走到這個兜底。
+**已改為讀 config。** 真正壞掉的其實不是「可能不同步」——前三項當時剛好對得上——而是
+**`singleFileLimits` 的逐檔上限前端完全沒有檢查**:`csv: 2 GB`、`xlsx: 200 MB`、
+`xls: 200 MB`,所以一個 500 MB 的 `.xlsx` 會通過前端、整份上傳完、才被後端擋下來。
+現在送出前就擋住,並說得出是哪個檔、超過哪一條上限。
+
+可接受的副檔名現在**就是 `singleFileLimits` 的 key**,不再有第二份白名單要跟著維護——
+後端開始接受一個新型別並給它上限,前端自動跟上。
+
+**保留了一組保底值**(`DEFAULT_UPLOAD_LIMITS`)。`GET /config` 不做 runtime 驗證
+([ADR-0013](../adr/0013-api-response-contract.md)),漏送 `singleFileLimits` 會讓白名單
+變空、每個檔案都被拒——那是防護失效成「全部擋下」,而使用者無能為力。保底值只在 config
+形狀不可用時生效,不是第二份真相。
 
 ## BROWSER_REPAIR_UNSUPPORTED 尚未處理(2026-09-07)
 
