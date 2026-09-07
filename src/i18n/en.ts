@@ -20,6 +20,8 @@ export const en: Translations = {
     submit: 'Submit',
     title: 'Share Artifact',
     published: 'Published',
+    sharedWith: (count: number) => `Shared with ${count} ${count === 1 ? 'recipient' : 'recipients'}`,
+    sharingRemoved: 'Sharing removed — nobody else can see this now.',
   },
 
   common: {
