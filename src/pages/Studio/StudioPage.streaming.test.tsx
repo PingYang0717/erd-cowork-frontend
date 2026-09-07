@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
+import { en } from '@/i18n/en';
 import { useConnectorsPanelStore } from '@/stores/useConnectorsPanelStore';
 import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
 import { useStudioLayoutStore } from '@/stores/useStudioLayoutStore';
@@ -478,6 +479,48 @@ describe('Streaming a run in the Studio', () => {
     await user.click(screen.getByRole('button', { name: 'N5' }));
     await answerField(user, 'Time range', 'Last 7 days');
     await user.click(screen.getByRole('button', { name: '送出' }));
+
+    await waitFor(() => expect(stream.requests).toHaveLength(2));
+    expect(stream.requests[1]).toEqual({
+      question: 'Part ID：A14、N5；Time range：Last 7 days',
+    });
+  });
+
+  /** The reask a REAL backend sends: a flat `Question[]` and nothing else. The rich `form`
+   *  beside it is a frontend-only extension only the mock rides along (ADR-0003 §2), and
+   *  `useAgentStream` prefers it whenever it is there — so every other streaming test in
+   *  this file exercises a path production never takes. This one drives what actually
+   *  arrives, all the way from the wire to the prose that goes back.
+   *
+   *  It also covers both control shapes on that path: two short options stay chips, while
+   *  `Last 7 days` is long enough to be offered as a dropdown. */
+  it('answers a reask that arrived as the bare flat list a real backend sends', async () => {
+    const user = userEvent.setup();
+    const stream = mockAgentStream();
+    renderStudio();
+
+    await startAnalysis(user);
+
+    act(() =>
+      stream.push({
+        type: 'QUESTION',
+        questions: [
+          { text: 'Part ID', options: ['A14', 'N5'], multiSelect: true },
+          { text: 'Time range', options: ['Last 7 days', 'Last 30 days'], multiSelect: false },
+        ],
+      })
+    );
+    act(() => stream.close());
+    await screen.findByRole('button', { name: 'Send message' });
+
+    // Lifted, so the card's own wording comes from this app's dictionary rather than from
+    // the backend — the flat list carries no title, submit label or hint.
+    expect(screen.getByText(en.chat.questionTitle)).toBeInTheDocument();
+
+    await user.click(await screen.findByRole('button', { name: 'A14' }));
+    await user.click(screen.getByRole('button', { name: 'N5' }));
+    await answerField(user, 'Time range', 'Last 7 days');
+    await user.click(screen.getByRole('button', { name: en.chat.questionSubmit }));
 
     await waitFor(() => expect(stream.requests).toHaveLength(2));
     expect(stream.requests[1]).toEqual({
