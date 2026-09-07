@@ -51,3 +51,16 @@ export const listArtifacts = () => apiClient.get<Artifact[]>('/artifacts');
   cache——isOwn: undefined 是 falsy,曾讓自己的 Artifact 變成「分享給我的」。
 - repair 端點住在 `artifactApi`(依層放),`BrowserJsError` 是它的 body 形狀,
   隨之定義在 api 層。
+
+## 2026-09-07 修訂:`errorMessage` 不再是文案的第一順位
+
+`apiError.ts` 的六個判讀維持原樣,但 `errorMessage` 的**用途**變了。它的註解原本寫著「The backend's
+own message... The backend's words win over anything this client would compose」——那條規則已由
+[ADR-0016](0016-error-copy-is-owned-by-the-frontend.md) 推翻。
+
+現在 `errorCode` 是文案的第一順位(`utils/describeErrorCode.ts` 查 `errors.byCode`),`errorMessage`
+退成次要細節:錯誤卡的小字、對話串泡泡在 code 未知時的保底。唯一仍然以它為主的畫面是 403 的
+`AccessDeniedGate`,理由寫在 ADR-0016。
+
+判讀本身收攏於一處這件事沒有改變——反而更重要了,因為現在有第三個消費者(`describeErrorCode`)
+依賴 `errorCode` 認得三種傳輸。

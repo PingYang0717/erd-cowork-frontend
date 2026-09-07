@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 
-import { errorMessage, isOffline } from '@/api/apiError';
+import { isOffline } from '@/api/apiError';
 import { deleteFile, uploadFiles, type UploadProgress } from '@/api/fileApi';
 import { useActionErrorToast } from '@/hooks/useActionErrorToast';
+import { describeErrorCode } from '@/utils/describeErrorCode';
 import { planFileAdditions } from '@/utils/uploadValidation';
+import { useAppConfig } from './useAppConfig';
 import { sessionDetailQueryKey, useSessionDetail } from './useSessionDetail';
 
 export {
@@ -14,7 +16,7 @@ export {
   MAX_ATTACHMENT_TOTAL_BYTES,
   MAX_ATTACHMENT_TOTAL_LABEL,
 } from '@/utils/uploadValidation';
-import { getTranslations } from '@/i18n/useTranslations';
+import { getTranslations, useTranslations } from '@/i18n/useTranslations';
 
 /** Session-level attachments per the backend contract: files live on the session
  *  (POST /sessions/{id}/files) and surface through SessionDetail.files. Count, size
@@ -29,8 +31,9 @@ export const useFileAttachments = (sessionId: string) => {
   /** A removal in flight. Uploading has `uploadPercent` to say so; removing has no
    *  progress to report, only the fact that it is happening. */
   const [isRemoving, setIsRemoving] = useState(false);
-  const toastError = useActionErrorToast();
+  const toastError = useActionErrorToast(useTranslations().errors.notFound.file);
   const queryClient = useQueryClient();
+  const { retentionDays } = useAppConfig();
   const { data: detail } = useSessionDetail(sessionId);
   const attachments = detail.files;
 
@@ -47,11 +50,14 @@ export const useFileAttachments = (sessionId: string) => {
       await uploadFiles(sessionId, plan.accepted, setUploadProgress);
       await queryClient.invalidateQueries({ queryKey: sessionDetailQueryKey(sessionId) });
     } catch (uploadError) {
-      // The backend's own reason first ("single file exceeds 2 GB") — it was being
-      // thrown away for the generic sentence. Offline gets named; only a reason-less
-      // failure falls back to the generic wording.
+      // The backend's code decides the sentence — PARSE_ERROR, UPLOAD_LIMIT and
+      // UNSUPPORTED_TYPE each name something the user can do. Its `message` used to be
+      // shown verbatim, which put a parser position or a byte count in the modal.
       const t = getTranslations();
-      setError(errorMessage(uploadError) ?? (isOffline(uploadError) ? t.errors.offlineAction : t.files.uploadFailed));
+      setError(
+        describeErrorCode(uploadError, { retentionDays }) ??
+          (isOffline(uploadError) ? t.errors.offlineAction : t.files.uploadFailed)
+      );
     } finally {
       setUploadProgress(null);
     }

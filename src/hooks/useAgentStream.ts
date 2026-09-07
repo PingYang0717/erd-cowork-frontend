@@ -5,6 +5,7 @@ import { AgentStreamHttpError, type SendMessageArgs, streamAgentMessage } from '
 import { isCanceled } from '@/api/apiError';
 import { getTranslations } from '@/i18n/useTranslations';
 import type { AgentEvent, QuestionForm, StepItem, TableResult } from '@/types/api/agentEvent';
+import { copyForCode } from '@/utils/describeErrorCode';
 import { liftQuestions } from '@/utils/liftQuestions';
 import { sessionsQueryKey } from './useSessions';
 
@@ -121,7 +122,10 @@ const reducer = (state: AgentStreamState, action: Action): AgentStreamState => {
           // it (ADR-0003). Do not "fix" this into an early exit.
           return {
             ...state,
-            error: { code: agentEvent.code, message: agentEvent.message },
+            // Our sentence when the code is one we know; the backend's otherwise. A
+            // bubble has room, so an unrecognised code keeps whatever the run said about
+            // itself rather than losing it to a generic line.
+            error: { code: agentEvent.code, message: copyForCode(agentEvent.code) ?? agentEvent.message },
           };
 
         case 'THINKING':
@@ -258,7 +262,10 @@ export const useAgentStream = (
         }
 
         if (error instanceof AgentStreamHttpError) {
-          dispatch({ type: 'FAILED', error: { code: error.code, message: error.message } });
+          dispatch({
+            type: 'FAILED',
+            error: { code: error.code, message: copyForCode(error.code) ?? error.message },
+          });
           return;
         }
 

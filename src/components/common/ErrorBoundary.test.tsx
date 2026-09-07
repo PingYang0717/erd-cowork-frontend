@@ -1,5 +1,5 @@
 import { act } from 'react';
-import { AxiosError } from 'axios';
+import { AxiosError, AxiosHeaders } from 'axios';
 import { describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -27,6 +27,37 @@ describe('ErrorBoundary', () => {
 
     expect(screen.getByRole('alert')).toHaveTextContent('This section failed to load');
     expect(screen.getByText('連線中斷')).toBeInTheDocument();
+  });
+
+  /** A card has two lines where a toast has one, so it does not have to choose between
+   *  telling the reader something they can act on and keeping what the server said. The
+   *  backend's sentence used to BE the detail line, which is how untranslated server prose
+   *  became the main thing a user was told. */
+  it("leads with its own sentence and keeps the backend's underneath", () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    const ExplodeRefused = (): never => {
+      const error = new AxiosError('Request failed', 'ERR_BAD_RESPONSE');
+      error.response = {
+        status: 409,
+        statusText: '',
+        data: { code: 'CONFLICT', message: 'E11000 duplicate key error collection: erd.sessions' },
+        headers: {},
+        config: { headers: new AxiosHeaders() },
+      };
+      throw error;
+    };
+
+    render(
+      <ErrorBoundary>
+        <ExplodeRefused />
+      </ErrorBoundary>
+    );
+
+    const card = screen.getByRole('alert');
+    expect(card).toHaveTextContent(en.errors.byCode.CONFLICT);
+    // Kept, but as small print — useful to whoever reads the screenshot, never the claim.
+    expect(screen.getByText('E11000 duplicate key error collection: erd.sessions')).toBeInTheDocument();
   });
 
   // The app has no mock backend to fall back on (ADR-0006), so "the backend is not

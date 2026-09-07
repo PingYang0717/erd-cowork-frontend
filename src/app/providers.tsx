@@ -4,6 +4,7 @@ import enUS from 'antd/locale/en_US';
 import zhTW from 'antd/locale/zh_TW';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
+import AccessDeniedGate from '@/components/common/AccessDeniedGate';
 import { useLanguageStore } from '@/stores/useLanguageStore';
 import { useThemeStore } from '@/stores/useThemeStore';
 import { buildAntdTheme } from '@/theme/antdTheme';
@@ -73,7 +74,9 @@ const AppProviders: React.FC<AppProvidersProps> = ({ children }) => {
     <QueryClientProvider client={queryClient}>
       <ConfigProvider locale={language === 'en' ? enUS : zhTW} theme={antdTheme}>
         <AntdApp>
-          <ThemedSurface tokens={tokens}>{children}</ThemedSurface>
+          <ThemedSurface tokens={tokens}>
+            <AccessDeniedGate>{children}</AccessDeniedGate>
+          </ThemedSurface>
         </AntdApp>
       </ConfigProvider>
     </QueryClientProvider>

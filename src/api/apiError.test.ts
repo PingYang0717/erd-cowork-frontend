@@ -34,7 +34,10 @@ describe('apiError', () => {
   });
 
   it('reads the backend code and message from either transport', () => {
-    const axiosErr = axiosErrorWith(410, { code: 'FILES_EXPIRED', message: '檔案已過期' });
+    // 409, the status the backend actually answers FILES_EXPIRED with. The status is
+    // incidental to what this asserts — the code and message are read from the body — but
+    // a fixture is also a record of the wire, and this one said 410.
+    const axiosErr = axiosErrorWith(409, { code: 'FILES_EXPIRED', message: '檔案已過期' });
     expect(errorCode(axiosErr)).toBe('FILES_EXPIRED');
     expect(errorMessage(axiosErr)).toBe('檔案已過期');
 

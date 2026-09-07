@@ -56,9 +56,42 @@ TABLE 事件目前只送 `truncated: boolean`,不送截斷筆數。前端曾寫�
 那是前端獻上的、後端沒說過的數字,已改為不報數字的「(結果已截斷)」。若 TABLE 能帶
 `rowLimit`(實際套用的上限),前端就能誠實地報出筆數。
 
-## mutation 的 404 語意不可分辨(2026-09-03)
+## ~~mutation 的 404 語意不可分辨(2026-09-03)~~ — 前端已處理(2026-09-07)
 
-`describeActionError` 把 404/501 讀成「後端尚未就緒」——對「端點沒實作」正確,但
-「資源已消失」的 404(刪除一個已被刪的 session)會得到同一句誤導訊息。單靠 status
-前端分不出這兩件事;希望錯誤回應一律帶 `code`(如 `SESSION_NOT_FOUND` vs 純 404),
-前端即可分別處理。
+原本:`describeActionError` 把 404/501 一起讀成「後端尚未就緒」,所以刪除一個已被刪的
+session 會得到誤導訊息。
+
+**前端這一側已解決**([ADR-0016](../adr/0016-error-copy-is-owned-by-the-frontend.md)):404 改說
+「這個東西不在了」,而不見的是什麼由呼叫端給(`useActionErrorToast(notFoundCopy)`);501 才保留
+「尚未就緒」。
+
+**對後端的請求仍然成立,只是不再緊急**:若 404 一律帶 `code`(`SESSION_NOT_FOUND` /
+`ARTIFACT_NOT_FOUND` …),這些 code 就能進 `errors.byCode`,呼叫端那個參數可以退場——現在是
+10 個呼叫點各自挑一句話,挑錯不會有任何錯誤,它只是說錯話。
+
+## UPLOAD_LIMIT 希望拆成三個 code(2026-09-07)
+
+`UPLOAD_LIMIT` 同時代表三種情況:單檔超過上限、session 總量超過上限、檔案數超過上限。前端因此
+只能給一句涵蓋三者的模糊話(「檔案超出可上傳的限制」),說不出實際撞到哪一條。拆成三個 code
+(或在 body 多帶一個欄位說明是哪一項)前端就能講清楚。
+
+## 前端的上傳限制與 `GET /config` 已經漂移(2026-09-07)
+
+`GET /config` 發布了 `maxFiles` / `maxSessionBytes` / `singleFileLimits`,而 `configApi.ts` 的
+註解也寫著這是「so the UI can state them rather than keep a second copy that drifts out of step
+with the server's」——但 `utils/uploadValidation.ts` 至今仍寫死 **5 個檔、5 GB、
+`.csv,.xlsx,.xls`**,三項都沒接上。
+
+這份漂移正是 `UPLOAD_LIMIT` / `UNSUPPORTED_TYPE` 會被觸發的原因:前端放行了後端不收的檔案。
+2026-09-07 判斷維持原設計(前端理論上會先擋住),只補了這兩個 code 的兜底文案。**這是已知的、
+被接受的風險,不是疏漏**——後端調整任何一項限制而前端沒跟上,使用者就會走到這個兜底。
+
+## BROWSER_REPAIR_UNSUPPORTED 尚未處理(2026-09-07)
+
+409 `BROWSER_REPAIR_UNSUPPORTED` 代表「請求 browser-error 修復,但 provider 模式不支援」。這次
+**刻意延後**,所以它目前落在未知 code 的泛用文案:使用者看到「操作失敗,請稍後再試」,不會知道
+這個環境永遠不支援。
+
+真正的解法是**事前不提議修復**——`CONTEXT.md` 對「修復(Repair)」的定義是「由系統偵測、向使用者
+提議、經使用者確認」,在不支援的環境提議一件必定失敗的事,那個提議本身就是錯的。但前端現在沒有
+任何管道知道:希望 `GET /config` 增加 `browserRepairSupported: boolean`。
