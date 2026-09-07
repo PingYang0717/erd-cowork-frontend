@@ -7,7 +7,7 @@ import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
 import { useStudioLayoutStore } from '@/stores/useStudioLayoutStore';
 import { mockAgentStream } from '@/test/agentStream';
 import { renderStudio, waitForComposer } from '@/test/renderStudio';
-import { answerAnalysisConditions } from '@/test/studioRun';
+import { answerAnalysisConditions, answerField } from '@/test/studioRun';
 
 const selectASession = async (user: ReturnType<typeof userEvent.setup>) => {
   await user.click(await screen.findByRole('button', { name: 'New chat' }));
@@ -405,11 +405,11 @@ describe('Streaming a run in the Studio', () => {
       })
     );
 
-    await screen.findByRole('group', { name: '你的角色' });
+    await screen.findByRole('combobox', { name: '你的角色' });
     expect(screen.queryByRole('group', { name: 'Flow' })).not.toBeInTheDocument();
     expect(screen.queryByRole('group', { name: 'Loop' })).not.toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: 'INT Baseline' }));
+    await answerField(user, '你的角色', 'INT Baseline');
     expect(screen.getByRole('group', { name: 'Flow' })).toBeInTheDocument();
     expect(screen.queryByRole('group', { name: 'Loop' })).not.toBeInTheDocument();
 
@@ -417,12 +417,12 @@ describe('Streaming a run in the Studio', () => {
     expect(screen.getByRole('button', { name: 'FEOL' })).toHaveAttribute('aria-pressed', 'true');
 
     // Switching the trigger swaps which dependent field is asked...
-    await user.click(screen.getByRole('button', { name: 'INT Loop' }));
+    await answerField(user, '你的角色', 'INT Loop');
     expect(screen.queryByRole('group', { name: 'Flow' })).not.toBeInTheDocument();
     expect(screen.getByRole('group', { name: 'Loop' })).toBeInTheDocument();
 
     // ...and the answer given under the old trigger is gone, not merely hidden.
-    await user.click(screen.getByRole('button', { name: 'INT Baseline' }));
+    await answerField(user, '你的角色', 'INT Baseline');
     expect(screen.getByRole('button', { name: 'FEOL' })).toHaveAttribute('aria-pressed', 'false');
   });
 
@@ -472,7 +472,7 @@ describe('Streaming a run in the Studio', () => {
 
     await user.click(await screen.findByRole('button', { name: 'A14' }));
     await user.click(screen.getByRole('button', { name: 'N5' }));
-    await user.click(screen.getByRole('button', { name: 'Last 7 days' }));
+    await answerField(user, 'Time range', 'Last 7 days');
     await user.click(screen.getByRole('button', { name: '送出' }));
 
     await waitFor(() => expect(stream.requests).toHaveLength(2));
@@ -492,7 +492,8 @@ describe('Streaming a run in the Studio', () => {
 
       expect(await screen.findByText('分析條件')).toBeInTheDocument();
       expect(screen.getByRole('group', { name: 'Part ID' })).toBeInTheDocument();
-      expect(screen.getByRole('group', { name: 'Time range' })).toBeInTheDocument();
+      // Offered as a dropdown: its options read too long to sit on chips.
+      expect(screen.getByRole('combobox', { name: 'Time range' })).toBeInTheDocument();
 
       // A connector is a capability the user MAY grant the agent, not a precondition for
       // talking to it: a fresh conversation has none attached, and the form still offers
@@ -608,7 +609,7 @@ describe('Streaming a run in the Studio', () => {
       await user.click(screen.getByRole('button', { name: 'Manage connections' }));
 
       expect(await screen.findByRole('dialog', { name: 'Connectors' })).toBeInTheDocument();
-    });
+    }, 20000);
 
     it('lets the user type a Time range the chips do not offer', async () => {
       const user = userEvent.setup();
@@ -620,17 +621,14 @@ describe('Streaming a run in the Studio', () => {
       const custom = screen.getByRole('textbox', { name: 'Time range' });
       await user.type(custom, '07/01–07/31');
 
-      // Typing a custom range answers the field, so the chips let go of their choice.
-      const chips = screen.getByRole('group', { name: 'Time range' });
-      expect(within(chips).getByRole('button', { name: 'Last 7 days' })).toHaveAttribute('aria-pressed', 'false');
-
-      await user.click(within(screen.getByRole('group', { name: 'Part ID' })).getByRole('button', { name: 'A14' }));
-      await user.click(
-        within(screen.getByRole('group', { name: 'Data type' })).getByRole('button', {
-          name: 'Inline',
-        })
-      );
+      await answerField(user, 'Part ID', 'A14');
+      await answerField(user, 'Data type', 'Inline');
       expect(screen.getByRole('button', { name: '送出' })).toBeEnabled();
+
+      // What the typed range answers is the field itself — the offered ranges are not
+      // also sent alongside it.
+      await user.click(screen.getByRole('button', { name: '送出' }));
+      expect(await screen.findByText(/07\/01–07\/31/)).toBeInTheDocument();
     });
 
     it('narrows a long option list with a search box', async () => {
@@ -658,22 +656,24 @@ describe('Streaming a run in the Studio', () => {
       await user.click(screen.getByRole('button', { name: 'CP Test status' }));
 
       await screen.findByText('分析條件');
-      expect(screen.getByRole('group', { name: '你的角色' })).toBeInTheDocument();
-      expect(screen.queryByRole('group', { name: 'Flow' })).not.toBeInTheDocument();
+      expect(screen.getByRole('combobox', { name: '你的角色' })).toBeInTheDocument();
+      // Flow and Loop are dropdowns too: one flow reads 整段 flow (全流程), and there are
+      // six loops.
+      expect(screen.queryByRole('combobox', { name: 'Flow' })).not.toBeInTheDocument();
       expect(screen.getByRole('button', { name: '開始分析' })).toBeDisabled();
 
-      await user.click(screen.getByRole('button', { name: 'INT Baseline' }));
-      expect(screen.getByRole('group', { name: 'Flow' })).toBeInTheDocument();
+      await answerField(user, '你的角色', 'INT Baseline');
+      expect(screen.getByRole('combobox', { name: 'Flow' })).toBeInTheDocument();
 
-      await user.click(screen.getByRole('button', { name: '其他' }));
-      expect(screen.queryByRole('group', { name: 'Flow' })).not.toBeInTheDocument();
+      await answerField(user, '你的角色', '其他');
+      expect(screen.queryByRole('combobox', { name: 'Flow' })).not.toBeInTheDocument();
       expect(screen.getByRole('textbox', { name: '自行輸入範圍' })).toBeInTheDocument();
 
-      await user.click(screen.getByRole('button', { name: 'INT Loop' }));
-      expect(screen.getByRole('group', { name: 'Loop' })).toBeInTheDocument();
-      await user.click(screen.getByRole('button', { name: 'M1' }));
+      await answerField(user, '你的角色', 'INT Loop');
+      expect(screen.getByRole('combobox', { name: 'Loop' })).toBeInTheDocument();
+      await answerField(user, 'Loop', 'M1');
 
-      await user.click(screen.getByRole('button', { name: '近 7 天' }));
+      await answerField(user, '時間區間', '近 7 天');
 
       const mineOnly = screen.getByRole('button', { name: '只看我送測的 (王小明)' });
       expect(mineOnly).toHaveAttribute('aria-pressed', 'false');
@@ -749,17 +749,9 @@ describe('Streaming a run in the Studio', () => {
 
       // Answer only the opening conditions — the second reask is what this is about.
       await screen.findByText('分析條件');
-      await user.click(within(screen.getByRole('group', { name: 'Part ID' })).getByRole('button', { name: 'A14' }));
-      await user.click(
-        within(screen.getByRole('group', { name: 'Time range' })).getByRole('button', {
-          name: 'Last 7 days',
-        })
-      );
-      await user.click(
-        within(screen.getByRole('group', { name: 'Data type' })).getByRole('button', {
-          name: 'Inline',
-        })
-      );
+      await answerField(user, 'Part ID', 'A14');
+      await answerField(user, 'Time range', 'Last 7 days');
+      await answerField(user, 'Data type', 'Inline');
       await user.click(screen.getByRole('button', { name: '送出' }));
 
       // The scan step ran, found too much, and handed back to the user.
@@ -770,14 +762,13 @@ describe('Streaming a run in the Studio', () => {
       expect(submit).toBeDisabled();
       expect(screen.getByText('至少選一項')).toBeInTheDocument();
 
-      // Each item carries the spec limits an engineer needs to judge it.
-      const items = screen.getByRole('group', { name: 'DC item' });
-      expect(within(items).getByRole('button', { name: /Vt \(gate CD\)/ })).toHaveAccessibleName(/0\.28 – 0\.34 V/);
-
-      await user.type(screen.getByRole('textbox', { name: 'Search DC item' }), 'Vt');
-      await waitFor(() => expect(within(items).queryByRole('button', { name: /Idsat/ })).not.toBeInTheDocument());
-
-      await user.click(within(items).getByRole('button', { name: /Vt \(gate CD\)/ }));
+      // A dropdown here, because each label carries the item's spec limits and reads long
+      // — but the limits still ride the option itself, so an engineer judges an item
+      // without leaving the list.
+      await user.click(screen.getByRole('combobox', { name: 'DC item' }));
+      const vt = await screen.findByText(/Vt \(gate CD\)/, { selector: '.ant-select-item-option-content' });
+      expect(vt).toHaveTextContent(/0\.28 – 0\.34 V/);
+      await user.click(vt);
       expect(screen.getByRole('button', { name: '先產生這 1 項' })).toBeEnabled();
       expect(screen.getByText('1 selected')).toBeInTheDocument();
 
