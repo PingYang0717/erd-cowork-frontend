@@ -31,7 +31,11 @@ export const DEFAULT_UPLOAD_LIMITS: UploadLimits = {
  *  anything it left out or sent in a shape this cannot read. */
 const withDefaults = (limits: UploadLimits | undefined): UploadLimits => {
   const perType = limits?.singleFileLimits;
-  const hasTypes = typeof perType === 'object' && perType !== null && Object.keys(perType).length > 0;
+  // `!Array.isArray`: an array's typeof is 'object' too, and `Object.keys([])` is empty
+  // while `Object.keys(['csv'])` is ['0'] — a list would pass as a limits table and cap
+  // a file called `0` at 'csv' bytes.
+  const hasTypes =
+    typeof perType === 'object' && perType !== null && !Array.isArray(perType) && Object.keys(perType).length > 0;
 
   return {
     maxFiles:

@@ -25,6 +25,8 @@
 
 **3. 403 鎖住整個 app,不開 route。** `ACCESS_DENIED`(沒有這個資源的權限)與 `ENTITLEMENT_DENIED`(帳號缺 A4 entitlement)由 `AccessDeniedGate` 蓋一層不可關閉的全屏遮罩,顯示圖案 + **後端的 message**。攔截點是 axios 的 response interceptor 與 `agentApi` 的 `!response.ok` 分支,兩條共用 `noteAccessDenial`。
 
+**2026-09-08 追記:「不再多說一次」原本只對 axios 成立。** 遮罩兩條路都會蓋上,但判斷「這是不是被拒絕」的 `isAccessDenied` 只認 axios,而串流丟出的錯誤根本沒有帶 status——狀態碼在丟出的當下就被扔掉了。於是被拒絕的一次執行仍然走進失敗路徑,把後端原話印進對話串,壓在遮罩底下。改法是讓 `httpStatus` 為兩種 transport 各自答得出來(`AgentStreamHttpError` 移到自己的模組並帶上 status),`isAccessDenied` 改問狀態碼而不是問哪一條管道。
+
 **4. 404 不再是「後端尚未就緒」。** `describeActionError` 收一個 `notFoundCopy`,由呼叫端說出不見的是什麼(對話 / Artifact / 檔案 / 資料來源);501 才保留原本的措辭。
 
 **5. 未知 code 在 dev 模式 `console.warn`,並補一條涵蓋測試。**

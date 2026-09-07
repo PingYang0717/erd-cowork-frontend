@@ -1,5 +1,6 @@
 import axios from 'axios';
 
+import { httpStatus } from '@/api/apiError';
 import { useAccessDeniedStore } from '@/stores/useAccessDeniedStore';
 
 /** Records a refusal if this failure was one.
@@ -27,8 +28,12 @@ export const noteAccessDenial = (status: number, code: string | null, message: s
  *  is already saying it, with the backend's own explanation and at full size. A toast
  *  underneath is a second, worse telling of the same thing — and one nobody can read,
  *  since the overlay covers it. The same reasoning `isCanceled` gets: not every rejected
- *  promise is a failure to report. */
-export const isAccessDenied = (error: unknown): boolean => axios.isAxiosError(error) && error.response?.status === 403;
+ *  promise is a failure to report.
+ *
+ *  Asked of the status rather than of axios: the agent stream is refused the same way and
+ *  by the same account, and it was this question — answered only for axios — that let a
+ *  refused run print the backend's own sentence into the thread, under the overlay. */
+export const isAccessDenied = (error: unknown): boolean => httpStatus(error) === 403;
 
 /** Records a refusal that rode axios, digging the backend's `{ code, message }` out of the
  *  response body. This is the interceptor's way in; the agent stream, which has the parsed
