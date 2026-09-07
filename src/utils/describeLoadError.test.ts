@@ -42,21 +42,40 @@ describe('describeLoadError', () => {
     });
   });
 
-  /** The backend's own words win, the same rule describeActionError follows. Skipped
-   *  here, a load that failed with a reason attached was reported as a bare number —
-   *  `伺服器回應 403` where the backend had already written "no access to this session". */
-  it('shows the reason the backend gave, in preference to its status code', () => {
+  /** A card has room for two lines, so it can do what a toast cannot: lead with a sentence
+   *  the reader can act on, and still keep the backend's own words. They go underneath as
+   *  small print — useful to whoever gets the screenshot, never the main claim. */
+  it("leads with this app's sentence for the code and keeps the backend's underneath", () => {
+    const expired = axiosError('ERR_BAD_REQUEST', {
+      status: 409,
+      statusText: 'Conflict',
+      data: { code: 'FILES_EXPIRED', message: 'session files purged by retention job' },
+      headers: new AxiosHeaders(),
+      config: { headers: new AxiosHeaders() },
+    });
+
+    expect(describeLoadError(expired)).toEqual({
+      heading: en.errors.loadFailedHeading,
+      detail: en.errors.byCode.FILES_EXPIRED(null),
+      technical: 'session files purged by retention job',
+    });
+  });
+
+  /** Without a code there is nothing to look up, so the status is the main line — but the
+   *  backend's sentence is still worth keeping where someone debugging can read it. */
+  it('keeps the backend sentence as small print even when it has no code to go with it', () => {
     const refused = axiosError('ERR_BAD_REQUEST', {
-      status: 403,
-      statusText: 'Forbidden',
-      data: { message: '沒有這個 session 的存取權' },
+      status: 500,
+      statusText: '',
+      data: { message: 'NullPointerException at SessionService.java:214' },
       headers: new AxiosHeaders(),
       config: { headers: new AxiosHeaders() },
     });
 
     expect(describeLoadError(refused)).toEqual({
       heading: en.errors.loadFailedHeading,
-      detail: '沒有這個 session 的存取權',
+      detail: en.errors.loadFailedDetail(500),
+      technical: 'NullPointerException at SessionService.java:214',
     });
   });
 
@@ -71,28 +90,73 @@ describe('describeLoadError', () => {
 });
 
 describe('describeActionError', () => {
-  /** The backend's own words win: it is the only party that knows what went wrong. */
-  it('passes the backend message through', () => {
-    expect(
-      describeActionError(
-        axiosError('ERR', {
-          status: 400,
-          statusText: '',
-          data: { message: '配額已滿' },
-          headers: new AxiosHeaders(),
-          config: { headers: new AxiosHeaders() },
-        })
-      )
-    ).toBe('配額已滿');
+  /** The code decides the sentence, not the message beside it. The backend names a
+   *  failure in its own terms — a duplicate-key violation here — which is the right
+   *  vocabulary for a server log and the wrong one for a toast. */
+  it("prefers this app's sentence for the code over the backend's message", () => {
+    const conflict = describeActionError(
+      axiosError('ERR', {
+        status: 409,
+        statusText: '',
+        data: { code: 'CONFLICT', message: 'E11000 duplicate key error collection: erd.sessions' },
+        headers: new AxiosHeaders(),
+        config: { headers: new AxiosHeaders() },
+      })
+    );
+
+    expect(conflict).toBe(en.errors.byCode.CONFLICT);
+    expect(conflict).not.toContain('E11000');
   });
 
-  /** 404 is the one status that means "no such endpoint", which is what this wording is
-   *  actually about. */
-  it('keeps "not ready yet" for a status that means the endpoint is absent', () => {
+  /** A message with no code beside it has nothing this app can map, and a toast is one
+   *  line — there is no room to show a generic sentence AND the backend's. The backend's
+   *  words used to win here outright; that is what put untranslated server prose in front
+   *  of users, which is the whole reason for the code table. */
+  it('gives its own generic sentence when the failure carried no code', () => {
+    const uncoded = describeActionError(
+      axiosError('ERR', {
+        status: 400,
+        statusText: '',
+        data: { message: 'Constraint violation on column quota_bytes' },
+        headers: new AxiosHeaders(),
+        config: { headers: new AxiosHeaders() },
+      })
+    );
+
+    expect(uncoded).toBe(en.errors.actionFailedWithStatus(400));
+    expect(uncoded).not.toContain('quota_bytes');
+  });
+
+  /** 404 used to mean "this endpoint is not built yet" — true while endpoints were
+   *  landing, and false now that they all have. Deleting an already-deleted Session
+   *  answered 404 and was reported as the backend not being ready, which is a claim about
+   *  the wrong thing and one a user acts on by waiting for something already there.
+   *
+   *  Only the caller knows what was missing, so only the caller can name it. 501 keeps the
+   *  old wording: that status really does mean "not implemented". */
+  it('lets the caller name what was missing, rather than calling it an unbuilt endpoint', () => {
+    const notFound = axiosError('ERR', {
+      status: 404,
+      statusText: '',
+      data: null,
+      headers: new AxiosHeaders(),
+      config: { headers: new AxiosHeaders() },
+    });
+
+    expect(describeActionError(notFound, 'This Session has already been deleted.')).toBe(
+      'This Session has already been deleted.'
+    );
+    expect(describeActionError(notFound)).toBe(en.errors.noLongerExists);
+    expect(describeActionError(notFound)).not.toBe(en.errors.notReady);
+  });
+
+  /** 501 is the status that actually says "not implemented", so it keeps the wording 404
+   *  borrowed. */
+  it('keeps "not ready yet" for the status that really means unimplemented', () => {
     expect(
       describeActionError(
         axiosError('ERR', {
-          status: 404,
+          status: 501,
           statusText: '',
           data: null,
           headers: new AxiosHeaders(),

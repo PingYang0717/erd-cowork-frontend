@@ -11,14 +11,14 @@
 
 後端還沒建好的端點,前端已各自表態,不需要任何設定:
 
-| 類別                  | 端點                             | 前端行為                                          |
-| --------------------- | -------------------------------- | ------------------------------------------------- |
-| **stub**(讀取)        | `GET /directory`                 | `src/api/` 回固定資料,不發請求                    |
-| **localStorage 偏好** | `GET`/`PATCH`/`POST /connectors` | 前端常數目錄 + 使用者選擇存 localStorage,不發請求 |
-| **無入口**            | `DELETE /artifacts/{id}/publish` | 契約與函式都在,UI 上還沒有觸發點                  |
+| 類別                  | 端點                             | 前端行為                                                         |
+| --------------------- | -------------------------------- | ---------------------------------------------------------------- |
+| **localStorage 偏好** | Connector 的選取與自訂來源       | 目錄本身走 `GET /connectors`;選了哪些、自訂了哪些存 localStorage |
+| **無入口**            | `DELETE /artifacts/{id}/publish` | 契約與函式都在,UI 上還沒有觸發點                                 |
 
-其餘端點都已接上真後端。後端補上 stub 那幾條時:把 `src/api/` 裡的固定資料換回
-`apiClient` 呼叫即可(函式與型別都已就位)。
+其餘端點都已接上真後端,執行時沒有任何不發請求的讀取。上表那兩條不是等後端的 stub:
+Connector 偏好是刻意存在本機的使用者選擇,`DELETE /artifacts/{id}/publish` 則是契約與
+函式都在、只缺 UI 入口。
 
 ## 2. 網路層:讓 `/api` 到得了後端
 
@@ -60,7 +60,7 @@ live bubble 永遠看不到逐步進度。Vite 的 http-proxy 預設不 buffer;�
 
 ## 4. 已知降級(不是 bug,是記錄過的取捨)
 
-- **反問表單降級成 chips**:真後端只送扁平 `Question[]`;六種欄位/`visibleWhen` 的
+- **反問表單降級成 chips**:真後端只送扁平 `Question[]`;四種欄位/`visibleWhen` 的
   富表單是 mock-only extension,`utils/liftQuestions.ts` 單向抬升。完整表單需後端改送
   `QuestionForm`(feedback #1)。
 - **New chat 的短暫不一致**:草稿 session 只存在於這個分頁,第一次送訊息時後端以同 id

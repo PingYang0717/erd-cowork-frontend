@@ -178,14 +178,14 @@ describe('useAgentStream', () => {
     });
     stream.push({
       type: 'QUESTION',
-      questions: [{ text: 'DC item', options: [], multiSelect: true }],
+      questions: [{ text: 'Lot', options: [], multiSelect: true }],
       form: {
-        formKey: 'dc-item-scope',
-        title: 'DC item',
-        fields: [{ key: 'items', label: 'DC item', kind: 'dcitem', required: true }],
-        submitLabel: '先產生這 3 項',
-        disabledHint: '至少選一項',
-        summaryLabel: '已選 3 項',
+        formKey: 'lot-scope',
+        title: 'Lot',
+        fields: [{ key: 'lots', label: 'Lot', kind: 'multi', required: true }],
+        submitLabel: '先產生這 3 個',
+        disabledHint: '至少選一個',
+        summaryLabel: '已選 3 個',
       },
     });
     stream.push({ type: 'ANSWER', text: 'Vt is drifting on A14.' });
@@ -207,7 +207,7 @@ describe('useAgentStream', () => {
       artifactId: 'artifact-9',
       title: 'SPC analysis — Vt (gate CD)',
     });
-    expect(result.current.state.question?.formKey).toBe('dc-item-scope');
+    expect(result.current.state.question?.formKey).toBe('lot-scope');
   });
 
   it('lifts a flat backend QUESTION into a renderable form when no form extension rides along', async () => {

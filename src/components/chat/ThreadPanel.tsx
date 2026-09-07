@@ -10,6 +10,7 @@ import { useTranslations } from '@/i18n/useTranslations';
 import { useActiveRunStore } from '@/stores/useActiveRunStore';
 import { useRepairOfferStore } from '@/stores/useRepairOfferStore';
 import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
+import type { QuestionForm } from '@/types/api';
 import { composeAnswerText } from '@/utils/composeAnswerText';
 import { showOptimisticBubble } from '@/utils/optimisticBubble';
 import ChatComposer from './ChatComposer';
@@ -180,16 +181,14 @@ const ThreadView: React.FC<ThreadViewProps> = ({ sessionId }) => {
 
   // The backend body is question-only, so a reask's answers travel as one prose
   // sentence composed from the form (labels stand in for values on the wire).
-  const question = state.question;
-
+  // Composed from the form the card was drawn with, not from `state.question`: a reask
+  // waiting when the tab was reloaded has no live state behind it, and this used to
+  // return early there — the chips responded and Send did nothing at all.
   const handleAnswer = useCallback(
-    async (answers: Answers) => {
-      if (!question) {
-        return;
-      }
-      await handleSend({ question: composeAnswerText(question, answers) });
+    async (answers: Answers, form: QuestionForm) => {
+      await handleSend({ question: composeAnswerText(form, answers) });
     },
-    [handleSend, question]
+    [handleSend]
   );
 
   // A run that ended cleanly hands over to the refetched history — the bubble it left

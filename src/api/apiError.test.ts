@@ -1,7 +1,7 @@
 import { AxiosError, AxiosHeaders, CanceledError } from 'axios';
 import { describe, expect, it } from 'vitest';
 
-import { AgentStreamHttpError } from './agentApi';
+import { AgentStreamHttpError } from './agentStreamError';
 import { errorCode, errorMessage, httpStatus, isCanceled, isOffline } from './apiError';
 
 const axiosErrorWith = (status: number, data: unknown): AxiosError =>
@@ -34,11 +34,14 @@ describe('apiError', () => {
   });
 
   it('reads the backend code and message from either transport', () => {
-    const axiosErr = axiosErrorWith(410, { code: 'FILES_EXPIRED', message: '檔案已過期' });
+    // 409, the status the backend actually answers FILES_EXPIRED with. The status is
+    // incidental to what this asserts — the code and message are read from the body — but
+    // a fixture is also a record of the wire, and this one said 410.
+    const axiosErr = axiosErrorWith(409, { code: 'FILES_EXPIRED', message: '檔案已過期' });
     expect(errorCode(axiosErr)).toBe('FILES_EXPIRED');
     expect(errorMessage(axiosErr)).toBe('檔案已過期');
 
-    const streamErr = new AgentStreamHttpError('SESSION_BUSY', 'busy');
+    const streamErr = new AgentStreamHttpError(409, 'SESSION_BUSY', 'busy');
     expect(errorCode(streamErr)).toBe('SESSION_BUSY');
     expect(errorMessage(streamErr)).toBe('busy');
 

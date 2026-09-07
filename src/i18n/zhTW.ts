@@ -186,7 +186,13 @@ export const zhTW = {
     limits: (count: number, total: string) => `最多 ${count} 個檔案 · 總計上限 ${total}`,
     expired: '已過期',
     uploadFailed: '上傳失敗，請再試一次。',
-    onlySpreadsheets: '僅支援 .csv / .xlsx',
+    /** Which types are accepted is `GET /config`'s answer, not a fact this app owns —
+     *  the sentence takes the list rather than naming them, so a type the backend starts
+     *  accepting does not need this line edited too. */
+    unsupportedType: (extensions: string) => `僅支援 ${extensions}`,
+    /** Each type has its own cap (a CSV may run to gigabytes, a spreadsheet not), so the
+     *  file is named — "over the limit" alone leaves the reader guessing which one. */
+    fileTooLarge: (name: string, limit: string) => `${name} 超過 ${limit} 上限`,
     tooManyFiles: (count: number) => `最多 ${count} 個檔案`,
     tooLarge: (total: string) => `總計上限 ${total}`,
     duplicateName: '已附加過同名檔案',
@@ -281,6 +287,32 @@ export const zhTW = {
   },
 
   errors: {
+    /** What to say for each error code the backend sends. Keyed by the wire code
+     *  verbatim (SCREAMING_CASE, ADR-0003 §5) so the two sides can be compared without a
+     *  translation table in between. These are this app's own sentences, not the
+     *  backend's — its `message` names the failure in its own terms, which is the right
+     *  vocabulary for a server log and the wrong one for the person reading the screen. */
+    byCode: {
+      CONFLICT: '這個名稱已經有人用了,換一個再試。',
+      /** The three the upload endpoint sends. Each says what to do about it — the
+       *  backend's own sentence for these is a parser position or a byte count, which
+       *  tells the reader nothing they can act on.
+       *
+       *  UPLOAD_LIMIT covers three different caps (single file, session total, file
+       *  count) under one code, so this cannot name which was hit. Splitting it is on the
+       *  backend list; until then the client's own pre-flight is what usually says
+       *  precisely, and this is the fallback for what slips past it. */
+      PARSE_ERROR: '這個檔案讀不出內容,請確認格式後重新上傳。',
+      UPLOAD_LIMIT: '檔案超出可上傳的限制,請減少檔案數量或大小後再試。',
+      UNSUPPORTED_TYPE: '不支援這種檔案格式,請改上傳試算表檔案。',
+      /** The retention period comes from `GET /config`, the same source ChatComposer
+       *  states it from. A caller outside React cannot reach it, so the entry answers
+       *  for both cases rather than letting `undefined` reach the screen. */
+      FILES_EXPIRED: (retentionDays: number | null) =>
+        retentionDays === null
+          ? '這個 Session 的檔案已超過保留期並被清除,請重新上傳後再試。'
+          : `這個 Session 的檔案已超過 ${retentionDays} 天保留期並被清除,請重新上傳後再試。`,
+    },
     offlineHeading: '無法連線到後端服務',
     offlineDetail: '請確認服務已啟動後重試。',
     loadFailedHeading: '這個區塊載入失敗',
@@ -292,6 +324,21 @@ export const zhTW = {
      *  for two. */
     offlineAction: '無法連線到後端服務，請確認服務已啟動後重試。',
     notReady: '後端尚未就緒，請稍後再試。',
+    /** A 404 with no caller-supplied wording. Says the thing is gone — which is all a 404
+     *  supports — rather than naming what it was, which only the caller knows. */
+    noLongerExists: '這個項目已不存在，請重新整理後再試。',
+    /** What was missing, said by the call site that asked for it. A 404 on its own only
+     *  supports "it is gone"; which thing it was is something only the caller knows. */
+    notFound: {
+      session: '這段對話已不存在,可能已在其他地方刪除。',
+      artifact: '這個 Artifact 已不存在,可能已被刪除。',
+      file: '這個檔案已不存在,可能已被移除。',
+      connector: '這個資料來源已不存在。',
+    },
+    /** Shown when the account itself is refused. The backend's sentence carries the
+     *  actual explanation — which entitlement, which resource — so this is only what to
+     *  say when it sent none. */
+    accessDeniedFallback: '你的帳號沒有使用這項功能的權限,請聯絡系統管理員。',
     /** The action failed and the backend said nothing readable about why. */
     actionFailed: '操作失敗,請稍後再試。',
     actionFailedWithStatus: (status: number) => `操作失敗(伺服器回應 ${status}),請稍後再試。`,
@@ -301,8 +348,17 @@ export const zhTW = {
 /** Widens what `as const` narrowed. Without this every entry's type would be the Chinese
  *  string itself, and the English copy could only satisfy it by repeating the Chinese.
  *  Functions keep their parameter list, so a translation cannot quietly take fewer
- *  arguments than the call site passes. */
-type SameShape<T> = T extends (...args: infer Args) => string ? (...args: Args) => string : string;
+ *  arguments than the call site passes.
+ *
+ *  Recurses into nested objects rather than stopping at the second level. It used to
+ *  flatten anything that was not a function to `string`, so a group like `errors.byCode`
+ *  — one entry per backend error code — typechecked as a single string and every lookup
+ *  into it was an error. */
+type SameShape<T> = T extends (...args: infer Args) => string
+  ? (...args: Args) => string
+  : T extends string
+    ? string
+    : { [Key in keyof T]: SameShape<T[Key]> };
 
 /** What every other language must supply. Derived from `zhTW` rather than hand-written:
  *  adding a string to the Chinese copy is what makes the English one incomplete, and it

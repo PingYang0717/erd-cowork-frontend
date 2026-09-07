@@ -4,7 +4,7 @@ import { AppstoreOutlined, LoadingOutlined, ThunderboltFilled, ToolOutlined } fr
 import { INTERRUPTED_TEXTS, REPAIR_RECORD_PREFIXES } from '@/constants/wireStrings';
 import type { AgentStreamState } from '@/hooks/useAgentStream';
 import type { QuestionForm, StepItem } from '@/types/api';
-import { splitAnswerByTableMarkers } from '@/utils/tableMarkers';
+import { splitAnswerByTableMarkers, stripTableMarkers } from '@/utils/tableMarkers';
 import CollapsiblePanel from './CollapsiblePanel';
 import { Elapsed, LiveElapsed } from './Elapsed';
 import HtmlCodePanel from './HtmlCodePanel';
@@ -47,7 +47,9 @@ export interface MessageBubbleProps {
   /** History reasks render read-only: the answers were never persisted, so there is
    *  nothing to re-submit. */
   questionDisabled?: boolean;
-  onAnswer?: (answers: Answers) => void;
+  /** Takes the form as well as the answers: the answer is composed FROM the form, and
+   *  the only form the thread held was the live run's — which a reload does not have. */
+  onAnswer?: (answers: Answers, form: QuestionForm) => void;
   /** True when this reply's artifact is the one the Artifact pane is showing; the
    *  chip then states the fact instead of offering the hand-off. */
   artifactShown?: boolean;
@@ -146,7 +148,13 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
   const placedTableIds = new Set(
     segments.flatMap((segment) => (segment.type === 'table' ? [segment.table.tableId] : []))
   );
-  const unplacedTables = (tables ?? []).filter((table) => !placedTableIds.has(table.tableId));
+  // A table no marker claimed still has to appear — but not while the agent is only
+  // thinking. Until the reply starts there is nothing for it to belong to, and a query
+  // result dropped into the middle of the reasoning reads as an answer that has not been
+  // given yet. Once the run ends it appears regardless, so a run that produced a table
+  // and no prose never swallows it.
+  const replyHasStarted = !streaming || deferredText !== '';
+  const unplacedTables = replyHasStarted ? (tables ?? []).filter((table) => !placedTableIds.has(table.tableId)) : [];
 
   return (
     <div className={styles.aiRow}>
@@ -189,7 +197,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
             (ADR-0003). */}
         {thinking && (
           <CollapsiblePanel label={t.chat.thinking}>
-            <p className={styles.thinkingBody}>{thinking}</p>
+            <p className={styles.thinkingBody}>{stripTableMarkers(thinking)}</p>
           </CollapsiblePanel>
         )}
         {codeText && <HtmlCodePanel code={codeText} autoScroll={streaming} />}
@@ -250,7 +258,13 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
             still arriving, the live panel above is the same content. */}
         {artifact && !codeText && <HtmlCodePanel artifactId={artifact.artifactId} />}
 
-        {question && <QuestionFormCard form={question} disabled={questionDisabled} onSubmit={onAnswer ?? (() => {})} />}
+        {question && (
+          <QuestionFormCard
+            form={question}
+            disabled={questionDisabled}
+            onSubmit={(answers) => onAnswer?.(answers, question)}
+          />
+        )}
 
         {/* Keyed on the start: a new turn gets a fresh timer rather than inheriting the
             last one's reading for up to a second. */}

@@ -2,18 +2,16 @@ import { http, HttpResponse } from 'msw';
 
 import type { AgentEvent, QuestionForm, StepItem } from '@/types/api/agentEvent';
 import type { Connector } from '@/types/api/connector';
-import type { DcItem } from '@/types/api/dcItem';
 import type { Message } from '@/types/api/message';
 import type { ScenarioKey } from '@/types/api/scenario';
 import type { ArtifactKind } from './artifactFixtures';
 import { currentUser } from './currentUser';
-import { DC_ITEM_FIXTURES, ROWS_PER_DC_ITEM } from './dcItemFixtures';
 import { artifacts, type StoredArtifact } from './handlers.artifacts';
 import { CATALOGUE } from './handlers.connectors';
 import { sessionFiles } from './handlers.files';
 import { sessionDataSources, upsertSession } from './handlers.sessions';
 import { createPersistedResource } from './persistedResource';
-import { dcItemQuestion, flattenQuestionForm, openingQuestion } from './questionFixtures';
+import { flattenQuestionForm, lotScopeQuestion, openingQuestion } from './questionFixtures';
 import { matchScenario, SCENARIO_FIXTURES, SLIDES_STEP } from './scenarioFixtures';
 
 // Cross-module writes (artifacts, session files, the session upsert) all happen inside
@@ -74,27 +72,27 @@ const attachedConnectors = (sessionId: string): Connector[] => {
 
 /** A run that has asked a question and is waiting on the user. `stage` says which
  *  question it is waiting on: an SPC run asks twice — once for its conditions, then
- *  again mid-flight once the scan finds more DC items than are worth charting at once. */
+ *  again mid-flight once the scan matches more lots than are worth charting at once. */
 interface PendingRun {
   scenarioKey: ScenarioKey;
   artifactKind: ArtifactKind;
   form: QuestionForm;
-  stage: 'conditions' | 'dc-item-scope';
+  stage: 'conditions' | 'lot-scope';
 }
 
 const pendingRuns = new Map<string, PendingRun>();
 
-/** Steps an SPC run gets through before it has to ask about DC items. */
+/** Steps an SPC run gets through before it has to ask which lots to narrow to. */
 const SCAN_STEP: StepItem = {
   stepKey: 'scan',
-  title: '掃描 wafer / DC item',
+  title: '掃描 wafer / lot',
   description: 'Inline DB · 近 7 天',
   status: 'SUCCESS',
 };
 
 const FILTER_STEP: StepItem = {
   stepKey: 'filter',
-  title: '過濾至選定 DC item',
+  title: '過濾至選定 Lot',
   description: null,
   status: 'SUCCESS',
 };
@@ -214,7 +212,11 @@ const streamRun = (
 
   return sseResponse(events);
 };
-const dcItems = createPersistedResource<DcItem>('erd-cowork:dc-items', DC_ITEM_FIXTURES);
+/** Lots the scan matched. Enough of them that narrowing is worth asking about — which is
+ *  the only reason this reask exists. */
+const LOT_FIXTURES = ['A14-0731', 'A14-0802', 'A14-0815', 'N5-0726', 'N5-0808', 'N3-0819'];
+/** Rough per-lot row count, only used to make the reask's 「資料量偏大」 honest. */
+const ROWS_PER_LOT = 4200;
 
 export const messageHandlers = [
   http.post('/api/sessions/:sessionId/messages', async ({ params, request }) => {
@@ -262,8 +264,8 @@ export const messageHandlers = [
     if (pending) {
       // An SPC run scans first, then asks again before charting anything.
       if (pending.stage === 'conditions' && pending.scenarioKey === 'spc') {
-        const form = dcItemQuestion(dcItems.read(), ROWS_PER_DC_ITEM);
-        pendingRuns.set(sessionId, { ...pending, form, stage: 'dc-item-scope' });
+        const form = lotScopeQuestion(LOT_FIXTURES, ROWS_PER_LOT);
+        pendingRuns.set(sessionId, { ...pending, form, stage: 'lot-scope' });
 
         return sseResponse([
           { ...SCAN_STEP, type: 'STEP', status: 'RUNNING' },
@@ -273,7 +275,7 @@ export const messageHandlers = [
       }
 
       pendingRuns.delete(sessionId);
-      const extraSteps = pending.stage === 'dc-item-scope' ? [SCAN_STEP, FILTER_STEP] : [];
+      const extraSteps = pending.stage === 'lot-scope' ? [SCAN_STEP, FILTER_STEP] : [];
       return streamRun(sessionId, pending.scenarioKey, pending.artifactKind, extraSteps);
     }
 

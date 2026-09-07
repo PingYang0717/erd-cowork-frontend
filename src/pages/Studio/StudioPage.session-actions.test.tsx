@@ -26,13 +26,19 @@ describe('Session row actions', () => {
   /** Every mutation in the app hangs its failure on `onError: toastError`, and until the
    *  shared harness carried `AntdApp` none of them could be asserted: `App.useApp()`
    *  answers with an empty object outside it, so `message.error?.()` did nothing and a
-   *  passing test would have proved nothing. The backend's own wording is what the user
-   *  reads — it is how an endpoint says it is not there yet (ADR-0006). */
-  it('tells the user what the backend said when a write fails', async () => {
+   *  passing test would have proved nothing.
+   *
+   *  What the toast says is now decided by the backend's `code`, not by the sentence
+   *  beside it. This used to show the message verbatim, which is how a duplicate-key
+   *  violation phrased for a server log ended up being the thing a user was told. */
+  it("shows this app's sentence for the backend's code, not the backend's own wording", async () => {
     const user = userEvent.setup();
     server.use(
       http.patch('/api/sessions/:id/pin', () =>
-        HttpResponse.json({ code: 'E_PIN', message: '釘選失敗:配額已滿' }, { status: 400 })
+        HttpResponse.json(
+          { code: 'CONFLICT', message: 'E11000 duplicate key error collection: erd.sessions' },
+          { status: 409 }
+        )
       )
     );
     renderStudio();
@@ -40,7 +46,8 @@ describe('Session row actions', () => {
     await openMenuOf(user, 'Defect pareto — W12');
     await user.click(await screen.findByRole('menuitem', { name: /Pin/ }));
 
-    expect(await screen.findByText('釘選失敗:配額已滿')).toBeInTheDocument();
+    expect(await screen.findByText(en.errors.byCode.CONFLICT)).toBeInTheDocument();
+    expect(screen.queryByText(/E11000/)).not.toBeInTheDocument();
   });
 
   /** A backend that answers with nothing readable still has to say something. */
@@ -62,6 +69,23 @@ describe('Session row actions', () => {
     expect(screen.queryByText(en.errors.notReady)).not.toBeInTheDocument();
     // The row stays: a delete that failed did not happen.
     expect(screen.getByRole('button', { name: 'Defect pareto — W12' })).toBeInTheDocument();
+  });
+
+  /** The failure this names: a Session deleted in another tab, then deleted again here.
+   *  The 404 that comes back used to be reported as the backend not being ready — a claim
+   *  about the wrong thing, and one the reader acts on by waiting for something that is
+   *  not coming. Only this call site knows the missing thing was a conversation. */
+  it('says the conversation is already gone when the backend answers 404', async () => {
+    const user = userEvent.setup();
+    server.use(http.patch('/api/sessions/:id/soft-delete', () => new HttpResponse(null, { status: 404 })));
+    renderStudio();
+
+    await openMenuOf(user, 'Defect pareto — W12');
+    await user.click(await screen.findByRole('menuitem', { name: /Delete/ }));
+    await user.click(await screen.findByRole('button', { name: 'Delete' }));
+
+    expect(await screen.findByText(en.errors.notFound.session)).toBeInTheDocument();
+    expect(screen.queryByText(en.errors.notReady)).not.toBeInTheDocument();
   });
 
   it('renames a session through the menu, and the row shows the new name', async () => {

@@ -47,13 +47,13 @@ export const SCENARIO_FIXTURES: Record<ScenarioKey, ScenarioFixture> = {
       {
         stepKey: '1',
         title: 'Connect data source',
-        description: 'Inline DB · selected DC items',
+        description: 'Inline DB · selected lots',
         status: 'SUCCESS',
       },
       {
         stepKey: '2',
         title: 'Apply query filters',
-        description: 'Scan wafer / DC item data',
+        description: 'Scan wafer / lot data',
         status: 'SUCCESS',
       },
       {

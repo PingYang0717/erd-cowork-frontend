@@ -69,12 +69,16 @@ class ErrorBoundary extends Component<Props, State> {
  *  on screen left the panel in the old one until something remounted it. */
 const ErrorPanel: React.FC<{ error: Error; onRetry: () => void }> = ({ error, onRetry }) => {
   const t = useTranslations();
-  const { heading, detail } = describeLoadError(error, t.errors);
+  const { heading, detail, technical } = describeLoadError(error, t.errors);
 
   return (
     <div role="alert" className={styles.panel}>
       <p className={styles.heading}>{heading}</p>
       <p className={styles.message}>{detail}</p>
+      {/* The backend's own sentence, kept but demoted. It names the failure in the
+          backend's terms — a stack frame, a constraint name — which is what someone
+          reading a screenshot needs and not what the reader should be acting on. */}
+      {technical !== undefined && <p className={styles.technical}>{technical}</p>}
       <div className={styles.actions}>
         <button type="button" className={styles.retry} onClick={onRetry}>
           {t.common.retry}

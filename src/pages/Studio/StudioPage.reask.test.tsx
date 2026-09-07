@@ -1,0 +1,143 @@
+import { http, HttpResponse } from 'msw';
+import { beforeEach, describe, expect, it } from 'vitest';
+import { act, screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+
+import { server } from '@/mocks/server';
+import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
+import { useStudioLayoutStore } from '@/stores/useStudioLayoutStore';
+import { mockAgentStream } from '@/test/agentStream';
+import { renderStudio, waitForComposer } from '@/test/renderStudio';
+
+const PART_ID_REASK = JSON.stringify([{ text: 'Part ID', options: ['A14', 'A16'], multiSelect: false }]);
+
+const message = (over: { id: string; sender: 'USER' | 'AI'; text?: string; questionsJson?: string | null }) => ({
+  text: '',
+  stepsJson: null,
+  artifactId: null,
+  createdAt: new Date(0).toISOString(),
+  artifactTitle: null,
+  questionsJson: null,
+  ...over,
+});
+
+/** The backend remembers the reask it asked — `questionsJson` on the AI message. The
+ *  mock's own store never sets it, so a suite that needs history to carry one says so. */
+const historyOf = (...messages: ReturnType<typeof message>[]) => {
+  server.use(
+    http.get('/api/sessions/:sessionId', ({ params }) =>
+      HttpResponse.json({
+        id: params.sessionId,
+        title: 'SPC',
+        createdAt: new Date(0).toISOString(),
+        messages,
+        files: [],
+        dataSourceIds: [],
+      })
+    )
+  );
+};
+
+const chipIn = (group: HTMLElement, name: string) => within(group).getByRole('button', { name });
+
+/** A reask the run is still waiting on has to be answerable, wherever it is rendered from.
+ *
+ *  History reasks are read-only by design: answers are never persisted, so an old card can
+ *  only show what was asked, not what was chosen (CONTEXT.md, 分析條件). That reasoning
+ *  covers an ANSWERED reask. It used to be applied to every history message, including the
+ *  trailing one the agent is blocked on — so once the post-run refetch landed, the question
+ *  the user was being asked arrived on screen dead. */
+describe('A reask the run is waiting on', () => {
+  beforeEach(() => {
+    useStudioLayoutStore.setState(useStudioLayoutStore.getInitialState());
+    useSessionSelectionStore.setState(useSessionSelectionStore.getInitialState());
+  });
+
+  it('is answerable when it comes from history, with no live run at all', async () => {
+    const user = userEvent.setup();
+    historyOf(message({ id: 'm1', sender: 'AI', questionsJson: PART_ID_REASK }));
+    renderStudio();
+
+    // An existing session, not a draft: a draft never fetches a detail (ADR-0005).
+    await user.click(await screen.findByRole('button', { name: 'Defect pareto — W12' }));
+    await waitForComposer();
+
+    const group = await screen.findByRole('group', { name: 'Part ID' });
+    await user.click(chipIn(group, 'A14'));
+
+    expect(chipIn(group, 'A14')).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  /** The reported symptom. When the run ends on a question the live bubble stays on
+   *  screen, and the refetched history now carries the same reask — two identical cards,
+   *  the upper one dead. The user reaches for the one they see. */
+  it('appears exactly once after the run ends, and that one answers', async () => {
+    const user = userEvent.setup();
+    const stream = mockAgentStream();
+    renderStudio();
+
+    await user.click(await screen.findByRole('button', { name: 'New chat' }));
+    await screen.findByRole('button', { name: 'New analysis' });
+    await waitForComposer();
+    await user.click(screen.getByRole('button', { name: 'SPC analysis' }));
+
+    // From here the backend remembers the reask, the way a real one does.
+    historyOf(
+      message({ id: 'm1', sender: 'USER', text: 'Run an SPC analysis on Vt (gate CD).' }),
+      message({ id: 'm2', sender: 'AI', questionsJson: PART_ID_REASK })
+    );
+
+    act(() => stream.push({ type: 'QUESTION', questions: JSON.parse(PART_ID_REASK) }));
+    // The run is blocked on the answer, so the backend closes the stream here.
+    act(() => stream.close());
+
+    await screen.findByRole('group', { name: 'Part ID' });
+    await waitFor(() => expect(screen.getByText('Run an SPC analysis on Vt (gate CD).')).toBeInTheDocument());
+
+    expect(screen.getAllByRole('group', { name: 'Part ID' })).toHaveLength(1);
+
+    const group = screen.getByRole('group', { name: 'Part ID' });
+    await user.click(chipIn(group, 'A14'));
+    expect(chipIn(group, 'A14')).toHaveAttribute('aria-pressed', 'true');
+  }, 20000);
+
+  /** Selecting a chip is not answering. The submit path composes the answer from the
+   *  FORM, and the only form ThreadPanel held was the live run's — which a reload does
+   *  not have. Pressing Send there did nothing at all. */
+  it('actually sends the answer when the reask came from history', async () => {
+    const user = userEvent.setup();
+    const stream = mockAgentStream();
+    historyOf(message({ id: 'm1', sender: 'AI', questionsJson: PART_ID_REASK }));
+    renderStudio();
+
+    await user.click(await screen.findByRole('button', { name: 'Defect pareto — W12' }));
+    await waitForComposer();
+
+    const group = await screen.findByRole('group', { name: 'Part ID' });
+    await user.click(chipIn(group, 'A14'));
+    await user.click(screen.getByRole('button', { name: 'Send' }));
+
+    await waitFor(() => expect(stream.requests).toHaveLength(1));
+    expect(stream.requests[0]).toMatchObject({ question: 'Part ID：A14' });
+  }, 20000);
+
+  /** The guard against over-fixing. A reask with the user's reply after it was answered
+   *  long ago; the answers were never stored, so the card cannot show what was chosen and
+   *  must not invite a second answer to a question that is already behind the reader. */
+  it('stays read-only once it has been answered', async () => {
+    const user = userEvent.setup();
+    historyOf(
+      message({ id: 'm1', sender: 'AI', questionsJson: PART_ID_REASK }),
+      message({ id: 'm2', sender: 'USER', text: 'Part ID：A14' })
+    );
+    renderStudio();
+
+    await user.click(await screen.findByRole('button', { name: 'Defect pareto — W12' }));
+    await waitForComposer();
+
+    const group = await screen.findByRole('group', { name: 'Part ID' });
+    await user.click(chipIn(group, 'A14'));
+
+    expect(chipIn(group, 'A14')).toHaveAttribute('aria-pressed', 'false');
+  });
+});

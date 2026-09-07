@@ -40,3 +40,13 @@
   align-items: center;
   gap: 6px;
 }
+
+/* Small print under the detail: present for whoever is debugging, quiet enough that it
+   never competes with the sentence above it for the reader's attention. */
+.technical {
+  margin: 4px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--erd-color-text-quaternary, #bfbfbf);
+  word-break: break-word;
+}

@@ -9,7 +9,7 @@
  *  named per-transport, each caller knowing only its own. */
 import axios from 'axios';
 
-import { AgentStreamHttpError } from '@/api/agentApi';
+import { AgentStreamHttpError } from '@/api/agentStreamError';
 
 /** Nothing came back at all: the backend is not answering (or the request never
  *  left). Note a cancelled axios request also has no response — callers that care
@@ -41,9 +41,18 @@ export const isCanceled = (error: unknown): boolean =>
  *  someone acts on by giving up looking for it. */
 export const isNotFound = (error: unknown): boolean => httpStatus(error) === 404;
 
-/** The HTTP status the backend answered with, or null when there was no answer. */
-export const httpStatus = (error: unknown): number | null =>
-  axios.isAxiosError(error) && error.response !== undefined ? error.response.status : null;
+/** The HTTP status the backend answered with, or null when there was no answer.
+ *
+ *  Both transports, like everything else here. The stream used to drop the status at the
+ *  point it threw, so every question asked of a stream failure by status — is this a
+ *  refusal, is this a 404 — was answered "no answer came back" for a request the backend
+ *  had in fact answered. */
+export const httpStatus = (error: unknown): number | null => {
+  if (error instanceof AgentStreamHttpError) {
+    return error.status;
+  }
+  return axios.isAxiosError(error) && error.response !== undefined ? error.response.status : null;
+};
 
 /** The backend's own error code (`FILES_EXPIRED` and friends), wherever it rode. */
 export const errorCode = (error: unknown): string | null => {
@@ -57,8 +66,14 @@ export const errorCode = (error: unknown): string | null => {
   return null;
 };
 
-/** The backend's own message, when it sent one. The backend's words win over
- *  anything this client would compose — it knows why it refused. */
+/** The backend's own message, when it sent one.
+ *
+ *  Its words no longer win outright (ADR-0016): they name the failure in the backend's
+ *  terms — a constraint name, a stack frame — which is the right vocabulary for a server
+ *  log and the wrong one for the person reading the screen. `describeErrorCode` reads the
+ *  code instead, and this is what is left over: the error card's small print, the thread
+ *  bubble's fallback for a code nothing recognises, and the 403 screen, where the backend
+ *  really is the only party that knows which resource or entitlement was refused. */
 export const errorMessage = (error: unknown): string | null => {
   if (error instanceof AgentStreamHttpError) {
     return error.message;

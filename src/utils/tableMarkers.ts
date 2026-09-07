@@ -17,6 +17,14 @@ export interface AnswerTableSegment {
 
 export type AnswerSegment = AnswerTextSegment | AnswerTableSegment;
 
+/** Removes every marker from text that is shown as-is.
+ *
+ *  The thinking panel prints its text verbatim — no Markdown, no marker resolution — so a
+ *  marker the agent happens to mention while reasoning reached the reader raw. Same rule
+ *  as the answer's: the marker is display plumbing and never reader-facing. */
+export const stripTableMarkers = (text: string): string =>
+  text.replace(new RegExp(TABLE_MARKER_PATTERN.source, 'g'), '').replace(/  +/g, ' ');
+
 /** Splits an answer on its `[[table:<tableId>]]` markers, resolving each id against the
  *  TABLE events the run produced. A marker whose table never arrived is dropped — the
  *  raw marker text must never reach the reader. */

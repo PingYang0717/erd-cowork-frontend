@@ -1,9 +1,10 @@
-import { screen, within } from '@testing-library/react';
+import { expect } from 'vitest';
+import { screen, waitFor, within } from '@testing-library/react';
 import type userEvent from '@testing-library/user-event';
 
 type User = ReturnType<typeof userEvent.setup>;
 
-const SUBMIT_LABEL = /^(送出|開始分析|先產生這 \d+ 項)$/;
+const SUBMIT_LABEL = /^(送出|開始分析|先產生這 \d+ 個)$/;
 
 const waitForForm = async (): Promise<HTMLElement | null> => {
   try {
@@ -13,22 +14,49 @@ const waitForForm = async (): Promise<HTMLElement | null> => {
   }
 };
 
-const chip = (groupName: string, chipName: string | RegExp) => {
-  return within(screen.getByRole('group', { name: groupName })).getByRole('button', {
-    name: chipName,
-  });
+/** A field is offered either as a row of chips or as a dropdown, depending on how many
+ *  options it has and how long they read (`QuestionFormCard.rendersAsDropdown`). Tests
+ *  answer the question, not the widget: this finds whichever control is there, so moving
+ *  a field across that threshold does not rewrite every suite that runs a scenario. */
+const hasField = (label: string): boolean =>
+  screen.queryByRole('group', { name: label }) !== null || screen.queryByRole('combobox', { name: label }) !== null;
+
+const matches = (text: string, option: string | RegExp) =>
+  typeof option === 'string' ? text === option : option.test(text);
+
+/** Answers one field, whichever control it is offered as — chips or a dropdown
+ *  (`QuestionFormCard.rendersAsDropdown`). Exported so suites that drive a form directly
+ *  do not each re-derive which shape a field happens to be in. */
+export const answerField = async (user: User, label: string, option: string | RegExp): Promise<void> => {
+  const dropdown = screen.queryByRole('combobox', { name: label });
+  if (dropdown) {
+    await user.click(dropdown);
+    // Scoped to the option rows rather than looked up by title across the document: the
+    // open list is portalled outside the card, and a title match there also hits the
+    // chosen-value element and any row whose label merely contains the same words.
+    const row = await waitFor(() => {
+      const rows = Array.from(document.querySelectorAll<HTMLElement>('.ant-select-item-option')).filter((node) =>
+        matches(node.textContent ?? '', option)
+      );
+      expect(rows.length).toBeGreaterThan(0);
+      return rows[0];
+    });
+    await user.click(row);
+    return;
+  }
+  await user.click(within(screen.getByRole('group', { name: label })).getByRole('button', { name: option }));
 };
 
 const answerOneForm = async (user: User, submit: HTMLElement): Promise<void> => {
-  if (screen.queryByRole('group', { name: 'Part ID' })) {
-    await user.click(chip('Part ID', 'A14'));
-    await user.click(chip('Time range', 'Last 7 days'));
-    await user.click(chip('Data type', 'Inline'));
-  } else if (screen.queryByRole('group', { name: '你的角色' })) {
-    await user.click(chip('你的角色', 'INT Baseline'));
-    await user.click(chip('時間區間', '近 7 天'));
-  } else if (screen.queryByRole('group', { name: 'DC item' })) {
-    await user.click(chip('DC item', /Vt \(gate CD\)/));
+  if (hasField('Part ID')) {
+    await answerField(user, 'Part ID', 'A14');
+    await answerField(user, 'Time range', 'Last 7 days');
+    await answerField(user, 'Data type', 'Inline');
+  } else if (hasField('你的角色')) {
+    await answerField(user, '你的角色', 'INT Baseline');
+    await answerField(user, '時間區間', '近 7 天');
+  } else if (hasField('Lot')) {
+    await answerField(user, 'Lot', 'A14-0731');
   }
 
   // The submit label carries a live count, so re-read it rather than reusing the node.
@@ -37,7 +65,7 @@ const answerOneForm = async (user: User, submit: HTMLElement): Promise<void> => 
 };
 
 /** Answers every reask a run raises, in order, with a plausible set of conditions.
- *  SPC asks twice (conditions, then which DC items to chart first); Inline and CP Test
+ *  SPC asks twice (conditions, then which lots to chart first); Inline and CP Test
  *  ask once; Daily monitor does not ask at all, so this is a no-op there. */
 export const answerAnalysisConditions = async (user: User): Promise<void> => {
   for (let round = 0; round < 3; round += 1) {

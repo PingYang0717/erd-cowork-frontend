@@ -110,15 +110,19 @@ scenario 與 kind，而非重新從文字推斷。
 串流**開始前**的失敗走一般 HTTP：非 2xx 加上 JSON body `{ code, message }`。串流**開始後**
 的失敗走 ERROR 事件。使用者主動中止走 `AbortSignal`，與非預期斷線在 UI 上區分顯示。
 
+**403 兩條路都攔。** `ACCESS_DENIED`（沒有這個資源的權限）與 `ENTITLEMENT_DENIED`（帳號缺 A4
+entitlement）在 axios interceptor 與這條 raw fetch 各接一次（`api/accessDenied.ts`），把 app 蓋住。
+攔的是 **status 403 本身**，不是 code 列表：帶著沒見過的 code 的 403 仍然是帳號被拒。
+
 ### QuestionForm
 
 ```
 QuestionForm {
-  formKey: string          // 'spc-conditions' | 'cptest-conditions' | 'dc-item-scope'
-  title: string            // 「分析條件」/「DC item」
-  intro?: string           // 「約 N 個 DC item(約 M 筆),資料量偏大。要先看哪些 DC Item?…」
+  formKey: string          // 'spc-conditions' | 'cptest-conditions' | 'lot-scope'
+  title: string            // 「分析條件」/「Lot」
+  intro?: string           // 「掃描到 N 個 Lot(約 M 筆),資料量偏大。要先看哪幾個 Lot?」
   fields: QuestionField[]
-  submitLabel: string      // 「送出」/「開始分析」/「先產生這 N 項」
+  submitLabel: string      // 「送出」/「開始分析」/「先產生這 N 個」
   disabledHint: string     // 「請先選 part id、time range、data type」
   summaryLabel: string     // 「已設定 N 項 分析條件」
 }
@@ -126,40 +130,46 @@ QuestionForm {
 QuestionField {
   key: string
   label: string
-  kind: 'single' | 'multi' | 'text' | 'boolean' | 'daterange' | 'dcitem'
+  kind: 'single' | 'multi' | 'text' | 'boolean'
   options?: QuestionOption[]
   required: boolean
   placeholder?: string
   hint?: string            // 「可多選,只顯示已連線的來源。」
-  allowCustom?: boolean    // Time range 自訂輸入、DC item 自訂新增
+  allowCustom?: boolean    // Time range 自訂輸入
   visibleWhen?: { field: string; equals: string }
 }
 
-QuestionOption { value: string; label: string; hint?: string; unit?: string; lo?: number; hi?: number }
+QuestionOption { value: string; label: string; hint?: string }
 ```
 
 **欄位組成是契約，選項值是資料。** 哪些欄位要問由 Scenario 固定，但 `options` 在執行時才
 填：SPC 條件表單的 `Data type` 選項是當下 `status === 'connected'` 的 Connector 名稱（無任何
-連線時 fallback `["Inline"]`），DC item 卡的選項來自 DC Item 清單。這是「Connector 與情境按鈕
+連線時 fallback `["Inline"]`）。這是「Connector 與情境按鈕
 連動」的實際機制——Connector 狀態決定反問卡上有哪些選項，而不是按鈕去設定 Connector。
 
 `visibleWhen` 表達欄位相依：CP Test 的 `Flow` 只在 `role === 'baseline'` 時顯示、`Loop` 只在
 `role === 'loop'` 時顯示。上游欄位值改變時，所有依賴它的下游欄位答案清空。
 
-**一次執行可以反問多次。** SPC 開場問一次分析條件，執行途中發現 DC Item 過多時再問一次。
+**一次執行可以反問多次。** SPC 開場問一次分析條件，執行途中發現資料量過大時再問一次（要先看哪幾個 Lot）。
 執行結束後「補齊全部 N 項」的提議不是反問，不走 QUESTION。
 
 ### 後端還沒有的端點怎麼辦
 
 app 執行時不再有 mock 後端（[ADR-0006](../adr/0006-no-mock-backend-at-runtime.md)），
-而且 **UI 不再有任何 disabled 的入口**：所有動作直接打 API，端點還沒落地就把後端的
-`{ code, message }` 以 toast 呈現（`describeActionError`）——錯誤訊息就是「還沒 ready」
-的告知方式。例外兩類：
+而且 **UI 不再有任何 disabled 的入口**：所有動作直接打 API，失敗以 toast 呈現
+（`describeActionError`）。
 
-| 類別                  | 端點/功能                                   | 前端行為                                                            |
-| --------------------- | ------------------------------------------- | ------------------------------------------------------------------- |
-| **stub**（讀取）      | `GET /connectors`（目錄）、`GET /directory` | `src/api/` 直接回固定資料，不發請求                                 |
-| **localStorage 偏好** | Connector 的連線/自訂來源選取               | 使用者偏好存 localStorage（`erd-cowork:connector-prefs`），不打後端 |
+**2026-09-07 起，toast 說什麼由 `code` 決定，不再是後端的 `message`**
+（[ADR-0016](../adr/0016-error-copy-is-owned-by-the-frontend.md)）。`errors.byCode` 收
+`CONFLICT` / `FILES_EXPIRED` / `PARSE_ERROR` / `UPLOAD_LIMIT` / `UNSUPPORTED_TYPE`；認不得的
+code 得到泛用文案，後端原話降級成錯誤卡的小字。「端點還沒 ready」現在只由 **501** 表達——404
+改成「這個東西不在了」，由呼叫端說出不見的是什麼。403 不走 toast，它蓋一層不可關閉的全屏遮罩。
+
+例外兩類：
+
+| 類別                  | 端點/功能                     | 前端行為                                                            |
+| --------------------- | ----------------------------- | ------------------------------------------------------------------- |
+| **localStorage 偏好** | Connector 的連線/自訂來源選取 | 使用者偏好存 localStorage（`erd-cowork:connector-prefs`），不打後端 |
 
 **Regenerate 已移除**：後端沒有 regenerate 概念；迭代＝對話裡再送一句話（自動帶
 `baseArtifactId`），產物是下一個版本。
@@ -179,8 +189,8 @@ upsert（[ADR-0005](../adr/0005-new-chat-is-a-client-side-draft.md)）。
 ### QUESTION 事件與反問表單的降級
 
 QUESTION 的線路承載是後端的扁平 `Question[]`（純字串選項、`multiSelect`、無欄位種類與
-相依）。mock 額外帶上 `form?: QuestionForm` extension，讓分析條件表單（六種欄位、
-`visibleWhen`、DC item 規格上下限）維持運作；真後端只送扁平清單時，
+相依）。mock 額外帶上 `form?: QuestionForm` extension，讓分析條件表單（四種欄位、
+`visibleWhen`、選項附帶說明）維持運作；真後端只送扁平清單時，
 `utils/liftQuestions.ts` 把它抬升成一排 chip 的表單——**單向且失真**。
 
 **要驅動完整的分析條件表單，後端必須改送 `QuestionForm` 本身**；連同結構化
@@ -199,7 +209,7 @@ QUESTION 的線路承載是後端的扁平 `Question[]`（純字串選項、`mul
 | DELETE | `/artifacts/:id/publish` | —                                                            | `Artifact`                            | 已實作   |
 | DELETE | `/artifacts/:id`         | —                                                            | 200                                   | 已實作   |
 | POST   | `/artifacts/:id/share`   | `{ targetIds: string[] }`                                    | `{ url: string; artifact: Artifact }` | 已實作   |
-| GET    | `/directory`             | —                                                            | `DirectoryEntry[]`                    | stub     |
+| GET    | `/hr/employeesAndOrgs`   | `?keyword=`                                                  | `{ content: DirectoryEntry[] }`       | ✅ 已接  |
 
 **`Artifact` 定版（2026-08-27）**：
 
@@ -266,23 +276,23 @@ itself is gone.
 `true`) and returns a shareable URL pointing at its full-page view
 (`/cowork/artifact/:id`).
 `targetIds` reference `DirectoryEntry.id` values (department code, section code, or
-NT account) from `GET /directory`; the mock backend does not model per-recipient
+NT account) from `GET /hr/employeesAndOrgs`; the mock backend does not model per-recipient
 delivery, it only flips the sender's own Artifact to shared. A recipient's "Shared to
 me" view is seeded directly (an Artifact whose `ownerId` is someone else, so `isOwn`
 comes back false), not produced by this endpoint.
 
-`GET /directory` returns the searchable department / section / person dataset backing
+`GET /hr/employeesAndOrgs` returns the searchable department / section / person dataset backing
 the share dialog's recipient picker (`DirectoryEntry.kind` is `'department'`,
 `'section'`, or `'person'`; `label` is the searchable display text — the raw code for
 departments/sections, `"<NT account> · <中文名>"` for people).
 
 ## Connector
 
-| Method | Path              | Request                       | Response          | 後端狀態 |
-| ------ | ----------------- | ----------------------------- | ----------------- | -------- |
-| GET    | `/connectors`     | —                             | `Connector[]`     | stub     |
-| PATCH  | `/connectors/:id` | `{ status: ConnectorStatus }` | `Connector`       | stub     |
-| POST   | `/connectors`     | `{ name: string }`            | `Connector` (201) | stub     |
+| Method | Path              | Request                       | Response          | 後端狀態   |
+| ------ | ----------------- | ----------------------------- | ----------------- | ---------- |
+| GET    | `/connectors`     | —                             | `Connector[]`     | ✅ 已接    |
+| PATCH  | `/connectors/:id` | `{ status: ConnectorStatus }` | `Connector`       | 前端未呼叫 |
+| POST   | `/connectors`     | `{ name: string }`            | `Connector` (201) | 前端未呼叫 |
 
 `Connector.status` is one of `connected` / `available` / `expired` / `no_access`.
 `PATCH /connectors/:id` connects or disconnects a data source from the Studio
@@ -296,12 +306,6 @@ returns that connector with 200 instead of creating a duplicate. Created connect
 are `custom: true`, category `Custom`, and start `connected`.
 
 ## Schedule
-
-| Method | Path | Request | Response |
-| ------ | ---- | ------- | -------- |
-|        |      |         |          |
-
-## DC Item
 
 | Method | Path | Request | Response |
 | ------ | ---- | ------- | -------- |
