@@ -88,6 +88,14 @@ _Avoid_: TTL, 過期刪除（紀錄沒有被刪，被清掉的只有內容——
 SPC 分析中可選擇的管制項目（量測參數），例如 Idsat、Vt (gate CD)、Contact Rs，各自有上下限（`lo`/`hi`）。當一次 SPC 執行涉及的 DC Item 過多時，Agent 會以 DC item 卡反問使用者先看哪幾項。
 _Avoid_: Parameter, Metric
 
+**錯誤代碼（Error code）**:
+後端錯誤回應 `{ code, message }` 裡的 `code`。它是**前端唯一據以決定錯誤文案的東西**——同一個 code 在畫面上永遠是同一句話,由前端自己寫、中英雙語(`errors.byCode`)。`message` 是後端用自己的語彙描述那次失敗,給維運看的,只在兩個地方上畫面:錯誤卡的小字,以及 403 的存取遭拒畫面(那裡只有後端知道是哪個資源、哪個 entitlement)。
+_Avoid_: 錯誤訊息（那是 `message`,是不同的東西）、HTTP status（status 說的是「哪一類失敗」,code 說的是「哪一件事」）
+
+**存取遭拒（Access denied）**:
+帳號層級的拒絕,以 403 送達,分兩種:`ACCESS_DENIED`（沒有這個資源的權限）與 `ENTITLEMENT_DENIED`（帳號缺 A4 entitlement）。它是**關於帳號的事實,不是關於那個剛好撞到它的請求**——所以它蓋住整個 app 而不是讓某一格失敗,而且背景請求撞到也一樣蓋。畫面不可關閉;回去的路是重新整理,那會重新問一次後端。
+_Avoid_: 登入失敗、未授權（那是身分沒被認出來,這裡身分是清楚的,被拒的是權限）
+
 ## Semiconductor process language
 
 **Lot**:

@@ -1,3 +1,4 @@
+import { noteAccessDenial } from '@/api/accessDenied';
 import { API_BASE_URL, getAuthHeaders } from '@/api/apiClient';
 import type { AgentEvent } from '@/types/api/agentEvent';
 import { createSseParser } from '@/utils/sseParser';
@@ -58,6 +59,8 @@ export const streamAgentMessage = async function* (args: SendMessageArgs): Async
     } catch {
       // Not a JSON body — the status code alone is all we can report.
     }
+    // Same refusal, other transport: this path never touches the axios interceptor.
+    noteAccessDenial(response.status, code, message);
     throw new AgentStreamHttpError(code, message);
   }
 

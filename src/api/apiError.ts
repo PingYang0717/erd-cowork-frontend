@@ -57,8 +57,14 @@ export const errorCode = (error: unknown): string | null => {
   return null;
 };
 
-/** The backend's own message, when it sent one. The backend's words win over
- *  anything this client would compose — it knows why it refused. */
+/** The backend's own message, when it sent one.
+ *
+ *  Its words no longer win outright (ADR-0016): they name the failure in the backend's
+ *  terms — a constraint name, a stack frame — which is the right vocabulary for a server
+ *  log and the wrong one for the person reading the screen. `describeErrorCode` reads the
+ *  code instead, and this is what is left over: the error card's small print, the thread
+ *  bubble's fallback for a code nothing recognises, and the 403 screen, where the backend
+ *  really is the only party that knows which resource or entitlement was refused. */
 export const errorMessage = (error: unknown): string | null => {
   if (error instanceof AgentStreamHttpError) {
     return error.message;

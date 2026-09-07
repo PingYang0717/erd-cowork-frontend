@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { addConnector as addConnectorRequest, readRememberedSelection, rememberSelection } from '@/api/connectorApi';
 import { attachDataSource, detachDataSource } from '@/api/sessionApi';
+import { useTranslations } from '@/i18n/useTranslations';
 import type { SessionDetail } from '@/types/api/session';
 import { useActionErrorToast } from './useActionErrorToast';
 import { connectorsQueryKey } from './useConnectors';
@@ -16,7 +17,7 @@ import { sessionDetailQueryKey } from './useSessionDetail';
  *  that is where attachment lives. */
 export const useSetSessionDataSource = (sessionId: string) => {
   const queryClient = useQueryClient();
-  const toastError = useActionErrorToast();
+  const toastError = useActionErrorToast(useTranslations().errors.notFound.session);
 
   return useMutation({
     mutationFn: ({ id, attached }: { id: string; attached: boolean }) =>
@@ -81,7 +82,7 @@ export const useApplyRememberedDataSources = (sessionId: string) => {
  *  with everything else on Submit. */
 export const useAddConnector = () => {
   const queryClient = useQueryClient();
-  const toastError = useActionErrorToast();
+  const toastError = useActionErrorToast(useTranslations().errors.notFound.connector);
 
   return useMutation({
     mutationFn: (name: string) => addConnectorRequest(name),

@@ -234,12 +234,30 @@ export const en: Translations = {
   },
 
   errors: {
+    byCode: {
+      CONFLICT: 'That name is already taken. Try another one.',
+      PARSE_ERROR: 'This file could not be read. Check its format and upload it again.',
+      UPLOAD_LIMIT: 'That is over the upload limit. Remove some files or use smaller ones, then try again.',
+      UNSUPPORTED_TYPE: 'That file type is not supported. Upload a spreadsheet instead.',
+      FILES_EXPIRED: (retentionDays: number | null) =>
+        retentionDays === null
+          ? "This session's files are past their retention period and have been cleared. Upload them again to continue."
+          : `This session's files are past the ${retentionDays}-day retention period and have been cleared. Upload them again to continue.`,
+    },
     offlineHeading: 'Cannot reach the backend',
     offlineDetail: 'Check that the service is running, then retry.',
     loadFailedHeading: 'This section failed to load',
     loadFailedDetail: (status: number) => `The server answered ${status}. Please try again shortly.`,
     offlineAction: 'Cannot reach the backend. Check that the service is running, then retry.',
     notReady: 'The backend is not ready yet. Please try again shortly.',
+    noLongerExists: 'That item no longer exists. Refresh and try again.',
+    notFound: {
+      session: 'That conversation no longer exists — it may have been deleted elsewhere.',
+      artifact: 'That Artifact no longer exists — it may have been deleted.',
+      file: 'That file no longer exists — it may have been removed.',
+      connector: 'That data source no longer exists.',
+    },
+    accessDeniedFallback: 'Your account does not have permission to use this. Contact your administrator.',
     actionFailed: 'That did not go through. Please try again shortly.',
     actionFailedWithStatus: (status: number) =>
       `That did not go through (the server answered ${status}). Please try again shortly.`,

@@ -110,6 +110,10 @@ scenario 與 kind，而非重新從文字推斷。
 串流**開始前**的失敗走一般 HTTP：非 2xx 加上 JSON body `{ code, message }`。串流**開始後**
 的失敗走 ERROR 事件。使用者主動中止走 `AbortSignal`，與非預期斷線在 UI 上區分顯示。
 
+**403 兩條路都攔。** `ACCESS_DENIED`（沒有這個資源的權限）與 `ENTITLEMENT_DENIED`（帳號缺 A4
+entitlement）在 axios interceptor 與這條 raw fetch 各接一次（`api/accessDenied.ts`），把 app 蓋住。
+攔的是 **status 403 本身**，不是 code 列表：帶著沒見過的 code 的 403 仍然是帳號被拒。
+
 ### QuestionForm
 
 ```
@@ -152,9 +156,16 @@ QuestionOption { value: string; label: string; hint?: string; unit?: string; lo?
 ### 後端還沒有的端點怎麼辦
 
 app 執行時不再有 mock 後端（[ADR-0006](../adr/0006-no-mock-backend-at-runtime.md)），
-而且 **UI 不再有任何 disabled 的入口**：所有動作直接打 API，端點還沒落地就把後端的
-`{ code, message }` 以 toast 呈現（`describeActionError`）——錯誤訊息就是「還沒 ready」
-的告知方式。例外兩類：
+而且 **UI 不再有任何 disabled 的入口**：所有動作直接打 API，失敗以 toast 呈現
+（`describeActionError`）。
+
+**2026-09-07 起，toast 說什麼由 `code` 決定，不再是後端的 `message`**
+（[ADR-0016](../adr/0016-error-copy-is-owned-by-the-frontend.md)）。`errors.byCode` 收
+`CONFLICT` / `FILES_EXPIRED` / `PARSE_ERROR` / `UPLOAD_LIMIT` / `UNSUPPORTED_TYPE`；認不得的
+code 得到泛用文案，後端原話降級成錯誤卡的小字。「端點還沒 ready」現在只由 **501** 表達——404
+改成「這個東西不在了」，由呼叫端說出不見的是什麼。403 不走 toast，它蓋一層不可關閉的全屏遮罩。
+
+例外兩類：
 
 | 類別                  | 端點/功能                                   | 前端行為                                                            |
 | --------------------- | ------------------------------------------- | ------------------------------------------------------------------- |
