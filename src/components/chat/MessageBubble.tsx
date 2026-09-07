@@ -47,7 +47,9 @@ export interface MessageBubbleProps {
   /** History reasks render read-only: the answers were never persisted, so there is
    *  nothing to re-submit. */
   questionDisabled?: boolean;
-  onAnswer?: (answers: Answers) => void;
+  /** Takes the form as well as the answers: the answer is composed FROM the form, and
+   *  the only form the thread held was the live run's — which a reload does not have. */
+  onAnswer?: (answers: Answers, form: QuestionForm) => void;
   /** True when this reply's artifact is the one the Artifact pane is showing; the
    *  chip then states the fact instead of offering the hand-off. */
   artifactShown?: boolean;
@@ -250,7 +252,13 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
             still arriving, the live panel above is the same content. */}
         {artifact && !codeText && <HtmlCodePanel artifactId={artifact.artifactId} />}
 
-        {question && <QuestionFormCard form={question} disabled={questionDisabled} onSubmit={onAnswer ?? (() => {})} />}
+        {question && (
+          <QuestionFormCard
+            form={question}
+            disabled={questionDisabled}
+            onSubmit={(answers) => onAnswer?.(answers, question)}
+          />
+        )}
 
         {/* Keyed on the start: a new turn gets a fresh timer rather than inheriting the
             last one's reading for up to a second. */}
