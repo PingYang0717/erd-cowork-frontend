@@ -215,6 +215,10 @@ describe('Streaming a run in the Studio', () => {
 
     await startAnalysis(user);
 
+    // The reply has started: a table only takes the floor once there is an answer for it
+    // to belong to — while the agent is merely thinking it is held back.
+    act(() => stream.push({ type: 'TOKEN', delta: 'Scanning found these:' }));
+
     act(() =>
       stream.push({
         type: 'TABLE',

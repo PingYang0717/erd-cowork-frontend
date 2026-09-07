@@ -23,8 +23,9 @@
 4. **Connector 端點**:`GET /connectors`、連線/斷線、新增自訂來源。目前是前端常數
    目錄疊上存在 localStorage 的使用者偏好(`erd-cowork:connector-prefs`),換一台
    機器就回到預設。連線狀態應該是帳號層級的事實——「已過期」「無權限」是全域的。
-5. **`GET /directory`**:分享對話框的收件者搜尋,目前是 `artifactApi.listDirectory`
-   回的一份固定名單。分享本身已接真後端,只有收件者來源還是假的。
+5. ~~**`GET /directory`**~~ — **已完成(2026-09-07 確認)**。收件者搜尋走真後端的
+   `GET /hr/employeesAndOrgs?keyword=`(`api/directoryApi.ts`),回應包在 `content`
+   信封裡,由該檔拆開。整份分享流程沒有假資料了。
 
 ## 低 — Artifact 週邊
 

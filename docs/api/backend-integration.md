@@ -13,7 +13,7 @@
 
 | 類別                  | 端點                             | 前端行為                                          |
 | --------------------- | -------------------------------- | ------------------------------------------------- |
-| **stub**(讀取)        | `GET /directory`                 | `src/api/` 回固定資料,不發請求                    |
+| **stub**(讀取)        | `GET /connectors`(目錄)          | `src/api/` 回固定資料,不發請求                    |
 | **localStorage 偏好** | `GET`/`PATCH`/`POST /connectors` | 前端常數目錄 + 使用者選擇存 localStorage,不發請求 |
 | **無入口**            | `DELETE /artifacts/{id}/publish` | 契約與函式都在,UI 上還沒有觸發點                  |
 

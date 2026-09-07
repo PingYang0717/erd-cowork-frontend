@@ -167,10 +167,10 @@ code 得到泛用文案，後端原話降級成錯誤卡的小字。「端點還
 
 例外兩類：
 
-| 類別                  | 端點/功能                                   | 前端行為                                                            |
-| --------------------- | ------------------------------------------- | ------------------------------------------------------------------- |
-| **stub**（讀取）      | `GET /connectors`（目錄）、`GET /directory` | `src/api/` 直接回固定資料，不發請求                                 |
-| **localStorage 偏好** | Connector 的連線/自訂來源選取               | 使用者偏好存 localStorage（`erd-cowork:connector-prefs`），不打後端 |
+| 類別                  | 端點/功能                     | 前端行為                                                            |
+| --------------------- | ----------------------------- | ------------------------------------------------------------------- |
+| **stub**（讀取）      | `GET /connectors`（目錄）     | `src/api/` 直接回固定資料，不發請求                                 |
+| **localStorage 偏好** | Connector 的連線/自訂來源選取 | 使用者偏好存 localStorage（`erd-cowork:connector-prefs`），不打後端 |
 
 **Regenerate 已移除**：後端沒有 regenerate 概念；迭代＝對話裡再送一句話（自動帶
 `baseArtifactId`），產物是下一個版本。
@@ -210,7 +210,7 @@ QUESTION 的線路承載是後端的扁平 `Question[]`（純字串選項、`mul
 | DELETE | `/artifacts/:id/publish` | —                                                            | `Artifact`                            | 已實作   |
 | DELETE | `/artifacts/:id`         | —                                                            | 200                                   | 已實作   |
 | POST   | `/artifacts/:id/share`   | `{ targetIds: string[] }`                                    | `{ url: string; artifact: Artifact }` | 已實作   |
-| GET    | `/directory`             | —                                                            | `DirectoryEntry[]`                    | stub     |
+| GET    | `/hr/employeesAndOrgs`   | `?keyword=`                                                  | `{ content: DirectoryEntry[] }`       | ✅ 已接  |
 
 **`Artifact` 定版（2026-08-27）**：
 
@@ -277,12 +277,12 @@ itself is gone.
 `true`) and returns a shareable URL pointing at its full-page view
 (`/cowork/artifact/:id`).
 `targetIds` reference `DirectoryEntry.id` values (department code, section code, or
-NT account) from `GET /directory`; the mock backend does not model per-recipient
+NT account) from `GET /hr/employeesAndOrgs`; the mock backend does not model per-recipient
 delivery, it only flips the sender's own Artifact to shared. A recipient's "Shared to
 me" view is seeded directly (an Artifact whose `ownerId` is someone else, so `isOwn`
 comes back false), not produced by this endpoint.
 
-`GET /directory` returns the searchable department / section / person dataset backing
+`GET /hr/employeesAndOrgs` returns the searchable department / section / person dataset backing
 the share dialog's recipient picker (`DirectoryEntry.kind` is `'department'`,
 `'section'`, or `'person'`; `label` is the searchable display text — the raw code for
 departments/sections, `"<NT account> · <中文名>"` for people).

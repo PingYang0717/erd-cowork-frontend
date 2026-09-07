@@ -37,3 +37,14 @@
 **目前仍未落地的**:`GET /directory` 是 stub、`artifactApi.unpublish` 沒有 UI 呼叫端、
 Schedule 頁面只有標題。Session 的改名/釘選/刪除與 Artifact 的刪除/分享/發布都已接真
 後端,不再停用。
+
+## 補充(2026-09-07):stub 只剩 Connector 目錄
+
+上面「目前仍未落地的」列了 `GET /directory` 是 stub。**那一條已不成立**:收件者搜尋走真後端的
+`GET /hr/employeesAndOrgs?keyword=`(`api/directoryApi.ts`),端點名稱也與當初規劃的不同。
+
+現在執行時**唯一不打後端的讀取**是 Connector 目錄,而它旁邊的連線選取與自訂來源是刻意存在
+localStorage 的**使用者偏好**,不是等後端補的 stub(見 `api/connectorApi.ts` 的說明)。
+
+這份 ADR 的本體——執行時不跑 mock 後端——維持不變:`main.tsx` 沒有任何 MSW 啟動,MSW 只在
+測試裡跑。
