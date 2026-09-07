@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 
+import { isAccessDenied } from '@/api/accessDenied';
 import { isOffline } from '@/api/apiError';
 import { deleteFile, uploadFiles, type UploadProgress } from '@/api/fileApi';
 import { useActionErrorToast } from '@/hooks/useActionErrorToast';
@@ -50,6 +51,10 @@ export const useFileAttachments = (sessionId: string) => {
       await uploadFiles(sessionId, plan.accepted, setUploadProgress);
       await queryClient.invalidateQueries({ queryKey: sessionDetailQueryKey(sessionId) });
     } catch (uploadError) {
+      // A refusal is the gate's to report, not this dialog's — same rule the toast follows.
+      if (isAccessDenied(uploadError)) {
+        return;
+      }
       // The backend's code decides the sentence — PARSE_ERROR, UPLOAD_LIMIT and
       // UNSUPPORTED_TYPE each name something the user can do. Its `message` used to be
       // shown verbatim, which put a parser position or a byte count in the modal.
