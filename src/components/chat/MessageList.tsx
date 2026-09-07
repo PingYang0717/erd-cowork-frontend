@@ -51,7 +51,7 @@ interface MessageListProps {
   /** Elapsed time of the run that just finished. Belongs to the turn that produced it,
    *  so it rides the tail AI bubble rather than the bottom of the thread. */
   lastRunDurationMs: number | null;
-  onAnswer: (answers: Answers) => void;
+  onAnswer: (answers: Answers, form: QuestionForm) => void;
   /** Rendered inside the scroll container, after the thread — anything that belongs to
    *  the tail of the conversation rather than above it. */
   bottomSlot?: ReactNode;
@@ -153,22 +153,40 @@ const MessageList: React.FC<MessageListProps> = ({
       className={styles.thread}
       onScroll={handleScroll}
     >
-      {messages.map((message, index) => (
-        <MessageBubble
-          key={message.id}
-          sender={message.sender}
-          text={message.text}
-          steps={parsedHistory[index].steps}
-          artifact={parsedHistory[index].artifact}
-          question={parsedHistory[index].question}
-          artifactShown={message.artifactId !== null && message.artifactId === displayedArtifactId}
-          onPickArtifact={pickArtifact}
-          questionDisabled
-          // The turn that just finished is the tail of the history once the live bubble
-          // has handed over; nothing older has a duration to show.
-          durationMs={live === null && index === lastIndex && message.sender === 'AI' ? lastRunDurationMs : null}
-        />
-      ))}
+      {messages.map((message, index) => {
+        // A reask on the trailing AI message is the one the run is blocked on: had it
+        // been answered, the answer would be a USER message after it (or, before the
+        // refetch catches up, the optimistic bubble below). Anything older is a past
+        // question — its answers were never stored, so it can only show what was asked
+        // and must not invite a second answer to a settled question.
+        const isPendingReask =
+          index === lastIndex &&
+          message.sender === 'AI' &&
+          parsedHistory[index].question !== null &&
+          optimisticUserText === null;
+        // The live bubble carries the same reask while the run's state survives, so only
+        // one of the two draws it — otherwise the refetch put a second, identical card on
+        // screen, and the one the reader reached for first was the dead one.
+        const drawnByLiveBubble = isPendingReask && live?.question != null;
+
+        return (
+          <MessageBubble
+            key={message.id}
+            sender={message.sender}
+            text={message.text}
+            steps={parsedHistory[index].steps}
+            artifact={parsedHistory[index].artifact}
+            question={drawnByLiveBubble ? null : parsedHistory[index].question}
+            artifactShown={message.artifactId !== null && message.artifactId === displayedArtifactId}
+            onPickArtifact={pickArtifact}
+            questionDisabled={!isPendingReask}
+            onAnswer={isPendingReask ? onAnswer : undefined}
+            // The turn that just finished is the tail of the history once the live bubble
+            // has handed over; nothing older has a duration to show.
+            durationMs={live === null && index === lastIndex && message.sender === 'AI' ? lastRunDurationMs : null}
+          />
+        );
+      })}
       {optimisticUserText !== null && <MessageBubble sender="USER" text={optimisticUserText} />}
       {live && (
         <MessageBubble
