@@ -59,7 +59,7 @@ live bubble 永遠看不到逐步進度。Vite 的 http-proxy 預設不 buffer;�
 
 ## 4. 已知降級(不是 bug,是記錄過的取捨)
 
-- **反問表單降級成 chips**:真後端只送扁平 `Question[]`;六種欄位/`visibleWhen` 的
+- **反問表單降級成 chips**:真後端只送扁平 `Question[]`;四種欄位/`visibleWhen` 的
   富表單是 mock-only extension,`utils/liftQuestions.ts` 單向抬升。完整表單需後端改送
   `QuestionForm`(feedback #1)。
 - **New chat 的短暫不一致**:草稿 session 只存在於這個分頁,第一次送訊息時後端以同 id

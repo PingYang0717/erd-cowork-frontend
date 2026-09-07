@@ -56,7 +56,7 @@ const spcConditions = (connectors: Connector[]): QuestionForm => {
       {
         key: 'timeRange',
         label: 'Time range',
-        kind: 'daterange',
+        kind: 'single',
         required: true,
         options: asOptions(TIME_RANGES),
         allowCustom: true,
