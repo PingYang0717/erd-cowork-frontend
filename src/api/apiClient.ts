@@ -1,5 +1,7 @@
 import axios, { type AxiosRequestConfig } from 'axios';
 
+import { noteIfAccessDenied } from './accessDenied';
+
 const USER_KEY = 'erd_user_id';
 
 export const getUserId = (): string => {
@@ -54,11 +56,17 @@ httpClient.interceptors.request.use((config) => {
 });
 
 // One place unwraps the envelope, so no endpoint module repeats `.then((res) => res.data)`.
-// Errors pass through untouched: `describeLoadError` / `describeActionError` read the
-// AxiosError, and swallowing it here would leave them nothing to read.
+//
+// Errors still reach the caller untouched — `describeLoadError` / `describeActionError`
+// read the AxiosError, and swallowing it here would leave them nothing to read. The one
+// thing this does on the way past is record a 403, because that is a fact about the
+// account rather than about the request that hit it; see `noteIfAccessDenied`.
 httpClient.interceptors.response.use(
   (response) => response.data,
-  (error) => Promise.reject(error)
+  (error) => {
+    noteIfAccessDenied(error);
+    return Promise.reject(error);
+  }
 );
 
 /** The interceptor above unwraps `response.data`, so axios's own return types

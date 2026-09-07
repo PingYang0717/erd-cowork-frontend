@@ -2,6 +2,8 @@ import { App as AntdApp } from 'antd';
 import type { ReactElement, ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
+import AccessDeniedGate from '@/components/common/AccessDeniedGate';
+
 /** The providers a rendered subtree needs to behave the way it does in the browser.
  *
  *  `AntdApp` is the one that used to go missing. Six suites hand-rolled their own
@@ -25,7 +27,9 @@ export const appWrapper = ({ retry = false, queryClient: given }: AppWrapperOpti
   return function AppHarness({ children }: { children: ReactNode }): ReactElement {
     return (
       <QueryClientProvider client={queryClient}>
-        <AntdApp>{children}</AntdApp>
+        <AntdApp>
+          <AccessDeniedGate>{children}</AccessDeniedGate>
+        </AntdApp>
       </QueryClientProvider>
     );
   };

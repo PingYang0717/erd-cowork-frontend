@@ -42,6 +42,12 @@ export const listArtifacts = () => apiClient.get<Artifact[]>('/artifacts');
 `types/api` 的 interface 回到唯一防線(編譯期,不驗 runtime)。要重新引入驗證時
 先讀這一節——上一輪撤回的原因是呼叫端形狀,不是保護本身沒有價值。
 
+**唯一的例外(2026-09-07)**:`uploadValidation.ts` 的 `withDefaults` 會檢查
+`GET /config` 的 `singleFileLimits` 是不是一個非空物件,不是就退回
+`DEFAULT_UPLOAD_LIMITS`。這不是重新引入回應驗證——它是逐欄位的保底,而且理由是這一欄
+的失效方向特別壞:少了它,可接受的副檔名清單會變成空的,前端於是拒絕每一個檔案,
+使用者在那個畫面上什麼都做不了。其餘欄位仍然照契約直接相信。
+
 ## 撤回時保留的周邊修正(與 contract 無關)
 
 - `listArtifactShares` 與 `searchDirectory` 原有的手寫形狀防守(raise 而非空清單)
@@ -51,3 +57,16 @@ export const listArtifacts = () => apiClient.get<Artifact[]>('/artifacts');
   cache——isOwn: undefined 是 falsy,曾讓自己的 Artifact 變成「分享給我的」。
 - repair 端點住在 `artifactApi`(依層放),`BrowserJsError` 是它的 body 形狀,
   隨之定義在 api 層。
+
+## 2026-09-07 修訂:`errorMessage` 不再是文案的第一順位
+
+`apiError.ts` 的六個判讀維持原樣,但 `errorMessage` 的**用途**變了。它的註解原本寫著「The backend's
+own message... The backend's words win over anything this client would compose」——那條規則已由
+[ADR-0016](0016-error-copy-is-owned-by-the-frontend.md) 推翻。
+
+現在 `errorCode` 是文案的第一順位(`utils/describeErrorCode.ts` 查 `errors.byCode`),`errorMessage`
+退成次要細節:錯誤卡的小字、對話串泡泡在 code 未知時的保底。唯一仍然以它為主的畫面是 403 的
+`AccessDeniedGate`,理由寫在 ADR-0016。
+
+判讀本身收攏於一處這件事沒有改變——反而更重要了,因為現在有第三個消費者(`describeErrorCode`)
+依賴 `errorCode` 認得三種傳輸。

@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { fireEvent, screen, waitFor, waitForElementToBeRemoved, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
+import { en } from '@/i18n/en';
 import { server } from '@/mocks/server';
 import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
 import { useStudioLayoutStore } from '@/stores/useStudioLayoutStore';
@@ -89,14 +90,16 @@ describe('File attachments', () => {
   /** Removing a file is a write to the same set the next question would be answered
    *  against. Until it lands, SENDING is shut — typing is not: a message sent in that window
    *  describes a set of files that is already changing under it. */
-  /** The backend knows why it refused ("single file over the limit") and used to have
-   *  that sentence thrown away for the generic one. Its words reach the dialog now;
-   *  the generic wording is only for failures that carried no reason. */
-  it("shows the backend's own reason when an upload is refused", async () => {
+  /** The upload endpoint refuses with a code and a sentence written for a server log —
+   *  a byte count against a config key. What the modal shows is chosen from the code. */
+  it("shows this app's sentence for a refused upload, not the backend's byte count", async () => {
     const user = userEvent.setup();
     server.use(
       http.post('/api/sessions/:sessionId/files', () =>
-        HttpResponse.json({ code: 'TOO_LARGE', message: '單一檔案超過 2 GB 上限' }, { status: 413 })
+        HttpResponse.json(
+          { code: 'UPLOAD_LIMIT', message: 'total 6442450944 exceeds maxSessionBytes' },
+          { status: 400 }
+        )
       )
     );
     renderStudio();
@@ -105,7 +108,9 @@ describe('File attachments', () => {
     await user.upload(screen.getByLabelText('Choose files'), fileOfSize('huge.csv', 4096));
 
     const dialog = screen.getByRole('dialog', { name: 'Attach files' });
-    expect(await within(dialog).findByRole('alert')).toHaveTextContent('單一檔案超過 2 GB 上限');
+    const alert = await within(dialog).findByRole('alert');
+    expect(alert).toHaveTextContent(en.errors.byCode.UPLOAD_LIMIT);
+    expect(alert).not.toHaveTextContent('maxSessionBytes');
   });
 
   /** Same rule inside the dialog: while a removal is in flight the set is not settled,
@@ -188,18 +193,20 @@ describe('File attachments', () => {
     expect(await within(composerAttachments()).findByText('lot-genealogy.csv')).toBeInTheDocument();
   });
 
-  it('rejects unsupported file types with the Chinese error and an accept attribute on the input', async () => {
+  it('rejects unsupported file types, naming the ones the backend does accept', async () => {
     // applyAccept off simulates a file arriving past the picker (drag & drop).
     const user = userEvent.setup({ applyAccept: false });
     renderStudio();
     const dialog = await selectASessionAndOpenFileModal(user);
 
+    // Both the picker's filter and the sentence below come from `GET /config`'s
+    // `singleFileLimits` keys — the same source the validator refuses by.
     const input = screen.getByLabelText('Choose files');
     expect(input).toHaveAttribute('accept', '.csv,.xlsx,.xls');
 
     await user.upload(input, fileOfSize('notes.pdf', 1024));
 
-    expect(await within(dialog).findByRole('alert')).toHaveTextContent('Only .csv / .xlsx are supported');
+    expect(await within(dialog).findByRole('alert')).toHaveTextContent('Only .csv, .xlsx, .xls are supported');
     expect(within(dialog).queryByText('notes.pdf')).not.toBeInTheDocument();
 
     // Supported types still go through afterwards.

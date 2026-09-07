@@ -1,18 +1,21 @@
 import React, { useState } from 'react';
+import { Select } from 'antd';
 import { InfoCircleOutlined, SendOutlined } from '@ant-design/icons';
 
-import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { useTranslations } from '@/i18n/useTranslations';
 import { useConnectorsPanelStore } from '@/stores/useConnectorsPanelStore';
 import type { QuestionAnswer, QuestionField, QuestionForm } from '@/types/api';
 
 import styles from './QuestionFormCard.module.css';
 
-/** Above this many options a field gets a search box rather than a wall of chips. */
-const SEARCHABLE_FROM = 4;
+/** Past either of these a chip row stops fitting in the two lines the card allows for it,
+ *  and the field is offered as a dropdown instead. Two limits rather than one because a
+ *  row grows two ways: more chips, or longer ones. */
+const CHIP_MAX_OPTIONS = 5;
+const CHIP_MAX_LABEL_LENGTH = 12;
 
 /** How many values the user has picked across the whole form. Drives the submit label
- *  of a form that asks "how many first?" — the DC item reask counts what it will chart. */
+ *  of a form that asks "how many first?" — a narrowing reask counts what it will chart. */
 const countAnswers = (answers: Answers): number => {
   return Object.values(answers).reduce<number>((total, answer) => {
     if (Array.isArray(answer)) {
@@ -22,16 +25,16 @@ const countAnswers = (answers: Answers): number => {
   }, 0);
 };
 
-/** A chip's label carries its spec limits when the field has them, so an engineer can
- *  judge an item without opening anything. */
-const optionLabel = (option: { label: string; unit?: string; lo?: number; hi?: number }): string => {
-  if (option.lo === undefined || option.hi === undefined || option.unit === undefined) {
-    return option.label;
+/** Whether this field is offered as a dropdown rather than as a row of chips.
+ *
+ *  `text` has its own input, and `boolean` is a single switch whose chip IS the value —
+ *  a dropdown for either would be a worse control, however long the wording. */
+const rendersAsDropdown = (field: QuestionField): boolean => {
+  if (field.kind === 'text' || field.kind === 'boolean') {
+    return false;
   }
-  if (option.unit === '') {
-    return option.label;
-  }
-  return `${option.label} · ${option.lo} – ${option.hi} ${option.unit}`;
+  const options = field.options ?? [];
+  return options.length > CHIP_MAX_OPTIONS || options.some((option) => option.label.length > CHIP_MAX_LABEL_LENGTH);
 };
 
 export type Answers = Record<string, QuestionAnswer>;
@@ -58,11 +61,12 @@ const isAnswered = (field: QuestionField, answers: Answers): boolean => {
 interface ChipGroupProps {
   field: QuestionField;
   answers: Answers;
-  search: string;
   onToggle: (value: string) => void;
 }
 
-const ChipGroup: React.FC<ChipGroupProps> = ({ field, answers, search, onToggle }) => {
+/** Chips are only ever offered for a handful of short options — anything long enough to
+ *  need narrowing is a dropdown, which searches itself — so this shows all of them. */
+const ChipGroup: React.FC<ChipGroupProps> = ({ field, answers, onToggle }) => {
   const selected = answers[field.key];
   const isSelected = (value: string) => {
     if (Array.isArray(selected)) {
@@ -75,10 +79,7 @@ const ChipGroup: React.FC<ChipGroupProps> = ({ field, answers, search, onToggle 
     return selected === value;
   };
 
-  const needle = search.trim().toLowerCase();
-  const options = (field.options ?? []).filter(
-    (option) => needle === '' || option.label.toLowerCase().includes(needle)
-  );
+  const options = field.options ?? [];
 
   return (
     <div className={styles.chipRow} role="group" aria-label={field.label}>
@@ -91,7 +92,7 @@ const ChipGroup: React.FC<ChipGroupProps> = ({ field, answers, search, onToggle 
           className={isSelected(option.value) ? styles.chipSelected : styles.chip}
           onClick={() => onToggle(option.value)}
         >
-          {optionLabel(option)}
+          {option.label}
         </button>
       ))}
     </div>
@@ -135,12 +136,18 @@ const QuestionFormCard: React.FC<QuestionFormCardProps> = ({ form, onSubmit, dis
   const t = useTranslations();
 
   const [answers, setAnswers] = useState<Answers>({});
-  const [searches, setSearches] = useState<Record<string, string>>({});
 
-  // Below the state it feeds from, against the top-block rule: a dependency is a hard
-  // constraint the grouping yields to. One debounce for the whole card: only one field
-  // is ever searchable at a time.
-  const settledSearches = useDebouncedValue(searches);
+  // Changing a trigger discards whatever was answered beneath it. Hiding the answer but
+  // keeping it would submit a Flow the user can no longer see, under a role it does not
+  // belong to. Mutates `next`, which is always a copy the caller just made.
+  const clearDependentsOf = (changed: QuestionField, next: Answers): Answers => {
+    for (const dependent of form.fields) {
+      if (dependent.visibleWhen?.field === changed.key && !isVisible(dependent, next)) {
+        delete next[dependent.key];
+      }
+    }
+    return next;
+  };
 
   const setFieldText = (field: QuestionField, value: string) => {
     setAnswers((previous) => ({ ...previous, [field.key]: value }));
@@ -163,17 +170,14 @@ const QuestionFormCard: React.FC<QuestionFormCardProps> = ({ form, onSubmit, dis
               })()
             : { ...previous, [field.key]: value };
 
-      // Changing a trigger discards whatever was answered beneath it. Hiding the answer
-      // but keeping it would submit a Flow the user can no longer see, under a role it
-      // does not belong to.
-      for (const dependent of form.fields) {
-        if (dependent.visibleWhen?.field === field.key && !isVisible(dependent, next)) {
-          delete next[dependent.key];
-        }
-      }
-
-      return next;
+      return clearDependentsOf(field, next);
     });
+  };
+
+  /** Writes a field's whole answer at once — what a dropdown reports, against the chips'
+   *  one-value-at-a-time toggling. */
+  const setFieldValue = (field: QuestionField, value: QuestionAnswer) => {
+    setAnswers((previous) => clearDependentsOf(field, { ...previous, [field.key]: value }));
   };
 
   const selectedCount = countAnswers(answers);
@@ -188,7 +192,7 @@ const QuestionFormCard: React.FC<QuestionFormCardProps> = ({ form, onSubmit, dis
 
       {visibleFields.map((field) => {
         const options = field.options ?? [];
-        const isSearchable = (field.kind === 'multi' || field.kind === 'dcitem') && options.length > SEARCHABLE_FROM;
+        const asDropdown = rendersAsDropdown(field);
         const answer = answers[field.key];
         // A typed value that no chip offers — the mockup highlights the input for it.
         const isCustom =
@@ -201,16 +205,6 @@ const QuestionFormCard: React.FC<QuestionFormCardProps> = ({ form, onSubmit, dis
           <div key={field.key} className={styles.field}>
             <p className={styles.fieldLabel}>{field.label}</p>
 
-            {isSearchable && (
-              <input
-                aria-label={`Search ${field.label}`}
-                placeholder={field.placeholder}
-                value={searches[field.key] ?? ''}
-                className={styles.searchInput}
-                onChange={(event) => setSearches((previous) => ({ ...previous, [field.key]: event.target.value }))}
-              />
-            )}
-
             {field.kind === 'text' ? (
               <input
                 aria-label={field.label}
@@ -219,19 +213,49 @@ const QuestionFormCard: React.FC<QuestionFormCardProps> = ({ form, onSubmit, dis
                 className={styles.textInput}
                 onChange={(event) => setFieldText(field, event.target.value)}
               />
-            ) : (
-              <ChipGroup
-                field={field}
-                answers={answers}
-                search={isSearchable ? (settledSearches[field.key] ?? '') : ''}
-                onToggle={(value) => toggle(field, value)}
+            ) : asDropdown ? (
+              <Select
+                // An id of its own rather than one from rc-util's `useId`, which returns a
+                // constant under test: a second component asking for one gets the same
+                // string, and any `aria-labelledby` pointing at it then resolves to
+                // whichever element comes first in the document. The Connectors dialog
+                // lost its accessible name that way.
+                id={`question-${form.formKey}-${field.key}`}
+                aria-label={field.label}
+                mode={field.kind === 'multi' ? 'multiple' : undefined}
+                // Same reason ShareArtifactDialog turns it off: the virtual list renders a
+                // window of rows and drops each one's `title`, so a row is neither fully
+                // present for assistive tech nor findable by the name it reads as.
+                virtual={false}
+                // The card sits in a thread pane the reader can narrow to a column; a
+                // dropdown that keeps its own width would push the conversation sideways.
+                className={styles.select}
+                placeholder={field.placeholder}
+                showSearch
+                optionFilterProp="label"
+                value={
+                  field.kind === 'multi' ? ((answer as string[] | undefined) ?? []) : ((answer as string) ?? undefined)
+                }
+                onChange={(value: string | string[]) => setFieldValue(field, value)}
+                // `title` mirrors the label rather than carrying the option's hint: antd
+                // uses it for the row's tooltip AND as its accessible fallback, so a hint
+                // there would make the row announce something other than what it reads as.
+                // The hint is a chip-only affordance — a dropdown row has no room beside
+                // its text for one.
+                options={options.map((option) => ({
+                  value: option.value,
+                  label: option.label,
+                  title: option.label,
+                }))}
               />
+            ) : (
+              <ChipGroup field={field} answers={answers} onToggle={(value) => toggle(field, value)} />
             )}
 
             {field.allowCustom && (
               <input
                 aria-label={field.label}
-                placeholder={field.customPlaceholder ?? field.placeholder}
+                placeholder={field.placeholder}
                 value={isCustom ? String(answer) : ''}
                 className={isCustom ? styles.customInputActive : styles.customInput}
                 onChange={(event) => setFieldText(field, event.target.value)}

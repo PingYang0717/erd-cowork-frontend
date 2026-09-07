@@ -9,6 +9,7 @@ import { afterAll, afterEach, beforeAll, beforeEach } from 'vitest';
 
 import { setStreamPace } from '@/mocks/handlers';
 import { server } from '@/mocks/server';
+import { useAccessDeniedStore } from '@/stores/useAccessDeniedStore';
 import { useLanguageStore } from '@/stores/useLanguageStore';
 
 import { installFormDataWire } from './formDataWire';
@@ -66,6 +67,10 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup();
+  // A denial never clears itself in the app — it is a fact about the account, and the way
+  // back is a reload. A test process has no reload, so one 403 would lock every suite
+  // after it behind the overlay.
+  useAccessDeniedStore.getState().clear();
   server.resetHandlers();
   localStorage.clear();
   localStorage.setItem('erd_user_id', TEST_USER_ID);

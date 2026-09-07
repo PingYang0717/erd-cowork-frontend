@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { deleteSession, renameSession, toggleSessionPin } from '@/api/sessionApi';
+import { useTranslations } from '@/i18n/useTranslations';
 import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
 import type { Artifact } from '@/types/api';
 import type { Session } from '@/types/api/session';
@@ -10,8 +11,9 @@ import { sessionDetailQueryKey } from './useSessionDetail';
 import { sessionsQueryKey } from './useSessions';
 
 export const useRenameSession = () => {
+  const t = useTranslations();
   const queryClient = useQueryClient();
-  const toastError = useActionErrorToast();
+  const toastError = useActionErrorToast(t.errors.notFound.session);
 
   return useMutation({
     mutationFn: ({ id, title }: { id: string; title: string }) => renameSession(id, title),
@@ -41,8 +43,9 @@ export const useRenameSession = () => {
 /** Toggle-style like the artifact pin: the backend decides the direction and stamps
  *  the time, so the call site sends nothing but the id. */
 export const useToggleSessionPin = () => {
+  const t = useTranslations();
   const queryClient = useQueryClient();
-  const toastError = useActionErrorToast();
+  const toastError = useActionErrorToast(t.errors.notFound.session);
 
   return useMutation({
     mutationFn: (id: string) => toggleSessionPin(id),
@@ -57,8 +60,9 @@ export const useToggleSessionPin = () => {
 };
 
 export const useDeleteSession = () => {
+  const t = useTranslations();
   const queryClient = useQueryClient();
-  const toastError = useActionErrorToast();
+  const toastError = useActionErrorToast(t.errors.notFound.session);
   const clearSelection = useSessionSelectionStore((store) => store.clearSelection);
 
   return useMutation({

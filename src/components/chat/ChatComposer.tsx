@@ -84,6 +84,7 @@ const ChatComposer: React.FC<ChatComposerProps> = ({ sessionId, onSend, disabled
     isMutating: isMutatingFiles,
     addFiles,
     removeFile,
+    limits: fileLimits,
   } = useFileAttachments(sessionId);
 
   const openConnectors = useConnectorsPanelStore((store) => store.open);
@@ -261,6 +262,7 @@ const ChatComposer: React.FC<ChatComposerProps> = ({ sessionId, onSend, disabled
         isMutating={isMutatingFiles}
         onAddFiles={(files) => void addFiles(files)}
         onRemoveFile={(fileId) => void removeFile(fileId)}
+        limits={fileLimits}
       />
       <ConnectorsPanel sessionId={sessionId} open={connectorsOpen} onClose={closeConnectors} />
     </div>

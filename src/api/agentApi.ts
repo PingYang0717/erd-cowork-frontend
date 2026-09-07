@@ -1,18 +1,8 @@
+import { noteAccessDenial } from '@/api/accessDenied';
+import { AgentStreamHttpError } from '@/api/agentStreamError';
 import { API_BASE_URL, getAuthHeaders } from '@/api/apiClient';
 import type { AgentEvent } from '@/types/api/agentEvent';
 import { createSseParser } from '@/utils/sseParser';
-
-/** A refusal the backend reported before the stream opened, carrying its own code so
- *  the UI can say something better than "request failed". */
-export class AgentStreamHttpError extends Error {
-  readonly code: string;
-
-  constructor(code: string, message: string) {
-    super(message);
-    this.name = 'AgentStreamHttpError';
-    this.code = code;
-  }
-}
 
 /** One turn of a run, in the backend's own body shape: `{ question, baseArtifactId? }`
  *  (SendMessageRequest on the Java side). Everything the UI knows beyond the question —
@@ -58,7 +48,9 @@ export const streamAgentMessage = async function* (args: SendMessageArgs): Async
     } catch {
       // Not a JSON body — the status code alone is all we can report.
     }
-    throw new AgentStreamHttpError(code, message);
+    // Same refusal, other transport: this path never touches the axios interceptor.
+    noteAccessDenial(response.status, code, message);
+    throw new AgentStreamHttpError(response.status, code, message);
   }
 
   if (!response.body) {
