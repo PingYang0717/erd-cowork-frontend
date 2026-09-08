@@ -51,9 +51,13 @@
   參數或換色通道,後端無需支援(見
   [ADR-0001](../adr/0001-artifact-rendered-via-sandboxed-iframe.md))。
 
-## TABLE 事件希望補 `rowLimit`(2026-09-03)
+## ~~TABLE 事件希望補 `rowLimit`(2026-09-03)~~ — 整個事件退場(2026-09-08)
 
-TABLE 事件目前只送 `truncated: boolean`,不送截斷筆數。前端曾寫死「(前 200 列)」——
+後端不再送 TABLE 事件,所以這一條連同它要問的東西一起沒有了。前端的渲染路徑
+(`ResultTable`、`splitAnswerByTableMarkers`、reducer 的 `tables`)已全部移除,
+`AgentEvent` 也不再有這個 variant。
+
+原本:TABLE 只送 `truncated: boolean`,不送截斷筆數。前端曾寫死「(前 200 列)」——
 那是前端獻上的、後端沒說過的數字,已改為不報數字的「(結果已截斷)」。若 TABLE 能帶
 `rowLimit`(實際套用的上限),前端就能誠實地報出筆數。
 

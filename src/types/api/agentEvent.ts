@@ -54,18 +54,6 @@ export interface Question {
   multiSelect: boolean;
 }
 
-/** One cell value in a TABLE event's rows — the honest union for what JSON gives us. */
-export type TableCellValue = string | number | boolean | null;
-
-/** One query-result table. Live-only: never persisted to the thread history. */
-export interface TableResult {
-  tableId: string;
-  intent: string;
-  columns: string[];
-  rows: TableCellValue[][];
-  truncated: boolean;
-}
-
 export type AgentEvent =
   | { type: 'STEP'; stepKey: string; title: string; description: string | null; status: StepStatus }
   | { type: 'TOKEN'; delta: string }
@@ -77,12 +65,4 @@ export type AgentEvent =
   // along so the rich condition forms (six field kinds, visibleWhen) keep working —
   // a real backend sends only the flat list, which the UI lifts (utils/liftQuestions).
   | { type: 'QUESTION'; questions: Question[]; form?: QuestionForm }
-  | { type: 'CODE'; delta: string }
-  | {
-      type: 'TABLE';
-      tableId: string;
-      intent: string;
-      columns: string[];
-      rows: TableCellValue[][];
-      truncated: boolean;
-    };
+  | { type: 'CODE'; delta: string };

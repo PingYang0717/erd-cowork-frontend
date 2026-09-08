@@ -89,26 +89,40 @@ const MessageList: React.FC<MessageListProps> = ({
   // would be a fresh object every token, and a fresh object prop is all it takes to
   // defeat MessageBubble's memo (probe-measured: bubbles with an artifact re-rendered
   // once per token; text-only bubbles not at all).
-  const parsedHistory = useMemo(
-    () =>
-      messages.map((message, index) => {
-        const question = message.sender === 'AI' ? parseQuestion(message.questionsJson) : null;
-        // What the reader chose, from the reply they sent. Nothing stores the answers —
-        // they went back as one prose sentence, which is the USER message sitting right
-        // after the card. Without this a past reask shows every option and no sign of
-        // which ones were picked, which reads as a question still waiting to be answered.
-        const reply = question !== null ? messages[index + 1] : undefined;
-        return {
-          steps: message.sender === 'AI' ? parseSteps(message.stepsJson) : [],
-          question,
-          questionAnswers: question !== null && reply?.sender === 'USER' ? parseAnswerText(question, reply.text) : null,
-          artifact: message.artifactId
-            ? { artifactId: message.artifactId, title: message.artifactTitle ?? message.text }
-            : null,
-        };
-      }),
-    [messages]
-  );
+  const parsedHistory = useMemo(() => {
+    const parsed = messages.map((message, index) => {
+      const question = message.sender === 'AI' ? parseQuestion(message.questionsJson) : null;
+      // What the reader chose, from the reply they sent. Nothing stores the answers —
+      // they went back as one prose sentence, which is the USER message sitting right
+      // after the card. Without this a past reask shows every option and no sign of
+      // which ones were picked, which reads as a question still waiting to be answered.
+      const reply = question !== null ? messages[index + 1] : undefined;
+      return {
+        steps: message.sender === 'AI' ? parseSteps(message.stepsJson) : [],
+        question,
+        questionAnswers: question !== null && reply?.sender === 'USER' ? parseAnswerText(question, reply.text) : null,
+        artifact: message.artifactId
+          ? { artifactId: message.artifactId, title: message.artifactTitle ?? message.text }
+          : null,
+        /** This message is a reask's answer, and the card above it is already showing
+         *  what was chosen. Filled in below, once every card knows what it recovered. */
+        shownByCardAbove: false,
+      };
+    });
+
+    // Answering a reask is filling in a form, not saying something. The sentence that
+    // goes on the wire (`部件：A14；時間區間：近 7 天`) exists only because the backend has
+    // no structured answers channel, and reading it back as a chat message shows the
+    // reader plumbing they never wrote. Hidden only where the card above recovered it:
+    // if that parse failed, this message is the only record the answer has left.
+    for (const [index, entry] of parsed.entries()) {
+      if (entry.questionAnswers !== null && parsed[index + 1] !== undefined) {
+        parsed[index + 1].shownByCardAbove = true;
+      }
+    }
+
+    return parsed;
+  }, [messages]);
 
   // Deps are the pieces of content that can change the log's height — not the `live`
   // object itself, whose identity is fresh on every parent render and would force a
@@ -124,7 +138,6 @@ const MessageList: React.FC<MessageListProps> = ({
     live?.thinking,
     live?.codeText,
     live?.steps,
-    live?.tables,
     live?.question,
     optimisticUserText,
     bottomSlot,
@@ -178,6 +191,9 @@ const MessageList: React.FC<MessageListProps> = ({
         // one of the two draws it — otherwise the refetch put a second, identical card on
         // screen, and the one the reader reached for first was the dead one.
         const drawnByLiveBubble = isPendingReask && live?.question != null;
+        if (parsedHistory[index].shownByCardAbove) {
+          return null;
+        }
         // The whole turn, not only its card: a reask bubble shows the question and not
         // the working that led to it, and the backend persists that working as this
         // message's text. Rendering the history copy beside the live one put exactly the

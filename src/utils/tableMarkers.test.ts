@@ -1,61 +1,24 @@
 import { describe, expect, it } from 'vitest';
 
-import type { TableResult } from '@/types/api';
-import { splitAnswerByTableMarkers } from './tableMarkers';
+import { stripTableMarkers } from './tableMarkers';
 
-const table = (tableId: string): TableResult => {
-  return {
-    tableId,
-    intent: `intent for ${tableId}`,
-    columns: ['lot', 'value'],
-    rows: [['L1', 1]],
-    truncated: false,
-  };
-};
-
-describe('splitAnswerByTableMarkers', () => {
-  it('returns the whole answer as one text segment when there is no marker', () => {
-    expect(splitAnswerByTableMarkers('No tables here.', [])).toEqual([{ type: 'text', content: 'No tables here.' }]);
+/** A guard, not a feature. TABLE has left the contract, so nothing resolves a marker any
+ *  more — which is exactly why this has to keep working: an unresolved marker would be
+ *  printed verbatim, and `[[table:tbl_9f]]` is display plumbing the reader must never see. */
+describe('stripTableMarkers', () => {
+  it('leaves text with no marker in it alone', () => {
+    expect(stripTableMarkers('No markers here.')).toBe('No markers here.');
   });
 
-  it('resolves a marker into the table it names, keeping the text either side', () => {
-    const segments = splitAnswerByTableMarkers('Before [[table:t1]] after', [table('t1')]);
-
-    expect(segments).toEqual([
-      { type: 'text', content: 'Before ' },
-      { type: 'table', table: table('t1') },
-      { type: 'text', content: ' after' },
-    ]);
+  it('removes a marker without leaving a double space behind it', () => {
+    expect(stripTableMarkers('Before [[table:t1]] after')).toBe('Before after');
   });
 
-  it('resolves several markers in the order they appear, not the order the tables arrived', () => {
-    const segments = splitAnswerByTableMarkers('[[table:t2]] then [[table:t1]]', [table('t1'), table('t2')]);
-
-    expect(segments.map((segment) => (segment.type === 'table' ? segment.table.tableId : 'text'))).toEqual([
-      't2',
-      'text',
-      't1',
-    ]);
+  it('removes every marker, not only the first', () => {
+    expect(stripTableMarkers('[[table:t2]] then [[table:t1]]')).toBe(' then ');
   });
 
-  it('drops a marker whose table never arrived rather than leaking it to the reader', () => {
-    const segments = splitAnswerByTableMarkers('Look: [[table:missing]] done', []);
-
-    expect(segments).toEqual([
-      { type: 'text', content: 'Look: ' },
-      { type: 'text', content: ' done' },
-    ]);
-    expect(JSON.stringify(segments)).not.toContain('[[table:');
-  });
-
-  it('omits empty text runs so a marker-only answer renders as just the table', () => {
-    expect(splitAnswerByTableMarkers('[[table:t1]]', [table('t1')])).toEqual([{ type: 'table', table: table('t1') }]);
-  });
-
-  it('treats an absent table list as no tables at all', () => {
-    expect(splitAnswerByTableMarkers('a [[table:t1]] b', undefined)).toEqual([
-      { type: 'text', content: 'a ' },
-      { type: 'text', content: ' b' },
-    ]);
+  it('removes one whose table never existed — the point of the guard', () => {
+    expect(stripTableMarkers('Look: [[table:missing]] done')).not.toContain('[[table:');
   });
 });

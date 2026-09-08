@@ -161,15 +161,20 @@ const ThreadView: React.FC<ThreadViewProps> = ({ sessionId }) => {
   // artifact on display rides along as baseArtifactId so the run builds on it.
   const isStreaming = state.isStreaming;
 
-  const handleSend = useCallback(
-    async (input: SendInput) => {
+  /** `optimistic` is whether the text is the reader's own words. It is for what they
+   *  typed; a reask's answer is a sentence this app composed from a form, and the card
+   *  above already shows what was chosen — far better than the sentence does. */
+  const submit = useCallback(
+    async (input: SendInput, optimistic: boolean) => {
       if (isStreaming) {
         return;
       }
-      // `messages.length` is constant across a run's tokens (history refetches only at
-      // the end), so it does not defeat ChatComposer's memo mid-stream — handleSend's
-      // identity changes once per completed turn, outside the token loop.
-      setPending({ text: input.question, atLength: messages.length });
+      if (optimistic) {
+        // `messages.length` is constant across a run's tokens (history refetches only at
+        // the end), so it does not defeat ChatComposer's memo mid-stream — the identity
+        // changes once per completed turn, outside the token loop.
+        setPending({ text: input.question, atLength: messages.length });
+      }
       // Before the message, not after: this is the moment the session comes into being
       // (ADR-0005), and the run this message starts should already have the capabilities
       // the user habitually grants.
@@ -179,6 +184,8 @@ const ThreadView: React.FC<ThreadViewProps> = ({ sessionId }) => {
     [send, displayedArtifactId, isStreaming, messages.length, applyRememberedDataSources, detail.dataSourceIds]
   );
 
+  const handleSend = useCallback((input: SendInput) => submit(input, true), [submit]);
+
   // The backend body is question-only, so a reask's answers travel as one prose
   // sentence composed from the form (labels stand in for values on the wire).
   // Composed from the form the card was drawn with, not from `state.question`: a reask
@@ -186,9 +193,9 @@ const ThreadView: React.FC<ThreadViewProps> = ({ sessionId }) => {
   // return early there — the chips responded and Send did nothing at all.
   const handleAnswer = useCallback(
     async (answers: Answers, form: QuestionForm) => {
-      await handleSend({ question: composeAnswerText(form, answers) });
+      await submit({ question: composeAnswerText(form, answers) }, false);
     },
-    [handleSend]
+    [submit]
   );
 
   // A run that ended cleanly hands over to the refetched history — the bubble it left

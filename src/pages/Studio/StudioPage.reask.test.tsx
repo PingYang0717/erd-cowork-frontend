@@ -163,6 +163,44 @@ describe('A reask the run is waiting on', () => {
     expect(chipIn(group, 'A16')).toHaveAttribute('aria-pressed', 'false');
   });
 
+  /** Answering a reask is filling in a form, not saying something. The sentence that goes
+   *  on the wire exists only because the backend has no structured answers channel, and
+   *  reading it back as a chat bubble shows the reader plumbing they never wrote — while
+   *  the card above already says the same thing, better. */
+  it('does not read the composed answer back as a message of its own', async () => {
+    const user = userEvent.setup();
+    historyOf(
+      message({ id: 'm1', sender: 'AI', questionsJson: PART_ID_REASK }),
+      message({ id: 'm2', sender: 'USER', text: 'Part ID：A14' })
+    );
+    renderStudio();
+
+    await user.click(await screen.findByRole('button', { name: 'Defect pareto — W12' }));
+    await waitForComposer();
+
+    // The card has it, so the bubble does not.
+    const group = await screen.findByRole('group', { name: 'Part ID' });
+    expect(chipIn(group, 'A14')).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.queryByText('Part ID：A14')).not.toBeInTheDocument();
+  });
+
+  /** The safety condition. Hiding is only right where the card recovered the answer — if
+   *  the parse failed, this message is the only record left of what was chosen, and
+   *  hiding it too would lose it entirely. */
+  it('keeps the message when the card above could not recover it', async () => {
+    const user = userEvent.setup();
+    historyOf(
+      message({ id: 'm1', sender: 'AI', questionsJson: PART_ID_REASK }),
+      message({ id: 'm2', sender: 'USER', text: 'actually, forget that — show me A16 yields' })
+    );
+    renderStudio();
+
+    await user.click(await screen.findByRole('button', { name: 'Defect pareto — W12' }));
+    await waitForComposer();
+
+    expect(await screen.findByText('actually, forget that — show me A16 yields')).toBeInTheDocument();
+  });
+
   /** A reader who ignored the reask and typed something else leaves an ordinary message
    *  in exactly the same position. Reading that as answers would put words in their
    *  mouth — and mark options they never picked. */

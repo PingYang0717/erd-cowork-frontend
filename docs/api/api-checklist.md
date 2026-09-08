@@ -41,9 +41,9 @@ Pin 是**切換式**的:方向由後端決定並蓋時間戳,client 不送它可
 
 ## 3. 對話(SSE)
 
-| #   | Method + Path                  | 前端送出                                                                    | 前端期望回應                                                                                         | 狀態    | 後端實際 input/output(請補) |
-| --- | ------------------------------ | --------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- | ------- | --------------------------- |
-| 7   | `POST /sessions/{id}/messages` | `{ question: string, baseArtifactId?: string }`,`Accept: text/event-stream` | SSE:`AgentEvent` 流(`STEP`/`TOKEN`/`ANSWER`/`ARTIFACT`/`THINKING`/`QUESTION`/`CODE`/`TABLE`/`ERROR`) | ✅ 已接 |                             |
+| #   | Method + Path                  | 前端送出                                                                    | 前端期望回應                                                                                 | 狀態    | 後端實際 input/output(請補) |
+| --- | ------------------------------ | --------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- | ------- | --------------------------- |
+| 7   | `POST /sessions/{id}/messages` | `{ question: string, baseArtifactId?: string }`,`Accept: text/event-stream` | SSE:`AgentEvent` 流(`STEP`/`TOKEN`/`ANSWER`/`ARTIFACT`/`THINKING`/`QUESTION`/`CODE`/`ERROR`) | ✅ 已接 |                             |
 
 要點:`ERROR` 事件**不關閉串流**(後端還會送收尾 STEP,連線關閉才算結束);中止靠
 client abort,前端會在 abort 後兩段 800ms invalidate 追後端非同步落庫。
@@ -109,6 +109,6 @@ client abort,前端會在 abort 後兩段 800ms invalidate 追後端非同步落
 - 📝 合約已定:函式存在但沒有 UI 入口
 
 型別出處速查:`Session`/`SessionDetail` → `types/api/session.ts`、`Message` →
-`message.ts`、`AgentEvent`/`TableResult`/`QuestionForm` → `agentEvent.ts`、`Artifact` →
+`message.ts`、`AgentEvent`/`QuestionForm` → `agentEvent.ts`、`Artifact` →
 `artifact.ts`、`UploadedFileInfo` → `upload.ts`、`Connector` → `connector.ts`、
 `DirectoryEntry` → `directory.ts`、`AppConfig` → `configApi.ts`。
