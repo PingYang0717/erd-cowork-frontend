@@ -243,6 +243,38 @@ describe('Streaming a run in the Studio', () => {
     expect(screen.getByText('(results truncated)')).toBeInTheDocument();
   });
 
+  /** The same TABLE event, arriving before the reply instead of after it. A query the
+   *  agent ran to work something out is reasoning, not a result — it belongs with the
+   *  THINKING text, which the reader opens a panel to see, and not in the reply. Nothing
+   *  later promotes it: the reply starting does not, and the run ending does not. */
+  it('never shows a table the agent produced before it started replying', async () => {
+    const user = userEvent.setup();
+    const stream = mockAgentStream();
+    renderStudio();
+
+    await startAnalysis(user);
+
+    act(() =>
+      stream.push({
+        type: 'TABLE',
+        tableId: 'scan',
+        intent: 'Lots scanned',
+        columns: ['Lot'],
+        rows: [['A14-001']],
+        truncated: false,
+      })
+    );
+    expect(screen.queryByRole('table')).not.toBeInTheDocument();
+
+    act(() => stream.push({ type: 'TOKEN', delta: 'Six lots matched.' }));
+    expect(await screen.findByText(/Six lots matched/)).toBeInTheDocument();
+    expect(screen.queryByRole('table')).not.toBeInTheDocument();
+
+    act(() => stream.close());
+    await waitFor(() => expect(screen.queryByRole('status', { name: 'eRD AI is working' })).not.toBeInTheDocument());
+    expect(screen.queryByRole('table')).not.toBeInTheDocument();
+  });
+
   // Runs against the scripted mock backend rather than a hand-driven stream: this is a
   // post-run assertion, so there is no intermediate state to hold still.
   // The elapsed time belongs to the turn that spent it, so it rides that turn's bubble

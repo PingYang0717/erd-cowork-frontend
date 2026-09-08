@@ -5,7 +5,10 @@
   padding: 4px 5px 4px 9px;
   border-radius: 8px;
   background: var(--erd-color-primary-bg, #e6f4ff);
-  border: 1px solid var(--erd-color-primary-border, #91caff);
+  /* Transparent rather than absent: the fill is what says the file is attached and ready,
+     and a ring around it adds nothing — but the width has to stay, or the chip changes
+     size beside the expired one below, which does need a border to hold its shape. */
+  border: 1px solid transparent;
   color: var(--erd-color-primary, #1677ff);
   font-size: 12px;
 }

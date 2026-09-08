@@ -29,7 +29,7 @@ _Avoid_: 未儲存的 Session, Pending session（草稿不是「等待儲存」�
 _Avoid_: Workflow, Flow, Intent, Prompt preset（Scenario 不只是一段預寫好的提問——它是可被執行的劇本）
 
 **分析條件（Analysis condition）**:
-一次 Scenario 執行前必須先確定的參數，由 Agent 以反問卡向使用者收集，例如 SPC 的 Part ID／Time range／Data type，或 CP Test 的角色／Flow／Loop／時間區間。條件送出後會被組成一句話（`部件：A14；時間區間：近 7 天`）當作使用者訊息留在對話串中——**答案本身不會被保存**，所以歷史裡的反問卡只能顯示當初問了什麼，顯示不出選了什麼。
+一次 Scenario 執行前必須先確定的參數，由 Agent 以反問卡向使用者收集，例如 SPC 的 Part ID／Time range／Data type，或 CP Test 的角色／Flow／Loop／時間區間。條件送出後會被組成一句話（`部件：A14；時間區間：近 7 天`）當作使用者訊息留在對話串中。**答案本身不會被保存**（線路上沒有 `answersJson`），但那句話就是它們的紀錄：歷史裡的反問卡把緊接在後的那則使用者訊息讀回來（`parseAnswerText`），所以看得到當初選了什麼——只是不能再改。
 _Avoid_: Parameter, Setting, Filter
 
 **反問（Question form）**:

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import type { QuestionForm } from '@/types/api/agentEvent';
-import { composeAnswerText } from './composeAnswerText';
+import { composeAnswerText, parseAnswerText } from './composeAnswerText';
 
 const form: QuestionForm = {
   formKey: 'spc-conditions',
@@ -68,5 +68,34 @@ describe('composeAnswerText', () => {
 
   it('skips unanswered fields entirely', () => {
     expect(composeAnswerText(form, {})).toBe('');
+  });
+});
+
+/** The inverse. It exists because nothing stores the answers: the sentence composed above
+ *  is the only record, so a past reask can only show what was chosen by reading it back. */
+describe('parseAnswerText', () => {
+  it('round-trips what composeAnswerText wrote', () => {
+    const answers = { partIds: ['A14', 'N5'], timeRange: 'cp7d' };
+
+    expect(parseAnswerText(form, composeAnswerText(form, answers))).toEqual(answers);
+  });
+
+  it('keeps a custom value the options do not know, so the card shows it typed in', () => {
+    expect(parseAnswerText(form, 'Time range：07/01–07/31')).toEqual({ timeRange: '07/01–07/31' });
+  });
+
+  it('reads a boolean back as on — the sentence only ever carries it when it was', () => {
+    expect(parseAnswerText(form, composeAnswerText(form, { mineOnly: true }))).toEqual({ mineOnly: true });
+  });
+
+  it('is null for a message that was not an answer to this form at all', () => {
+    expect(parseAnswerText(form, 'actually, forget that — show me A16 yields')).toBeNull();
+    expect(parseAnswerText(form, '')).toBeNull();
+  });
+
+  /** A partial parse of a real answer beats an empty card, so one matched label is enough
+   *  and labels this form does not know are passed over rather than failing the whole. */
+  it('takes the fields it recognises and ignores the rest', () => {
+    expect(parseAnswerText(form, 'Part ID：A14；Something else：42')).toEqual({ partIds: ['A14'] });
   });
 });
