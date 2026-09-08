@@ -2,6 +2,7 @@ import React, { type ReactNode, useEffect, useMemo, useRef } from 'react';
 
 import { useActiveRunStore } from '@/stores/useActiveRunStore';
 import type { Message, QuestionForm, StepItem } from '@/types/api';
+import { parseAnswerText } from '@/utils/composeAnswerText';
 import { liftQuestions } from '@/utils/liftQuestions';
 import MessageBubble, { type LiveRun } from './MessageBubble';
 
@@ -25,8 +26,8 @@ const parseSteps = (stepsJson: string | null): StepItem[] => {
   }
 };
 
-/** The reask a past turn asked, lifted into the same form the live one renders. Answers
- *  were never persisted, so it comes back read-only. */
+/** The reask a past turn asked, lifted into the same form the live one renders. It comes
+ *  back read-only: a settled question must not invite a second answer. */
 const parseQuestion = (questionsJson: string | null): QuestionForm | null => {
   if (!questionsJson) {
     return null;
@@ -90,13 +91,22 @@ const MessageList: React.FC<MessageListProps> = ({
   // once per token; text-only bubbles not at all).
   const parsedHistory = useMemo(
     () =>
-      messages.map((message) => ({
-        steps: message.sender === 'AI' ? parseSteps(message.stepsJson) : [],
-        question: message.sender === 'AI' ? parseQuestion(message.questionsJson) : null,
-        artifact: message.artifactId
-          ? { artifactId: message.artifactId, title: message.artifactTitle ?? message.text }
-          : null,
-      })),
+      messages.map((message, index) => {
+        const question = message.sender === 'AI' ? parseQuestion(message.questionsJson) : null;
+        // What the reader chose, from the reply they sent. Nothing stores the answers —
+        // they went back as one prose sentence, which is the USER message sitting right
+        // after the card. Without this a past reask shows every option and no sign of
+        // which ones were picked, which reads as a question still waiting to be answered.
+        const reply = question !== null ? messages[index + 1] : undefined;
+        return {
+          steps: message.sender === 'AI' ? parseSteps(message.stepsJson) : [],
+          question,
+          questionAnswers: question !== null && reply?.sender === 'USER' ? parseAnswerText(question, reply.text) : null,
+          artifact: message.artifactId
+            ? { artifactId: message.artifactId, title: message.artifactTitle ?? message.text }
+            : null,
+        };
+      }),
     [messages]
   );
 
@@ -184,6 +194,7 @@ const MessageList: React.FC<MessageListProps> = ({
             steps={parsedHistory[index].steps}
             artifact={parsedHistory[index].artifact}
             question={parsedHistory[index].question}
+            questionAnswers={parsedHistory[index].questionAnswers}
             artifactShown={message.artifactId !== null && message.artifactId === displayedArtifactId}
             onPickArtifact={pickArtifact}
             questionDisabled={!isPendingReask}

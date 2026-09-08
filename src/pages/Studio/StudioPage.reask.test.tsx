@@ -121,9 +121,8 @@ describe('A reask the run is waiting on', () => {
     expect(stream.requests[0]).toMatchObject({ question: 'Part ID：A14' });
   }, 20000);
 
-  /** The guard against over-fixing. A reask with the user's reply after it was answered
-   *  long ago; the answers were never stored, so the card cannot show what was chosen and
-   *  must not invite a second answer to a question that is already behind the reader. */
+  /** The guard against over-fixing: an answered reask must not invite a second answer to
+   *  a question that is already behind the reader. */
   it('stays read-only once it has been answered', async () => {
     const user = userEvent.setup();
     historyOf(
@@ -136,8 +135,50 @@ describe('A reask the run is waiting on', () => {
     await waitForComposer();
 
     const group = await screen.findByRole('group', { name: 'Part ID' });
-    await user.click(chipIn(group, 'A14'));
+    // Pressing the option that was NOT chosen changes nothing, and there is no Send to
+    // put a second answer behind.
+    await user.click(chipIn(group, 'A16'));
 
+    expect(chipIn(group, 'A16')).toHaveAttribute('aria-pressed', 'false');
+    expect(within(group).queryByRole('button', { name: 'Send' })).not.toBeInTheDocument();
+  });
+
+  /** A past reask shows every option and, until now, no sign of which one was picked —
+   *  which reads as a question still waiting to be answered. Nothing stores the answers,
+   *  but they are not lost: they went back as one prose sentence, and that sentence is
+   *  the USER message sitting right after the card. */
+  it('shows what was chosen last time', async () => {
+    const user = userEvent.setup();
+    historyOf(
+      message({ id: 'm1', sender: 'AI', questionsJson: PART_ID_REASK }),
+      message({ id: 'm2', sender: 'USER', text: 'Part ID：A14' })
+    );
+    renderStudio();
+
+    await user.click(await screen.findByRole('button', { name: 'Defect pareto — W12' }));
+    await waitForComposer();
+
+    const group = await screen.findByRole('group', { name: 'Part ID' });
+    expect(chipIn(group, 'A14')).toHaveAttribute('aria-pressed', 'true');
+    expect(chipIn(group, 'A16')).toHaveAttribute('aria-pressed', 'false');
+  });
+
+  /** A reader who ignored the reask and typed something else leaves an ordinary message
+   *  in exactly the same position. Reading that as answers would put words in their
+   *  mouth — and mark options they never picked. */
+  it('marks nothing when the message after it was not an answer', async () => {
+    const user = userEvent.setup();
+    historyOf(
+      message({ id: 'm1', sender: 'AI', questionsJson: PART_ID_REASK }),
+      message({ id: 'm2', sender: 'USER', text: 'actually, forget that — show me A16 yields' })
+    );
+    renderStudio();
+
+    await user.click(await screen.findByRole('button', { name: 'Defect pareto — W12' }));
+    await waitForComposer();
+
+    const group = await screen.findByRole('group', { name: 'Part ID' });
     expect(chipIn(group, 'A14')).toHaveAttribute('aria-pressed', 'false');
+    expect(chipIn(group, 'A16')).toHaveAttribute('aria-pressed', 'false');
   });
 });
