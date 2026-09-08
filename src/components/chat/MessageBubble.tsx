@@ -45,9 +45,12 @@ export interface MessageBubbleProps {
   steps?: StepItem[] | null;
   artifact?: { artifactId: string; title: string } | null;
   question?: QuestionForm | null;
-  /** History reasks render read-only: the answers were never persisted, so there is
-   *  nothing to re-submit. */
+  /** History reasks render read-only: a settled question must not invite a second
+   *  answer. What was chosen still shows — see `questionAnswers`. */
   questionDisabled?: boolean;
+  /** What was answered, for a past reask. Reconstructed from the reply the reader sent,
+   *  which is the only record of it there is. */
+  questionAnswers?: Answers | null;
   /** Takes the form as well as the answers: the answer is composed FROM the form, and
    *  the only form the thread held was the live run's — which a reload does not have. */
   onAnswer?: (answers: Answers, form: QuestionForm) => void;
@@ -91,6 +94,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
   artifact: settledArtifact,
   question: settledQuestion,
   questionDisabled = false,
+  questionAnswers,
   onAnswer,
   artifactShown = false,
   onPickArtifact,
@@ -270,6 +274,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
           <QuestionFormCard
             form={question}
             disabled={questionDisabled}
+            initialAnswers={questionAnswers ?? undefined}
             onSubmit={(answers) => onAnswer?.(answers, question)}
           />
         )}
