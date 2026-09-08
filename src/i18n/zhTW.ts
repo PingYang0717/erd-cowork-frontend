@@ -158,6 +158,19 @@ export const zhTW = {
     questionTitle: '分析條件',
     questionSubmit: '送出',
     questionDisabledHint: '請先回答上面的問題',
+    /** The backend's flat question carries options and nothing else — no wording for the
+     *  box beside them — so the dictionary supplies it. An empty box with no placeholder
+     *  reads as something that failed to load rather than as an invitation.
+     *
+     *  Two of them, because "或" only makes sense when there is something to choose
+     *  instead: a question that offered no options has nothing for the reader to type
+     *  *rather than*. */
+    questionCustomPlaceholder: '或自行輸入…',
+    questionOpenPlaceholder: '請輸入…',
+    /** The list's own wording. It and the box below it are different controls doing
+     *  different things, so they must not read the same — sharing one string made the
+     *  card look like it was asking twice for the same thing. */
+    questionSelectPlaceholder: '請選擇…',
     /** Explains why sending is blocked while the file set is still settling — the input
      *  stays typable, only the send is held. */
     uploadingWait: '檔案處理中，完成後即可送出',
