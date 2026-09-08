@@ -203,10 +203,13 @@
 
 /* The mockup's fixed tokens, not a color-mix approximation — the derived
    values drifted visibly in dark mode (gray-blue vs the token navy). The
-   bold weight lands on the title only: the timestamp stays fw400. */
+   bold weight lands on the title only: the timestamp stays fw400.
+
+   The fill alone marks it. A tinted ring around a tinted row states the same thing
+   twice, and in a column of rows the rings read as separate boxes rather than as one
+   list. The base `1px solid transparent` stays so nothing shifts on selection. */
 .sessionRow[aria-current='true'] {
   background: var(--erd-color-primary-bg, #e6f4ff);
-  border-color: var(--erd-color-primary-border, #91caff);
 }
 
 .sessionRow[aria-current='true'] .sessionRowTitle {

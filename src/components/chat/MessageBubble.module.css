@@ -125,8 +125,9 @@
     background 0.15s;
 }
 
+/* Fill only, here and on the shown state below: the chip keeps the same neutral border
+   it wears at rest, so tinting says "this one" without also redrawing its outline. */
 .artifactChipButton:hover {
-  border-color: var(--erd-color-primary-border, #91caff);
   background: var(--erd-color-primary-bg, #e6f4ff);
 }
 
@@ -138,7 +139,6 @@
 /* The one currently on the pane, so a thread with several Artifacts shows which of
    them the right-hand side is answering for. */
 .artifactChipShown {
-  border-color: var(--erd-color-primary-border, #91caff);
   background: var(--erd-color-primary-bg, #e6f4ff);
 }
 
