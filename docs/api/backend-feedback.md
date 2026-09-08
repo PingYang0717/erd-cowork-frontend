@@ -20,9 +20,16 @@
 
 ## 中 — Connector 與 Directory
 
-4. **Connector 端點**:`GET /connectors`、連線/斷線、新增自訂來源。目前是前端常數
-   目錄疊上存在 localStorage 的使用者偏好(`erd-cowork:connector-prefs`),換一台
-   機器就回到預設。連線狀態應該是帳號層級的事實——「已過期」「無權限」是全域的。
+4. ~~**Connector 端點**~~ — **已完成(2026-09-08 定版)**。`GET /connectors` 回
+   `{ id, connectorName, description, type, enabled }`;哪一場對話在用哪些來源是
+   session 的事實(`SessionDetail.connectors`),寫入走 `PATCH /sessions/{id}/data-source`
+   ——裸陣列、整組取代、200 無 body。
+
+   原本要求的「連線狀態是帳號層級的事實」已落地,但收斂成一個布林 `enabled`:「已過期」
+   與「無權限」對前端要做的事完全一樣,而原因只有後端知道。**新增自訂來源這個設計確定
+   不做**,`POST /connectors` 與 `PATCH /connectors/{id}` 一併從契約移除。留在
+   localStorage 的只剩面板的預選值。
+
 5. ~~**`GET /directory`**~~ — **已完成(2026-09-07 確認)**。收件者搜尋走真後端的
    `GET /hr/employeesAndOrgs?keyword=`(`api/directoryApi.ts`),回應包在 `content`
    信封裡,由該檔拆開。整份分享流程沒有假資料了。
