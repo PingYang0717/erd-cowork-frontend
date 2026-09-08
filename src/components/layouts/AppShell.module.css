@@ -1,0 +1,13 @@
+/* The app fills the viewport and the routes scroll inside it: the header must stay put
+   while a thread or a gallery scrolls under it. */
+.shell {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.body {
+  flex: 1 1 auto;
+  min-height: 0;
+}

@@ -1,6 +1,7 @@
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { render, screen } from '@testing-library/react';
 
+import AppShell from '@/components/layouts/AppShell';
 import StudioShell from '@/components/layouts/StudioShell';
 import ArtifactsGalleryPage from '@/pages/ArtifactsGallery/ArtifactsGalleryPage';
 import StudioPage from '@/pages/Studio/StudioPage';
@@ -27,9 +28,13 @@ export const renderStudio = ({ retry = true }: RenderStudioOptions = {}) => {
   return render(
     <MemoryRouter initialEntries={['/cowork']}>
       <Routes>
-        <Route path="/cowork" element={<StudioShell />}>
-          <Route index element={<StudioPage />} />
-          <Route path="artifacts" element={<ArtifactsGalleryPage />} />
+        {/* The app's own bar is a layout route above everything (app/router.tsx); a
+            harness without it would be testing a shell the browser never renders. */}
+        <Route element={<AppShell />}>
+          <Route path="/cowork" element={<StudioShell />}>
+            <Route index element={<StudioPage />} />
+            <Route path="artifacts" element={<ArtifactsGalleryPage />} />
+          </Route>
         </Route>
       </Routes>
     </MemoryRouter>,

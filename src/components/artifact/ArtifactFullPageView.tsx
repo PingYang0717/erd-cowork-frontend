@@ -10,7 +10,6 @@ import {
 } from '@ant-design/icons';
 
 import { isNotFound } from '@/api/apiError';
-import SettingsMenu from '@/components/common/SettingsMenu';
 import { useArtifactContent } from '@/hooks/useArtifactContent';
 import { useArtifacts } from '@/hooks/useArtifacts';
 import { useTranslations } from '@/i18n/useTranslations';
@@ -141,7 +140,6 @@ const ArtifactFullPageView: React.FC<ArtifactFullPageViewProps> = ({ artifactId 
             }
           }}
         />
-        <SettingsMenu variant="tile" />
       </div>
       <div className={styles.body}>
         {/* Only a 404 means gone. A 500 or an unreachable backend says nothing about

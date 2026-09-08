@@ -87,6 +87,15 @@ client abort,前端會在 abort 後兩段 800ms invalidate 追後端非同步落
 
 分享與收件者名單都已接真後端。名單是搜尋式查詢(`directoryApi.searchDirectory`,少於 `DIRECTORY_SEARCH_MIN_LENGTH` 個字不發請求),沒有一份固定名單。
 
+## 6.5 User
+
+| #   | Method + Path      | 前端送出 | 前端期望回應                                                              | 狀態       | 後端實際 input/output(請補) |
+| --- | ------------------ | -------- | ------------------------------------------------------------------------- | ---------- | --------------------------- |
+| 19b | `GET /hr/userInfo` | —        | `{ type: 'EMPLOYEE', employeeName, employeeNt, employeeOrgName, emplId }` | 待後端實作 |                             |
+
+單一物件,不包 `content` 信封。前端用 `emplId` 套出頭像位址(樣板目前是 placeholder)。
+頭像拿不到不影響任何功能——退回姓名首字,再退回中性圖示。
+
 ## 7. Connector
 
 | #   | Method + Path     | 前端送出 | 前端期望回應                                                      | 狀態    | 後端實際 input/output(請補)             |

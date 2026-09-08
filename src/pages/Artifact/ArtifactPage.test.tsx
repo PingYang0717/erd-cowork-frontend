@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
+import AppShell from '@/components/layouts/AppShell';
 import StudioShell from '@/components/layouts/StudioShell';
 import { en } from '@/i18n/en';
 import { server } from '@/mocks/server';
@@ -19,11 +20,15 @@ const renderArtifactPageAt = (path: string) => {
   return render(
     <MemoryRouter initialEntries={[path]}>
       <Routes>
-        <Route path="/cowork" element={<StudioShell />}>
-          <Route index element={<StudioPage />} />
-          <Route path="artifacts" element={<ArtifactsGalleryPage />} />
+        {/* The app's own bar is a layout route above everything (app/router.tsx); a
+            harness without it would be testing a shell the browser never renders. */}
+        <Route element={<AppShell />}>
+          <Route path="/cowork" element={<StudioShell />}>
+            <Route index element={<StudioPage />} />
+            <Route path="artifacts" element={<ArtifactsGalleryPage />} />
+          </Route>
+          <Route path="/cowork/artifact/:artifactId" element={<ArtifactPage />} />
         </Route>
-        <Route path="/cowork/artifact/:artifactId" element={<ArtifactPage />} />
       </Routes>
     </MemoryRouter>,
     { wrapper: appWrapper() }
@@ -168,14 +173,15 @@ describe('Artifact full-page view', () => {
     openSpy.mockRestore();
   });
 
-  /** A shared-link recipient can land here with the backend down, facing an error card
-   *  in a language they may not read. The card carries the settings entry (ErrorPanel),
-   *  so the language exit survives the very failure that hid every other entry. */
-  it('keeps a Settings entry on the failure card when the artifacts list cannot load', async () => {
+  /** A shared-link recipient can land here with the backend down, facing an error card in
+   *  a language they may not read. The card used to carry a settings entry of its own for
+   *  exactly that reason; the app's bar sits above every boundary now and cannot fail, so
+   *  the language exit survives without the card having to carry a second one. */
+  it('keeps the account entry above the failure card when the artifacts list cannot load', async () => {
     server.use(http.get('/api/artifacts', () => new HttpResponse(null, { status: 500 })));
     renderArtifactPageAt('/cowork/artifact/artifact-1');
 
     expect(await screen.findByText(en.errors.loadFailedHeading)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Settings' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Account' })).toBeInTheDocument();
   });
 });
