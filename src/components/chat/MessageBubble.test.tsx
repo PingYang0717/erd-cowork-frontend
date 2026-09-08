@@ -59,11 +59,10 @@ describe('MessageBubble', () => {
     expect(screen.queryByText(/\[\[table:/)).not.toBeInTheDocument();
   });
 
-  /** A reask is a question, not an answer. The prose the run gathered on the way to
-   *  asking is its working — putting it beside the card asks the reader to take in a
-   *  half-finished analysis before answering the one thing that would finish it. The
-   *  steps stay: they say what it did before it had to ask. */
-  it('shows only the reask, not the working that led to it', () => {
+  /** The prose an agent writes before asking is usually what explains why it has to ask.
+   *  Withholding it and showing the card alone is a question out of nowhere — the reader
+   *  is asked to choose without being told what the choice is about. */
+  it('keeps the sentence that led up to a reask, beside the card', async () => {
     render(
       <MessageBubble
         sender="AI"
@@ -86,7 +85,7 @@ describe('MessageBubble', () => {
 
     expect(screen.getByRole('group', { name: 'Lot' })).toBeInTheDocument();
     expect(screen.getByText('Scanning lots')).toBeInTheDocument();
-    expect(screen.queryByText(/The scan matched 6 lots/)).not.toBeInTheDocument();
+    expect(await screen.findByText(/The scan matched 6 lots/)).toBeInTheDocument();
   });
 
   /** `[[table:…]]` is display plumbing the reader must never see. That was guaranteed for

@@ -104,8 +104,22 @@ const MessageList: React.FC<MessageListProps> = ({
         artifact: message.artifactId
           ? { artifactId: message.artifactId, title: message.artifactTitle ?? message.text }
           : null,
+        /** This message is a reask's answer, and the card above it is already showing
+         *  what was chosen. Filled in below, once every card knows what it recovered. */
+        shownByCardAbove: false,
       };
     });
+
+    // Answering a reask is filling in a form, not saying something. The sentence that
+    // goes on the wire (`部件：A14；時間區間：近 7 天`) exists only because the backend has
+    // no structured answers channel, and reading it back as a chat message shows the
+    // reader plumbing they never wrote. Hidden only where the card above recovered it:
+    // if that parse failed, this message is the only record the answer has left.
+    for (const [index, entry] of parsed.entries()) {
+      if (entry.questionAnswers !== null && parsed[index + 1] !== undefined) {
+        parsed[index + 1].shownByCardAbove = true;
+      }
+    }
 
     return parsed;
   }, [messages]);
@@ -177,6 +191,9 @@ const MessageList: React.FC<MessageListProps> = ({
         // one of the two draws it — otherwise the refetch put a second, identical card on
         // screen, and the one the reader reached for first was the dead one.
         const drawnByLiveBubble = isPendingReask && live?.question != null;
+        if (parsedHistory[index].shownByCardAbove) {
+          return null;
+        }
         // The whole turn, not only its card: a reask bubble shows the question and not
         // the working that led to it, and the backend persists that working as this
         // message's text. Rendering the history copy beside the live one put exactly the
