@@ -27,8 +27,7 @@ const asOptions = (values: string[]) => values.map((value) => ({ value, label: v
  *  connectors that are actually connected right now (ADR-0004). With none connected the
  *  mockup still offers Inline, so the form is never a dead end. */
 const dataTypeField = (connectors: Connector[]): QuestionField => {
-  const connected = connectors.filter((connector) => connector.status === 'connected');
-  const names = connected.length > 0 ? connected.map((connector) => connector.name) : ['Inline'];
+  const names = connectors.length > 0 ? connectors.map((connector) => connector.connectorName) : ['Inline'];
 
   return {
     key: 'dataTypes',

@@ -10,24 +10,22 @@ import {
   ContainerOutlined,
   DotChartOutlined,
   ExperimentOutlined,
-  LoadingOutlined,
   LockOutlined,
   PictureOutlined,
   PlusOutlined,
   RadarChartOutlined,
-  ReloadOutlined,
   SearchOutlined,
   ToolOutlined,
   WarningOutlined,
 } from '@ant-design/icons';
 
-import { useAddConnector, useSetSessionDataSource } from '@/hooks/useConnectorMutations';
+import { readRememberedSelection } from '@/api/connectorApi';
+import { useSetSessionDataSources } from '@/hooks/useConnectorMutations';
 import { useConnectors } from '@/hooks/useConnectors';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { useTranslations } from '@/i18n/useTranslations';
 import type { Translations } from '@/i18n/zhTW';
-import type { Connector, ConnectorStatus } from '@/types/api';
-import { selectConnected } from '@/utils/connectorSelectors';
+import type { Connector } from '@/types/api';
 
 import styles from './ConnectorsPanel.module.css';
 
@@ -44,46 +42,48 @@ const CONNECTOR_ICONS: Record<string, ReactNode> = {
   tool: <ToolOutlined aria-hidden />,
 };
 
+/** How one row reads, from the two facts that decide it: whether the connector can be
+ *  chosen at all, and whether this conversation's draft has chosen it. Derived per render
+ *  rather than stored, so there is no third copy of the answer to fall out of step. */
+type RowState = 'connected' | 'available' | 'unavailable';
+
+const rowState = (connector: Connector, draftIds: string[]): RowState => {
+  if (!connector.enabled) {
+    return 'unavailable';
+  }
+  return draftIds.includes(connector.id) ? 'connected' : 'available';
+};
+
 type StatusFilter = 'All' | 'Connected' | 'Not Connected';
 
 /** Filter identity stays these English keys (tests and logic match on them); what the
  *  user reads is looked up per key at render time. */
 const STATUS_FILTERS: StatusFilter[] = ['All', 'Connected', 'Not Connected'];
 
-const matchesFilter = (connector: Connector, filter: StatusFilter): boolean => {
+const matchesFilter = (state: RowState, filter: StatusFilter): boolean => {
   if (filter === 'All') return true;
-  return filter === 'Connected' ? connector.status === 'connected' : connector.status !== 'connected';
+  return filter === 'Connected' ? state === 'connected' : state !== 'connected';
 };
 
 /** Takes the copy rather than reaching for it, so the lookup stays a pure function
- *  of (status, pending, dictionary). */
-const statusMeta = (status: ConnectorStatus, isPending: boolean, t: Translations['connectors']) => {
-  if (isPending) {
-    return { label: t.statusConnecting, color: 'var(--erd-color-primary, #1677ff)' };
-  }
-  switch (status) {
+ *  of (state, dictionary). */
+const statusMeta = (state: RowState, t: Translations['connectors']) => {
+  switch (state) {
     case 'connected':
       return { label: t.statusConnected, color: 'var(--erd-color-primary, #1677ff)' };
-    case 'expired':
-      return { label: t.statusExpired, color: 'var(--erd-color-warning, #faad14)' };
-    case 'no_access':
-      return { label: t.statusNoAccess, color: 'var(--erd-color-text-tertiary, #8c8c8c)' };
+    case 'unavailable':
+      return { label: t.statusUnavailable, color: 'var(--erd-color-text-tertiary, #8c8c8c)' };
     default:
       return { label: t.statusNotConnected, color: 'var(--erd-color-text-tertiary, #8c8c8c)' };
   }
 };
 
-const toggleIcon = (status: ConnectorStatus, isPending: boolean) => {
-  if (isPending) {
-    return <LoadingOutlined aria-hidden />;
-  }
-  switch (status) {
+const toggleIcon = (state: RowState) => {
+  switch (state) {
     case 'connected':
       return <CheckOutlined aria-hidden />;
-    case 'no_access':
+    case 'unavailable':
       return <LockOutlined aria-hidden />;
-    case 'expired':
-      return <ReloadOutlined aria-hidden />;
     default:
       return <PlusOutlined aria-hidden />;
   }
@@ -98,13 +98,35 @@ interface ConnectorsPanelProps {
 
 const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ sessionId, open, onClose }) => {
   const t = useTranslations();
-  const addConnector = useAddConnector();
-  const sessionConnectors = useConnectors(sessionId);
-  const setDataSource = useSetSessionDataSource(sessionId);
+  const { catalogue, attachedIds } = useConnectors(sessionId);
+  const setDataSources = useSetSessionDataSources(sessionId);
+
+  // Above the state it seeds, against the top-block order: `draftIds` initialises from
+  // it on mount, and a dependency is a hard constraint the grouping yields to (ADR-0010).
+  /** What to open on: this conversation's own selection, or — only when it has none —
+   *  the combination the user last worked with.
+   *
+   *  Intersected with the catalogue both ways. A remembered id the catalogue no longer
+   *  serves cannot be shown, and submitting it would send the backend an id it does not
+   *  know; a session id that has gone the same way is a source the user cannot see in the
+   *  list, so counting it would claim they are using something invisible.
+   *
+   *  A default offered here and nowhere else. Nothing is attached to a session on the
+   *  user's behalf: it reaches the backend when they press Submit, like every other
+   *  choice on this panel. */
+  const openingDraft = useMemo(() => {
+    const known = new Set(catalogue.filter((connector) => connector.enabled).map((connector) => connector.id));
+    const source = attachedIds.length > 0 ? attachedIds : readRememberedSelection();
+    return source.filter((id) => known.has(id));
+  }, [catalogue, attachedIds]);
 
   const [search, setSearch] = useState('');
-  const [addValue, setAddValue] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('All');
+  // What the user has picked but not yet submitted. Choosing sources is one decision made
+  // out of several clicks, so nothing is written until Submit: a request per checkbox
+  // would leave a half-made choice on the server every time someone changed their mind
+  // mid-way, and Cancel would have nothing to cancel.
+  const [draftIds, setDraftIds] = useState<string[]>(openingDraft);
 
   // Below the state it feeds from, against the top-block rule: the debounce's input is
   // `search`, and a dependency is a hard constraint the grouping yields to. The list
@@ -112,44 +134,19 @@ const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ sessionId, open, onCl
   // feels delayed — only the filtering behind it is.
   const normalizedSearch = useDebouncedValue(search).trim().toLowerCase();
 
-  const attachedIds = useMemo(
-    () => selectConnected(sessionConnectors).map((connector) => connector.id),
-    [sessionConnectors]
-  );
-
-  // What the user has picked but not yet submitted. Choosing sources is one decision made
-  // out of several clicks, so nothing is written until Submit: a request per checkbox
-  // would leave a half-made choice on the server every time someone changed their mind
-  // mid-way, and Cancel would have nothing to cancel.
-  const [draftIds, setDraftIds] = useState<string[]>(attachedIds);
-
-  // Opening starts a fresh decision from whatever the session currently has. Adjusting
-  // during render (React's documented pattern for state derived from a prop change)
-  // rather than in an effect, so the first paint of an opened panel already shows the
-  // right ticks instead of last time's for one frame.
+  // Opening starts a fresh decision. Adjusting during render (React's documented pattern
+  // for state derived from a prop change) rather than in an effect, so the first paint of
+  // an opened panel already shows the right ticks instead of last time's for one frame.
   const [wasOpen, setWasOpen] = useState(open);
   if (open !== wasOpen) {
     setWasOpen(open);
     if (open) {
-      setDraftIds(attachedIds);
+      setDraftIds(openingDraft);
     }
   }
 
-  // The list reads its `connected` from the draft, so the panel shows the decision being
-  // made rather than the one already stored. `expired` and `no_access` are the
-  // catalogue's word and outrank any of it.
-  const connectors = useMemo<Connector[]>(
-    () =>
-      sessionConnectors.map((connector) =>
-        connector.status === 'expired' || connector.status === 'no_access'
-          ? connector
-          : { ...connector, status: draftIds.includes(connector.id) ? 'connected' : 'available' }
-      ),
-    [sessionConnectors, draftIds]
-  );
-
   const toggle = (connector: Connector) => {
-    if (connector.status === 'no_access') {
+    if (!connector.enabled) {
       return;
     }
     setDraftIds((previous) =>
@@ -157,47 +154,23 @@ const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ sessionId, open, onCl
     );
   };
 
-  /** Writes the decision: one call per source that actually changed, then closes.
+  /** Writes the decision as one set, then closes.
    *
-   *  Sequential rather than parallel — each attach may upsert the session (ADR-0005), and
-   *  firing them together would race several creations of the same one. */
-  const submit = async () => {
-    try {
-      for (const id of draftIds.filter((id) => !attachedIds.includes(id))) {
-        await setDataSource.mutateAsync({ id, attached: true });
-      }
-      for (const id of attachedIds.filter((id) => !draftIds.includes(id))) {
-        await setDataSource.mutateAsync({ id, attached: false });
-      }
-    } catch {
-      // The mutation has already toasted it. The panel closes either way: a connector is
-      // a capability, and holding the dialog open over one that would not attach helps
-      // nobody.
-    }
-    onClose();
+   *  The whole selection in a single request: it describes the outcome rather than a
+   *  change, so two panels or a double-press cannot land in an order that decides it. */
+  const submit = () => {
+    setDataSources.mutate(draftIds, { onSuccess: onClose });
   };
 
-  const submitAddConnector = () => {
-    const name = addValue.trim();
-    if (!name) return;
-    // Adding one IS picking it, so it lands in the draft — and reaches the session with
-    // the rest of the selection on Submit.
-    addConnector.mutate(name, {
-      onSuccess: (id) => setDraftIds((previous) => [...previous, id]),
-    });
-    setAddValue('');
-  };
-
-  const connectedConnectors = selectConnected(connectors);
-  const connectedCount = connectedConnectors.length;
-  const isDirty =
-    connectedConnectors.length !== attachedIds.length ||
-    connectedConnectors.some((connector) => !attachedIds.includes(connector.id));
-  const visibleConnectors = connectors.filter(
+  const chosen = catalogue.filter((connector) => rowState(connector, draftIds) === 'connected');
+  const isDirty = chosen.length !== attachedIds.length || chosen.some((c) => !attachedIds.includes(c.id));
+  const visibleConnectors = catalogue.filter(
     (connector) =>
-      matchesFilter(connector, statusFilter) &&
+      matchesFilter(rowState(connector, draftIds), statusFilter) &&
       (!normalizedSearch ||
-        `${connector.name} ${connector.description} ${connector.category}`.toLowerCase().includes(normalizedSearch))
+        `${connector.connectorName} ${connector.description} ${connector.type}`
+          .toLowerCase()
+          .includes(normalizedSearch))
   );
 
   return (
@@ -221,45 +194,39 @@ const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ sessionId, open, onCl
       }}
       footer={
         <div className={styles.footer}>
-          <span className={styles.footerCount}>
-            {t.connectors.showing(visibleConnectors.length, connectors.length)}
-          </span>
+          <span className={styles.footerCount}>{t.connectors.showing(visibleConnectors.length, catalogue.length)}</span>
           <Button onClick={onClose}>{t.common.cancel}</Button>
-          <Button type="primary" loading={setDataSource.isPending} disabled={!isDirty} onClick={() => void submit()}>
+          <Button type="primary" loading={setDataSources.isPending} disabled={!isDirty} onClick={submit}>
             {t.connectors.submit}
           </Button>
         </div>
       }
     >
-      <p className={styles.subtitle}>{t.connectors.subtitle(connectedCount, connectors.length)}</p>
+      <p className={styles.subtitle}>{t.connectors.subtitle(chosen.length, catalogue.length)}</p>
 
       <div className={styles.selectedBox}>
         <div className={styles.selectedHeader}>
           <CheckCircleFilled aria-hidden className={styles.selectedHeaderIcon} />
           <span className={styles.selectedHeaderLabel}>{t.connectors.selectedSources}</span>
-          <span className={styles.badge}>{connectedCount}</span>
-          {connectedCount > 0 && (
-            <button
-              type="button"
-              className={styles.clearAll}
-              onClick={() => connectedConnectors.forEach((c) => toggle(c))}
-            >
+          <span className={styles.badge}>{chosen.length}</span>
+          {chosen.length > 0 && (
+            <button type="button" className={styles.clearAll} onClick={() => setDraftIds([])}>
               {t.connectors.clearAll}
             </button>
           )}
         </div>
         <div className={styles.selectedChips}>
-          {connectedCount > 0 ? (
-            connectedConnectors.map((connector) => (
+          {chosen.length > 0 ? (
+            chosen.map((connector) => (
               <span key={connector.id} className={styles.selectedChip}>
                 <span className={styles.selectedChipIcon} aria-hidden="true">
                   {CONNECTOR_ICONS[connector.id] ?? <ApiOutlined aria-hidden />}
                 </span>
-                <span className={styles.selectedChipName}>{connector.name}</span>
+                <span className={styles.selectedChipName}>{connector.connectorName}</span>
                 <button
                   type="button"
                   className={styles.selectedChipRemove}
-                  aria-label={`Remove ${connector.name} from selected sources`}
+                  aria-label={`Remove ${connector.connectorName} from selected sources`}
                   onClick={() => toggle(connector)}
                 >
                   <CloseOutlined aria-hidden />
@@ -305,7 +272,7 @@ const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ sessionId, open, onCl
                 : t.connectors.filterNotConnected}
             {filter !== 'All' && (
               <span className={styles.filterChipCount}>
-                {connectors.filter((c) => matchesFilter(c, filter)).length}
+                {catalogue.filter((c) => matchesFilter(rowState(c, draftIds), filter)).length}
               </span>
             )}
           </button>
@@ -315,9 +282,9 @@ const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ sessionId, open, onCl
       <ul className={styles.list}>
         {visibleConnectors.length ? (
           visibleConnectors.map((connector) => {
-            const isPending = setDataSource.isPending && setDataSource.variables?.id === connector.id;
-            const meta = statusMeta(connector.status, isPending, t.connectors);
-            const isConnected = connector.status === 'connected';
+            const state = rowState(connector, draftIds);
+            const meta = statusMeta(state, t.connectors);
+            const isConnected = state === 'connected';
             return (
               <li key={connector.id} className={styles.row} data-connected={isConnected}>
                 <span className={styles.icon} data-connected={isConnected} aria-hidden="true">
@@ -325,24 +292,25 @@ const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ sessionId, open, onCl
                 </span>
                 <span className={styles.info}>
                   <span className={styles.nameRow}>
-                    <span className={styles.name}>{connector.name}</span>
-                    <span className={styles.categoryTag}>{connector.category}</span>
-                    {connector.custom && <span className={styles.customTag}>custom</span>}
+                    <span className={styles.name}>{connector.connectorName}</span>
+                    <span className={styles.categoryTag}>{connector.type}</span>
                   </span>
                   <span className={styles.description}>{connector.description}</span>
-                  <span className={styles.status} data-status={connector.status} style={{ color: meta.color }}>
+                  <span className={styles.status} data-status={state} style={{ color: meta.color }}>
                     <span className={styles.statusDot} style={{ background: meta.color }} />
                     {meta.label}
                   </span>
                 </span>
                 <Button
                   className={styles.toggleButton}
-                  data-state={isPending ? 'connecting' : connector.status}
+                  data-state={state}
                   shape="circle"
                   size="small"
-                  disabled={connector.status === 'no_access'}
-                  aria-label={isConnected ? `Disconnect ${connector.name}` : `Connect ${connector.name}`}
-                  icon={toggleIcon(connector.status, isPending)}
+                  disabled={state === 'unavailable'}
+                  aria-label={
+                    isConnected ? `Disconnect ${connector.connectorName}` : `Connect ${connector.connectorName}`
+                  }
+                  icon={toggleIcon(state)}
                   onClick={() => toggle(connector)}
                 />
               </li>
@@ -352,19 +320,6 @@ const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ sessionId, open, onCl
           <li className={styles.empty}>{t.connectors.noMatch(search)}</li>
         )}
       </ul>
-
-      <div className={styles.addRow}>
-        <Input
-          aria-label="Add a custom data source"
-          placeholder={t.connectors.addPlaceholder}
-          value={addValue}
-          onChange={(e) => setAddValue(e.target.value)}
-          onPressEnter={submitAddConnector}
-        />
-        <Button icon={<PlusOutlined aria-hidden />} onClick={submitAddConnector}>
-          {t.connectors.add}
-        </Button>
-      </div>
     </Modal>
   );
 };

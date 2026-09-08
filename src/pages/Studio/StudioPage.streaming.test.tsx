@@ -536,10 +536,14 @@ describe('Streaming a run in the Studio', () => {
     });
 
     /** The convenience the localStorage preference exists for: the same person grants
-     *  roughly the same capabilities every time, so having chosen once, a new conversation
-     *  opens on that combination rather than making them choose it again. Carried in on
-     *  send, which is when the session comes into being (ADR-0005). */
-    it('carries the combination the user last chose into the next conversation', async () => {
+     *  roughly the same capabilities every time, so having chosen once, the panel opens a
+     *  new conversation on that combination rather than making them choose it again.
+     *
+     *  A default in the dialog and nothing more. It used to be carried in on send —
+     *  written to the session without the user seeing it — which meant a conversation
+     *  they never opened the panel for silently drew on sources they last picked
+     *  somewhere else. Now they see it, and it reaches the backend when they submit it. */
+    it('opens a new conversation on the combination the user last chose', async () => {
       const user = userEvent.setup();
       renderStudio();
 
@@ -548,12 +552,6 @@ describe('Streaming a run in the Studio', () => {
       await user.click(screen.getByRole('button', { name: 'Attach files or connect a data source' }));
       await user.click(await screen.findByRole('menuitem', { name: /^Connectors/ }));
       await user.click(await screen.findByRole('button', { name: 'Connect Defect' }));
-      // Nothing is written until Submit: picking sources is one decision, not one per
-      // click.
-      // Nothing is written until Submit: picking sources is one decision, not one per
-      // click. The panel closes only after every write has landed, so its own open flag
-      // is the signal that the session now has them — the dialog element itself is no
-      // use here, since antd leaves it in the DOM and merely hides it.
       await user.click(screen.getByRole('button', { name: 'Submit' }));
       await waitFor(() => expect(useConnectorsPanelStore.getState().isOpen).toBe(false));
 
@@ -570,12 +568,15 @@ describe('Streaming a run in the Studio', () => {
       await user.click(screen.getByRole('button', { name: 'New chat' }));
       await waitFor(() => expect(useSessionSelectionStore.getState().selectedSessionId).not.toBe(firstSessionId));
       await waitForComposer();
-      await user.click(screen.getByRole('button', { name: 'SPC analysis' }));
-      await screen.findByText('分析條件');
 
-      const dataType = screen.getByRole('group', { name: 'Data type' });
-      expect(within(dataType).getByRole('button', { name: 'Defect' })).toBeInTheDocument();
-    });
+      await user.click(screen.getByRole('button', { name: 'Attach files or connect a data source' }));
+      await user.click(await screen.findByRole('menuitem', { name: /^Connectors/ }));
+
+      // Offered, not applied: Submit is live because none of this has reached the new
+      // conversation yet.
+      expect(await screen.findByRole('button', { name: 'Disconnect Defect' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Submit' })).toBeEnabled();
+    }, 20000);
 
     /** The link between the two surfaces, asserted from the user's side rather than from
      *  a fixture: connect a source in the panel, and the next run must offer it. These

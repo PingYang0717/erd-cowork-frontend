@@ -52,3 +52,15 @@ multipart、Artifact 內容直接回 `text/html`、反問是扁平的 `Question[
 - `stepsJson` 的 JSON 字串滲入 UI 解析點,這是 verbatim 的代價,刻意不再包一層。
 - 串流那條路走 raw `fetch`(axios 無法逐塊讀 body),因此 MUST 自行帶
   `getAuthHeaders()`——見 [ADR-0007](0007-cowork-file-parity-for-api-seams.md)。
+
+**2026-09-08 追記:`types/api` 描述前端消費什麼,不是後端吐什麼。**
+
+這份 ADR 講的是**不改名**——事件與欄位沿用線路上的拼法,不轉成本專案的 TypeScript 慣例。
+它沒有要求把後端送的每一個欄位都收進型別,而這兩件事很容易被讀成同一件。
+
+Connector 串接時定案:後端會送 `connectorId`(它自己的用途)與 `url`,前端型別兩個都不收。
+判準與 `customPlaceholder` 被刪掉時同一條——一個沒有消費端的欄位,會讓讀契約的人以為有
+功能。`url` 還多一層:資料來源的位址沒有理由進到瀏覽器。契約文件照實記錄後端會送它們,
+`types/api` 不收。
+
+收進來的欄位仍然照線路原樣命名(`connectorName` 不改成 `name`),那部分沒有變。

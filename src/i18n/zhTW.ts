@@ -229,14 +229,14 @@ export const zhTW = {
     filterNotConnected: '未連線',
     showing: (shown: number, total: number) => `顯示 ${shown} / ${total}`,
     submit: '送出',
-    add: '新增',
-    addPlaceholder: '新增自訂資料來源（例如 My Team DB）…',
     noMatch: (keyword: string) => `沒有符合「${keyword}」的資料來源。`,
-    statusConnecting: '連線中…',
     statusConnected: '已連線',
-    statusExpired: 'Token 已過期',
-    statusNoAccess: '無權限',
     statusNotConnected: '未連線',
+    /** One state, not three. `enabled: false` covers an expired token, a connection that
+     *  is down and an administrator switching the source off — the reason stays with the
+     *  backend, which is the only party that knows it, and the reader has the same
+     *  nothing to do about any of them. */
+    statusUnavailable: '目前不可用',
   },
 
   fileModal: {

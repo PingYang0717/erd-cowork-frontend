@@ -1,96 +1,34 @@
-import { useCallback } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
-import { addConnector as addConnectorRequest, readRememberedSelection, rememberSelection } from '@/api/connectorApi';
-import { attachDataSource, detachDataSource } from '@/api/sessionApi';
+import { rememberSelection } from '@/api/connectorApi';
+import { setDataSources } from '@/api/sessionApi';
 import { useTranslations } from '@/i18n/useTranslations';
-import type { SessionDetail } from '@/types/api/session';
 import { useActionErrorToast } from './useActionErrorToast';
-import { connectorsQueryKey } from './useConnectors';
 import { sessionDetailQueryKey } from './useSessionDetail';
 
-/** Attaches or detaches a data source for one conversation.
+/** Sets which data sources one conversation draws on.
  *
- *  The write goes to the session, not to the connector: `connected` is a fact about
- *  what this conversation may read, and the same source can be attached to one session
- *  and not another. Invalidating the session detail is what refreshes the panel, since
- *  that is where attachment lives. */
-export const useSetSessionDataSource = (sessionId: string) => {
+ *  The write goes to the session, not to the connector: what this conversation may read
+ *  is a fact about the conversation, and the same source can be attached to one and not
+ *  another. Invalidating the session detail is what refreshes the panel, since that is
+ *  where the selection lives.
+ *
+ *  The whole set travels, so this replaces rather than amends — see `setDataSources`. */
+export const useSetSessionDataSources = (sessionId: string) => {
   const t = useTranslations();
   const queryClient = useQueryClient();
   const toastError = useActionErrorToast(t.errors.notFound.session);
 
   return useMutation({
-    mutationFn: ({ id, attached }: { id: string; attached: boolean }) =>
-      attached ? attachDataSource(sessionId, id) : detachDataSource(sessionId, id),
-    onSuccess: (_result, { id, attached }) => {
-      // Remember what the user is working with. The same person grants roughly the same
-      // capabilities every time, so the next conversation can open on this combination
-      // instead of asking them to pick it again.
-      const current = new Set(
-        queryClient.getQueryData<SessionDetail>(sessionDetailQueryKey(sessionId))?.dataSourceIds ?? []
-      );
-      if (attached) {
-        current.add(id);
-      } else {
-        current.delete(id);
-      }
-      rememberSelection([...current]);
+    mutationFn: (connectorIds: string[]) => setDataSources(sessionId, connectorIds),
+    onSuccess: (_result, connectorIds) => {
+      // Remember what the user is working with, so the next conversation opens on this
+      // combination instead of asking them to pick it again. A default for the dialog and
+      // nothing more — it is never attached to a session on their behalf.
+      rememberSelection(connectorIds);
       queryClient.invalidateQueries({ queryKey: sessionDetailQueryKey(sessionId) });
     },
     // A write that fails silently is how a choice quietly stops sticking.
-    onError: toastError,
-  });
-};
-
-/** Carries the user's remembered connector combination into a conversation that has
- *  none of its own.
- *
- *  Called on send rather than when the conversation is opened, because that is when the
- *  session comes into being (ADR-0005) — attaching earlier would mint a session for every
- *  "New chat" click the user never followed through on. Awaited before the message so the
- *  run that message starts already has the capabilities.
- *
- *  Failure is deliberately swallowed: a connector is something the agent MAY use, so
- *  losing the pre-selection is a smaller harm than refusing to send the message. */
-export const useApplyRememberedDataSources = (sessionId: string) => {
-  const queryClient = useQueryClient();
-
-  return useCallback(
-    async (currentIds: string[]) => {
-      if (currentIds.length > 0) {
-        return;
-      }
-      const remembered = readRememberedSelection();
-      if (remembered.length === 0) {
-        return;
-      }
-      try {
-        await Promise.all(remembered.map((id) => attachDataSource(sessionId, id)));
-        await queryClient.invalidateQueries({ queryKey: sessionDetailQueryKey(sessionId) });
-      } catch {
-        // Nothing to tell the user: the conversation runs either way.
-      }
-    },
-    [sessionId, queryClient]
-  );
-};
-
-/** Adds a source to the catalogue.
- *
- *  Only the catalogue: whether this conversation draws on it is part of the selection the
- *  user submits, so the new source arrives pre-picked in the draft and reaches the session
- *  with everything else on Submit. */
-export const useAddConnector = () => {
-  const t = useTranslations();
-  const queryClient = useQueryClient();
-  const toastError = useActionErrorToast(t.errors.notFound.connector);
-
-  return useMutation({
-    mutationFn: (name: string) => addConnectorRequest(name),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: connectorsQueryKey });
-    },
     onError: toastError,
   });
 };

@@ -62,10 +62,7 @@ const attachedConnectors = (sessionId: string): Connector[] => {
       .filter((link) => link.sessionId === sessionId)
       .map((link) => link.connectorId)
   );
-  return CATALOGUE.filter((connector) => attached.has(connector.id)).map((connector) => ({
-    ...connector,
-    status: 'connected' as const,
-  }));
+  return CATALOGUE.filter((connector) => attached.has(connector.id));
 };
 
 // Session-level files per the backend contract (POST /sessions/{id}/files).
