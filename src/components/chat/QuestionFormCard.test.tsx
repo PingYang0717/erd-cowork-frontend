@@ -152,4 +152,23 @@ describe('QuestionFormCard: how a field is offered', () => {
 
     expect(onSubmit).toHaveBeenCalledWith({ sources: ['Inline', 'WAT'] });
   });
+
+  /** A read-only card is drawn before the answers it shows are available: they are
+   *  recovered from the reply, and the reply arrives with the history refetch after the
+   *  card is already on screen. Held in `useState` — which reads its argument once, on
+   *  mount — the card kept the empty object it started with and only filled in when
+   *  something remounted it, which in practice meant reloading the page. */
+  it('shows answers that arrive after it was drawn', () => {
+    const form = formOf(field({ key: 'part', label: 'Part ID', options: options('A14', 'A16') }));
+
+    const view = render(<QuestionFormCard form={form} disabled onSubmit={vi.fn()} />, { wrapper: appWrapper() });
+    const group = screen.getByRole('group', { name: 'Part ID' });
+    expect(within(group).getByRole('button', { name: 'A14' })).toHaveAttribute('aria-pressed', 'false');
+
+    // Same instance, no remount — exactly what the refetch does to a card on screen.
+    view.rerender(<QuestionFormCard form={form} disabled answered={{ part: 'A14' }} onSubmit={vi.fn()} />);
+
+    expect(within(group).getByRole('button', { name: 'A14' })).toHaveAttribute('aria-pressed', 'true');
+    expect(within(group).getByRole('button', { name: 'A16' })).toHaveAttribute('aria-pressed', 'false');
+  });
 });

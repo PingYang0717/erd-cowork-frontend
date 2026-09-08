@@ -49,6 +49,10 @@ interface MessageListProps {
   /** The question just sent, shown as a user bubble before the refetched history
    *  carries it — a run takes seconds and the user's own words must not vanish. */
   optimisticUserText: string | null;
+  /** A reask's answer that has been submitted but is not in the refetched history yet.
+   *  The trailing card reads it back the same way it reads a settled reply, so the
+   *  selection does not vanish for the length of the run that follows it. */
+  pendingAnswerText: string | null;
   /** Elapsed time of the run that just finished. Belongs to the turn that produced it,
    *  so it rides the tail AI bubble rather than the bottom of the thread. */
   lastRunDurationMs: number | null;
@@ -65,6 +69,7 @@ const MessageList: React.FC<MessageListProps> = ({
   messages,
   live,
   optimisticUserText,
+  pendingAnswerText,
   lastRunDurationMs,
   onAnswer,
   bottomSlot,
@@ -97,10 +102,18 @@ const MessageList: React.FC<MessageListProps> = ({
       // after the card. Without this a past reask shows every option and no sign of
       // which ones were picked, which reads as a question still waiting to be answered.
       const reply = question !== null ? messages[index + 1] : undefined;
+      // The settled reply if the refetch has it, otherwise the answer just submitted —
+      // only for the trailing card, which is the only one an answer can be in flight for.
+      const replyText =
+        reply?.sender === 'USER'
+          ? reply.text
+          : question !== null && index === messages.length - 1
+            ? pendingAnswerText
+            : null;
       return {
         steps: message.sender === 'AI' ? parseSteps(message.stepsJson) : [],
         question,
-        questionAnswers: question !== null && reply?.sender === 'USER' ? parseAnswerText(question, reply.text) : null,
+        questionAnswers: question !== null && replyText !== null ? parseAnswerText(question, replyText) : null,
         artifact: message.artifactId
           ? { artifactId: message.artifactId, title: message.artifactTitle ?? message.text }
           : null,
@@ -122,7 +135,7 @@ const MessageList: React.FC<MessageListProps> = ({
     }
 
     return parsed;
-  }, [messages]);
+  }, [messages, pendingAnswerText]);
 
   // Deps are the pieces of content that can change the log's height — not the `live`
   // object itself, whose identity is fresh on every parent render and would force a
@@ -186,6 +199,9 @@ const MessageList: React.FC<MessageListProps> = ({
           index === lastIndex &&
           message.sender === 'AI' &&
           parsedHistory[index].question !== null &&
+          // Answered — by the refetched reply or by one still in flight. A settled
+          // question must not invite a second answer.
+          parsedHistory[index].questionAnswers === null &&
           optimisticUserText === null;
         // The live bubble carries the same reask while the run's state survives, so only
         // one of the two draws it — otherwise the refetch put a second, identical card on
