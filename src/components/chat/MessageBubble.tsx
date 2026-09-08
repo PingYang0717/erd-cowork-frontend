@@ -123,17 +123,14 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
   const deferredText = useDeferredValue(text);
 
   const recordKind = systemRecordKind(text);
-  // A reask is a question, not an answer. Whatever prose the run accumulated on the way
-  // to asking is its working — showing it beside the card asks the reader to take in a
-  // half-finished analysis before answering the thing that would finish it.
-  const asksRatherThanAnswers = question != null;
+  // Kept when a reask follows it, not hidden: the prose an agent writes before asking is
+  // usually what explains why it has to ask ("the scan matched 6 lots, which is a lot to
+  // chart"). A card on its own, with that sentence withheld, is a question out of nowhere.
+  //
   // Stripped, not resolved: `[[table:…]]` used to place a TABLE event's result in the
   // answer, and with TABLE gone from the contract there is nothing to resolve it against.
   // A marker that still arrives must not reach the reader as literal text.
-  const answerText = useMemo(
-    () => (recordKind || asksRatherThanAnswers ? '' : stripTableMarkers(deferredText)),
-    [recordKind, asksRatherThanAnswers, deferredText]
-  );
+  const answerText = useMemo(() => (recordKind ? '' : stripTableMarkers(deferredText)), [recordKind, deferredText]);
 
   if (sender === 'USER') {
     return (
