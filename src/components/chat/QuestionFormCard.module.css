@@ -112,40 +112,138 @@
   cursor: pointer;
 }
 
+/* A line, not a box. Boxed at the same radius as the dropdown, a place to type read as
+   the same kind of control as a place to pick — and the two do opposite things: one opens
+   a list, the other takes what the list does not have. A rule under the text is the least
+   a text field can be, and it cannot be mistaken for a surface that opens. */
 .textInput,
 .customInput,
 .customInputActive {
   box-sizing: border-box;
   width: 100%;
-  padding: 8px 10px;
-  border-radius: 8px;
+  padding: 6px 2px;
+  border: none;
+  border-bottom: 1px solid var(--erd-color-border, #d9d9d9);
+  border-radius: 0;
+  background: transparent;
   font: inherit;
   font-size: 12.5px;
   color: var(--erd-color-text, rgba(0, 0, 0, 0.88));
-  background: var(--erd-color-bg-container, #fff);
   outline: none;
-}
-
-.textInput {
-  border: 1px solid var(--erd-color-border, #d9d9d9);
 }
 
 .customInput,
 .customInputActive {
-  margin-top: 8px;
+  margin-top: 6px;
 }
 
-.customInput {
-  border: 1px solid var(--erd-color-border, #d9d9d9);
-}
-
-/* The mockup turns the border primary once a custom range is typed. */
-.customInputActive {
-  border: 1px solid var(--erd-color-primary-border, #91caff);
+/* Holding the answer, so the line says so — the same primary the chips wear when one of
+   them is the answer instead. */
+.customInputActive,
+.textInput:focus,
+.customInput:focus,
+.customInputActive:focus {
+  border-bottom-color: var(--erd-color-primary, #1677ff);
 }
 
 /* Full width of the field: the thread pane is resizable, and a dropdown that kept an
    intrinsic width would either overflow a narrowed pane or float in a widened one. */
-.select {
+/* A filled surface, against `.textInput`'s outlined white one. The two used to be a grey
+   1px border at the same radius and padding, so the only thing telling "pick from a list"
+   apart from "type an answer" was a chevron at the far right — and on a card where both
+   can sit under the same question, that is not enough. Filled reads as a control that
+   opens something; outlined reads as somewhere to write.
+
+   Doubled class specificity outranks antd's own rule, the same trick ConnectorsPanel
+   uses. antd 6.6 carries the border on the `.ant-select` element itself — there is no
+   inner `.ant-select-selector` any more — which is the element this class is on. */
+.select.select {
   width: 100%;
+  background: var(--erd-color-fill-tertiary, rgba(0, 0, 0, 0.04));
+  border-color: transparent;
+  border-radius: 8px;
+}
+
+/* Open or focused, it becomes the thing being written in, and says so. */
+.select.select:global(.ant-select-focused),
+.select.select:global(.ant-select-open) {
+  background: var(--erd-color-bg-container, #fff);
+  border-color: var(--erd-color-primary, #1677ff);
+}
+
+/* Chosen values wear the card's own selected language: the primary tint the whole app
+   uses for "this one", not antd's neutral grey tag. Pill-shaped like the chips they stand
+   in for — the same answer picked from a shorter list would have been a chip. */
+.select :global(.ant-select-selection-item) {
+  background: var(--erd-color-primary-bg, #e6f4ff);
+  border: none;
+  border-radius: 14px;
+  padding-inline: 10px;
+  color: var(--erd-color-primary, #1677ff);
+  font-size: 12px;
+}
+
+.select :global(.ant-select-selection-item-remove) {
+  color: var(--erd-color-primary, #1677ff);
+  opacity: 0.65;
+}
+
+/* A settled card's values are statements, not controls: the tint would read as something
+   still pickable. */
+.select:global(.ant-select-disabled) :global(.ant-select-selection-item) {
+  background: var(--erd-color-fill-tertiary, rgba(0, 0, 0, 0.04));
+  color: var(--erd-color-text-secondary, rgba(0, 0, 0, 0.65));
+}
+
+/* The option list. A row is a choice being made, so it carries a real checkbox rather
+   than antd's tick at the far right — the box says "you may pick several" before anything
+   is picked, which a tick that only appears afterwards cannot. */
+.selectPopup :global(.ant-select-item-option) {
+  position: relative;
+  padding-block: 7px;
+}
+
+.selectPopup :global(.ant-select-item-option-content) {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 12.5px;
+}
+
+.selectPopup :global(.ant-select-item-option-content)::before {
+  content: '';
+  flex: none;
+  box-sizing: border-box;
+  width: 15px;
+  height: 15px;
+  border: 1.5px solid var(--erd-color-border, #d9d9d9);
+  border-radius: 4px;
+  background: var(--erd-color-bg-container, #fff);
+}
+
+.selectPopup :global(.ant-select-item-option-selected) {
+  background: var(--erd-color-primary-bg, #e6f4ff);
+}
+
+.selectPopup :global(.ant-select-item-option-selected) :global(.ant-select-item-option-content)::before {
+  border-color: var(--erd-color-primary, #1677ff);
+  background: var(--erd-color-primary, #1677ff);
+}
+
+/* The tick, drawn rather than shipped: an icon would need a second element inside a row
+   antd owns. Two borders rotated is the whole mark. */
+.selectPopup :global(.ant-select-item-option-selected) :global(.ant-select-item-option-content)::after {
+  content: '';
+  position: absolute;
+  left: 17px;
+  width: 4px;
+  height: 8px;
+  border: solid #fff;
+  border-width: 0 1.5px 1.5px 0;
+  transform: translateY(-1px) rotate(45deg);
+}
+
+/* antd's own selected tick, replaced by the box above. */
+.selectPopup :global(.ant-select-item-option-state) {
+  display: none;
 }
