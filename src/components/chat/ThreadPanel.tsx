@@ -119,7 +119,7 @@ const ThreadView: React.FC<ThreadViewProps> = ({ sessionId }) => {
   // made the user's own words vanish with only the error left. The pending text
   // lingers in state, suppressed or visible as the derivation decides, until the next
   // send replaces it or the session remount retires it.
-  const [pending, setPending] = useState<{ text: string; atLength: number } | null>(null);
+  const [pending, setPending] = useState<{ text: string; atLength: number; isAnswer: boolean } | null>(null);
 
   const prevStreamingRef = useRef(false);
 
@@ -169,12 +169,15 @@ const ThreadView: React.FC<ThreadViewProps> = ({ sessionId }) => {
       if (isStreaming) {
         return;
       }
-      if (optimistic) {
-        // `messages.length` is constant across a run's tokens (history refetches only at
-        // the end), so it does not defeat ChatComposer's memo mid-stream — the identity
-        // changes once per completed turn, outside the token loop.
-        setPending({ text: input.question, atLength: messages.length });
-      }
+      // Recorded either way. `optimistic` decides whether it is *shown* as a bubble; a
+      // reask's answer is not, but it still has to count as answered until the refetch
+      // carries it home — otherwise the card it came from sits there empty and open, and
+      // the selection the reader just submitted looks like it was thrown away.
+      //
+      // `messages.length` is constant across a run's tokens (history refetches only at
+      // the end), so it does not defeat ChatComposer's memo mid-stream — the identity
+      // changes once per completed turn, outside the token loop.
+      setPending({ text: input.question, atLength: messages.length, isAnswer: !optimistic });
       // Before the message, not after: this is the moment the session comes into being
       // (ADR-0005), and the run this message starts should already have the capabilities
       // the user habitually grants.
@@ -210,8 +213,11 @@ const ThreadView: React.FC<ThreadViewProps> = ({ sessionId }) => {
 
   // Suppress the optimistic bubble once the refetched history has grown past the point
   // it was sent from — that growth is the refetch carrying the message home (ADR-0015 §optimistic-bubble).
-  const optimisticUserText =
-    pending !== null && showOptimisticBubble(messages.length, pending.atLength) ? pending.text : null;
+  const stillAhead = pending !== null && showOptimisticBubble(messages.length, pending.atLength);
+  const optimisticUserText = stillAhead && !pending.isAnswer ? pending.text : null;
+  /** A reask's answer that the refetched history has not caught up with yet. The card it
+   *  was submitted from reads it back the same way it reads the settled reply. */
+  const pendingAnswerText = stillAhead && pending.isAnswer ? pending.text : null;
 
   const hasContent = messages.length > 0 || live !== null || optimisticUserText !== null;
 
@@ -222,6 +228,7 @@ const ThreadView: React.FC<ThreadViewProps> = ({ sessionId }) => {
           messages={messages}
           live={live}
           optimisticUserText={optimisticUserText}
+          pendingAnswerText={pendingAnswerText}
           lastRunDurationMs={state.durationMs}
           onAnswer={handleAnswer}
           // The offer is about the artifact this conversation just produced, so it
