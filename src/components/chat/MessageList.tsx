@@ -168,6 +168,13 @@ const MessageList: React.FC<MessageListProps> = ({
         // one of the two draws it — otherwise the refetch put a second, identical card on
         // screen, and the one the reader reached for first was the dead one.
         const drawnByLiveBubble = isPendingReask && live?.question != null;
+        // The whole turn, not only its card: a reask bubble shows the question and not
+        // the working that led to it, and the backend persists that working as this
+        // message's text. Rendering the history copy beside the live one put exactly the
+        // prose the live bubble withholds back on the screen, one bubble higher.
+        if (drawnByLiveBubble) {
+          return null;
+        }
 
         return (
           <MessageBubble
@@ -176,7 +183,7 @@ const MessageList: React.FC<MessageListProps> = ({
             text={message.text}
             steps={parsedHistory[index].steps}
             artifact={parsedHistory[index].artifact}
-            question={drawnByLiveBubble ? null : parsedHistory[index].question}
+            question={parsedHistory[index].question}
             artifactShown={message.artifactId !== null && message.artifactId === displayedArtifactId}
             onPickArtifact={pickArtifact}
             questionDisabled={!isPendingReask}

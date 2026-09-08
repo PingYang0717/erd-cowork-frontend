@@ -26,6 +26,7 @@ const liveRun = (overrides: Partial<LiveRun> = {}): LiveRun => ({
   thinking: '',
   codeText: '',
   tables: [],
+  replyTableIds: [],
   question: null,
   error: null,
   artifact: null,
@@ -65,17 +66,23 @@ describe('MessageBubble', () => {
     expect(screen.queryByText(/\[\[table:/)).not.toBeInTheDocument();
   });
 
-  it('still shows a table that no marker placed', () => {
-    render(<MessageBubble sender="AI" live={liveRun({ liveText: 'No markers here.', tables: [table()] })} />);
+  it("still shows a table the answer did not place, when it is the answer's own", () => {
+    render(
+      <MessageBubble
+        sender="AI"
+        live={liveRun({ liveText: 'No markers here.', tables: [table()], replyTableIds: ['t1'] })}
+      />
+    );
 
     expect(screen.getByRole('table', { name: 'Top offending lots' })).toBeInTheDocument();
   });
 
-  /** While the agent is still thinking there is no reply for a table to belong to, and a
-   *  query result dropped into the middle of the reasoning reads as an answer that has
-   *  not been given yet. The thinking panel is for the reasoning and nothing else. */
-  it('holds a table back while the agent is still thinking', () => {
-    render(
+  /** A TABLE the agent emits while it is still reasoning is a query it ran to work
+   *  something out — the same kind of thing as the THINKING text beside it. It is not
+   *  held back until the reply starts; it is not the reader's to see at all. The reducer
+   *  is what tells the two apart, by whether the first token had arrived (`replyTableIds`). */
+  it('never shows a table the agent produced while it was still thinking', () => {
+    const { rerender } = render(
       <MessageBubble
         sender="AI"
         live={liveRun({ isStreaming: true, thinking: 'Scanning the lot table…', tables: [table()] })}
@@ -83,10 +90,10 @@ describe('MessageBubble', () => {
     );
 
     expect(screen.queryByRole('table')).not.toBeInTheDocument();
-  });
 
-  it('shows it as soon as the reply starts arriving', () => {
-    render(
+    // The reply arrives, and then the run ends. Neither makes a working query into a
+    // result: it stays out both times.
+    rerender(
       <MessageBubble
         sender="AI"
         live={liveRun({
@@ -97,15 +104,53 @@ describe('MessageBubble', () => {
         })}
       />
     );
+    expect(screen.queryByRole('table')).not.toBeInTheDocument();
+
+    rerender(
+      <MessageBubble sender="AI" live={liveRun({ isStreaming: false, thinking: 'Done.', tables: [table()] })} />
+    );
+    expect(screen.queryByRole('table')).not.toBeInTheDocument();
+  });
+
+  /** The marker overrides the arrival time. An answer that names a table by id is
+   *  claiming it as part of what it is saying, whenever the table happened to arrive. */
+  it('places a thinking-time table anyway when the answer claims it by marker', () => {
+    render(<MessageBubble sender="AI" live={liveRun({ liveText: 'As shown: [[table:t1]]', tables: [table()] })} />);
 
     expect(screen.getByRole('table', { name: 'Top offending lots' })).toBeInTheDocument();
   });
 
-  /** A run that produced a table and no prose at all must not swallow it. */
-  it('shows it once the run has ended, even with no reply text', () => {
-    render(<MessageBubble sender="AI" live={liveRun({ isStreaming: false, thinking: 'Done.', tables: [table()] })} />);
+  /** A reask is a question, not an answer. The prose and the query results the run
+   *  gathered on the way to asking are its working — putting them beside the card asks
+   *  the reader to take in a half-finished analysis before answering the one thing that
+   *  would finish it. The steps stay: they say what it did before it had to ask. */
+  it('shows only the reask, not the working that led to it', () => {
+    render(
+      <MessageBubble
+        sender="AI"
+        live={liveRun({
+          steps: [step()],
+          liveText: 'The scan matched 6 lots, which is a lot to chart.',
+          tables: [table()],
+          replyTableIds: ['t1'],
+          question: {
+            formKey: 'lot-scope',
+            title: 'Which lots?',
+            fields: [
+              { key: 'lot', label: 'Lot', kind: 'single', required: true, options: [{ value: 'A14', label: 'A14' }] },
+            ],
+            submitLabel: 'Submit',
+            disabledHint: 'Answered',
+            summaryLabel: 'Lots',
+          },
+        })}
+      />
+    );
 
-    expect(screen.getByRole('table', { name: 'Top offending lots' })).toBeInTheDocument();
+    expect(screen.getByRole('group', { name: 'Lot' })).toBeInTheDocument();
+    expect(screen.getByText('Scanning lots')).toBeInTheDocument();
+    expect(screen.queryByRole('table')).not.toBeInTheDocument();
+    expect(screen.queryByText(/The scan matched 6 lots/)).not.toBeInTheDocument();
   });
 
   /** `[[table:…]]` is display plumbing the reader must never see. That was guaranteed for
