@@ -4,7 +4,7 @@ import { AppstoreOutlined, LoadingOutlined, ThunderboltFilled, ToolOutlined } fr
 import { INTERRUPTED_TEXTS, REPAIR_RECORD_PREFIXES } from '@/constants/wireStrings';
 import type { AgentStreamState } from '@/hooks/useAgentStream';
 import type { QuestionForm, StepItem } from '@/types/api';
-import { splitAnswerByTableMarkers, stripTableMarkers } from '@/utils/tableMarkers';
+import { stripTableMarkers } from '@/utils/tableMarkers';
 import CollapsiblePanel from './CollapsiblePanel';
 import { Elapsed, LiveElapsed } from './Elapsed';
 import HtmlCodePanel from './HtmlCodePanel';
@@ -25,8 +25,6 @@ export type LiveRun = Pick<
   | 'liveText'
   | 'thinking'
   | 'codeText'
-  | 'tables'
-  | 'replyTableIds'
   | 'question'
   | 'error'
   | 'artifact'
@@ -35,7 +33,6 @@ export type LiveRun = Pick<
 import { useTranslations } from '@/i18n/useTranslations';
 import type { Translations } from '@/i18n/zhTW';
 import ReplyText from './ReplyText';
-import ResultTable from './ResultTable';
 
 export interface MessageBubbleProps {
   sender: 'USER' | 'AI';
@@ -67,8 +64,8 @@ export interface MessageBubbleProps {
    *  reducer's own state IS this shape (`LiveRun` is a `Pick` of it) — and hand-copying
    *  them across ThreadPanel → MessageList → here meant a new live field touched four
    *  files. History bubbles simply omit it, so their memoised props stay flat and
-   *  stable. When set, `liveText` / `steps` / `artifact` / `question` / `tables` win
-   *  over the flat props. */
+   *  stable. When set, `liveText` / `steps` / `artifact` / `question` win over the
+   *  flat props. */
   live?: LiveRun | null;
 }
 
@@ -113,8 +110,6 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
   const networkError = live?.networkError ?? false;
   const thinking = live?.thinking || null;
   const codeText = live?.codeText || null;
-  const tables = live?.tables;
-  const replyTableIds = live?.replyTableIds;
   const error = live?.error ?? null;
   const timerStartedAt = live?.isStreaming ? live.startedAt : null;
 
@@ -132,10 +127,12 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
   // to asking is its working — showing it beside the card asks the reader to take in a
   // half-finished analysis before answering the thing that would finish it.
   const asksRatherThanAnswers = question != null;
-  // Markers say where a table belongs in the answer.
-  const segments = useMemo(
-    () => (recordKind || asksRatherThanAnswers ? [] : splitAnswerByTableMarkers(deferredText, tables)),
-    [recordKind, asksRatherThanAnswers, deferredText, tables]
+  // Stripped, not resolved: `[[table:…]]` used to place a TABLE event's result in the
+  // answer, and with TABLE gone from the contract there is nothing to resolve it against.
+  // A marker that still arrives must not reach the reader as literal text.
+  const answerText = useMemo(
+    () => (recordKind || asksRatherThanAnswers ? '' : stripTableMarkers(deferredText)),
+    [recordKind, asksRatherThanAnswers, deferredText]
   );
 
   if (sender === 'USER') {
@@ -154,19 +151,6 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
   // is a claim about a turn that finished. A disabled reask is a past one, so a history
   // bubble carrying it is settled.
   const turnInPlay = streaming || stopped || (question != null && !questionDisabled);
-  const placedTableIds = new Set(
-    segments.flatMap((segment) => (segment.type === 'table' ? [segment.table.tableId] : []))
-  );
-  // A table the answer did not place is shown only if it belongs to the answer at all.
-  // One that arrived while the agent was still reasoning is a query it ran to work
-  // something out — reasoning, like the thinking text beside it, and not a result anyone
-  // asked to read. A marker still overrides this: an answer that names a table by id is
-  // claiming it, whenever it arrived, and that claim is resolved above.
-  const unplacedTables = asksRatherThanAnswers
-    ? []
-    : (tables ?? []).filter(
-        (table) => !placedTableIds.has(table.tableId) && (replyTableIds ?? []).includes(table.tableId)
-      );
 
   return (
     <div className={styles.aiRow}>
@@ -226,16 +210,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
           </p>
         )}
 
-        {segments.map((segment, index) =>
-          segment.type === 'table' ? (
-            <ResultTable key={`table-${segment.table.tableId}-${index}`} table={segment.table} />
-          ) : (
-            <ReplyText key={`text-${index}`} text={segment.content} />
-          )
-        )}
-        {unplacedTables.map((table) => (
-          <ResultTable key={table.tableId} table={table} />
-        ))}
+        {answerText !== '' && <ReplyText text={answerText} />}
 
         {artifact &&
           (onPickArtifact ? (

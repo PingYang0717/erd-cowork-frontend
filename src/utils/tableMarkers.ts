@@ -1,63 +1,16 @@
-import type { TableResult } from '@/types/api';
-
 /** Matches `[[table:tbl_abc123]]` — the backend's display-level marker, the same
- *  convention as the legacy `[[step:]]` one: it says where a table belongs in the
- *  answer, and never drives control flow. */
+ *  convention as the legacy `[[step:]]` one. */
 const TABLE_MARKER_PATTERN = /\[\[table:([^\]]+)\]\]/g;
 
-export interface AnswerTextSegment {
-  type: 'text';
-  content: string;
-}
-
-export interface AnswerTableSegment {
-  type: 'table';
-  table: TableResult;
-}
-
-export type AnswerSegment = AnswerTextSegment | AnswerTableSegment;
-
-/** Removes every marker from text that is shown as-is.
+/** Removes every marker from text on its way to the reader.
  *
- *  The thinking panel prints its text verbatim — no Markdown, no marker resolution — so a
- *  marker the agent happens to mention while reasoning reached the reader raw. Same rule
- *  as the answer's: the marker is display plumbing and never reader-facing. */
+ *  A guard, not a feature. The markers said where a TABLE event's result belonged in the
+ *  answer; TABLE has left the contract, so nothing resolves them any more and a marker
+ *  that still turned up would be printed as the literal `[[table:…]]` — display plumbing
+ *  the reader must never see. Both the answer and the thinking panel run through this,
+ *  because both print what the backend sent.
+ *
+ *  Delete it once the backend is confirmed to have stopped emitting the markers as well
+ *  as the events. */
 export const stripTableMarkers = (text: string): string =>
   text.replace(new RegExp(TABLE_MARKER_PATTERN.source, 'g'), '').replace(/  +/g, ' ');
-
-/** Splits an answer on its `[[table:<tableId>]]` markers, resolving each id against the
- *  TABLE events the run produced. A marker whose table never arrived is dropped — the
- *  raw marker text must never reach the reader. */
-export const splitAnswerByTableMarkers = (text: string, tables: TableResult[] | undefined): AnswerSegment[] => {
-  const tablesById = new Map((tables ?? []).map((table) => [table.tableId, table]));
-  const segments: AnswerSegment[] = [];
-  let cursor = 0;
-
-  // A fresh regex per call: the shared literal carries lastIndex between calls.
-  const pattern = new RegExp(TABLE_MARKER_PATTERN.source, 'g');
-  let match = pattern.exec(text);
-
-  while (match !== null) {
-    pushText(segments, text.slice(cursor, match.index));
-
-    const resolved = tablesById.get(match[1]);
-    if (resolved) {
-      segments.push({ type: 'table', table: resolved });
-    }
-
-    cursor = match.index + match[0].length;
-    match = pattern.exec(text);
-  }
-
-  pushText(segments, text.slice(cursor));
-
-  return segments;
-};
-
-/** Empty runs between two adjacent markers (or at either end) are not segments —
- *  rendering them would put a stray empty paragraph between tables. */
-const pushText = (segments: AnswerSegment[], content: string): void => {
-  if (content !== '') {
-    segments.push({ type: 'text', content });
-  }
-};
