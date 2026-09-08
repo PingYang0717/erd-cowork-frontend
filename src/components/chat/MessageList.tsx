@@ -89,26 +89,26 @@ const MessageList: React.FC<MessageListProps> = ({
   // would be a fresh object every token, and a fresh object prop is all it takes to
   // defeat MessageBubble's memo (probe-measured: bubbles with an artifact re-rendered
   // once per token; text-only bubbles not at all).
-  const parsedHistory = useMemo(
-    () =>
-      messages.map((message, index) => {
-        const question = message.sender === 'AI' ? parseQuestion(message.questionsJson) : null;
-        // What the reader chose, from the reply they sent. Nothing stores the answers —
-        // they went back as one prose sentence, which is the USER message sitting right
-        // after the card. Without this a past reask shows every option and no sign of
-        // which ones were picked, which reads as a question still waiting to be answered.
-        const reply = question !== null ? messages[index + 1] : undefined;
-        return {
-          steps: message.sender === 'AI' ? parseSteps(message.stepsJson) : [],
-          question,
-          questionAnswers: question !== null && reply?.sender === 'USER' ? parseAnswerText(question, reply.text) : null,
-          artifact: message.artifactId
-            ? { artifactId: message.artifactId, title: message.artifactTitle ?? message.text }
-            : null,
-        };
-      }),
-    [messages]
-  );
+  const parsedHistory = useMemo(() => {
+    const parsed = messages.map((message, index) => {
+      const question = message.sender === 'AI' ? parseQuestion(message.questionsJson) : null;
+      // What the reader chose, from the reply they sent. Nothing stores the answers —
+      // they went back as one prose sentence, which is the USER message sitting right
+      // after the card. Without this a past reask shows every option and no sign of
+      // which ones were picked, which reads as a question still waiting to be answered.
+      const reply = question !== null ? messages[index + 1] : undefined;
+      return {
+        steps: message.sender === 'AI' ? parseSteps(message.stepsJson) : [],
+        question,
+        questionAnswers: question !== null && reply?.sender === 'USER' ? parseAnswerText(question, reply.text) : null,
+        artifact: message.artifactId
+          ? { artifactId: message.artifactId, title: message.artifactTitle ?? message.text }
+          : null,
+      };
+    });
+
+    return parsed;
+  }, [messages]);
 
   // Deps are the pieces of content that can change the log's height — not the `live`
   // object itself, whose identity is fresh on every parent render and would force a
@@ -124,7 +124,6 @@ const MessageList: React.FC<MessageListProps> = ({
     live?.thinking,
     live?.codeText,
     live?.steps,
-    live?.tables,
     live?.question,
     optimisticUserText,
     bottomSlot,

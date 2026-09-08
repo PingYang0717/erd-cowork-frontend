@@ -37,7 +37,7 @@ Agent 在條件不足時反過來詢問使用者的一張表單，以 QUESTION �
 _Avoid_: Prompt, Clarification, Dialog
 
 **Agent event**:
-一次請求執行過程中由後端逐筆推送的事件，是「AI 正在做什麼」的唯一來源。九種：STEP（步驟狀態）、TOKEN（逐字回覆）、ANSWER（完整回覆）、ARTIFACT（產出的 Artifact）、THINKING（思考過程）、QUESTION（反問表單）、CODE（產碼過程）、TABLE（查詢結果表）、ERROR（錯誤）。
+一次請求執行過程中由後端逐筆推送的事件，是「AI 正在做什麼」的唯一來源。八種：STEP（步驟狀態）、TOKEN（逐字回覆）、ANSWER（完整回覆）、ARTIFACT（產出的 Artifact）、THINKING（思考過程）、QUESTION（反問表單）、CODE（產碼過程）、ERROR（錯誤）。TABLE（查詢結果表）於 2026-09-08 退場——後端不再送，前端也不再有渲染它的路徑。
 _Avoid_: Message chunk, Delta, Packet
 
 **Thinking**:

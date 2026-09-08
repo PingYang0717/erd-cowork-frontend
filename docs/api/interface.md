@@ -98,7 +98,6 @@ scenario 與 kind，而非重新從文字推斷。
 | `QUESTION` | `questions: Question[]`, `form?: QuestionForm`      | 反問（`form` 為前端-only extension） | 否（live-only）   |
 | `THINKING` | `delta`                                             | 推理過程                             | 否                |
 | `CODE`     | `delta`                                             | Artifact HTML 產碼過程               | 否                |
-| `TABLE`    | `tableId`, `intent`, `columns`, `rows`, `truncated` | 查詢結果表                           | 否                |
 | `ERROR`    | `code`, `message`                                   | 執行錯誤                             | 否                |
 
 `StepStatus` 是 `'PENDING' | 'RUNNING' | 'SUCCESS' | 'ERROR'`。步驟可以失敗——這是相對於

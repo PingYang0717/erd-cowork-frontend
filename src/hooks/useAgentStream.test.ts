@@ -164,14 +164,6 @@ describe('useAgentStream', () => {
     stream.push({ type: 'CODE', delta: '<div ' });
     stream.push({ type: 'CODE', delta: 'id="chart">' });
     stream.push({
-      type: 'TABLE',
-      tableId: 't1',
-      intent: 'OOC wafers',
-      columns: ['Lot', 'Wafer'],
-      rows: [['A14-001', 3]],
-      truncated: true,
-    });
-    stream.push({
       type: 'ARTIFACT',
       artifactId: 'artifact-9',
       title: 'SPC analysis — Vt (gate CD)',
@@ -194,15 +186,6 @@ describe('useAgentStream', () => {
 
     expect(result.current.state.thinking).toBe('The Vt trend crosses the UCL.');
     expect(result.current.state.codeText).toBe('<div id="chart">');
-    expect(result.current.state.tables).toEqual([
-      {
-        tableId: 't1',
-        intent: 'OOC wafers',
-        columns: ['Lot', 'Wafer'],
-        rows: [['A14-001', 3]],
-        truncated: true,
-      },
-    ]);
     expect(result.current.state.artifact).toEqual({
       artifactId: 'artifact-9',
       title: 'SPC analysis — Vt (gate CD)',

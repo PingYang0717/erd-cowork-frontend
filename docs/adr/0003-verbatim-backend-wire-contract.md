@@ -29,7 +29,7 @@ multipart、Artifact 內容直接回 `text/html`、反問是扁平的 `Question[
 那是憑空製造一個會壞的環節。
 
 **4. Agent 事件以 SSE 串流。** 同一個端點回 `text/event-stream`,逐筆推送九種事件
-(STEP / TOKEN / ANSWER / ARTIFACT / THINKING / QUESTION / CODE / TABLE / ERROR),由
+(STEP / TOKEN / ANSWER / ARTIFACT / THINKING / QUESTION / CODE / ERROR),由
 `useAgentStream` 的 reducer 累積成畫面狀態。批次契約在結構上表達不了三件事:執行途中
 反問(QUESTION 必須在流程中段送達)、逐字回覆與思考過程(沒有時間維度)、使用者中止
 (沒有可中止的連線)。前端那支 500ms 計時器揭露的是**假的進度**——它揭露的是後端早就

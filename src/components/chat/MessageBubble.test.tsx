@@ -5,7 +5,7 @@ import userEvent from '@testing-library/user-event';
 
 import { INTERRUPTED_TEXTS, REPAIR_RECORD_PREFIXES } from '@/constants/wireStrings';
 import { server } from '@/mocks/server';
-import type { StepItem, TableResult } from '@/types/api';
+import type { StepItem } from '@/types/api';
 import MessageBubble, { type LiveRun } from './MessageBubble';
 
 const step = (overrides: Partial<StepItem> = {}): StepItem => ({
@@ -25,21 +25,11 @@ const liveRun = (overrides: Partial<LiveRun> = {}): LiveRun => ({
   liveText: '',
   thinking: '',
   codeText: '',
-  tables: [],
-  replyTableIds: [],
   question: null,
   error: null,
   artifact: null,
   startedAt: null,
   ...overrides,
-});
-
-const table = (tableId = 't1'): TableResult => ({
-  tableId,
-  intent: 'Top offending lots',
-  columns: ['lot', 'cpk'],
-  rows: [['L1', 0.9]],
-  truncated: false,
 });
 
 describe('MessageBubble', () => {
@@ -59,71 +49,20 @@ describe('MessageBubble', () => {
     expect((await screen.findByText('two')).tagName).toBe('STRONG');
   });
 
-  it('places a table where its marker sits in the answer', () => {
-    render(<MessageBubble sender="AI" live={liveRun({ liveText: 'Before [[table:t1]] after', tables: [table()] })} />);
+  /** `[[table:…]]` used to place a TABLE event's result in the answer. TABLE has left
+   *  the contract, so nothing resolves a marker any more — and an unresolved one must be
+   *  removed rather than printed, because it is display plumbing the reader never sees. */
+  it('never shows a raw table marker in the answer', async () => {
+    render(<MessageBubble sender="AI" live={liveRun({ liveText: 'Before [[table:t1]] after' })} />);
 
-    expect(screen.getByRole('table', { name: 'Top offending lots' })).toBeInTheDocument();
+    expect(await screen.findByText(/Before after/)).toBeInTheDocument();
     expect(screen.queryByText(/\[\[table:/)).not.toBeInTheDocument();
   });
 
-  it("still shows a table the answer did not place, when it is the answer's own", () => {
-    render(
-      <MessageBubble
-        sender="AI"
-        live={liveRun({ liveText: 'No markers here.', tables: [table()], replyTableIds: ['t1'] })}
-      />
-    );
-
-    expect(screen.getByRole('table', { name: 'Top offending lots' })).toBeInTheDocument();
-  });
-
-  /** A TABLE the agent emits while it is still reasoning is a query it ran to work
-   *  something out — the same kind of thing as the THINKING text beside it. It is not
-   *  held back until the reply starts; it is not the reader's to see at all. The reducer
-   *  is what tells the two apart, by whether the first token had arrived (`replyTableIds`). */
-  it('never shows a table the agent produced while it was still thinking', () => {
-    const { rerender } = render(
-      <MessageBubble
-        sender="AI"
-        live={liveRun({ isStreaming: true, thinking: 'Scanning the lot table…', tables: [table()] })}
-      />
-    );
-
-    expect(screen.queryByRole('table')).not.toBeInTheDocument();
-
-    // The reply arrives, and then the run ends. Neither makes a working query into a
-    // result: it stays out both times.
-    rerender(
-      <MessageBubble
-        sender="AI"
-        live={liveRun({
-          isStreaming: true,
-          thinking: 'Scanning…',
-          liveText: 'Here is what I found',
-          tables: [table()],
-        })}
-      />
-    );
-    expect(screen.queryByRole('table')).not.toBeInTheDocument();
-
-    rerender(
-      <MessageBubble sender="AI" live={liveRun({ isStreaming: false, thinking: 'Done.', tables: [table()] })} />
-    );
-    expect(screen.queryByRole('table')).not.toBeInTheDocument();
-  });
-
-  /** The marker overrides the arrival time. An answer that names a table by id is
-   *  claiming it as part of what it is saying, whenever the table happened to arrive. */
-  it('places a thinking-time table anyway when the answer claims it by marker', () => {
-    render(<MessageBubble sender="AI" live={liveRun({ liveText: 'As shown: [[table:t1]]', tables: [table()] })} />);
-
-    expect(screen.getByRole('table', { name: 'Top offending lots' })).toBeInTheDocument();
-  });
-
-  /** A reask is a question, not an answer. The prose and the query results the run
-   *  gathered on the way to asking are its working — putting them beside the card asks
-   *  the reader to take in a half-finished analysis before answering the one thing that
-   *  would finish it. The steps stay: they say what it did before it had to ask. */
+  /** A reask is a question, not an answer. The prose the run gathered on the way to
+   *  asking is its working — putting it beside the card asks the reader to take in a
+   *  half-finished analysis before answering the one thing that would finish it. The
+   *  steps stay: they say what it did before it had to ask. */
   it('shows only the reask, not the working that led to it', () => {
     render(
       <MessageBubble
@@ -131,8 +70,6 @@ describe('MessageBubble', () => {
         live={liveRun({
           steps: [step()],
           liveText: 'The scan matched 6 lots, which is a lot to chart.',
-          tables: [table()],
-          replyTableIds: ['t1'],
           question: {
             formKey: 'lot-scope',
             title: 'Which lots?',
@@ -149,7 +86,6 @@ describe('MessageBubble', () => {
 
     expect(screen.getByRole('group', { name: 'Lot' })).toBeInTheDocument();
     expect(screen.getByText('Scanning lots')).toBeInTheDocument();
-    expect(screen.queryByRole('table')).not.toBeInTheDocument();
     expect(screen.queryByText(/The scan matched 6 lots/)).not.toBeInTheDocument();
   });
 
@@ -161,7 +97,7 @@ describe('MessageBubble', () => {
     render(
       <MessageBubble
         sender="AI"
-        live={liveRun({ isStreaming: true, thinking: 'Building [[table:t1]] from the scan', tables: [table()] })}
+        live={liveRun({ isStreaming: true, thinking: 'Building [[table:t1]] from the scan' })}
       />
     );
 
