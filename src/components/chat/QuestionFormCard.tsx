@@ -123,19 +123,21 @@ const DataTypeHint: React.FC<DataTypeHintProps> = ({ hint }) => {
 interface QuestionFormCardProps {
   form: QuestionForm;
   onSubmit: (answers: Answers) => void;
-  /** Read-only: the reask as it was asked, with nothing to submit. History reasks come
-   *  back this way — the answers were never persisted, so the card can only show what
-   *  was asked, not what was chosen. */
+  /** Read-only: the reask as it was asked, with nothing to submit. */
   disabled?: boolean;
+  /** What was chosen, for a card showing a past reask. Read back out of the answer the
+   *  reader sent (`parseAnswerText`), because nothing persists the answers themselves.
+   *  Initial value only — a read-only card never changes after it is drawn. */
+  initialAnswers?: Answers;
 }
 
 /** One reask from the agent: the fields it needs answered before it can carry on.
  *  Which fields appear is the Scenario's contract; what is in `options` is resolved
  *  when the run happens (ADR-0004). */
-const QuestionFormCard: React.FC<QuestionFormCardProps> = ({ form, onSubmit, disabled = false }) => {
+const QuestionFormCard: React.FC<QuestionFormCardProps> = ({ form, onSubmit, disabled = false, initialAnswers }) => {
   const t = useTranslations();
 
-  const [answers, setAnswers] = useState<Answers>({});
+  const [answers, setAnswers] = useState<Answers>(initialAnswers ?? {});
 
   // Changing a trigger discards whatever was answered beneath it. Hiding the answer but
   // keeping it would submit a Flow the user can no longer see, under a role it does not

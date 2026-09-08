@@ -26,6 +26,7 @@ export type LiveRun = Pick<
   | 'thinking'
   | 'codeText'
   | 'tables'
+  | 'replyTableIds'
   | 'question'
   | 'error'
   | 'artifact'
@@ -44,9 +45,12 @@ export interface MessageBubbleProps {
   steps?: StepItem[] | null;
   artifact?: { artifactId: string; title: string } | null;
   question?: QuestionForm | null;
-  /** History reasks render read-only: the answers were never persisted, so there is
-   *  nothing to re-submit. */
+  /** History reasks render read-only: a settled question must not invite a second
+   *  answer. What was chosen still shows — see `questionAnswers`. */
   questionDisabled?: boolean;
+  /** What was answered, for a past reask. Reconstructed from the reply the reader sent,
+   *  which is the only record of it there is. */
+  questionAnswers?: Answers | null;
   /** Takes the form as well as the answers: the answer is composed FROM the form, and
    *  the only form the thread held was the live run's — which a reload does not have. */
   onAnswer?: (answers: Answers, form: QuestionForm) => void;
@@ -90,6 +94,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
   artifact: settledArtifact,
   question: settledQuestion,
   questionDisabled = false,
+  questionAnswers,
   onAnswer,
   artifactShown = false,
   onPickArtifact,
@@ -109,6 +114,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
   const thinking = live?.thinking || null;
   const codeText = live?.codeText || null;
   const tables = live?.tables;
+  const replyTableIds = live?.replyTableIds;
   const error = live?.error ?? null;
   const timerStartedAt = live?.isStreaming ? live.startedAt : null;
 
@@ -122,11 +128,14 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
   const deferredText = useDeferredValue(text);
 
   const recordKind = systemRecordKind(text);
-  // Markers say where a table belongs in the answer. A table nobody placed still has to
-  // appear somewhere, so it goes after the text rather than vanishing.
+  // A reask is a question, not an answer. Whatever prose the run accumulated on the way
+  // to asking is its working — showing it beside the card asks the reader to take in a
+  // half-finished analysis before answering the thing that would finish it.
+  const asksRatherThanAnswers = question != null;
+  // Markers say where a table belongs in the answer.
   const segments = useMemo(
-    () => (recordKind ? [] : splitAnswerByTableMarkers(deferredText, tables)),
-    [recordKind, deferredText, tables]
+    () => (recordKind || asksRatherThanAnswers ? [] : splitAnswerByTableMarkers(deferredText, tables)),
+    [recordKind, asksRatherThanAnswers, deferredText, tables]
   );
 
   if (sender === 'USER') {
@@ -148,13 +157,16 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
   const placedTableIds = new Set(
     segments.flatMap((segment) => (segment.type === 'table' ? [segment.table.tableId] : []))
   );
-  // A table no marker claimed still has to appear — but not while the agent is only
-  // thinking. Until the reply starts there is nothing for it to belong to, and a query
-  // result dropped into the middle of the reasoning reads as an answer that has not been
-  // given yet. Once the run ends it appears regardless, so a run that produced a table
-  // and no prose never swallows it.
-  const replyHasStarted = !streaming || deferredText !== '';
-  const unplacedTables = replyHasStarted ? (tables ?? []).filter((table) => !placedTableIds.has(table.tableId)) : [];
+  // A table the answer did not place is shown only if it belongs to the answer at all.
+  // One that arrived while the agent was still reasoning is a query it ran to work
+  // something out — reasoning, like the thinking text beside it, and not a result anyone
+  // asked to read. A marker still overrides this: an answer that names a table by id is
+  // claiming it, whenever it arrived, and that claim is resolved above.
+  const unplacedTables = asksRatherThanAnswers
+    ? []
+    : (tables ?? []).filter(
+        (table) => !placedTableIds.has(table.tableId) && (replyTableIds ?? []).includes(table.tableId)
+      );
 
   return (
     <div className={styles.aiRow}>
@@ -262,6 +274,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
           <QuestionFormCard
             form={question}
             disabled={questionDisabled}
+            initialAnswers={questionAnswers ?? undefined}
             onSubmit={(answers) => onAnswer?.(answers, question)}
           />
         )}
