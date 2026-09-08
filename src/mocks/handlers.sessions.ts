@@ -83,38 +83,29 @@ export const sessionHandlers = [
         .read()
         .filter((file) => file.sessionId === session.id)
         .map(toFileDto),
-      dataSourceIds: sessionDataSources
+      connectors: sessionDataSources
         .read()
         .filter((link) => link.sessionId === session.id)
         .map((link) => link.connectorId),
     });
   }),
 
-  // Data sources attach to a session, not to the user: PATCH adds one to whatever is
-  // already there, DELETE removes one. Both answer a bare 200 — the caller refetches
-  // the detail, which is where attachment lives.
+  // Data sources attach to a session, not to the user. The body is a bare array of
+  // connector ids and it REPLACES the set — one request describes the outcome, so two in
+  // flight cannot settle it by arrival order. Answers a bare 200; the caller refetches
+  // the detail, which is where the selection lives.
   http.patch('/api/sessions/:sessionId/data-source', async ({ params, request }) => {
-    const { connectorId } = (await request.json()) as { connectorId: string };
+    const connectorIds = (await request.json()) as string[];
     const sessionId = params.sessionId as string;
-    // Attaching a source upserts the session, exactly as uploading a file does
+    // Choosing sources upserts the session, exactly as uploading a file does
     // (handlers.files.ts): both are writes, and a draft only exists client-side until
     // one of them lands (ADR-0005). Without this, the caller's refetch of the session
-    // detail 404s and the panel silently keeps showing the source as unattached.
+    // detail 404s and the panel silently keeps showing the sources as unattached.
     upsertSession(sessionId);
-    const links = sessionDataSources.read();
-    if (!links.some((link) => link.sessionId === sessionId && link.connectorId === connectorId)) {
-      sessionDataSources.write([...links, { sessionId, connectorId }]);
-    }
-    return new HttpResponse(null, { status: 200 });
-  }),
-
-  http.delete('/api/sessions/:sessionId/data-source', async ({ params, request }) => {
-    const { connectorId } = (await request.json()) as { connectorId: string };
-    const sessionId = params.sessionId as string;
-    upsertSession(sessionId);
-    sessionDataSources.write(
-      sessionDataSources.read().filter((link) => !(link.sessionId === sessionId && link.connectorId === connectorId))
-    );
+    sessionDataSources.write([
+      ...sessionDataSources.read().filter((link) => link.sessionId !== sessionId),
+      ...connectorIds.map((connectorId) => ({ sessionId, connectorId })),
+    ]);
     return new HttpResponse(null, { status: 200 });
   }),
 

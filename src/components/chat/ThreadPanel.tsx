@@ -4,7 +4,6 @@ import { ThunderboltFilled } from '@ant-design/icons';
 import DataBoundary from '@/components/common/DataBoundary';
 import { type SendInput, useAgentStream } from '@/hooks/useAgentStream';
 import { useArtifactRepair } from '@/hooks/useArtifactRepair';
-import { useApplyRememberedDataSources } from '@/hooks/useConnectorMutations';
 import { useSessionDetail } from '@/hooks/useSessionDetail';
 import { useTranslations } from '@/i18n/useTranslations';
 import { useActiveRunStore } from '@/stores/useActiveRunStore';
@@ -98,8 +97,6 @@ const ThreadView: React.FC<ThreadViewProps> = ({ sessionId }) => {
   const setStreamedArtifact = useActiveRunStore((s) => s.setStreamedArtifact);
   const displayedArtifactId = useActiveRunStore((s) => s.displayedArtifactId);
 
-  const applyRememberedDataSources = useApplyRememberedDataSources(sessionId);
-
   /** What the screen reader hears when a run finishes: the complete reply, once. The
    *  thread itself is aria-live="off" (every token used to be re-read; ADR-0014 §live-region), so this
    *  sr-only region is the one place a finished answer is announced from. */
@@ -178,13 +175,9 @@ const ThreadView: React.FC<ThreadViewProps> = ({ sessionId }) => {
       // the end), so it does not defeat ChatComposer's memo mid-stream — the identity
       // changes once per completed turn, outside the token loop.
       setPending({ text: input.question, atLength: messages.length, isAnswer: !optimistic });
-      // Before the message, not after: this is the moment the session comes into being
-      // (ADR-0005), and the run this message starts should already have the capabilities
-      // the user habitually grants.
-      await applyRememberedDataSources(detail.dataSourceIds ?? []);
       await send({ baseArtifactId: displayedArtifactId ?? undefined, ...input });
     },
-    [send, displayedArtifactId, isStreaming, messages.length, applyRememberedDataSources, detail.dataSourceIds]
+    [send, displayedArtifactId, isStreaming, messages.length]
   );
 
   const handleSend = useCallback((input: SendInput) => submit(input, true), [submit]);

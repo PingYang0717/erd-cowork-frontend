@@ -2,21 +2,19 @@ import { CONNECTOR_PREFS_STORAGE_KEY } from '@/constants/storage';
 import type { Connector } from '@/types/api';
 import { apiClient } from './apiClient';
 
-/** What this browser remembers about the user's own preferences.
+/** What this browser remembers about the user's own habits.
  *
- *  `lastSelected` is the combination they last worked with. A connector is a capability
- *  the user may grant the agent, and in practice the same person grants roughly the same
- *  ones every time — so a new conversation starts pre-selected on what they chose last
- *  rather than making them pick the same set again. It is a convenience, never a
- *  requirement: a conversation with nothing selected runs perfectly well.
+ *  `lastSelected` is the combination they last worked with. The same person grants the
+ *  agent roughly the same capabilities every time, so opening the panel on a conversation
+ *  that has chosen nothing yet starts from what they picked last rather than from empty.
  *
- *  `custom` holds sources they added themselves. Both are localStorage rather than
- *  backend state because both are about this person's habits, not about any one
- *  conversation — which of them a given conversation actually draws on is the session's
- *  business (PATCH /sessions/{id}/data-source). */
+ *  It is a default offered in the dialog and nothing more: it is never written to a
+ *  session on the user's behalf. localStorage rather than backend state because it is
+ *  about this person's habits, not about any one conversation — which sources a given
+ *  conversation actually draws on is the session's business
+ *  (PATCH /sessions/{id}/data-source). */
 interface ConnectorPrefs {
   lastSelected: string[];
-  custom: Connector[];
 }
 
 const readPrefs = (): ConnectorPrefs => {
@@ -24,55 +22,25 @@ const readPrefs = (): ConnectorPrefs => {
     const raw = localStorage.getItem(CONNECTOR_PREFS_STORAGE_KEY);
     if (raw !== null) {
       const parsed = JSON.parse(raw) as Partial<ConnectorPrefs>;
-      return { lastSelected: parsed.lastSelected ?? [], custom: parsed.custom ?? [] };
+      return { lastSelected: parsed.lastSelected ?? [] };
     }
   } catch {
     // A corrupt entry reads as "no preferences" and gets overwritten on the next write.
   }
-  return { lastSelected: [], custom: [] };
+  return { lastSelected: [] };
 };
 
-/** The combination to start a fresh conversation on. */
+/** The combination to open the panel on when a conversation has chosen nothing yet.
+ *  Callers intersect it with the catalogue: a remembered id the catalogue no longer
+ *  serves cannot be offered, and must never reach the backend as part of a selection. */
 export const readRememberedSelection = (): string[] => readPrefs().lastSelected;
 
 /** Remembers what the user is working with now, so the next conversation opens on it. */
 export const rememberSelection = (connectorIds: string[]): void => {
-  writePrefs({ ...readPrefs(), lastSelected: connectorIds });
+  localStorage.setItem(CONNECTOR_PREFS_STORAGE_KEY, JSON.stringify({ lastSelected: connectorIds }));
 };
 
-const writePrefs = (prefs: ConnectorPrefs): void => {
-  localStorage.setItem(CONNECTOR_PREFS_STORAGE_KEY, JSON.stringify(prefs));
-};
-
-/** What data sources exist and whether the user may reach them. The user's own custom
- *  additions are merged on top of what the backend serves. Whether a given conversation
- *  is drawing on one is the session's business (useConnectors joins the two). */
-export const listCatalogue = async (): Promise<Connector[]> => {
-  const catalogue = await apiClient.get<Connector[]>('/connectors');
-  return [...catalogue, ...readPrefs().custom];
-};
-
-/** Adds a source to the catalogue and answers its id, so the caller can attach it to the
- *  session it was added from — adding one IS choosing it.
- *
- *  Still localStorage rather than an endpoint: the backend has no way to register a
- *  source yet, and this is the half of the model that is genuinely the user's. */
-export const addConnector = (name: string): Promise<string> => {
-  const prefs = readPrefs();
-  const id = `custom-${crypto.randomUUID()}`;
-  writePrefs({
-    ...prefs,
-    custom: [
-      ...prefs.custom,
-      {
-        id,
-        name,
-        description: 'Custom data source',
-        category: 'Custom',
-        status: 'available',
-        custom: true,
-      },
-    ],
-  });
-  return Promise.resolve(id);
-};
+/** What data sources this user may reach. Whether a given conversation is drawing on one
+ *  is the session's business — `useConnectors` holds the two side by side rather than
+ *  folding them into one value. */
+export const listCatalogue = () => apiClient.get<Connector[]>('/connectors');

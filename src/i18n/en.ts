@@ -176,14 +176,10 @@ export const en: Translations = {
     filterNotConnected: 'Not Connected',
     showing: (shown: number, total: number) => `Showing ${shown} of ${total}`,
     submit: 'Submit',
-    add: 'Add',
-    addPlaceholder: 'Add a custom data source (e.g. My Team DB)…',
     noMatch: (keyword: string) => `No data sources match "${keyword}".`,
-    statusConnecting: 'Connecting…',
     statusConnected: 'Connected',
-    statusExpired: 'Token expired',
-    statusNoAccess: 'No access',
     statusNotConnected: 'Not connected',
+    statusUnavailable: 'Unavailable',
   },
 
   fileModal: {
