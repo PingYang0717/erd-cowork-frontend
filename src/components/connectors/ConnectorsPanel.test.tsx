@@ -1,9 +1,10 @@
 import { Suspense } from 'react';
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { QueryClient } from '@tanstack/react-query';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
+import { CONNECTOR_PREFS_STORAGE_KEY } from '@/constants/storage';
 import { appWrapper } from '@/test/appHarness';
 import ConnectorsPanel from './ConnectorsPanel';
 
@@ -19,7 +20,7 @@ const renderPanel = (sessionId = 'session-1', seedDraft = false) => {
       createdAt: '2026-08-31T00:00:00.000Z',
       messages: [],
       files: [],
-      dataSourceIds: [],
+      connectors: [],
     });
   }
   return render(
@@ -50,6 +51,11 @@ const selectedSources = () => {
  *  Picking is one decision made out of several clicks, so nothing reaches the server
  *  until Submit — every test here has to press it. */
 describe('ConnectorsPanel', () => {
+  // Submitting remembers the combination, and the panel opens a session that has chosen
+  // nothing on it. That is the feature — but it also means one test's Submit would seed
+  // the next test's opening draft.
+  beforeEach(() => localStorage.removeItem(CONNECTOR_PREFS_STORAGE_KEY));
+
   it('attaches an available source to the session and reads it back on a fresh mount', async () => {
     const user = userEvent.setup();
     const first = renderPanel();
@@ -107,19 +113,34 @@ describe('ConnectorsPanel', () => {
     expect(within(selectedSources()).queryByText('WAT')).not.toBeInTheDocument();
   });
 
-  it('adds a custom source, connected, and it survives a fresh mount', async () => {
+  /** A connector that cannot be chosen is shown rather than hidden — a source that
+   *  vanished from the list tells the reader nothing about why. It reads as unavailable
+   *  and its toggle is dead. */
+  it('shows a disabled connector, and will not let it be picked', async () => {
+    renderPanel();
+
+    const toggle = await screen.findByRole('button', { name: 'Connect Recipe' });
+    expect(toggle).toBeDisabled();
+    expect(within(screen.getByRole('dialog')).getAllByText('Unavailable').length).toBeGreaterThan(0);
+  });
+
+  /** The remembered combination is a default for the dialog and nothing more: it is
+   *  offered on a conversation that has chosen nothing, and never written to a session on
+   *  the user's behalf. A conversation with its own selection outranks it. */
+  it('opens a fresh conversation on the combination last submitted', async () => {
     const user = userEvent.setup();
-    const first = renderPanel();
+    // Defect, because the mock's session store persists across this file and the sources
+    // the tests above touched are no longer where they started.
+    const first = renderPanel('session-1');
 
-    await screen.findByRole('button', { name: 'Connect Lot Info' });
-    await user.type(screen.getByRole('textbox', { name: 'Add a custom data source' }), 'My Team DB');
-    await user.click(screen.getByRole('button', { name: /Add/ }));
-
-    // Added and picked, but not yet written.
-    expect(await screen.findByRole('button', { name: 'Disconnect My Team DB' })).toBeInTheDocument();
+    await user.click(await screen.findByRole('button', { name: 'Connect Defect' }));
     await submitSelection(user);
     first.unmount();
-    renderPanel();
-    expect(await screen.findByRole('button', { name: 'Disconnect My Team DB' })).toBeInTheDocument();
+
+    // A conversation with nothing of its own opens on it — as a draft, not as a fact:
+    // Submit is dirty, because none of it has reached this session yet.
+    renderPanel('draft-never-chosen', true);
+    expect(await screen.findByRole('button', { name: 'Disconnect Defect' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Submit' })).toBeEnabled();
   });
 });

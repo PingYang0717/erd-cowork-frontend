@@ -2,84 +2,84 @@ import { http, HttpResponse } from 'msw';
 
 import type { Connector } from '@/types/api';
 
-/** The catalogue of known data sources: what exists and whether the user may reach it.
+/** The catalogue of known data sources: what exists and whether it can be chosen.
  *  Which of these a given conversation is drawing on lives on the session
- *  (`dataSourceIds`), not here — `connected` is a fact about a session, so no entry in
- *  the catalogue claims it. All the other statuses are present so the per-state styling
- *  and the status filter mean something.
+ *  (`SessionDetail.connectors`), not here — that is a fact about a session, so no entry
+ *  in the catalogue claims it. Two are `enabled: false` so the unavailable state and the
+ *  status filter have something to act on.
  *
  *  This moved out of `src/api/connectorApi.ts`, which had 73 lines of fixture and not
  *  one HTTP call — a fake backend living in the runtime layer (ADR-0006). */
 export const CATALOGUE: Connector[] = [
   {
     id: 'inline',
-    name: 'Inline',
+    connectorName: 'Inline',
     description: 'In-line metrology & process parametric',
-    category: 'Process',
-    status: 'available',
+    type: 'Process',
+    enabled: true,
   },
   {
     id: 'wat',
-    name: 'WAT',
+    connectorName: 'WAT',
     description: 'Wafer Acceptance Test (e-test parametric)',
-    category: 'Test',
-    status: 'available',
+    type: 'Test',
+    enabled: true,
   },
   {
     id: 'cp',
-    name: 'CP',
+    connectorName: 'CP',
     description: 'Circuit Probe / wafer sort bin & yield',
-    category: 'Test',
-    status: 'available',
+    type: 'Test',
+    enabled: true,
   },
   {
     id: 'lot',
-    name: 'Lot Info',
+    connectorName: 'Lot Info',
     description: 'Lot genealogy, route & hold',
-    category: 'Lot',
-    status: 'available',
+    type: 'Lot',
+    enabled: true,
   },
   {
     id: 'lotabn',
-    name: 'Lot Abnormal',
+    connectorName: 'Lot Abnormal',
     description: 'Qtime OOS, running hold, inline OOS, etc.',
-    category: 'Lot',
-    status: 'available',
+    type: 'Lot',
+    enabled: true,
   },
   {
     id: 'process',
-    name: 'Process',
+    connectorName: 'Process',
     description: 'EXP Result, Qtime',
-    category: 'Process',
-    status: 'available',
+    type: 'Process',
+    enabled: true,
   },
   {
     id: 'defect',
-    name: 'Defect',
+    connectorName: 'Defect',
     description: 'Defect inspection & wafer map',
-    category: 'Defect',
-    status: 'available',
+    type: 'Defect',
+    enabled: true,
   },
   {
     id: 'tem',
-    name: 'TEM',
+    connectorName: 'TEM',
     description: 'Cross-section TEM images & analysis',
-    category: 'Physical',
-    status: 'available',
+    type: 'Physical',
+    enabled: true,
   },
   {
     id: 'recipe',
-    name: 'Recipe',
+    connectorName: 'Recipe',
     description: 'Process recipe params & splits',
-    category: 'Equipment',
-    status: 'expired',
+    type: 'Equipment',
+    enabled: false,
   },
   {
     id: 'tool',
-    name: 'Offline Tool Log',
+    connectorName: 'Offline Tool Log',
     description: 'Tool events, chamber & maintenance',
-    category: 'Equipment',
-    status: 'no_access',
+    type: 'Equipment',
+    enabled: false,
   },
 ];
 

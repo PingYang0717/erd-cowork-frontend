@@ -240,3 +240,8 @@ lineage 層(第 5 題)。
   改變了它的安全邊界:我們無法在前端保證 artifact 不外洩它收到的資料。**若這對
   fab 資料是不可接受的,需要後端在組裝時消毒 agent 產出的 HTML** — 這一項待雙方
   決策,見安全審查紀錄。
+
+**2026-09-08 追記。** 上面關於 `SessionDetail.dataSourceIds` 的兩則已由後端回覆並落地:
+欄位定名為 `connectors: string[]`(內容是 `Connector.id`)、前端型別改為**必填**,寫入是
+單一的 `PATCH /sessions/{id}/data-source`(裸陣列、整組取代、200 無 body),原本的
+PATCH 加一個 / DELETE 減一個已下線。

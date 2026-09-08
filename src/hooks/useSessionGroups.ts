@@ -16,7 +16,7 @@ const sortByRecency = (sessions: Session[]) => {
  *  what the backend names a new session, or the rail label changes under the user the
  *  moment the session becomes real. */
 const emptySessionDetail = (id: string, createdAt: string): SessionDetail => {
-  return { id, title: DRAFT_SESSION_TITLE, createdAt, messages: [], files: [], dataSourceIds: [] };
+  return { id, title: DRAFT_SESSION_TITLE, createdAt, messages: [], files: [], connectors: [] };
 };
 
 export const useSessionGroups = () => {
