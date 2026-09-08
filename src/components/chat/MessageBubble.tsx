@@ -246,7 +246,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
           <QuestionFormCard
             form={question}
             disabled={questionDisabled}
-            initialAnswers={questionAnswers ?? undefined}
+            answered={questionAnswers ?? undefined}
             onSubmit={(answers) => onAnswer?.(answers, question)}
           />
         )}

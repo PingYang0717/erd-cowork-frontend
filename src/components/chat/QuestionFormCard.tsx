@@ -127,17 +127,18 @@ interface QuestionFormCardProps {
   disabled?: boolean;
   /** What was chosen, for a card showing a past reask. Read back out of the answer the
    *  reader sent (`parseAnswerText`), because nothing persists the answers themselves.
-   *  Initial value only — a read-only card never changes after it is drawn. */
-  initialAnswers?: Answers;
+   *  Read on every render, not only the first: a read-only card is drawn before the reply
+   *  it is recovered from has been refetched. */
+  answered?: Answers;
 }
 
 /** One reask from the agent: the fields it needs answered before it can carry on.
  *  Which fields appear is the Scenario's contract; what is in `options` is resolved
  *  when the run happens (ADR-0004). */
-const QuestionFormCard: React.FC<QuestionFormCardProps> = ({ form, onSubmit, disabled = false, initialAnswers }) => {
+const QuestionFormCard: React.FC<QuestionFormCardProps> = ({ form, onSubmit, disabled = false, answered }) => {
   const t = useTranslations();
 
-  const [answers, setAnswers] = useState<Answers>(initialAnswers ?? {});
+  const [editedAnswers, setEditedAnswers] = useState<Answers>({});
 
   // Changing a trigger discards whatever was answered beneath it. Hiding the answer but
   // keeping it would submit a Flow the user can no longer see, under a role it does not
@@ -152,11 +153,11 @@ const QuestionFormCard: React.FC<QuestionFormCardProps> = ({ form, onSubmit, dis
   };
 
   const setFieldText = (field: QuestionField, value: string) => {
-    setAnswers((previous) => ({ ...previous, [field.key]: value }));
+    setEditedAnswers((previous) => ({ ...previous, [field.key]: value }));
   };
 
   const toggle = (field: QuestionField, value: string) => {
-    setAnswers((previous) => {
+    setEditedAnswers((previous) => {
       const next: Answers =
         field.kind === 'boolean'
           ? { ...previous, [field.key]: previous[field.key] !== true }
@@ -179,8 +180,15 @@ const QuestionFormCard: React.FC<QuestionFormCardProps> = ({ form, onSubmit, dis
   /** Writes a field's whole answer at once — what a dropdown reports, against the chips'
    *  one-value-at-a-time toggling. */
   const setFieldValue = (field: QuestionField, value: QuestionAnswer) => {
-    setAnswers((previous) => clearDependentsOf(field, { ...previous, [field.key]: value }));
+    setEditedAnswers((previous) => clearDependentsOf(field, { ...previous, [field.key]: value }));
   };
+
+  // A read-only card has nothing to edit, so it renders from what it was given rather
+  // than from state. `useState` reads its argument once, on mount — and these answers
+  // arrive later than that: they are recovered from the reply, which lands with the
+  // history refetch after the card is already on screen. Held in state, the card sat
+  // there empty until something remounted it, which in practice meant reloading the page.
+  const answers = disabled ? (answered ?? {}) : editedAnswers;
 
   const selectedCount = countAnswers(answers);
   const submitLabel = form.submitLabel.replace('{count}', String(selectedCount));
