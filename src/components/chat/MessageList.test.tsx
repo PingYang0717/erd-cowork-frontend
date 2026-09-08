@@ -25,7 +25,6 @@ const liveRun = (overrides: Partial<LiveRun> = {}): LiveRun => ({
   thinking: '',
   question: null,
   codeText: '',
-  tables: [],
   error: null,
   artifact: null,
   startedAt: null,

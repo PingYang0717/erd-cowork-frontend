@@ -6,7 +6,7 @@ import { type SendMessageArgs, streamAgentMessage } from '@/api/agentApi';
 import { AgentStreamHttpError } from '@/api/agentStreamError';
 import { isCanceled } from '@/api/apiError';
 import { getTranslations } from '@/i18n/useTranslations';
-import type { AgentEvent, QuestionForm, StepItem, TableResult } from '@/types/api/agentEvent';
+import type { AgentEvent, QuestionForm, StepItem } from '@/types/api/agentEvent';
 import { copyForCode } from '@/utils/describeErrorCode';
 import { liftQuestions } from '@/utils/liftQuestions';
 import { sessionsQueryKey } from './useSessions';
@@ -27,23 +27,10 @@ export interface AgentStreamState {
   /** True only for an unexpected disconnection — never for a user-initiated stop
    *  or a refusal the backend reported with a code. */
   networkError: boolean;
-  // Live-only: thinking, code and tables belong to this connection, not to the
-  // thread history (ADR-0003).
+  // Live-only: thinking and code belong to this connection, not to the thread
+  // history (ADR-0003).
   thinking: string;
   codeText: string;
-  tables: TableResult[];
-  /** Of `tables`, the ones that arrived after the reply had begun.
-   *
-   *  A TABLE the agent emits while it is still reasoning is a query it ran to work
-   *  something out — the same kind of thing as the THINKING text beside it, and not
-   *  something the reader asked to see. A TABLE that arrives once the reply is under way
-   *  is part of what the agent is telling them. The wire does not distinguish the two, so
-   *  the boundary is recorded here as each one arrives; `TableResult` stays exactly the
-   *  shape the backend sends (ADR-0003).
-   *
-   *  Ids rather than a second list of tables: a `[[table:…]]` marker can claim any table
-   *  by id, thinking-time ones included, and resolving markers has to see all of them. */
-  replyTableIds: string[];
   /** Wall-clock milliseconds the finished run took; null while idle or streaming. */
   durationMs: number | null;
   /** Epoch ms the current run started; null while idle. Drives the bubble's live timer,
@@ -73,8 +60,6 @@ const initialState: AgentStreamState = {
   networkError: false,
   thinking: '',
   codeText: '',
-  tables: [],
-  replyTableIds: [],
   durationMs: null,
   startedAt: null,
 };
@@ -148,24 +133,6 @@ const reducer = (state: AgentStreamState, action: Action): AgentStreamState => {
 
         case 'CODE':
           return { ...state, codeText: state.codeText + agentEvent.delta };
-
-        case 'TABLE':
-          return {
-            ...state,
-            tables: [
-              ...state.tables,
-              {
-                tableId: agentEvent.tableId,
-                intent: agentEvent.intent,
-                columns: agentEvent.columns,
-                rows: agentEvent.rows,
-                truncated: agentEvent.truncated,
-              },
-            ],
-            // The first token is the boundary: before it the agent is still working the
-            // answer out, after it the answer is being given. See `replyTableIds`.
-            replyTableIds: state.liveText === '' ? state.replyTableIds : [...state.replyTableIds, agentEvent.tableId],
-          };
 
         default:
           return state;

@@ -113,7 +113,6 @@ export const en: Translations = {
     loading: 'Loading…',
     noSource: 'No source available for this version',
     sourceLoadFailed: 'Could not load the source — please try again shortly',
-    truncated: '(results truncated)',
     manageConnections: 'Manage connections',
     selectedCount: (n: number) => `${n} selected`,
     filesExpired: (days: number) =>

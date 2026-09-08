@@ -7,8 +7,6 @@ export type {
   QuestionOption,
   StepItem,
   StepStatus,
-  TableCellValue,
-  TableResult,
 } from './agentEvent';
 export type { Artifact, ArtifactVersion } from './artifact';
 export type { Connector, ConnectorStatus } from './connector';

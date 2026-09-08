@@ -150,9 +150,6 @@ export const zhTW = {
     /** The read failed but the source may be perfectly fine — do not claim "there is
      *  none" on a generic failure. */
     sourceLoadFailed: '原始碼載入失敗，請稍後重試',
-    /** TABLE sends `truncated: boolean` only, never a row count — so this reports no
-     *  number (open with the backend: we would like TABLE to carry rowLimit). */
-    truncated: '(結果已截斷)',
     manageConnections: '管理連線',
     selectedCount: (n: number) => `已選 ${n} 項`,
     filesExpired: (days: number) =>
