@@ -37,6 +37,7 @@ const renderList = (live: LiveRun | null = null, optimisticUserText: string | nu
       messages={[message('m1', 'USER', 'Run SPC'), message('m2', 'AI', 'Done.')]}
       live={live}
       optimisticUserText={optimisticUserText}
+      pendingAnswerText={null}
       lastRunDurationMs={null}
       onAnswer={() => {}}
     />
@@ -71,6 +72,7 @@ describe('MessageList auto-scroll', () => {
         messages={[message('m1', 'USER', 'Run SPC'), message('m2', 'AI', 'Done.')]}
         live={liveRun()}
         optimisticUserText={null}
+        pendingAnswerText={null}
         lastRunDurationMs={null}
         onAnswer={() => {}}
       />
@@ -92,6 +94,7 @@ describe('MessageList auto-scroll', () => {
         messages={[message('m1', 'USER', 'Run SPC'), message('m2', 'AI', 'Done. More.')]}
         live={liveRun({ liveText: 'still going' })}
         optimisticUserText={null}
+        pendingAnswerText={null}
         lastRunDurationMs={null}
         onAnswer={() => {}}
       />
@@ -113,6 +116,7 @@ describe('MessageList auto-scroll', () => {
         messages={[message('m1', 'USER', 'Run SPC'), message('m2', 'AI', 'Done.')]}
         live={null}
         optimisticUserText="One more thing"
+        pendingAnswerText={null}
         lastRunDurationMs={null}
         onAnswer={() => {}}
       />

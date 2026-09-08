@@ -121,6 +121,36 @@ describe('A reask the run is waiting on', () => {
     expect(stream.requests[0]).toMatchObject({ question: 'Part ID：A14' });
   }, 20000);
 
+  /** Submitting must not look like the selection was thrown away.
+   *
+   *  Two things conspired to empty the card the moment Send was pressed. The answers are
+   *  recovered from the reply, and the reply is not in the history until the refetch at
+   *  the end of the run — so for the length of that run there was nothing to recover from.
+   *  And `QuestionFormCard` held them in `useState`, which reads its argument once on
+   *  mount, so even when the refetch landed the card kept the empty object it started
+   *  with. It came back only when something remounted it, which in practice meant
+   *  reloading the page — the exact shape of the report. */
+  it('keeps the selection on screen the moment it is submitted', async () => {
+    const user = userEvent.setup();
+    mockAgentStream();
+    historyOf(message({ id: 'm1', sender: 'AI', questionsJson: PART_ID_REASK }));
+    renderStudio();
+
+    await user.click(await screen.findByRole('button', { name: 'Defect pareto — W12' }));
+    await waitForComposer();
+
+    const group = await screen.findByRole('group', { name: 'Part ID' });
+    await user.click(chipIn(group, 'A14'));
+    await user.click(screen.getByRole('button', { name: 'Send' }));
+
+    // Still there, and now settled: the run it started is under way and the history has
+    // not caught up, but the answer is not in doubt.
+    await waitFor(() => expect(screen.queryByRole('button', { name: 'Send' })).not.toBeInTheDocument());
+    const settled = screen.getByRole('group', { name: 'Part ID' });
+    expect(chipIn(settled, 'A14')).toHaveAttribute('aria-pressed', 'true');
+    expect(chipIn(settled, 'A16')).toHaveAttribute('aria-pressed', 'false');
+  }, 20000);
+
   /** The guard against over-fixing: an answered reask must not invite a second answer to
    *  a question that is already behind the reader. */
   it('stays read-only once it has been answered', async () => {
