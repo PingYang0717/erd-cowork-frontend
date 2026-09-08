@@ -50,3 +50,16 @@ Schedule 頁面只有標題。Session 的改名/釘選/刪除與 Artifact 的刪
 
 這份 ADR 的本體——執行時不跑 mock 後端——維持不變:`main.tsx` 沒有任何 MSW 啟動,MSW 只在
 測試裡跑。
+
+## 補充(2026-09-08):自訂資料來源退場,連線狀態上了後端
+
+上一段說「留在前端的使用者偏好——選了哪些 Connector、自訂了哪些來源」。**後半已不存在**:
+使用者自行新增資料來源這個設計確定不做了,面板的入口、`addConnector`、`Connector.custom`
+與 `POST /connectors` 一併移除。它模型化的是「使用者可以登記一個後端不知道的來源」,而後端
+不知道的來源 agent 讀不到——這個功能從來沒有真的成立過。
+
+前半也變了:哪一場對話在用哪些來源現在是**後端的事實**(`SessionDetail.connectors`,寫入走
+`PATCH /sessions/{id}/data-source`)。留在 localStorage 的只剩「上次送出的組合」,而且只在
+一場對話還沒選過任何來源時當面板的預設值——它從不代替使用者寫進 session。
+
+`PATCH /connectors/{id}` 也已從契約移除。
