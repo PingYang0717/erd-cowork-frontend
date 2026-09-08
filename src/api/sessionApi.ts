@@ -48,12 +48,14 @@ export const toggleSessionPin = (id: string) => apiClient.patch<SessionPinResult
  *  doing; whether the backend can undo it later is not something the UI offers. */
 export const deleteSession = (id: string) => apiClient.patch<void>(`/sessions/${id}/soft-delete`);
 
-/** Attaches a data source to the session. PATCH rather than PUT: this adds one source to
- *  whatever is already attached, it does not replace the set. */
-export const attachDataSource = (id: string, connectorId: string) =>
-  apiClient.patch<void>(`/sessions/${id}/data-source`, { connectorId });
-
-/** Detaches one data source. The id travels in the body rather than the path because the
- *  endpoint is `/data-source` for both directions. */
-export const detachDataSource = (id: string, connectorId: string) =>
-  apiClient.delete<void>(`/sessions/${id}/data-source`, { data: { connectorId } });
+/** Replaces the whole set of data sources this conversation draws on.
+ *
+ *  One call carrying the complete set, rather than an add and a remove carrying one id
+ *  each. Two toggles in flight together used to race — each described only its own
+ *  change, so the result depended on which arrived last. A set describes the outcome, so
+ *  there is nothing for them to disagree about.
+ *
+ *  A bare array is the backend's body shape, not an envelope. Answers 200 with no body;
+ *  the caller invalidates the session detail to see it. */
+export const setDataSources = (id: string, connectorIds: string[]) =>
+  apiClient.patch<void>(`/sessions/${id}/data-source`, connectorIds);

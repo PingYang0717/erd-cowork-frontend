@@ -22,9 +22,9 @@ export interface SessionDetail {
    *  not per user: two conversations can draw on different sources, and a run's answer
    *  is only reproducible if you know what it was allowed to read.
    *
-   *  Optional because the backend has not shipped it yet — the endpoints it goes with
-   *  (PATCH/DELETE /sessions/{id}/data-source) are mocked ahead of the real ones. A
-   *  response without it reads as "nothing attached" rather than crashing the thread;
-   *  make it required once the field is live. */
-  dataSourceIds?: string[];
+   *  Required: the backend ships it. `types/api` is the only defence there is
+   *  (ADR-0013), so an optional field here would be a claim that the backend sometimes
+   *  omits it — and every call site would have to spell `?? []`, which reads the same as
+   *  "nothing attached" and hides the difference. */
+  connectors: string[];
 }

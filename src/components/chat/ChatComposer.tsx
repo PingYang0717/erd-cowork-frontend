@@ -22,7 +22,7 @@ import { useConnectors } from '@/hooks/useConnectors';
 import { useFileAttachments } from '@/hooks/useFileAttachments';
 import { useTranslations } from '@/i18n/useTranslations';
 import { useConnectorsPanelStore } from '@/stores/useConnectorsPanelStore';
-import { selectConnected } from '@/utils/connectorSelectors';
+import { attachedConnectors } from '@/utils/connectorSelectors';
 import { dispatchMenuAction } from '@/utils/dispatchMenuAction';
 
 import styles from './ChatComposer.module.css';
@@ -124,7 +124,7 @@ const ChatComposer: React.FC<ChatComposerProps> = ({ sessionId, onSend, disabled
     setDraft('');
   };
 
-  const connectedConnectorCount = selectConnected(connectors).length;
+  const connectedConnectorCount = attachedConnectors(connectors.catalogue, connectors.attachedIds).length;
 
   return (
     <div>

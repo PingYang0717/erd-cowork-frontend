@@ -26,6 +26,10 @@ describe('Connectors panel', () => {
     useSessionSelectionStore.setState(useSessionSelectionStore.getInitialState());
   });
 
+  /** Three states, from two facts: whether the connector can be chosen at all, and
+   *  whether this conversation's draft has chosen it. `expired` and `no_access` used to
+   *  be two of four here — the backend no longer distinguishes them, and neither did the
+   *  reader's options. */
   it('exposes each connector state on its toggle button for the per-state styling', async () => {
     const user = userEvent.setup();
     renderStudio();
@@ -33,8 +37,11 @@ describe('Connectors panel', () => {
 
     expect(await screen.findByRole('button', { name: 'Disconnect Inline' })).toHaveAttribute('data-state', 'connected');
     expect(screen.getByRole('button', { name: 'Connect Lot Info' })).toHaveAttribute('data-state', 'available');
-    expect(screen.getByRole('button', { name: 'Connect Recipe' })).toHaveAttribute('data-state', 'expired');
-    expect(screen.getByRole('button', { name: 'Connect Offline Tool Log' })).toHaveAttribute('data-state', 'no_access');
+    expect(screen.getByRole('button', { name: 'Connect Recipe' })).toHaveAttribute('data-state', 'unavailable');
+    expect(screen.getByRole('button', { name: 'Connect Offline Tool Log' })).toHaveAttribute(
+      'data-state',
+      'unavailable'
+    );
   });
 
   it('lists every connector type with its current status', async () => {
@@ -52,21 +59,21 @@ describe('Connectors panel', () => {
     expect(screen.getByRole('button', { name: 'Connect Defect' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Connect TEM' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Connect Recipe' })).toBeInTheDocument();
-    expect(screen.getByText('Token expired')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Connect Offline Tool Log' })).toBeDisabled();
-    expect(screen.getByText('No access')).toBeInTheDocument();
+    // Shown, not hidden: a source that vanished from the list tells the reader nothing
+    // about why they cannot pick it.
+    expect(screen.getAllByText('Unavailable')).toHaveLength(2);
   });
 
-  // Choices are the user's preference, kept in localStorage (see
-  // ConnectorsPanel.test.tsx for the persistence itself); only no_access stays off.
-  it('lets the user connect and disconnect; only no_access stays off', async () => {
+  // The selection belongs to this conversation and reaches the backend on Submit (see
+  // ConnectorsPanel.test.tsx for the write itself); only a disabled source stays off.
+  it('lets the user connect and disconnect; only a disabled source stays off', async () => {
     const user = userEvent.setup();
     renderStudio();
     await selectASessionAndOpenConnectors(user);
 
     expect(await screen.findByRole('button', { name: 'Connect Lot Info' })).toBeEnabled();
     expect(screen.getByRole('button', { name: 'Disconnect Inline' })).toBeEnabled();
-    expect(screen.getByRole('button', { name: /^Add$/ })).toBeEnabled();
     expect(screen.getByRole('button', { name: 'Connect Offline Tool Log' })).toBeDisabled();
   });
 });

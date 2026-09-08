@@ -89,15 +89,18 @@ client abort,前端會在 abort 後兩段 800ms invalidate 追後端非同步落
 
 ## 7. Connector
 
-| #   | Method + Path            | 前端送出                      | 前端期望回應                                                                                                  | 狀態                                    | 後端實際 input/output(請補) |
-| --- | ------------------------ | ----------------------------- | ------------------------------------------------------------------------------------------------------------- | --------------------------------------- | --------------------------- |
-| 20  | `GET /connectors`        | —                             | `Connector[]`:`{ id, name, description, category, status: 'connected'\|'available'\|'expired'\|'no_access' }` | ✅ 已接(再併上 localStorage 的自訂來源) |                             |
-| 21  | `PATCH /connectors/{id}` | `{ status: ConnectorStatus }` | `Connector`                                                                                                   | 前端未呼叫(選取是 localStorage 偏好)    |                             |
-| 22  | `POST /connectors`       | `{ name: string }`            | `Connector`                                                                                                   | 前端未呼叫(自訂來源寫 localStorage)     |                             |
+| #   | Method + Path     | 前端送出 | 前端期望回應                                                      | 狀態    | 後端實際 input/output(請補)             |
+| --- | ----------------- | -------- | ----------------------------------------------------------------- | ------- | --------------------------------------- |
+| 20  | `GET /connectors` | —        | `Connector[]`:`{ id, connectorName, description, type, enabled }` | ✅ 已接 | 另送 `connectorId` / `url`,前端型別不收 |
 
-目錄本身走 `GET /connectors`(`connectorApi.listCatalogue`);使用者選了哪些、自訂了哪些疊在
-上面,存 `erd-cowork:connector-prefs`。那份 localStorage 不是等後端補的 stub——「選了哪些資料
-來源」對使用者是真的偏好,只是還沒有帳號層級的歸屬,所以 PATCH / POST 這兩條前端沒有呼叫端。
+目錄走 `GET /connectors`(`connectorApi.listCatalogue`)。哪一場對話正在用哪些來源不在這裡,
+在 `SessionDetail.connectors`(第 1 節),寫入走 `PATCH /sessions/{id}/data-source`——裸陣列、
+整組取代、200 無 body。
+
+`erd-cowork:connector-prefs` 只剩一件事:記住上次送出的組合,在一場對話還沒選過任何來源時
+當面板的預設值。它從不代替使用者寫進 session。
+
+`PATCH /connectors/{id}` 與 `POST /connectors` 已從契約移除,自訂資料來源一併退場。
 
 ## 8. 尚無前端呼叫
 
