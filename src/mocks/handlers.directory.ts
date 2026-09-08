@@ -23,7 +23,21 @@ const EMPLOYEES: DirectoryEntry[] = [
 
 const DIRECTORY = [...ORGS, ...EMPLOYEES];
 
+/** Who the mock backend considers signed in.
+ *
+ *  `/hr/userInfo` answers a single row — the same shape the search returns, plus the
+ *  employee id only this endpoint carries. No `content` envelope: the question has one
+ *  answer, so there is no list to wrap. */
+const SIGNED_IN: DirectoryEntry & { emplId: string } = {
+  type: 'EMPLOYEE',
+  employeeName: '鄭凱宇',
+  employeeNt: 'CHXXGHYC',
+  employeeOrgName: '整合技術一課',
+  emplId: 'E100427',
+};
+
 export const directoryHandlers = [
+  http.get('/api/hr/userInfo', () => HttpResponse.json(SIGNED_IN)),
   // The real endpoint searches the HR directory; here the same fixed roster is filtered,
   // so the wire shape and the minimum-length rule are what a test exercises. Reading the
   // param by name is deliberate: a rename on either side should fail loudly here rather

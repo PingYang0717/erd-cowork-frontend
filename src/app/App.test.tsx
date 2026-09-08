@@ -7,7 +7,7 @@ import { useThemeStore } from '@/stores/useThemeStore';
 import App from './App';
 
 const openSettings = async (user: ReturnType<typeof userEvent.setup>) =>
-  user.click(await screen.findByRole('button', { name: 'Settings' }));
+  user.click(await screen.findByRole('button', { name: 'Account' }));
 
 /** antd's Segmented hides the radio and lets the surrounding `<label>` take the click,
  *  so the accessible element and the clickable one are not the same node. */
@@ -32,7 +32,7 @@ describe('App theme shell', () => {
 
     await openSettings(user);
     await chooseTheme(user, en.settings.themeDark);
-    await user.click(screen.getByRole('button', { name: 'Settings' }));
+    await user.click(screen.getByRole('button', { name: 'Account' }));
     await openSettings(user);
 
     expect(await screen.findByRole('radio', { name: en.settings.themeDark })).toBeChecked();

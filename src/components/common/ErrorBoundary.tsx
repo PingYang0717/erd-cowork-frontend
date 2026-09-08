@@ -2,7 +2,6 @@ import { Component, type ErrorInfo, type ReactNode } from 'react';
 
 import { useTranslations } from '@/i18n/useTranslations';
 import { describeLoadError } from '@/utils/describeLoadError';
-import SettingsMenu from './SettingsMenu';
 
 import styles from './ErrorBoundary.module.css';
 
@@ -87,7 +86,6 @@ const ErrorPanel: React.FC<{ error: Error; onRetry: () => void }> = ({ error, on
             left on screen (the full-page view fails whole), and its words are in a
             language the reader may not read — settings is where the language lives,
             so it must survive every failure that hides the rail's own entry. */}
-        <SettingsMenu variant="tile" />
       </div>
     </div>
   );

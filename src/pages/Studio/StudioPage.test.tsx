@@ -115,20 +115,16 @@ describe('StudioPage three-pane layout', () => {
     expect(rail.style.width).toBe('270px');
   });
 
-  /** Language and theme live only in the rail now, so they have to survive it collapsing
-   *  — otherwise a collapsed rail puts them out of reach until the user thinks to expand
-   *  it again. */
-  it('offers Settings in both rail states', async () => {
+  /** Language and theme used to live in the rail, so collapsing it put them out of reach
+   *  until the reader thought to expand it again. They are in the app's own bar now — the
+   *  rail cannot take away what it never held. */
+  it('keeps the preferences reachable whatever the rail is doing', async () => {
     const user = userEvent.setup();
     renderStudio();
 
-    await user.click(await screen.findByRole('button', { name: 'Settings' }));
-    expect(await screen.findByRole('radio', { name: en.settings.languageEn })).toBeInTheDocument();
-    await user.keyboard('{Escape}');
+    await user.click(await screen.findByRole('button', { name: 'Collapse session list' }));
 
-    await user.click(screen.getByRole('button', { name: 'Collapse session list' }));
-
-    await user.click(await screen.findByRole('button', { name: 'Settings' }));
+    await user.click(await screen.findByRole('button', { name: 'Account' }));
     expect(await screen.findByRole('radio', { name: en.settings.languageEn })).toBeInTheDocument();
   });
 
@@ -146,10 +142,11 @@ describe('StudioPage three-pane layout', () => {
     expect(await screen.findByText(en.errors.loadFailedHeading)).toBeInTheDocument();
     // The rest of the shell survives alongside the failed rail.
     expect(screen.getByRole('banner', { name: 'Thread header' })).toBeInTheDocument();
-    // And so does Settings — it sits OUTSIDE the boundary now. It used to live inside
-    // the rail components, so the very failure whose card a reader might not be able
-    // to read also removed their only way to switch language.
-    expect(screen.getAllByRole('button', { name: 'Settings' }).length).toBeGreaterThan(0);
+    // And so does the account entry — it sits in the app's own bar, above every
+    // boundary. It used to live inside the rail components, so the very failure whose
+    // card a reader might not be able to read also removed their only way to switch
+    // language.
+    expect(screen.getByRole('button', { name: 'Account' })).toBeInTheDocument();
   });
 
   /** The divider used to be pointer-only: role="separator" with no tabIndex and no

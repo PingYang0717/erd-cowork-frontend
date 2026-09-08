@@ -1,0 +1,62 @@
+.header {
+  flex: none;
+  display: flex;
+  align-items: center;
+  height: 52px;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--erd-color-border-secondary, #f0f0f0);
+  background: var(--erd-color-bg-container, #fff);
+}
+
+/* A button rather than a link: the router is a hash router (ADR-0011) and every other
+   navigation in this app goes through it, so the brand does too. */
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--erd-color-text, rgba(0, 0, 0, 0.88));
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.brand:hover {
+  background: var(--erd-color-fill-tertiary, rgba(0, 0, 0, 0.04));
+}
+
+.brandIcon {
+  font-size: 17px;
+  color: var(--erd-color-primary, #1677ff);
+}
+
+.spacer {
+  flex: 1 1 auto;
+}
+
+/* The trigger is the circle; `UserAvatar` decides what is inside it. */
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--erd-color-primary-bg, #e6f4ff);
+  color: var(--erd-color-primary, #1677ff);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.avatar:hover {
+  filter: brightness(0.97);
+}

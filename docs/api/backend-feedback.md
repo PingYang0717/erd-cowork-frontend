@@ -18,6 +18,17 @@
    前端-only extension,真後端的歷史訊息不帶檔案資訊,bubble 上的附件 chips 因此不會
    出現在歷史訊息上。
 
+## 中 — 使用者與頭像
+
+4b. **`GET /hr/userInfo` 待實作**,回單一物件(不包 `content` 信封):
+`{ type: 'EMPLOYEE', employeeName, employeeNt, employeeOrgName, emplId }`。
+
+4c. **頭像位址的樣板不要進前端 repo。** 前端目前用一個 placeholder 常數套 `emplId`
+(`api/userApi.ts`)。真值是機密,寫死在原始碼裡等於進版控。兩條路都比它好:
+讓 `GET /hr/userInfo` 直接回組好的 `avatarUrl`(前端連規則都不用知道),或把樣板
+放進 `GET /config`。前者更好——後端同時知道 `emplId` 與樣板,沒有理由把拼裝這件事
+交出來。
+
 ## 中 — Connector 與 Directory
 
 4. ~~**Connector 端點**~~ — **已完成(2026-09-08 定版)**。`GET /connectors` 回

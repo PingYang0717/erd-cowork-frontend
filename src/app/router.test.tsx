@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, it, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 // The router reads window.location once at module-evaluation time, so each test puts
@@ -85,6 +85,20 @@ describe('Routing shell', () => {
 
       // A direct visit has no recorded origin, so the toolbar leads with Home.
       expect(await screen.findByRole('button', { name: 'Home' })).toBeInTheDocument();
+    },
+    RESET_MODULES_TIMEOUT
+  );
+
+  /** The header sits above the whole app, not inside the shell: the single-Artifact view
+   *  is a route of its own that deliberately has no session rail, and it needs the brand
+   *  and the account entry as much as any other screen does. */
+  it(
+    'puts the app header above every route, including the full-page Artifact',
+    async () => {
+      await renderAppAt('/cowork/artifact/artifact-123');
+
+      const header = await screen.findByRole('banner', { name: 'App header' });
+      expect(within(header).getByRole('button', { name: 'eRD Cowork' })).toBeInTheDocument();
     },
     RESET_MODULES_TIMEOUT
   );

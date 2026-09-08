@@ -16,6 +16,14 @@ _Avoid_: Chat app, Assistant
 Cowork 內的主要工作畫面，由 Session 列表、對話串（Thread）、Artifact 面板三欄組成。
 _Avoid_: Chat view, Main view
 
+**使用者（User）**:
+使用這個 app 的人。由 `GET /hr/userInfo` 回答「現在是誰」——姓名、部門、NT account，以及只有這支端點會給的**員工編號（emplId）**，頭像位址由它推導而來。
+
+**與 `X-User-Id` 不是同一件事。** 後者是每個請求都帶、後端據以過濾資源的識別碼；v1 是這台瀏覽器產生的匿名 UUID，internal 環境才由 SSO 換成真實身分（[ADR-0007](docs/adr/0007-cowork-file-parity-for-api-seams.md)）。所以「畫面上顯示的是誰」與「後端認為你是誰」在 v1 可以完全無關——這是最容易搞混的地方。
+
+頭像只是裝飾:拿不到就退回姓名首字，姓名也拿不到就退回中性圖示。它的缺席從不影響任何功能。
+_Avoid_: Account（這個 app 沒有帳號的概念,沒有註冊、沒有登出）、Employee（那是 HR 系統的說法,這裡的主體是「正在用這個 app 的人」）
+
 **Session**:
 一段對話（Thread），底下包含多筆訊息與這段對話中產生的 Artifact 清單；使用者可命名、釘選（pin）。
 _Avoid_: Thread, Conversation, Chat

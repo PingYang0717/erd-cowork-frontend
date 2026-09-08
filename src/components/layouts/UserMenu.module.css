@@ -1,0 +1,40 @@
+/* Claude Desktop's account menu: a card of rows, the person at the top, preferences
+   under a rule. Interim — see AppHeader. */
+.panel {
+  width: 244px;
+  padding: 4px;
+}
+
+.identity {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px 10px;
+  border-bottom: 1px solid var(--erd-color-border-secondary, #f0f0f0);
+  margin-bottom: 6px;
+}
+
+.name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--erd-color-text, rgba(0, 0, 0, 0.88));
+}
+
+.department {
+  font-size: 11.5px;
+  color: var(--erd-color-text-tertiary, #8c8c8c);
+}
+
+/* A row per preference: the label reads left, the choice sits right. Stacked rather than
+   side by side because a segmented control with two Chinese words needs the width. */
+.row {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 6px 10px 8px;
+}
+
+.rowLabel {
+  font-size: 11.5px;
+  color: var(--erd-color-text-tertiary, #8c8c8c);
+}

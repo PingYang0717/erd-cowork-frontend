@@ -307,6 +307,25 @@ the share dialog's recipient picker (`DirectoryEntry.kind` is `'department'`,
 `'section'`, or `'person'`; `label` is the searchable display text — the raw code for
 departments/sections, `"<NT account> · <中文名>"` for people).
 
+## User
+
+| Method | Path           | Request | Response   | 後端狀態   |
+| ------ | -------------- | ------- | ---------- | ---------- |
+| GET    | `/hr/userInfo` | —       | `UserInfo` | 待後端實作 |
+
+```
+UserInfo { type: 'EMPLOYEE', employeeName, employeeNt, employeeOrgName, emplId }
+```
+
+**單一物件，不包 `content` 信封**——與 `/hr/employeesAndOrgs` 同一個 row 形狀，但那支是搜尋、
+回一份清單，這支問的是「我是誰」，只有一個答案。讀錯形狀會什麼都找不到，而且說不出原因。
+
+`emplId` 只有這支端點會給。前端拿它套進頭像位址的樣板——**那個樣板目前是 placeholder**
+（`api/userApi.ts`），真值是機密，見 `backend-feedback.md`。
+
+這支端點回答的是「畫面上顯示誰」，跟 `X-User-Id` 決定的「後端認為你是誰」是兩件事：v1 的
+`X-User-Id` 是這台瀏覽器的匿名 UUID，兩者可以完全無關。
+
 ## Connector
 
 | Method | Path          | Request | Response      | 後端狀態 |
