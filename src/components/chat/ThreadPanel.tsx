@@ -216,8 +216,19 @@ const ThreadView: React.FC<ThreadViewProps> = ({ sessionId }) => {
   const stillAhead = pending !== null && showOptimisticBubble(messages.length, pending.atLength);
   const optimisticUserText = stillAhead && !pending.isAnswer ? pending.text : null;
   /** A reask's answer that the refetched history has not caught up with yet. The card it
-   *  was submitted from reads it back the same way it reads the settled reply. */
-  const pendingAnswerText = stillAhead && pending.isAnswer ? pending.text : null;
+   *  was submitted from reads it back the same way it reads the settled reply.
+   *
+   *  Dropped when the run it started failed. This record exists to bridge one gap — from
+   *  Send until the refetch carries the answer home — and a run that died never reaches
+   *  the other side of it: the history it was waiting for is not coming. Left standing, it
+   *  settled the card on an answer that reached nothing, and the question stayed unopened
+   *  with no way to send it again.
+   *
+   *  The optimistic bubble beside it deliberately survives a failure, and for the opposite
+   *  reason: those are the reader's own words, and a failure that erased them would leave
+   *  an error card explaining a message nobody can see. An answer is not words — it is a
+   *  claim that a question is settled, and a failed run settles nothing. */
+  const pendingAnswerText = stillAhead && pending.isAnswer && state.error === null ? pending.text : null;
 
   const hasContent = messages.length > 0 || live !== null || optimisticUserText !== null;
 
