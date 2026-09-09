@@ -21,7 +21,7 @@
 ## 中 — Connector 與 Directory
 
 4. ~~**Connector 端點**~~ — **已完成(2026-09-08 定版)**。`GET /connectors` 回
-   `{ id, connectorName, description, type, enabled }`;哪一場對話在用哪些來源是
+   `{ id, name, description, type, enabled }`;哪一場對話在用哪些來源是
    session 的事實(`SessionDetail.connectors`),寫入走 `PATCH /sessions/{id}/data-source`
    ——裸陣列、整組取代、200 無 body。
 

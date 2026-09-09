@@ -314,7 +314,7 @@ departments/sections, `"<NT account> · <中文名>"` for people).
 | GET    | `/connectors` | —       | `Connector[]` | ✅ 已接  |
 
 ```
-Connector { id, connectorName, description, type, enabled }
+Connector { id, name, description, type, enabled }
 ```
 
 後端另外會送 `connectorId`（它自己的用途）與 `url`。**前端型別不收這兩欄**：`types/api`

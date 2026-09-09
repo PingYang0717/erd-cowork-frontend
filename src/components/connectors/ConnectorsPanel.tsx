@@ -168,9 +168,7 @@ const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ sessionId, open, onCl
     (connector) =>
       matchesFilter(rowState(connector, draftIds), statusFilter) &&
       (!normalizedSearch ||
-        `${connector.connectorName} ${connector.description} ${connector.type}`
-          .toLowerCase()
-          .includes(normalizedSearch))
+        `${connector.name} ${connector.description} ${connector.type}`.toLowerCase().includes(normalizedSearch))
   );
 
   return (
@@ -222,11 +220,11 @@ const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ sessionId, open, onCl
                 <span className={styles.selectedChipIcon} aria-hidden="true">
                   {CONNECTOR_ICONS[connector.id] ?? <ApiOutlined aria-hidden />}
                 </span>
-                <span className={styles.selectedChipName}>{connector.connectorName}</span>
+                <span className={styles.selectedChipName}>{connector.name}</span>
                 <button
                   type="button"
                   className={styles.selectedChipRemove}
-                  aria-label={`Remove ${connector.connectorName} from selected sources`}
+                  aria-label={`Remove ${connector.name} from selected sources`}
                   onClick={() => toggle(connector)}
                 >
                   <CloseOutlined aria-hidden />
@@ -292,7 +290,7 @@ const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ sessionId, open, onCl
                 </span>
                 <span className={styles.info}>
                   <span className={styles.nameRow}>
-                    <span className={styles.name}>{connector.connectorName}</span>
+                    <span className={styles.name}>{connector.name}</span>
                     <span className={styles.categoryTag}>{connector.type}</span>
                   </span>
                   <span className={styles.description}>{connector.description}</span>
@@ -307,9 +305,7 @@ const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ sessionId, open, onCl
                   shape="circle"
                   size="small"
                   disabled={state === 'unavailable'}
-                  aria-label={
-                    isConnected ? `Disconnect ${connector.connectorName}` : `Connect ${connector.connectorName}`
-                  }
+                  aria-label={isConnected ? `Disconnect ${connector.name}` : `Connect ${connector.name}`}
                   icon={toggleIcon(state)}
                   onClick={() => toggle(connector)}
                 />
