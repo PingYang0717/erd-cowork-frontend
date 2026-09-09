@@ -197,22 +197,29 @@
 
 /* The option list. A row is a choice being made, so it carries a real checkbox rather
    than antd's tick at the far right — the box says "you may pick several" before anything
-   is picked, which a tick that only appears afterwards cannot. */
+   is picked, which a tick that only appears afterwards cannot.
+
+   The box is drawn on the ROW, absolutely, and the row makes room for it with padding.
+   Putting it inside `.ant-select-item-option-content` meant making that a flex container,
+   which took antd's ellipsis away from the label: the rule was on the row, and the text
+   became a child of it. A long label was then cut mid-character with nothing saying so —
+   and in a thread pane the reader can narrow to 320px, that is most labels. */
 .selectPopup :global(.ant-select-item-option) {
   position: relative;
   padding-block: 7px;
+  padding-inline-start: 34px;
 }
 
 .selectPopup :global(.ant-select-item-option-content) {
-  display: flex;
-  align-items: center;
-  gap: 9px;
   font-size: 12.5px;
 }
 
-.selectPopup :global(.ant-select-item-option-content)::before {
+.selectPopup :global(.ant-select-item-option)::before {
   content: '';
-  flex: none;
+  position: absolute;
+  left: 11px;
+  top: 50%;
+  transform: translateY(-50%);
   box-sizing: border-box;
   width: 15px;
   height: 15px;
@@ -225,22 +232,23 @@
   background: var(--erd-color-primary-bg, #e6f4ff);
 }
 
-.selectPopup :global(.ant-select-item-option-selected) :global(.ant-select-item-option-content)::before {
+.selectPopup :global(.ant-select-item-option-selected)::before {
   border-color: var(--erd-color-primary, #1677ff);
   background: var(--erd-color-primary, #1677ff);
 }
 
 /* The tick, drawn rather than shipped: an icon would need a second element inside a row
    antd owns. Two borders rotated is the whole mark. */
-.selectPopup :global(.ant-select-item-option-selected) :global(.ant-select-item-option-content)::after {
+.selectPopup :global(.ant-select-item-option-selected)::after {
   content: '';
   position: absolute;
   left: 17px;
+  top: 50%;
   width: 4px;
   height: 8px;
   border: solid #fff;
   border-width: 0 1.5px 1.5px 0;
-  transform: translateY(-1px) rotate(45deg);
+  transform: translateY(-60%) rotate(45deg);
 }
 
 /* antd's own selected tick, replaced by the box above. */
