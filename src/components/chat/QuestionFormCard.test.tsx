@@ -171,4 +171,26 @@ describe('QuestionFormCard: how a field is offered', () => {
     expect(within(group).getByRole('button', { name: 'A14' })).toHaveAttribute('aria-pressed', 'true');
     expect(within(group).getByRole('button', { name: 'A16' })).toHaveAttribute('aria-pressed', 'false');
   });
+
+  /** A settled card is a statement, not a control, and the surrounding `<fieldset
+   *  disabled>` does not make it one: antd draws its own wrapper around the input and
+   *  opens the list from there, and it draws a tag's remove `×` as a span — neither is a
+   *  form control, so neither is what the fieldset reaches. The list came down on a
+   *  question answered long ago, offering choices that could not be made, and every
+   *  chosen value wore a button that looked like it took the answer back.
+   *
+   *  Asserted on the `×` rather than on the list: jsdom will not deliver the click that
+   *  opens it either way, so a test written against opening passes with or without the
+   *  fix. The remove control is the same absence, and it is one jsdom can see. */
+  it('offers no way to take back an answer on a settled card', async () => {
+    const form = formOf(
+      field({ key: 'lots', label: 'Lot', kind: 'multi', options: options('L1', 'L2', 'L3', 'L4', 'L5', 'L6') })
+    );
+    render(<QuestionFormCard form={form} disabled answered={{ lots: ['L1'] }} onSubmit={vi.fn()} />, {
+      wrapper: appWrapper(),
+    });
+
+    expect(screen.getByTitle('L1')).toBeInTheDocument();
+    expect(document.querySelector('.ant-select-selection-item-remove')).toBeNull();
+  });
 });

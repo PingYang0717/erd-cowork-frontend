@@ -237,6 +237,12 @@ const QuestionFormCard: React.FC<QuestionFormCardProps> = ({ form, onSubmit, dis
                 // window of rows and drops each one's `title`, so a row is neither fully
                 // present for assistive tech nor findable by the name it reads as.
                 virtual={false}
+                // Its own flag, not just the fieldset's. antd opens the list from the
+                // wrapper it draws around the input, and draws a tag's remove `×` as a
+                // span — a disabled fieldset reaches neither. A settled card would still
+                // drop its list open, and show a control that looks like it takes the
+                // answer back.
+                disabled={disabled}
                 // The card sits in a thread pane the reader can narrow to a column; a
                 // dropdown that keeps its own width would push the conversation sideways.
                 className={styles.select}
