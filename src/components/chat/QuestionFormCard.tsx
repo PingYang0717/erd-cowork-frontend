@@ -5,6 +5,7 @@ import { InfoCircleOutlined, SendOutlined } from '@ant-design/icons';
 import { useTranslations } from '@/i18n/useTranslations';
 import { useConnectorsPanelStore } from '@/stores/useConnectorsPanelStore';
 import type { QuestionAnswer, QuestionField, QuestionForm } from '@/types/api';
+import { DEFAULT_LIST_HEIGHT, listHeightUnder } from '@/utils/dropdownListHeight';
 
 import styles from './QuestionFormCard.module.css';
 
@@ -199,6 +200,9 @@ const QuestionFormCard: React.FC<QuestionFormCardProps> = ({ form, onSubmit, dis
   const [editedPicks, setEditedPicks] = useState<Answers>({});
   const [editedTexts, setEditedTexts] = useState<Record<string, string>>({});
 
+  // Only one list is open at a time, so one measurement serves every field on the card.
+  const [listHeight, setListHeight] = useState(DEFAULT_LIST_HEIGHT);
+
   // Changing a trigger discards whatever was answered beneath it. Hiding the answer but
   // keeping it would submit a Flow the user can no longer see, under a role it does not
   // belong to. Mutates `next`, which is always a copy the caller just made.
@@ -316,6 +320,15 @@ const QuestionFormCard: React.FC<QuestionFormCardProps> = ({ form, onSubmit, dis
                 // dropdown that keeps its own width would push the conversation sideways.
                 className={styles.select}
                 classNames={{ popup: { root: styles.selectPopup } }}
+                // Measured when it opens, from the trigger down to the edge of the
+                // conversation — see `listHeightUnder`. antd's own fit test is against the
+                // viewport, which the thread is only a fraction of.
+                listHeight={listHeight}
+                onOpenChange={(open) => {
+                  if (open) {
+                    setListHeight(listHeightUnder(document.getElementById(`question-${form.formKey}-${field.key}`)));
+                  }
+                }}
                 placeholder={field.placeholder}
                 showSearch
                 optionFilterProp="label"
