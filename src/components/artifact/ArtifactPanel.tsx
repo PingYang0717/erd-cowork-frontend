@@ -183,6 +183,12 @@ const ArtifactPanelContent: React.FC<ArtifactPanelContentProps> = ({
 
   const artifact = artifacts?.find((a) => a.id === artifactId);
 
+  // The trigger names the same row the menu does. `activeVersion` is resolved before the
+  // artifacts list is in hand, so its title is the message's stand-in wording — reading
+  // it here put the name given at publish time in the menu and the old wording on the
+  // trigger, for one Artifact, on screen at once.
+  const activeEnriched = enrichedVersions.find((v) => v.artifactId === artifactId) ?? activeVersion;
+
   // Publishing means making this Artifact available to other people. The mockup's button
   // says 生成 Artifact; what it does is publish, and `publishedAt` is where that lives now.
   const isPublished = artifact?.publishedAt != null;
@@ -193,7 +199,7 @@ const ArtifactPanelContent: React.FC<ArtifactPanelContentProps> = ({
         {enrichedVersions.length > 0 && (
           <VersionSwitcher
             versions={enrichedVersions}
-            activeVersion={{ ...activeVersion, publishedAt: artifact?.publishedAt ?? null }}
+            activeVersion={{ ...activeEnriched, publishedAt: artifact?.publishedAt ?? null }}
             onSelect={onSelectVersion}
             // What this session produced, counted — and the `vN` says how many outputs
             // in each one is, which is what that number means here.
@@ -215,7 +221,7 @@ const ArtifactPanelContent: React.FC<ArtifactPanelContentProps> = ({
             type="button"
             className={styles.generateButton}
             disabled={publishArtifact.isPending}
-            onClick={() => setPublishTarget({ artifactId, suggestedTitle: activeVersion.title })}
+            onClick={() => setPublishTarget({ artifactId, suggestedTitle: activeEnriched.title })}
           >
             {t.artifact.publish}
           </button>

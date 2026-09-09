@@ -9,6 +9,7 @@ import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
 import { useStudioLayoutStore } from '@/stores/useStudioLayoutStore';
 import { useThemeStore } from '@/stores/useThemeStore';
 import { renderStudio } from '@/test/renderStudio';
+import { publishArtifactAs } from '@/test/studioRun';
 
 const artifactSrcdoc = () => {
   return (screen.getByTitle('Artifact preview') as HTMLIFrameElement).getAttribute('srcdoc');
@@ -144,6 +145,32 @@ describe('Artifact version switcher', () => {
     // Newest first: the one this run produced leads.
     expect(within(rows[0]).getByText('v2')).toBeInTheDocument();
     expect(within(rows[rows.length - 1]).getByText('v1')).toBeInTheDocument();
+  });
+
+  /** The name the user gave at publish time is the Artifact's name, and the trigger is
+   *  where that name is read most. The menu rows took their title from the artifacts
+   *  list and the trigger did not, so a freshly named Artifact was listed under its new
+   *  name and announced under the message's stand-in wording — the same row, two names,
+   *  on screen at once. */
+  it('shows the name given at publish time on the trigger, not only inside the menu', async () => {
+    const user = userEvent.setup();
+    renderStudio();
+
+    await user.click(await screen.findByRole('button', { name: 'SPC — Vt (gate CD)' }));
+    await screen.findByTitle('Artifact preview');
+    await user.type(await screen.findByRole('textbox', { name: 'Message' }), 'Regenerate the dashboard.{Enter}');
+    await screen.findByRole('button', { name: 'Publish Artifact' });
+
+    await publishArtifactAs(user, '8 月 A14 良率追蹤');
+    await screen.findByText('Published');
+
+    // The menu row has always had it; the trigger is the regression.
+    await user.click(screen.getByRole('button', { name: 'Switch Artifact' }));
+    const rows = within(await screen.findByRole('menu')).getAllByRole('menuitem');
+    expect(within(rows[0]).getByText('8 月 A14 良率追蹤')).toBeInTheDocument();
+    await user.keyboard('{Escape}');
+
+    expect(screen.getByRole('button', { name: 'Switch Artifact' })).toHaveTextContent('8 月 A14 良率追蹤');
   });
 
   /** The menu-button keyboard contract (ADR-0014 §menu-keyboard): opening focuses the current item,
