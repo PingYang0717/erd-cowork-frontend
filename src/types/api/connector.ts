@@ -9,8 +9,9 @@ export interface Connector {
   /** The Mongo UUID. Every id the frontend sends or receives is this one; the backend's
    *  own `connectorId` serves its purposes and never reaches here. */
   id: string;
-  /** The wire's own name for the field, kept verbatim (ADR-0003). */
-  connectorName: string;
+  /** What the source is called, in the wire's own wording (ADR-0003). Sent as
+   *  `connectorName` until 2026-09-09; the backend renamed it and so did this. */
+  name: string;
   description: string;
   /** The classification shown beside the name — Process, Test, Lot. Also searched. */
   type: string;

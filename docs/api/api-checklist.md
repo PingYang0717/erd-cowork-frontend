@@ -89,9 +89,9 @@ client abort,前端會在 abort 後兩段 800ms invalidate 追後端非同步落
 
 ## 7. Connector
 
-| #   | Method + Path     | 前端送出 | 前端期望回應                                                      | 狀態    | 後端實際 input/output(請補)             |
-| --- | ----------------- | -------- | ----------------------------------------------------------------- | ------- | --------------------------------------- |
-| 20  | `GET /connectors` | —        | `Connector[]`:`{ id, connectorName, description, type, enabled }` | ✅ 已接 | 另送 `connectorId` / `url`,前端型別不收 |
+| #   | Method + Path     | 前端送出 | 前端期望回應                                             | 狀態    | 後端實際 input/output(請補)             |
+| --- | ----------------- | -------- | -------------------------------------------------------- | ------- | --------------------------------------- |
+| 20  | `GET /connectors` | —        | `Connector[]`:`{ id, name, description, type, enabled }` | ✅ 已接 | 另送 `connectorId` / `url`,前端型別不收 |
 
 目錄走 `GET /connectors`(`connectorApi.listCatalogue`)。哪一場對話正在用哪些來源不在這裡,
 在 `SessionDetail.connectors`(第 1 節),寫入走 `PATCH /sessions/{id}/data-source`——裸陣列、
