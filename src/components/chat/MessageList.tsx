@@ -186,6 +186,10 @@ const MessageList: React.FC<MessageListProps> = ({
       // from the dedicated status region in ThreadView (ADR-0014 §live-region).
       aria-live="off"
       aria-label="Messages"
+      // The region a reask card's dropdown may not open out of. antd portals its popup to
+      // <body> and measures the fit against the viewport, which is far taller than this —
+      // so a list that fitted on screen opened over the composer. See `listHeightUnder`.
+      data-popup-bounds
       className={styles.thread}
       onScroll={handleScroll}
     >
