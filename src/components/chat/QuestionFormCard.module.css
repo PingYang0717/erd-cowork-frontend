@@ -1,5 +1,11 @@
 /* Mirrors the mockup's clarification card: eRDWorkspace20260819.html:82899-82905. */
 .card {
+  /* A fieldset carries `min-inline-size: min-content` from the UA sheet, and nothing in
+     this card is narrow: a picked value renders as a tag that will not wrap, so the card
+     stopped shrinking at that tag's width while the bubble around it kept going — the
+     white card stuck out of the grey one. Only a fieldset needs this line, and this is
+     the only fieldset in the app. */
+  min-inline-size: 0;
   margin-top: 10px;
   padding: 14px 15px;
   border: 1px solid var(--erd-color-border-secondary, #f0f0f0);
