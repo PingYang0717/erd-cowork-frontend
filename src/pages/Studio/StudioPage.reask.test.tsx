@@ -249,4 +249,30 @@ describe('A reask the run is waiting on', () => {
     expect(chipIn(group, 'A14')).toHaveAttribute('aria-pressed', 'false');
     expect(chipIn(group, 'A16')).toHaveAttribute('aria-pressed', 'false');
   });
+
+  /** A run that failed answered nothing. The answer was recorded so the card would not
+   *  look emptied the moment Send was pressed — but that record has no expiry of its own,
+   *  and the history it was waiting for never arrives when the run dies. The card stayed
+   *  settled on an answer that never reached anything, with no way to send it again. */
+  it('lets the reask be answered again when the run it started failed', async () => {
+    const user = userEvent.setup();
+    const stream = mockAgentStream();
+    historyOf(message({ id: 'm1', sender: 'AI', questionsJson: PART_ID_REASK }));
+    renderStudio();
+
+    await user.click(await screen.findByRole('button', { name: 'Defect pareto — W12' }));
+    await waitForComposer();
+
+    const group = await screen.findByRole('group', { name: 'Part ID' });
+    await user.click(chipIn(group, 'A14'));
+    await user.click(screen.getByRole('button', { name: 'Send' }));
+    await waitFor(() => expect(stream.requests).toHaveLength(1));
+
+    act(() => stream.disconnect());
+
+    // Answerable again: the question is still open, so the card has to be. And what was
+    // picked is still picked — retrying should not mean choosing everything twice.
+    expect(await screen.findByRole('button', { name: 'Send' })).toBeInTheDocument();
+    expect(chipIn(screen.getByRole('group', { name: 'Part ID' }), 'A14')).toHaveAttribute('aria-pressed', 'true');
+  }, 20000);
 });
