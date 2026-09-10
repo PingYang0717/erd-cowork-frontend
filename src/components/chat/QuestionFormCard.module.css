@@ -261,3 +261,15 @@
 .selectPopup :global(.ant-select-item-option-state) {
   display: none;
 }
+
+/* The control the answer is NOT coming from. Its own class rather than `:disabled`,
+   because a settled card disables the whole fieldset and must keep reading as a record
+   rather than as something switched off. */
+.locked {
+  opacity: 0.4;
+}
+
+.locked,
+.locked * {
+  cursor: not-allowed;
+}

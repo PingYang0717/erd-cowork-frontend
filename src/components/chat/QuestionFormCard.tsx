@@ -114,11 +114,13 @@ interface ChipGroupProps {
   field: QuestionField;
   answers: Answers;
   onToggle: (value: string) => void;
+  /** The field's one slot is filled from the other control — see `singleSlotTaken`. */
+  locked?: boolean;
 }
 
 /** Chips are only ever offered for a handful of short options — anything long enough to
  *  need narrowing is a dropdown, which searches itself — so this shows all of them. */
-const ChipGroup: React.FC<ChipGroupProps> = ({ field, answers, onToggle }) => {
+const ChipGroup: React.FC<ChipGroupProps> = ({ field, answers, onToggle, locked = false }) => {
   const selected = answers[field.key];
   const isSelected = (value: string) => {
     if (Array.isArray(selected)) {
@@ -134,11 +136,16 @@ const ChipGroup: React.FC<ChipGroupProps> = ({ field, answers, onToggle }) => {
   const options = field.options ?? [];
 
   return (
-    <div className={styles.chipRow} role="group" aria-label={field.label}>
+    <div
+      className={locked ? `${styles.chipRow} ${styles.locked}` : styles.chipRow}
+      role="group"
+      aria-label={field.label}
+    >
       {options.map((option) => (
         <button
           key={option.value}
           type="button"
+          disabled={locked}
           aria-pressed={isSelected(option.value)}
           title={option.hint}
           className={isSelected(option.value) ? styles.chipSelected : styles.chip}
@@ -243,7 +250,12 @@ const QuestionFormCard: React.FC<QuestionFormCardProps> = ({ form, onSubmit, dis
                     : [...current, value],
                 };
               })()
-            : { ...previous, [field.key]: value };
+            : // Clicking the lit chip clears it. A single field used to be one-way — once
+              // picked, the only move was picking something else — and with the typing box
+              // locked behind a filled slot, that was a door with no handle on this side.
+              // Emptied rather than set to undefined: the key stays, and every reader of it
+              // already treats '' as unanswered.
+              { ...previous, [field.key]: previous[field.key] === value ? '' : value };
 
       return clearDependentsOf(field, next);
     });
@@ -284,6 +296,18 @@ const QuestionFormCard: React.FC<QuestionFormCardProps> = ({ form, onSubmit, dis
         const customValue = disabled ? customValueOf(field, answer) : (editedTexts[field.key] ?? '');
         const isCustom = customValue !== '';
 
+        // A single-answer field has one slot, and both controls write to it: the typed
+        // value simply replaced the pick (`mergeAnswers`), which meant a chip could sit
+        // lit while something else was what went out. Whichever control holds the answer
+        // locks the other, so the card says which one is speaking.
+        //
+        // Only `single`. A `multi` field holds several answers at once, so a typed value
+        // is one more of them rather than a replacement for anything.
+        const oneSlot = field.kind === 'single' && field.allowCustom === true && !disabled;
+        const picked = editedPicks[field.key];
+        const listLocked = oneSlot && isCustom;
+        const boxLocked = oneSlot && picked !== undefined && picked !== '' && picked !== false;
+
         return (
           <div key={field.key} className={styles.field}>
             <p className={styles.fieldLabel}>{field.label}</p>
@@ -315,7 +339,10 @@ const QuestionFormCard: React.FC<QuestionFormCardProps> = ({ form, onSubmit, dis
                 // span — a disabled fieldset reaches neither. A settled card would still
                 // drop its list open, and show a control that looks like it takes the
                 // answer back.
-                disabled={disabled}
+                disabled={disabled || listLocked}
+                // A single-mode list can otherwise only be replaced, never emptied — so a
+                // reader who picked a row could never hand the slot back to the box.
+                allowClear={field.kind !== 'multi'}
                 // The card sits in a thread pane the reader can narrow to a column; a
                 // dropdown that keeps its own width would push the conversation sideways.
                 className={styles.select}
@@ -355,7 +382,12 @@ const QuestionFormCard: React.FC<QuestionFormCardProps> = ({ form, onSubmit, dis
                 }))}
               />
             ) : (
-              <ChipGroup field={field} answers={answers} onToggle={(value) => toggle(field, value)} />
+              <ChipGroup
+                field={field}
+                answers={answers}
+                onToggle={(value) => toggle(field, value)}
+                locked={listLocked}
+              />
             )}
 
             {/* On a settled card the box is only there when it holds the answer: an
@@ -372,7 +404,8 @@ const QuestionFormCard: React.FC<QuestionFormCardProps> = ({ form, onSubmit, dis
                 // there is no list. This one is always the same thing.
                 placeholder={t.chat.questionCustomPlaceholder}
                 value={customValue}
-                className={isCustom ? styles.customInputActive : styles.customInput}
+                disabled={boxLocked}
+                className={`${isCustom ? styles.customInputActive : styles.customInput}${boxLocked ? ` ${styles.locked}` : ''}`}
                 onChange={(event) => setFieldText(field, event.target.value)}
               />
             )}
