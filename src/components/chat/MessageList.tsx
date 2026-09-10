@@ -58,9 +58,6 @@ interface MessageListProps {
    *  so it rides the tail AI bubble rather than the bottom of the thread. */
   lastRunDurationMs: number | null;
   onAnswer: (answers: Answers, form: QuestionForm) => void;
-  /** The run stopped and the backend's own record of it has not been refetched yet, so
-   *  the thread draws one itself. */
-  stoppedRecordPending: boolean;
   /** Sends the question the interrupted run was answering, again. */
   onRetry: () => void;
   /** Rendered inside the scroll container, after the thread — anything that belongs to
@@ -78,7 +75,6 @@ const MessageList: React.FC<MessageListProps> = ({
   pendingAnswerText,
   lastRunDurationMs,
   onAnswer,
-  stoppedRecordPending,
   onRetry,
   bottomSlot,
 }) => {
@@ -229,12 +225,6 @@ const MessageList: React.FC<MessageListProps> = ({
         if (drawnByLiveBubble) {
           return null;
         }
-        // The record this run's interruption produced is drawn below the live bubble
-        // instead — see `stoppedRecordPending`. Rendered here it would sit ABOVE the
-        // half-written reply it interrupted, because history comes before the live bubble.
-        if (index === lastIndex && live?.stopped === true && INTERRUPTED_TEXTS.includes(message.text)) {
-          return null;
-        }
 
         return (
           <MessageBubble
@@ -272,13 +262,6 @@ const MessageList: React.FC<MessageListProps> = ({
           durationMs={live.isStreaming ? null : lastRunDurationMs}
         />
       )}
-      {/* The backend writes this record when the SSE client goes away mid-run, and the
-          refetch that carries it home is deliberately delayed (it lands asynchronously).
-          Drawn locally in the meantime — same text, same rendering — so that what a reader
-          sees the instant they stop is what they will still see after a reload. Without
-          it the stop was announced one way now and another way later, which read as two
-          different outcomes. */}
-      {stoppedRecordPending && <MessageBubble sender="AI" text={INTERRUPTED_TEXTS[0]} onRetry={onRetry} />}
       {bottomSlot}
     </div>
   );

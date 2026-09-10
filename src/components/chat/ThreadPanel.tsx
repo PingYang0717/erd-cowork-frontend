@@ -2,6 +2,7 @@ import React, { type ReactNode, useCallback, useEffect, useRef, useState } from 
 import { ThunderboltFilled } from '@ant-design/icons';
 
 import DataBoundary from '@/components/common/DataBoundary';
+import { INTERRUPTED_TEXTS } from '@/constants/wireStrings';
 import { type SendInput, useAgentStream } from '@/hooks/useAgentStream';
 import { useArtifactRepair } from '@/hooks/useArtifactRepair';
 import { useSessionDetail } from '@/hooks/useSessionDetail';
@@ -208,19 +209,35 @@ const ThreadView: React.FC<ThreadViewProps> = ({ sessionId }) => {
     state.liveText || state.answer || state.steps.length || state.artifact || state.thinking || state.codeText
   );
 
+  // Suppress the optimistic bubble once the refetched history has grown past the point
+  // it was sent from — that growth is the refetch carrying the message home (ADR-0015 §optimistic-bubble).
+  const stillAhead = pending !== null && showOptimisticBubble(messages.length, pending.atLength);
+
+  // Whether the backend's own record of the interruption is home. Asked of the history's
+  // tail rather than of its length: length grows for reasons that have nothing to do with
+  // this — the backend recording the question, a refetch racing the stop — and each of
+  // those would retire the bubble while the record was still on its way.
+  const lastMessage = messages[messages.length - 1];
+  const interruptionRecorded = lastMessage !== undefined && INTERRUPTED_TEXTS.includes(lastMessage.text);
+
   // A run that ended cleanly hands over to the refetched history — the bubble it left
   // behind and the one history renders are now the same component, so the swap is
   // invisible. A run that failed or is waiting on a reask has something the history does
-  // not carry, so it stays; a run that stopped stays only if it has something to hold.
-  const runEndedVisibly = (state.stopped && runProducedSomething) || state.error !== null || state.question !== null;
+  // not carry, so it stays.
+  //
+  // A stopped run hands over too, and that is the whole point: the backend writes its own
+  // record of the interruption, and what the reader is looking at has to be what the
+  // history holds — otherwise the screen says one thing now and another after a reload.
+  // So the bubble holds the half-written reply only until the refetch lands, and then the
+  // thread IS the history. (The half-written reply is not persisted, so it goes with it —
+  // that is the backend gap, made visible rather than papered over. See
+  // docs/api/backend-feedback.md.)
+  const runEndedVisibly =
+    (state.stopped && runProducedSomething && !interruptionRecorded) || state.error !== null || state.question !== null;
   // `AgentStreamState` is structurally a `LiveRun` superset, so the reducer's state
   // passes as-is — the twelve-field hand-copy this used to be meant every new live
   // field touched four files.
   const live: LiveRun | null = state.isStreaming || runEndedVisibly ? state : null;
-
-  // Suppress the optimistic bubble once the refetched history has grown past the point
-  // it was sent from — that growth is the refetch carrying the message home (ADR-0015 §optimistic-bubble).
-  const stillAhead = pending !== null && showOptimisticBubble(messages.length, pending.atLength);
   const optimisticUserText = stillAhead && !pending.isAnswer ? pending.text : null;
   /** A reask's answer that the refetched history has not caught up with yet. The card it
    *  was submitted from reads it back the same way it reads the settled reply.
@@ -251,11 +268,6 @@ const ThreadView: React.FC<ThreadViewProps> = ({ sessionId }) => {
           onAnswer={handleAnswer}
           // The offer is about the artifact this conversation just produced, so it
           // belongs at the tail of the thread and scrolls with it.
-          // Draw the record ourselves exactly when history is not showing one at the
-          // tail — either because the refetch has not carried it home yet, or because
-          // the live bubble is on screen and MessageList suppresses it there (rendered
-          // from history it would sit ABOVE the half-written reply it interrupted).
-          stoppedRecordPending={state.stopped && (live !== null || stillAhead)}
           onRetry={() => void submit({ question: lastQuestion }, true)}
           bottomSlot={
             repairOffer ? (
