@@ -15,7 +15,10 @@ export const zhTW = {
     /** The dialog's own subtitle, above the recipient picker. */
     subtitle: 'Artifact 已發布,可分享給團隊檢視。',
     recipientsLabel: '分享對象',
-    recipientsHint: '可混選部門(A10INTD1-1)、課別(INTD-1)與人員(CHXXGHYC · 鄭凱宇)',
+    /** The examples are what the search key can be. `GET /hr/employeesAndOrgs` does not
+     *  take Chinese input, so a 中文姓名 among them offers a way in that returns nothing —
+     *  and the reader who tries it concludes the person is not in the directory. */
+    recipientsHint: '可混選部門(A10INTD1-1)、課別(INTD-1)與人員(CHXXGHYC)',
     /** The list could not be read — deliberately not "shared with nobody", which is a
      *  different fact and the one a user would act on. */
     unavailable: '讀不到目前的分享對象,請稍後再試。',
@@ -23,7 +26,7 @@ export const zhTW = {
     searching: '搜尋中…',
     noMatch: '找不到符合的對象',
     minChars: (n: number) => `請至少輸入 ${n} 個字元`,
-    searchPlaceholder: (n: number) => `輸入 ${n} 個字元以上搜尋部門 / 課別 或 NT account · 姓名`,
+    searchPlaceholder: (n: number) => `輸入 ${n} 個字元以上搜尋部門 / 課別 或 NT account`,
     linkLabel: '分享連結',
     copy: '複製',
     copied: '已複製',
