@@ -141,15 +141,12 @@ export const zhTW = {
   },
 
   chat: {
-    /** Both append a turn — the backend cannot replace or remove one. `editAndResend` is
-     *  named for what it does: it puts the words back in the box. */
+    /** Appends a turn — the backend can neither replace nor remove one, so this asks the
+     *  same question again rather than re-running the one that stopped. */
     retryRun: '重試',
-    editAndResend: '修改後再問',
     /** The product's own name, unchanged in either language. */
     agentName: 'eRD AI',
     agentThinking: 'eRD AI 處理中…',
-    agentStopped: 'eRD AI · 已停止',
-    stopped: '⏹ 已停止生成',
     networkError: '⚠ 連線中斷，請重新送出一次',
     viewHtml: '查看 HTML',
     htmlLive: '產生中的 HTML',

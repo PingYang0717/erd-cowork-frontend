@@ -4,6 +4,7 @@ import {
   CheckOutlined,
   CopyOutlined,
   LoadingOutlined,
+  ReloadOutlined,
   ThunderboltFilled,
   ToolOutlined,
 } from '@ant-design/icons';
@@ -39,7 +40,6 @@ export type LiveRun = Pick<
   | 'startedAt'
 >;
 import { useTranslations } from '@/i18n/useTranslations';
-import type { Translations } from '@/i18n/zhTW';
 import ReplyText from './ReplyText';
 
 /** What a message says about itself: when it was sent, and an offer to copy it.
@@ -127,6 +127,10 @@ export interface MessageBubbleProps {
   /** Puts this reply's artifact on the Artifact pane. Without it the chip is a plain
    *  label (full-page artifact view has no pane to hand to). */
   onPickArtifact?: (artifactId: string) => void;
+  /** Offered on an interrupted record: sends the same question again. Only the trailing
+   *  one gets it — an interruption further up is settled history, and the run that
+   *  followed it has already been asked. */
+  onRetry?: () => void;
   /** When the message was sent. Absent on the live bubble — a run still being written has
    *  no settled moment, and the backend supplies one when the history catches up. */
   createdAt?: string | null;
@@ -168,6 +172,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
   onAnswer,
   artifactShown = false,
   onPickArtifact,
+  onRetry,
   createdAt,
   durationMs,
   live,
@@ -228,7 +233,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
     <div className={styles.aiRow}>
       <div className={styles.aiLabel}>
         <ThunderboltFilled aria-hidden className={styles.aiLabelIcon} />
-        {agentLabel(stopped, t.chat)}
+        {t.chat.agentName}
       </div>
       <div className={styles.aiBubble}>
         {/* The live region exists for as long as the run does, not only once it has
@@ -273,6 +278,15 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
         {recordKind === 'interrupted' && (
           <p data-record="true" className={styles.record}>
             {text}
+            {/* The record already tells the reader to send again; this is that sentence as
+                a button. It APPENDS a turn — the backend has no messages endpoint, so the
+                run that stopped cannot be replaced (docs/api/backend-feedback.md). */}
+            {onRetry && (
+              <button type="button" className={styles.recordAction} aria-label="Retry" onClick={onRetry}>
+                <ReloadOutlined aria-hidden />
+                {t.chat.retryRun}
+              </button>
+            )}
           </p>
         )}
         {recordKind === 'repair' && (
@@ -331,7 +345,6 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
         {streaming && timerStartedAt != null && <LiveElapsed key={timerStartedAt} startedAt={timerStartedAt} />}
         {!streaming && durationMs != null && <Elapsed ms={durationMs} />}
 
-        {stopped && <p className={styles.stateNote}>{t.chat.stopped}</p>}
         {/* Still an alert: the run ended in a way the user has to act on, and the
             dedicated wording is what distinguishes it from a backend refusal. */}
         {networkError && (
@@ -354,18 +367,6 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
       {!streaming && <MessageMeta createdAt={createdAt} copyText={recordKind ? text : answerText} />}
     </div>
   );
-};
-
-/** Who is speaking. It stays the same whether or not they are mid-sentence: that the run
- *  is in progress is said inside the bubble, next to the steps it is producing.
- *
- *  A stop is likewise reported inside (⏹ 已停止生成, cowork's wording) — the label carries
- *  it too because a stopped turn has no live panel left to say it from. */
-/** Takes the copy rather than reaching for it. Reading the language here worked only
- *  because the one caller subscribes to it — move this into a memoised child and the
- *  label would freeze on whatever language was current when it mounted, silently. */
-const agentLabel = (stopped: boolean, t: Translations['chat']): string => {
-  return stopped ? t.agentStopped : t.agentName;
 };
 
 /** The open turn's timer. The clock is read in the interval rather than during render —
