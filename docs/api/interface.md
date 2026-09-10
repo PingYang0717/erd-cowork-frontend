@@ -302,10 +302,16 @@ delivery, it only flips the sender's own Artifact to shared. A recipient's "Shar
 me" view is seeded directly (an Artifact whose `ownerId` is someone else, so `isOwn`
 comes back false), not produced by this endpoint.
 
-`GET /hr/employeesAndOrgs` returns the searchable department / section / person dataset backing
-the share dialog's recipient picker (`DirectoryEntry.kind` is `'department'`,
-`'section'`, or `'person'`; `label` is the searchable display text — the raw code for
-departments/sections, `"<NT account> · <中文名>"` for people).
+`GET /hr/employeesAndOrgs` returns the searchable organisation / person dataset backing
+the share dialog's recipient picker. One shape carries both kinds, told apart by `type`
+(`'ORG'` or `'EMPLOYEE'`); which other fields are populated follows from it — `org*` for an
+organisation, `employee*` for a person.
+
+`emplId` and `sortName` were added on 2026-09-10. `emplId` is the employee number the
+photo URL is keyed on, and is a different field from `employeeNt`, which is the account
+the share payload addresses a person by. `sortName` is the short name both kinds are
+called by once chosen; the option list still shows an organisation's code beside its name,
+because that is where two units with the same name are told apart.
 
 ## Connector
 

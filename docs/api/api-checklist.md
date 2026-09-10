@@ -81,9 +81,9 @@ client abort,前端會在 abort 後兩段 800ms invalidate 追後端非同步落
 
 ## 6. Directory(分享收件者)
 
-| #   | Method + Path              | 前端送出    | 前端期望回應                                                                             | 狀態    | 後端實際 input/output(請補) |
-| --- | -------------------------- | ----------- | ---------------------------------------------------------------------------------------- | ------- | --------------------------- |
-| 19  | `GET /hr/employeesAndOrgs` | `?keyword=` | `{ content: DirectoryEntry[] }`:`{ id, kind: 'department'\|'section'\|'person', label }` | ✅ 已接 | 回應包在 `content` 信封裡   |
+| #   | Method + Path              | 前端送出    | 前端期望回應                                                                                                                                         | 狀態    | 後端實際 input/output(請補)                                         |
+| --- | -------------------------- | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ------- | ------------------------------------------------------------------- |
+| 19  | `GET /hr/employeesAndOrgs` | `?keyword=` | `{ content: DirectoryEntry[] }`:`{ type: 'ORG'\|'EMPLOYEE', sortName, emplId, employeeName, employeeNt, employeeOrgName, orgName, orgId, orgLevel }` | ✅ 已接 | 回應包在 `content` 信封裡;`emplId` 與 `sortName` 於 2026-09-10 加入 |
 
 分享與收件者名單都已接真後端。名單是搜尋式查詢(`directoryApi.searchDirectory`,少於 `DIRECTORY_SEARCH_MIN_LENGTH` 個字不發請求),沒有一份固定名單。
 

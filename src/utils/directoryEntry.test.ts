@@ -1,13 +1,21 @@
 import { describe, expect, it } from 'vitest';
 
 import type { DirectoryEntry } from '@/types/api';
-import { directoryEntryKey, directoryEntryLabel, directoryEntryMatches, directoryShareTarget } from './directoryEntry';
+import {
+  directoryEntryKey,
+  directoryEntryMatches,
+  directoryEntryOptionText,
+  directoryEntrySelectedName,
+  directoryShareTarget,
+  employeeAvatarUrl,
+} from './directoryEntry';
 
 const org: DirectoryEntry = {
   type: 'ORG',
   orgId: 'SEC-11',
   orgName: '示範一課',
   orgLevel: 'SECTION',
+  sortName: '示範一課',
 };
 
 const employee: DirectoryEntry = {
@@ -15,15 +23,51 @@ const employee: DirectoryEntry = {
   employeeNt: 'NTDEMO01',
   employeeName: '示範甲',
   employeeOrgName: 'SEC-11',
+  emplId: '901234',
+  sortName: '示範甲',
 };
 
-describe('directoryEntryLabel', () => {
-  it('reads an organisation as its id and name', () => {
-    expect(directoryEntryLabel(org)).toBe('SEC-11 | 示範一課');
+/** The list and the chosen tags answer different questions. A row in the list is being
+ *  told apart from other rows, so an organisation carries its code; a chosen tag is
+ *  already settled, so both kinds read as the one short name. */
+describe('directoryEntryOptionText', () => {
+  it('reads an organisation as its name and code', () => {
+    expect(directoryEntryOptionText(org)).toBe('示範一課 (SEC-11)');
   });
 
-  it('reads a person as their org, account and name', () => {
-    expect(directoryEntryLabel(employee)).toBe('SEC-11 | NTDEMO01 | 示範甲');
+  it('reads a person as their short name — the photo beside it says who they are', () => {
+    expect(directoryEntryOptionText(employee)).toBe('示範甲');
+  });
+
+  /** Nothing renders as `undefined`: the two new fields are optional on the wire, and a
+   *  row that arrived without one still has to read as something. */
+  it('falls back when the wire left the short name out', () => {
+    expect(directoryEntryOptionText({ ...employee, sortName: undefined })).toBe('示範甲');
+    expect(directoryEntryOptionText({ type: 'ORG', orgId: 'SEC-19' })).toBe('SEC-19');
+  });
+});
+
+describe('directoryEntrySelectedName', () => {
+  it('reads both kinds as the one short name', () => {
+    expect(directoryEntrySelectedName(org)).toBe('示範一課');
+    expect(directoryEntrySelectedName(employee)).toBe('示範甲');
+  });
+
+  it('falls back when the wire left the short name out', () => {
+    expect(directoryEntrySelectedName({ ...org, sortName: undefined })).toBe('示範一課');
+    expect(directoryEntrySelectedName({ ...employee, sortName: undefined })).toBe('示範甲');
+  });
+});
+
+describe('employeeAvatarUrl', () => {
+  it('keys the photo on the employee id', () => {
+    expect(employeeAvatarUrl('901234')).toMatch(/\/901234\.jpg$/);
+  });
+
+  /** No id, no photo — and an <img> pointed at a URL ending in `/undefined.jpg` is a
+   *  broken image on screen, not an absence. */
+  it('has no photo for a row with no employee id', () => {
+    expect(employeeAvatarUrl(undefined)).toBeNull();
   });
 });
 

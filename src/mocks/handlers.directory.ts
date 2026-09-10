@@ -5,20 +5,73 @@ import type { DirectoryEntry } from '@/types/api';
 import { directoryEntryMatches } from '@/utils/directoryEntry';
 
 const ORGS: DirectoryEntry[] = [
-  { type: 'ORG', orgId: 'DEPT-11', orgName: '示範一部一課', orgLevel: 'DEPARTMENT' },
-  { type: 'ORG', orgId: 'DEPT-12', orgName: '示範一部二課', orgLevel: 'DEPARTMENT' },
-  { type: 'ORG', orgId: 'DEPT-31', orgName: '示範三部一課', orgLevel: 'DEPARTMENT' },
-  { type: 'ORG', orgId: 'SEC-11', orgName: '示範一課', orgLevel: 'SECTION' },
-  { type: 'ORG', orgId: 'SEC-12', orgName: '示範二課', orgLevel: 'SECTION' },
-  { type: 'ORG', orgId: 'SEC-31', orgName: '示範三課', orgLevel: 'SECTION' },
+  {
+    type: 'ORG',
+    orgId: 'DEPT-11',
+    orgName: '示範一部一課',
+    orgLevel: 'DEPARTMENT',
+    sortName: '示範一部一課',
+  },
+  {
+    type: 'ORG',
+    orgId: 'DEPT-12',
+    orgName: '示範一部二課',
+    orgLevel: 'DEPARTMENT',
+    sortName: '示範一部二課',
+  },
+  {
+    type: 'ORG',
+    orgId: 'DEPT-31',
+    orgName: '示範三部一課',
+    orgLevel: 'DEPARTMENT',
+    sortName: '示範三部一課',
+  },
+  { type: 'ORG', orgId: 'SEC-11', orgName: '示範一課', orgLevel: 'SECTION', sortName: '示範一課' },
+  { type: 'ORG', orgId: 'SEC-12', orgName: '示範二課', orgLevel: 'SECTION', sortName: '示範二課' },
+  { type: 'ORG', orgId: 'SEC-31', orgName: '示範三課', orgLevel: 'SECTION', sortName: '示範三課' },
 ];
 
 const EMPLOYEES: DirectoryEntry[] = [
-  { type: 'EMPLOYEE', employeeNt: 'NTDEMO01', employeeName: '示範甲', employeeOrgName: 'SEC-11' },
-  { type: 'EMPLOYEE', employeeNt: 'NTDEMO02', employeeName: '示範乙', employeeOrgName: 'SEC-11' },
-  { type: 'EMPLOYEE', employeeNt: 'NTDEMO03', employeeName: '示範丙', employeeOrgName: 'SEC-12' },
-  { type: 'EMPLOYEE', employeeNt: 'NTDEMO04', employeeName: '示範丁', employeeOrgName: 'SEC-31' },
-  { type: 'EMPLOYEE', employeeNt: 'NTDEMO05', employeeName: '示範戊', employeeOrgName: 'SEC-31' },
+  {
+    type: 'EMPLOYEE',
+    employeeNt: 'NTDEMO01',
+    employeeName: '示範甲',
+    employeeOrgName: 'SEC-11',
+    emplId: '901234',
+    sortName: '示範甲',
+  },
+  {
+    type: 'EMPLOYEE',
+    employeeNt: 'NTDEMO02',
+    employeeName: '示範乙',
+    employeeOrgName: 'SEC-11',
+    emplId: '901235',
+    sortName: '示範乙',
+  },
+  {
+    type: 'EMPLOYEE',
+    employeeNt: 'NTDEMO03',
+    employeeName: '示範丙',
+    employeeOrgName: 'SEC-12',
+    emplId: '901236',
+    sortName: '示範丙',
+  },
+  {
+    type: 'EMPLOYEE',
+    employeeNt: 'NTDEMO04',
+    employeeName: '示範丁',
+    employeeOrgName: 'SEC-31',
+    emplId: '901237',
+    sortName: '示範丁',
+  },
+  {
+    type: 'EMPLOYEE',
+    employeeNt: 'NTDEMO05',
+    employeeName: '示範戊',
+    employeeOrgName: 'SEC-31',
+    emplId: '901238',
+    sortName: '示範戊',
+  },
 ];
 
 const DIRECTORY = [...ORGS, ...EMPLOYEES];
