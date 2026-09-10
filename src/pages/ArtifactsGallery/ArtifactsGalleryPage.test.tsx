@@ -140,6 +140,53 @@ describe('Artifacts gallery', () => {
     expect(namesByRecency[2]).toContain('Daily monitor');
   });
 
+  /** Pinning lifts an Artifact to the top; it does not reorder what is under it. Within
+   *  each group the shelf reads newest first, the way it does everywhere else — the pinned
+   *  group used to be ordered by WHEN IT WAS PINNED instead, so pinning an old Artifact
+   *  put it above a newer one for no reason the reader could see, and the unpinned group
+   *  had no time order at all (every `pinnedAt` compared equal, so they kept whatever
+   *  order the response arrived in). */
+  it('orders both groups newest first under the pinned sort', async () => {
+    server.use(
+      http.get('/api/artifacts', () => {
+        return HttpResponse.json([
+          // Pinned most recently, but the oldest Artifact of the two.
+          artifactDto({
+            id: 'a-1',
+            title: 'Pinned but old',
+            pinnedAt: '2026-09-05T00:00:00.000Z',
+            createdAt: '2026-08-01T00:00:00.000Z',
+          }),
+          artifactDto({
+            id: 'a-2',
+            title: 'Pinned and new',
+            pinnedAt: '2026-09-01T00:00:00.000Z',
+            createdAt: '2026-08-20T00:00:00.000Z',
+          }),
+          artifactDto({ id: 'a-3', title: 'Plain and old', createdAt: '2026-07-01T00:00:00.000Z' }),
+          artifactDto({ id: 'a-4', title: 'Plain and new', createdAt: '2026-08-25T00:00:00.000Z' }),
+        ]);
+      })
+    );
+
+    renderGalleryPage();
+    await screen.findByRole('button', { name: 'Pinned and new' });
+
+    const list = screen.getByRole('list', { name: 'Artifacts' });
+    // The card's own button carries the session and date in its text, so the title is
+    // read off the pin control's label — which names it and nothing else.
+    const order = within(list)
+      .getAllByRole('listitem')
+      .map((item) =>
+        within(item)
+          .getByRole('button', { name: /^(Pin|Unpin) / })
+          .getAttribute('aria-label')
+          ?.replace(/^(Un)?[Pp]in /, '')
+      );
+
+    expect(order).toEqual(['Pinned and new', 'Pinned but old', 'Plain and new', 'Plain and old']);
+  });
+
   it('pins an Artifact from its card, and the pinned state persists across a simulated reload', async () => {
     const user = userEvent.setup();
     renderGalleryPage();
