@@ -1,5 +1,5 @@
 import { http, HttpResponse } from 'msw';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
@@ -140,13 +140,31 @@ describe('MessageBubble', () => {
     }
   });
 
-  it('distinguishes a user-initiated stop from a dropped connection', () => {
+  /** A dropped connection is something the reader has to act on, so the bubble says it.
+   *  A user-initiated stop is not: they know, they did it — and the record the backend
+   *  writes is what states it, in the one wording that survives a reload. */
+  it('reports a dropped connection in the bubble, and leaves a stop to the record', () => {
     const { rerender } = render(<MessageBubble sender="AI" live={liveRun({ liveText: 'Partial', stopped: true })} />);
-    expect(screen.getByText('⏹ Generation stopped')).toBeInTheDocument();
+    expect(screen.getByText('eRD AI')).toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
 
     rerender(<MessageBubble sender="AI" live={liveRun({ liveText: 'Partial', networkError: true })} />);
-    expect(screen.queryByText('⏹ Generation stopped')).not.toBeInTheDocument();
     expect(screen.getByText('⚠ Connection lost — please send again')).toBeInTheDocument();
+  });
+
+  /** The trailing interruption is the only one still open, and the record already tells
+   *  the reader to send again — this makes that a button. */
+  it('offers a retry on an interrupted record when one is given', async () => {
+    const onRetry = vi.fn();
+    render(<MessageBubble sender="AI" text={INTERRUPTED_TEXTS[0]} onRetry={onRetry} />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Retry' }));
+    expect(onRetry).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows no retry on an interruption further up the thread', () => {
+    render(<MessageBubble sender="AI" text={INTERRUPTED_TEXTS[0]} />);
+    expect(screen.queryByRole('button', { name: 'Retry' })).toBeNull();
   });
 
   it('renders the backend’s own record messages as hints, not as agent prose', () => {
@@ -206,5 +224,102 @@ describe('MessageBubble', () => {
     await user.click(screen.getByRole('button', { name: 'View HTML' }));
 
     expect(await screen.findByText('Could not load the source — please try again shortly')).toBeInTheDocument();
+  });
+});
+
+/** Claude's hover affordances: a message says when it was sent, and offers to copy
+ *  itself. Both are always in the DOM and revealed by CSS on hover or focus — a control
+ *  that only exists while the pointer is over it is a control a keyboard cannot reach. */
+describe('message time and copy', () => {
+  let writeText: ReturnType<typeof vi.spyOn>;
+
+  beforeEach(() => {
+    // Assigned onto the existing object: `navigator.clipboard` is a getter-only property,
+    // so replacing the whole thing throws.
+    writeText = vi.spyOn(navigator.clipboard, 'writeText').mockResolvedValue(undefined);
+  });
+
+  it('says when a message was sent', () => {
+    render(<MessageBubble sender="USER" text="幫我看 A14 的 SPC" createdAt="2026-09-10T02:00:00.000Z" />);
+
+    // Relative wording, like the session rail and the version menu; the machine-readable
+    // moment on `datetime`, and the exact one on `title` for a reader who wants it.
+    //
+    // Asserted on `datetime` rather than on either of those: the rendered wording is
+    // relative to now, and `title` is `toLocaleString()`, whose narrow no-break space
+    // Testing Library normalises out of the attribute but not out of the query.
+    const time = document.querySelector('time');
+    expect(time).toHaveAttribute('datetime', '2026-09-10T02:00:00.000Z');
+    expect(time?.getAttribute('title')).toContain('2026');
+  });
+
+  it('copies what the bubble says', async () => {
+    const user = userEvent.setup();
+    render(<MessageBubble sender="USER" text="幫我看 A14 的 SPC" createdAt="2026-09-10T02:00:00.000Z" />);
+
+    await user.click(screen.getByRole('button', { name: 'Copy message' }));
+    expect(writeText).toHaveBeenCalledWith('幫我看 A14 的 SPC');
+  });
+
+  /** The only confirmation a copy gets. Inside the success path, not beside it: it used
+   *  to be possible for a refused clipboard to still say "copied" — see the share
+   *  dialog, where the same mistake was made and fixed. */
+  it('says so once it is copied, and not when the clipboard refused', async () => {
+    const user = userEvent.setup();
+    render(<MessageBubble sender="AI" text="掃描比對到 6 個 Lot。" createdAt="2026-09-10T02:00:00.000Z" />);
+
+    await user.click(screen.getByRole('button', { name: 'Copy message' }));
+    expect(await screen.findByRole('button', { name: 'Copied' })).toBeInTheDocument();
+
+    writeText.mockRejectedValueOnce(new Error('denied'));
+    render(<MessageBubble sender="AI" text="另一則" createdAt="2026-09-10T02:00:00.000Z" />);
+    const [, second] = screen.getAllByRole('button', { name: /^Cop/ });
+    await user.click(second);
+    expect(second).toHaveAccessibleName('Copy message');
+  });
+
+  /** A reply that produced only an Artifact has no prose to copy, and a button that
+   *  copies an empty string is a button that lies about having done something. */
+  it('offers no copy when there is nothing to copy', () => {
+    render(<MessageBubble sender="AI" text="" createdAt="2026-09-10T02:00:00.000Z" />);
+    // The time still shows — it is the copy offer alone that has nothing to stand on.
+    expect(document.querySelector('time')).toHaveAttribute('datetime', '2026-09-10T02:00:00.000Z');
+    expect(screen.queryByRole('button', { name: /^Cop/ })).toBeNull();
+  });
+});
+
+/** Claude's rule: the newest turn keeps its actions on show, everything above it reveals
+ *  them on hover. The reply you have just been given is the one you act on, and hiding
+ *  its controls behind a pointer makes them findable only by accident. */
+describe('message actions: shown or revealed', () => {
+  it('keeps the newest turn’s actions on show', () => {
+    render(<MessageBubble sender="AI" text="Done." createdAt="2026-09-10T02:00:00.000Z" isLatest />);
+    expect(document.querySelector('[data-latest]')).toBeInTheDocument();
+  });
+
+  it('leaves an older turn’s actions to the pointer', () => {
+    render(<MessageBubble sender="AI" text="Done." createdAt="2026-09-10T02:00:00.000Z" />);
+    expect(document.querySelector('[data-latest]')).toBeNull();
+    // The row is still there — it is revealed, not absent, so a keyboard can reach it.
+    expect(document.querySelector('time')).toBeInTheDocument();
+  });
+
+  it('offers Try again at the end of the turn that stopped', async () => {
+    const onRetry = vi.fn();
+    render(
+      <MessageBubble sender="AI" text={INTERRUPTED_TEXTS[0]} createdAt="2026-09-10T02:00:00.000Z" onRetry={onRetry} />
+    );
+
+    const retry = screen.getByRole('button', { name: 'Retry' });
+    // Icon only — the wording lives in the tooltip, one hover away and nowhere else.
+    expect(retry).toHaveTextContent('');
+    // Beside the copy control, not inside the record's own sentence.
+    expect(retry.closest('[class*="metaActions"]')).not.toBeNull();
+    await userEvent.click(retry);
+    expect(onRetry).toHaveBeenCalledTimes(1);
+
+    // The label a pointer finds.
+    await userEvent.hover(retry);
+    expect(await screen.findByRole('tooltip')).toHaveTextContent('Try again');
   });
 });

@@ -1,5 +1,6 @@
 import React, { type ReactNode, useEffect, useMemo, useRef } from 'react';
 
+import { INTERRUPTED_TEXTS } from '@/constants/wireStrings';
 import { useActiveRunStore } from '@/stores/useActiveRunStore';
 import type { Message, QuestionForm, StepItem } from '@/types/api';
 import { parseAnswerText } from '@/utils/composeAnswerText';
@@ -57,6 +58,8 @@ interface MessageListProps {
    *  so it rides the tail AI bubble rather than the bottom of the thread. */
   lastRunDurationMs: number | null;
   onAnswer: (answers: Answers, form: QuestionForm) => void;
+  /** Sends the question the interrupted run was answering, again. */
+  onRetry: () => void;
   /** Rendered inside the scroll container, after the thread — anything that belongs to
    *  the tail of the conversation rather than above it. */
   bottomSlot?: ReactNode;
@@ -72,6 +75,7 @@ const MessageList: React.FC<MessageListProps> = ({
   pendingAnswerText,
   lastRunDurationMs,
   onAnswer,
+  onRetry,
   bottomSlot,
 }) => {
   // Zustand's setter identity is stable, so passing it down does not defeat
@@ -186,6 +190,10 @@ const MessageList: React.FC<MessageListProps> = ({
       // from the dedicated status region in ThreadView (ADR-0014 §live-region).
       aria-live="off"
       aria-label="Messages"
+      // The region a reask card's dropdown may not open out of. antd portals its popup to
+      // <body> and measures the fit against the viewport, which is far taller than this —
+      // so a list that fitted on screen opened over the composer. See `listHeightUnder`.
+      data-popup-bounds
       className={styles.thread}
       onScroll={handleScroll}
     >
@@ -223,6 +231,7 @@ const MessageList: React.FC<MessageListProps> = ({
             key={message.id}
             sender={message.sender}
             text={message.text}
+            createdAt={message.createdAt}
             steps={parsedHistory[index].steps}
             artifact={parsedHistory[index].artifact}
             question={parsedHistory[index].question}
@@ -234,10 +243,18 @@ const MessageList: React.FC<MessageListProps> = ({
             // The turn that just finished is the tail of the history once the live bubble
             // has handed over; nothing older has a duration to show.
             durationMs={live === null && index === lastIndex && message.sender === 'AI' ? lastRunDurationMs : null}
+            // Only the trailing interruption is still open; anything above it has already
+            // been answered by whatever came after.
+            onRetry={index === lastIndex && INTERRUPTED_TEXTS.includes(message.text) ? onRetry : undefined}
+            // Only when nothing newer is on screen: the live bubble and the optimistic
+            // user bubble both sit below the history.
+            isLatest={index === lastIndex && live === null && optimisticUserText === null}
           />
         );
       })}
-      {optimisticUserText !== null && <MessageBubble sender="USER" text={optimisticUserText} />}
+      {optimisticUserText !== null && (
+        <MessageBubble sender="USER" text={optimisticUserText} isLatest={live === null} />
+      )}
       {live && (
         <MessageBubble
           sender="AI"
@@ -248,6 +265,7 @@ const MessageList: React.FC<MessageListProps> = ({
           // which is why the handler is wired here and not only after the stream closes.
           onAnswer={onAnswer}
           durationMs={live.isStreaming ? null : lastRunDurationMs}
+          isLatest
         />
       )}
       {bottomSlot}

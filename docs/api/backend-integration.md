@@ -11,14 +11,14 @@
 
 後端還沒建好的端點,前端已各自表態,不需要任何設定:
 
-| 類別                  | 端點                             | 前端行為                                                         |
-| --------------------- | -------------------------------- | ---------------------------------------------------------------- |
-| **localStorage 偏好** | Connector 的選取與自訂來源       | 目錄本身走 `GET /connectors`;選了哪些、自訂了哪些存 localStorage |
-| **無入口**            | `DELETE /artifacts/{id}/publish` | 契約與函式都在,UI 上還沒有觸發點                                 |
+| 類別                  | 端點                             | 前端行為                                                 |
+| --------------------- | -------------------------------- | -------------------------------------------------------- |
+| **localStorage 偏好** | Connector 面板的預選             | 上次送出的組合存 localStorage,只在對話還沒選過時當預設值 |
+| **無入口**            | `DELETE /artifacts/{id}/publish` | 契約與函式都在,UI 上還沒有觸發點                         |
 
 其餘端點都已接上真後端,執行時沒有任何不發請求的讀取。上表那兩條不是等後端的 stub:
-Connector 偏好是刻意存在本機的使用者選擇,`DELETE /artifacts/{id}/publish` 則是契約與
-函式都在、只缺 UI 入口。
+面板預選是刻意存在本機的使用者習慣(選了哪些來源本身已經是後端的事實,存在 session 上),
+`DELETE /artifacts/{id}/publish` 則是契約與函式都在、只缺 UI 入口。
 
 ## 2. 網路層:讓 `/api` 到得了後端
 
@@ -71,8 +71,9 @@ live bubble 永遠看不到逐步進度。Vite 的 http-proxy 預設不 buffer;�
 - **深色 Artifact 不做**:Artifact HTML 只有單一配色,前端沒有任何 theme 參數或換色
   通道([ADR-0001](../adr/0001-artifact-rendered-via-sandboxed-iframe.md))。深色模式
   只作用在 app 本身,右側面板在深色下仍是亮的。
-- **Connector 是本機偏好**:選了哪些資料來源存在 localStorage,換一台機器就回到預設
-  (feedback #4)。
+- **~~Connector 是本機偏好~~**(2026-09-08 已不成立):選了哪些資料來源現在存在 session 上
+  (`PATCH /sessions/{id}/data-source`),換一台機器仍然看得到。留在本機的只剩「上次選了
+  哪些」這個面板預設值(feedback #4)。
 
 ## 5. 驗收後的下一步
 

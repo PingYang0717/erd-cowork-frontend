@@ -193,4 +193,109 @@ describe('QuestionFormCard: how a field is offered', () => {
     expect(screen.getByTitle('L1')).toBeInTheDocument();
     expect(document.querySelector('.ant-select-selection-item-remove')).toBeNull();
   });
+
+  /** The reader has to be able to answer what they were asked. A question the backend sent
+   *  with no options used to lift into a choice with nothing to choose: an empty row, no
+   *  input, and a Submit disabled for good. */
+  it('lets an open question be answered and sent', async () => {
+    const user = userEvent.setup();
+    const { onSubmit } = renderCard(formOf(field({ key: 'range', label: 'Time range', kind: 'text' })));
+
+    await user.type(screen.getByRole('textbox', { name: 'Time range' }), '07/01-07/31');
+    await user.click(screen.getByRole('button', { name: 'Send' }));
+
+    expect(onSubmit).toHaveBeenCalledWith({ range: '07/01-07/31' });
+  });
+
+  /** The box beside a list adds to the answer; it does not stand in for it. Writing the
+   *  typed string over the answer — which is what a plain text field does — threw away
+   *  every option the reader had already picked. */
+  it('keeps the options already picked when a custom value is typed beside them', async () => {
+    const user = userEvent.setup();
+    const { onSubmit } = renderCard(
+      formOf(field({ key: 'lots', label: 'Lot', kind: 'multi', allowCustom: true, options: options('A14', 'N5') }))
+    );
+
+    const group = screen.getByRole('group', { name: 'Lot' });
+    await user.click(within(group).getByRole('button', { name: 'A14' }));
+    await user.type(screen.getByRole('textbox', { name: 'Lot' }), 'A14-9999');
+    await user.click(screen.getByRole('button', { name: 'Send' }));
+
+    expect(onSubmit).toHaveBeenCalledWith({ lots: ['A14', 'A14-9999'] });
+  });
+
+  /** Two controls doing different things must not read as one. The list picks; the box
+   *  takes what the list does not have — and a dropdown that also accepted typing showed
+   *  the same answer in both places. */
+  it('shows a typed answer in the box only, never as a selection in the list', async () => {
+    const user = userEvent.setup();
+    renderCard(
+      formOf(
+        field({
+          key: 'lots',
+          label: 'Lot',
+          allowCustom: true,
+          options: options('L1', 'L2', 'L3', 'L4', 'L5', 'L6'),
+        })
+      )
+    );
+
+    await user.type(screen.getByRole('textbox', { name: 'Lot' }), 'L9-custom');
+
+    expect(screen.getByRole('textbox', { name: 'Lot' })).toHaveValue('L9-custom');
+    // The combobox still reads as nothing chosen: what was typed is not one of its options.
+    expect(document.querySelector('.ant-select-selection-item')).toBeNull();
+  });
+});
+
+/** A single-answer field has one slot. Whatever fills it — a chip, a dropdown row, or
+ *  something typed — leaves the other control with nothing to put there, and the answer
+ *  used to be replaced silently: type into the box and the chip stayed lit while the
+ *  typed value was what went out. Locking the one not in use says so up front. */
+describe('QuestionFormCard: a single answer comes from one place', () => {
+  const singleWithCustom = () =>
+    formOf(field({ key: 'part', label: 'Part ID', options: options('A14', 'A16', 'A18'), allowCustom: true }));
+
+  it('locks the box once an option is picked, and unlocks it when the pick is undone', async () => {
+    const user = userEvent.setup();
+    renderCard(singleWithCustom());
+
+    const box = screen.getByLabelText('Part ID', { selector: 'input' });
+    expect(box).toBeEnabled();
+
+    await user.click(screen.getByRole('button', { name: 'A14' }));
+    expect(box).toBeDisabled();
+
+    // Clicking the lit chip again gives the slot back.
+    await user.click(screen.getByRole('button', { name: 'A14' }));
+    expect(box).toBeEnabled();
+  });
+
+  it('locks the options once something is typed, and unlocks them when the box is emptied', async () => {
+    const user = userEvent.setup();
+    renderCard(singleWithCustom());
+
+    const box = screen.getByLabelText('Part ID', { selector: 'input' });
+    await user.type(box, 'A14-9999');
+    expect(screen.getByRole('button', { name: 'A14' })).toBeDisabled();
+
+    await user.clear(box);
+    expect(screen.getByRole('button', { name: 'A14' })).toBeEnabled();
+  });
+
+  /** A multi field holds several answers at once, so a typed value is one more of them
+   *  rather than a replacement for what is picked. Nothing to lock. */
+  it('leaves both open on a multi field', async () => {
+    const user = userEvent.setup();
+    renderCard(
+      formOf(field({ key: 'lot', label: 'Lots', kind: 'multi', options: options('L1', 'L2', 'L3'), allowCustom: true }))
+    );
+
+    const box = screen.getByLabelText('Lots', { selector: 'input' });
+    await user.click(screen.getByRole('button', { name: 'L1' }));
+    expect(box).toBeEnabled();
+
+    await user.type(box, 'L9-custom');
+    expect(screen.getByRole('button', { name: 'L1' })).toBeEnabled();
+  });
 });

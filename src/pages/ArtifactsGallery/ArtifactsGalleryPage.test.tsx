@@ -77,15 +77,15 @@ describe('Artifacts gallery', () => {
     renderGalleryPage();
 
     const trigger = await screen.findByRole('button', { name: /Sort/ });
-    expect(trigger.querySelector('.anticon-pushpin')).toBeInTheDocument();
+    expect(trigger.querySelector('.anticon-clock-circle')).toBeInTheDocument();
 
     await user.click(trigger);
-    await user.click(await screen.findByText(en.gallery.sortName));
+    await user.click(await screen.findByText(en.gallery.sortNameAsc));
 
     expect(
       (await screen.findByRole('button', { name: /Sort/ })).querySelector('.anticon-sort-ascending')
     ).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Sort/ }).querySelector('.anticon-pushpin')).toBeNull();
+    expect(screen.getByRole('button', { name: /Sort/ }).querySelector('.anticon-clock-circle')).toBeNull();
   });
 
   it('narrows the list per filter, independent of any pin/rename interaction', async () => {
@@ -124,20 +124,136 @@ describe('Artifacts gallery', () => {
     };
 
     await user.click(screen.getByRole('button', { name: /Sort:/ }));
-    await user.click(screen.getByRole('menuitem', { name: /Name A→Z/ }));
+    await user.click(screen.getByRole('menuitem', { name: en.gallery.sortNameAsc }));
 
+    // Inline dashboard is the seeded pinned one, so it leads whatever the chosen order —
+    // pinning holds under every sort. Alphabetical decides the rest.
     const namesByNameSort = orderedCardNames();
-    expect(namesByNameSort[0]).toContain('Daily monitor');
-    expect(namesByNameSort[1]).toContain('Inline dashboard');
+    expect(namesByNameSort[0]).toContain('Inline dashboard');
+    expect(namesByNameSort[1]).toContain('Daily monitor');
     expect(namesByNameSort[2]).toContain('SPC analysis');
 
     await user.click(screen.getByRole('button', { name: /Sort:/ }));
-    await user.click(screen.getByRole('menuitem', { name: /Most recent/ }));
+    await user.click(screen.getByRole('menuitem', { name: en.gallery.sortNameDesc }));
+
+    const namesByNameDesc = orderedCardNames();
+    expect(namesByNameDesc[0]).toContain('Inline dashboard');
+    expect(namesByNameDesc[1]).toContain('SPC analysis');
+    expect(namesByNameDesc[2]).toContain('Daily monitor');
+
+    await user.click(screen.getByRole('button', { name: /Sort:/ }));
+    await user.click(screen.getByRole('menuitem', { name: en.gallery.sortRecent }));
 
     const namesByRecency = orderedCardNames();
     expect(namesByRecency[0]).toContain('Inline dashboard');
     expect(namesByRecency[1]).toContain('SPC analysis');
     expect(namesByRecency[2]).toContain('Daily monitor');
+  });
+
+  /** Pinning lifts an Artifact to the top; it does not reorder what is under it. Within
+   *  each group the shelf reads by whatever sort is chosen — newest first by default.
+   *
+   *  Pinned-first is a rule, not one sort among several: it applies under every sort, so
+   *  it is no longer offered as one. */
+  it('keeps pinned first and orders both groups newest first', async () => {
+    server.use(
+      http.get('/api/artifacts', () => {
+        return HttpResponse.json([
+          // Pinned most recently, but the oldest Artifact of the two.
+          artifactDto({
+            id: 'a-1',
+            title: 'Pinned but old',
+            pinnedAt: '2026-09-05T00:00:00.000Z',
+            createdAt: '2026-08-01T00:00:00.000Z',
+          }),
+          artifactDto({
+            id: 'a-2',
+            title: 'Pinned and new',
+            pinnedAt: '2026-09-01T00:00:00.000Z',
+            createdAt: '2026-08-20T00:00:00.000Z',
+          }),
+          artifactDto({ id: 'a-3', title: 'Plain and old', createdAt: '2026-07-01T00:00:00.000Z' }),
+          artifactDto({ id: 'a-4', title: 'Plain and new', createdAt: '2026-08-25T00:00:00.000Z' }),
+        ]);
+      })
+    );
+
+    renderGalleryPage();
+    await screen.findByRole('button', { name: 'Pinned and new' });
+
+    const list = screen.getByRole('list', { name: 'Artifacts' });
+    // The card's own button carries the session and date in its text, so the title is
+    // read off the pin control's label — which names it and nothing else.
+    const order = within(list)
+      .getAllByRole('listitem')
+      .map((item) =>
+        within(item)
+          .getByRole('button', { name: /^(Pin|Unpin) / })
+          .getAttribute('aria-label')
+          ?.replace(/^(Un)?[Pp]in /, '')
+      );
+
+    expect(order).toEqual(['Pinned and new', 'Pinned but old', 'Plain and new', 'Plain and old']);
+  });
+
+  /** Pinning always wins, so it is not something to choose — the menu offers only the
+   *  four orders that are genuinely alternatives. */
+  it('offers four orders and no pinned-first entry', async () => {
+    const user = userEvent.setup();
+    renderGalleryPage();
+    await screen.findByRole('button', { name: 'SPC analysis — Vt (gate CD)' });
+
+    await user.click(screen.getByRole('button', { name: /Sort:/ }));
+
+    expect(screen.getAllByRole('menuitem').map((item) => item.textContent)).toEqual([
+      en.gallery.sortRecent,
+      en.gallery.sortOldest,
+      en.gallery.sortNameAsc,
+      en.gallery.sortNameDesc,
+    ]);
+  });
+
+  /** Newest first is the shelf's resting order — the one a reader gets without asking. */
+  it('opens on newest first', async () => {
+    renderGalleryPage();
+    await screen.findByRole('button', { name: 'SPC analysis — Vt (gate CD)' });
+
+    expect(screen.getByRole('button', { name: /Sort:/ })).toHaveTextContent(en.gallery.sortRecent);
+  });
+
+  it('reverses on the oldest-first and Z→A orders', async () => {
+    const user = userEvent.setup();
+    server.use(
+      http.get('/api/artifacts', () => {
+        return HttpResponse.json([
+          artifactDto({ id: 'a-1', title: 'Alpha', createdAt: '2026-07-01T00:00:00.000Z' }),
+          artifactDto({ id: 'a-2', title: 'Beta', createdAt: '2026-08-25T00:00:00.000Z' }),
+        ]);
+      })
+    );
+    renderGalleryPage();
+    await screen.findByRole('button', { name: 'Alpha' });
+
+    const titles = () =>
+      within(screen.getByRole('list', { name: 'Artifacts' }))
+        .getAllByRole('listitem')
+        .map((item) =>
+          within(item)
+            .getByRole('button', { name: /^(Pin|Unpin) / })
+            .getAttribute('aria-label')
+            ?.replace(/^(Un)?[Pp]in /, '')
+        );
+
+    // Default: newest first.
+    expect(titles()).toEqual(['Beta', 'Alpha']);
+
+    await user.click(screen.getByRole('button', { name: /Sort:/ }));
+    await user.click(await screen.findByRole('menuitem', { name: en.gallery.sortOldest }));
+    expect(titles()).toEqual(['Alpha', 'Beta']);
+
+    await user.click(screen.getByRole('button', { name: /Sort:/ }));
+    await user.click(await screen.findByRole('menuitem', { name: en.gallery.sortNameDesc }));
+    expect(titles()).toEqual(['Beta', 'Alpha']);
   });
 
   it('pins an Artifact from its card, and the pinned state persists across a simulated reload', async () => {

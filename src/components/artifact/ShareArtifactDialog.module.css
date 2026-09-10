@@ -109,3 +109,56 @@
   font-size: 11px;
   color: var(--ant-color-error, #ff4d4f);
 }
+
+/* A directory row: the photo, then the name. */
+.recipientOption {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.recipientAvatar,
+.recipientAvatarFallback {
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+}
+
+.recipientAvatar {
+  object-fit: cover;
+  background: var(--erd-color-fill-tertiary, rgba(0, 0, 0, 0.04));
+}
+
+.recipientAvatarFallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  background: var(--erd-color-primary-bg, #e6f4ff);
+  color: var(--erd-color-primary, #1677ff);
+}
+
+/* The one field in this dialog with no natural ceiling: recipients are chosen one at a
+   time and a share can reach a whole department. Left to grow it pushed the link and the
+   confirm off the bottom of the screen, so the tags scroll among themselves instead —
+   all of them still readable, none of them able to move anything else.
+
+   Capped on `.ant-select-content`, which is where antd 6 keeps the tags; there is no
+   inner `.ant-select-selector` any more. */
+.recipientSelect {
+  width: 100%;
+}
+
+.recipientSelect :global(.ant-select-content) {
+  max-height: 124px;
+  overflow-y: auto;
+}
+
+/* Beside the label, not in it: the count changes as recipients are added, and the
+   heading it sits next to does not. */
+.sectionCount {
+  color: var(--erd-color-text-tertiary, #8c8c8c);
+  font-weight: 400;
+}

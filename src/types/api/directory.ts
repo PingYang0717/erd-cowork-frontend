@@ -14,6 +14,12 @@ export interface DirectoryEntry {
   employeeName?: string;
   employeeNt?: string;
   employeeOrgName?: string;
+  /** The employee number the photo is keyed on. Distinct from `employeeNt`, which is the
+   *  account the share payload addresses a person by — this one only ever builds a URL. */
+  emplId?: string;
+  /** The short name both kinds are called by once chosen. The wire's own spelling
+   *  (ADR-0003), sent for people and organisations alike. */
+  sortName?: string;
   orgName?: string;
   orgId?: string;
   /** Which level of the org tree this is (department, section, …). It is what the share

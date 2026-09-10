@@ -1,12 +1,24 @@
-import React, { useDeferredValue, useMemo } from 'react';
-import { AppstoreOutlined, LoadingOutlined, ThunderboltFilled, ToolOutlined } from '@ant-design/icons';
+import React, { useDeferredValue, useEffect, useMemo, useState } from 'react';
+import {
+  AppstoreOutlined,
+  CheckOutlined,
+  ClockCircleOutlined,
+  CopyOutlined,
+  LoadingOutlined,
+  ReloadOutlined,
+  ThunderboltFilled,
+  ToolOutlined,
+} from '@ant-design/icons';
 
+import Tooltip from '@/components/common/Tooltip';
 import { INTERRUPTED_TEXTS, REPAIR_RECORD_PREFIXES } from '@/constants/wireStrings';
 import type { AgentStreamState } from '@/hooks/useAgentStream';
 import type { QuestionForm, StepItem } from '@/types/api';
+import { formatDuration } from '@/utils/formatDuration';
+import { formatRelativeTime } from '@/utils/formatRelativeTime';
 import { stripTableMarkers } from '@/utils/tableMarkers';
 import CollapsiblePanel from './CollapsiblePanel';
-import { Elapsed, LiveElapsed } from './Elapsed';
+import { LiveElapsed } from './Elapsed';
 import HtmlCodePanel from './HtmlCodePanel';
 import QuestionFormCard, { type Answers } from './QuestionFormCard';
 import { StepRow, StepsRecap } from './StepList';
@@ -31,8 +43,108 @@ export type LiveRun = Pick<
   | 'startedAt'
 >;
 import { useTranslations } from '@/i18n/useTranslations';
-import type { Translations } from '@/i18n/zhTW';
 import ReplyText from './ReplyText';
+
+/** What a message says about itself: when it was sent, and an offer to copy it.
+ *
+ *  Always rendered, revealed by CSS on hover or focus. Mounting it on hover instead would
+ *  nudge every message below it on every pass of the pointer, and — worse — would put the
+ *  copy button out of a keyboard's reach entirely, since a keyboard never hovers. Invisible
+ *  but focusable is the trap that pattern usually falls into; `:focus-within` is what
+ *  keeps it out of it (ADR-0014).
+ *
+ *  The relative wording matches the session rail and the version menu. The exact moment is
+ *  on the `title`, where someone who needs it can find it and nobody else has to read it. */
+const MessageMeta: React.FC<{
+  createdAt?: string | null;
+  copyText: string;
+  /** How long the turn took, for a run that has finished. */
+  durationMs?: number | null;
+  /** Offered on the turn that stopped: sends the same question again. */
+  onRetry?: () => void;
+  /** The newest turn keeps its row on show; older ones reveal on hover. Claude's rule,
+   *  and the reason is the same: the reply you have just been given is the one you act
+   *  on, and hiding its controls behind a pointer makes them findable only by accident. */
+  always?: boolean;
+}> = ({ createdAt, copyText, durationMs, onRetry, always = false }) => {
+  const t = useTranslations();
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    if (!copied) {
+      return;
+    }
+    const timer = setTimeout(() => setCopied(false), 2000);
+    return () => clearTimeout(timer);
+  }, [copied]);
+
+  if (!createdAt && copyText === '' && durationMs == null && onRetry === undefined) {
+    return null;
+  }
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(copyText);
+      // Inside the try. The tick is the only confirmation a copy gets, and saying it
+      // whether or not anything reached the clipboard is the mistake the share dialog
+      // already made once.
+      setCopied(true);
+    } catch {
+      // Nothing to add: the text is on screen and still selectable by hand.
+    }
+  };
+
+  return (
+    <div className={styles.meta} data-latest={always || undefined}>
+      {/* How long the turn took, then what to do about it, then when it was sent. The two
+          times bracket the controls: they are context, and context reads at the edges. */}
+      {durationMs != null && (
+        <span className={`${styles.metaAside} ${styles.metaTimer}`}>
+          <ClockCircleOutlined aria-hidden className={styles.metaAsideIcon} />
+          {formatDuration(durationMs)}
+        </span>
+      )}
+
+      {/* Icons alone. A row of labelled buttons under every reply competes with the reply;
+          the label lives in the tooltip, where it is one hover away and nowhere else. */}
+      <span className={always ? `${styles.metaActions} ${styles.metaActionsAlways}` : styles.metaActions}>
+        {/* Nothing to copy — a reply that produced only an Artifact — offers no button:
+            one that copies an empty string claims to have done something it did not. */}
+        {copyText !== '' && (
+          <Tooltip content={copied ? t.common.copied : t.common.copy}>
+            <button
+              type="button"
+              className={styles.metaButton}
+              aria-label={copied ? 'Copied' : 'Copy message'}
+              onClick={handleCopy}
+            >
+              {copied ? <CheckOutlined aria-hidden /> : <CopyOutlined aria-hidden />}
+            </button>
+          </Tooltip>
+        )}
+        {/* It APPENDS a turn — the backend has no messages endpoint, so the run that
+            stopped cannot be replaced (docs/api/backend-feedback.md). */}
+        {onRetry && (
+          <Tooltip content={t.chat.retryRun}>
+            <button type="button" className={styles.metaButton} aria-label="Retry" onClick={onRetry}>
+              <ReloadOutlined aria-hidden />
+            </button>
+          </Tooltip>
+        )}
+      </span>
+
+      {createdAt && (
+        <time
+          dateTime={createdAt}
+          title={new Date(createdAt).toLocaleString()}
+          className={`${styles.metaAside} ${styles.metaTime}`}
+        >
+          {formatRelativeTime(createdAt)}
+        </time>
+      )}
+    </div>
+  );
+};
 
 export interface MessageBubbleProps {
   sender: 'USER' | 'AI';
@@ -57,6 +169,16 @@ export interface MessageBubbleProps {
   /** Puts this reply's artifact on the Artifact pane. Without it the chip is a plain
    *  label (full-page artifact view has no pane to hand to). */
   onPickArtifact?: (artifactId: string) => void;
+  /** Offered on an interrupted record: sends the same question again. Only the trailing
+   *  one gets it — an interruption further up is settled history, and the run that
+   *  followed it has already been asked. */
+  onRetry?: () => void;
+  /** The newest turn in the thread: its actions stay on show rather than waiting for a
+   *  pointer. */
+  isLatest?: boolean;
+  /** When the message was sent. Absent on the live bubble — a run still being written has
+   *  no settled moment, and the backend supplies one when the history catches up. */
+  createdAt?: string | null;
   /** How long the turn behind this bubble took; shown once it is over. */
   durationMs?: number | null;
   /** The open (or visibly-ended) run this bubble fronts. One object instead of the
@@ -95,6 +217,9 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
   onAnswer,
   artifactShown = false,
   onPickArtifact,
+  onRetry,
+  isLatest = false,
+  createdAt,
   durationMs,
   live,
 }) => {
@@ -138,6 +263,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
         <div className={styles.userBubble}>
           <span className={styles.userText}>{text}</span>
         </div>
+        <MessageMeta createdAt={createdAt} copyText={text} always={isLatest} />
       </div>
     );
   }
@@ -153,7 +279,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
     <div className={styles.aiRow}>
       <div className={styles.aiLabel}>
         <ThunderboltFilled aria-hidden className={styles.aiLabelIcon} />
-        {agentLabel(stopped, t.chat)}
+        {t.chat.agentName}
       </div>
       <div className={styles.aiBubble}>
         {/* The live region exists for as long as the run does, not only once it has
@@ -254,9 +380,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
         {/* Keyed on the start: a new turn gets a fresh timer rather than inheriting the
             last one's reading for up to a second. */}
         {streaming && timerStartedAt != null && <LiveElapsed key={timerStartedAt} startedAt={timerStartedAt} />}
-        {!streaming && durationMs != null && <Elapsed ms={durationMs} />}
 
-        {stopped && <p className={styles.stateNote}>{t.chat.stopped}</p>}
         {/* Still an alert: the run ended in a way the user has to act on, and the
             dedicated wording is what distinguishes it from a backend refusal. */}
         {networkError && (
@@ -270,20 +394,23 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
           </p>
         )}
       </div>
+      {/* Outside the bubble, under it — the same place the user's own sits. Inside, its
+          reserved height showed as a strip of empty grey on every settled reply.
+
+          Not while the run is open: the text is still being written, and a copy taken
+          mid-sentence is half a reply. A record (an interruption, a repair) copies its own
+          wording — that IS its prose. */}
+      {!streaming && (
+        <MessageMeta
+          createdAt={createdAt}
+          copyText={recordKind ? text : answerText}
+          durationMs={durationMs}
+          onRetry={onRetry}
+          always={isLatest}
+        />
+      )}
     </div>
   );
-};
-
-/** Who is speaking. It stays the same whether or not they are mid-sentence: that the run
- *  is in progress is said inside the bubble, next to the steps it is producing.
- *
- *  A stop is likewise reported inside (⏹ 已停止生成, cowork's wording) — the label carries
- *  it too because a stopped turn has no live panel left to say it from. */
-/** Takes the copy rather than reaching for it. Reading the language here worked only
- *  because the one caller subscribes to it — move this into a memoised child and the
- *  label would freeze on whatever language was current when it mounted, silently. */
-const agentLabel = (stopped: boolean, t: Translations['chat']): string => {
-  return stopped ? t.agentStopped : t.agentName;
 };
 
 /** The open turn's timer. The clock is read in the interval rather than during render —

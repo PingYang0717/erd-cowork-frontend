@@ -38,17 +38,23 @@ provider 每次請求都會被呼叫,NEVER 快取它的回傳值——見
 
 ## Session
 
-| Method | Path                | Request                                   | Response           | 後端狀態 |
-| ------ | ------------------- | ----------------------------------------- | ------------------ | -------- |
-| GET    | `/sessions`         | —                                         | `Session[]`        | 已實作   |
-| GET    | `/sessions/:id`     | —                                         | `SessionDetail`    | 已實作   |
-| POST   | `/sessions`         | `{}` (title defaults to `"New analysis"`) | `Session` (201)    | 不會實作 |
-| PATCH  | `/sessions/:id`     | `{ title: string }`                       | `Session`          | 已實作   |
-| POST   | `/sessions/:id/pin` | —(toggle)                                 | `{ id, pinnedAt }` | 已實作   |
-| DELETE | `/sessions/:id`     | —                                         | 200                | 已實作   |
+| Method | Path                        | Request                                   | Response           | 後端狀態 |
+| ------ | --------------------------- | ----------------------------------------- | ------------------ | -------- |
+| GET    | `/sessions`                 | —                                         | `Session[]`        | 已實作   |
+| GET    | `/sessions/:id`             | —                                         | `SessionDetail`    | 已實作   |
+| POST   | `/sessions`                 | `{}` (title defaults to `"New analysis"`) | `Session` (201)    | 不會實作 |
+| PATCH  | `/sessions/:id`             | `{ title: string }`                       | `Session`          | 已實作   |
+| POST   | `/sessions/:id/pin`         | —(toggle)                                 | `{ id, pinnedAt }` | 已實作   |
+| DELETE | `/sessions/:id`             | —                                         | 200                | 已實作   |
+| PATCH  | `/sessions/:id/data-source` | `["<connectorId>", …]`（裸陣列）          | 200，無 body       | 已實作   |
 
 `GET /sessions/:id` 回 `SessionDetail`：session 的 messages 與 files 內嵌其中——後端
-**沒有**獨立的 messages 端點。
+**沒有**獨立的 messages 端點。`SessionDetail.connectors` 是這場對話正在用的資料來源，
+以 `Connector.id` 表示。
+
+`PATCH /sessions/:id/data-source` **整組取代**，body 是裸陣列而不是信封。一次請求描述
+的是結果而不是一個改動，所以兩個同時在飛的請求不會因為抵達順序而決定最終狀態——這正是
+先前 `PATCH` 加一個 / `DELETE` 減一個的問題。
 
 `POST /sessions` 標為「不會實作」：session 由 client 指定 id、第一次送訊息時 upsert
 （[ADR-0005](../adr/0005-new-chat-is-a-client-side-draft.md)），沒有建立端點這件事是決策
@@ -142,9 +148,9 @@ QuestionOption { value: string; label: string; hint?: string }
 ```
 
 **欄位組成是契約，選項值是資料。** 哪些欄位要問由 Scenario 固定，但 `options` 在執行時才
-填：SPC 條件表單的 `Data type` 選項是當下 `status === 'connected'` 的 Connector 名稱（無任何
-連線時 fallback `["Inline"]`）。這是「Connector 與情境按鈕
-連動」的實際機制——Connector 狀態決定反問卡上有哪些選項，而不是按鈕去設定 Connector。
+填：SPC 條件表單的 `Data type` 選項是這場對話正在用的 Connector 名稱（一個都沒有時
+fallback `["Inline"]`）。這是「Connector 與情境按鈕
+連動」的實際機制——這場對話選了哪些來源決定反問卡上有哪些選項，而不是按鈕去設定 Connector。
 
 `visibleWhen` 表達欄位相依：CP Test 的 `Flow` 只在 `role === 'baseline'` 時顯示、`Loop` 只在
 `role === 'loop'` 時顯示。上游欄位值改變時，所有依賴它的下游欄位答案清空。
@@ -166,9 +172,9 @@ code 得到泛用文案，後端原話降級成錯誤卡的小字。「端點還
 
 例外兩類：
 
-| 類別                  | 端點/功能                     | 前端行為                                                            |
-| --------------------- | ----------------------------- | ------------------------------------------------------------------- |
-| **localStorage 偏好** | Connector 的連線/自訂來源選取 | 使用者偏好存 localStorage（`erd-cowork:connector-prefs`），不打後端 |
+| 類別                  | 端點/功能            | 前端行為                                                                                                              |
+| --------------------- | -------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| **localStorage 偏好** | Connector 面板的預選 | 上次送出的組合存 localStorage（`erd-cowork:connector-prefs`），只在對話還沒選過時當預設值，從不代替使用者寫進 session |
 
 **Regenerate 已移除**：後端沒有 regenerate 概念；迭代＝對話裡再送一句話（自動帶
 `baseArtifactId`），產物是下一個版本。
@@ -184,6 +190,22 @@ upsert（[ADR-0005](../adr/0005-new-chat-is-a-client-side-draft.md)）。
 前端-only 的欄位（`Session.pinnedAt`、`Message.scenario` / `attachments`、QUESTION 的
 `form`）在型別上明確標註，真後端不回它們時 UI 各自降級。`Artifact` 已是後端定版，
 不再有前端-only 欄位。
+
+### 反問卡上的自由輸入(2026-09-08)
+
+線路上的 `Question` 只有 `{ text, options, multiSelect }`,而 `liftQuestions` 過去一律把它
+降級成「固定選項的單選/複選」。後果是兩件事:
+
+- **`options: []` 是一條死路。** 後端問一個開放式問題(它表達得出來——不給選項),前端畫出
+  一個空的選項列、沒有輸入框、Submit 永遠 disabled。使用者被問了一個無法回答的問題。
+  現在沒有選項就是 `kind: 'text'`,一個輸入框。
+- **有選項時使用者只能在選項裡回答。** 後端給的選項是它的模型猜的,猜不全是常態,而線路上
+  沒有任何欄位能表達「只准選這些」——所以假設它有,是前端自己發明了一條限制。現在每個
+  有選項的欄位都帶 `allowCustom`。
+
+畫面上分成三種控制項,語意不重疊:**藥丸 = 挑好的選項**、**填色的下拉 = 挑東西的地方**、
+**一條底線 = 打字的地方**。下拉只負責挑選(不是 `tags` 模式),自由輸入一律在它下方那一格。
+一個 multi 欄位可以同時帶著挑好的選項與一個自訂值。
 
 ### QUESTION 事件與反問表單的降級
 
@@ -280,29 +302,43 @@ delivery, it only flips the sender's own Artifact to shared. A recipient's "Shar
 me" view is seeded directly (an Artifact whose `ownerId` is someone else, so `isOwn`
 comes back false), not produced by this endpoint.
 
-`GET /hr/employeesAndOrgs` returns the searchable department / section / person dataset backing
-the share dialog's recipient picker (`DirectoryEntry.kind` is `'department'`,
-`'section'`, or `'person'`; `label` is the searchable display text — the raw code for
-departments/sections, `"<NT account> · <中文名>"` for people).
+`GET /hr/employeesAndOrgs` returns the searchable organisation / person dataset backing
+the share dialog's recipient picker. One shape carries both kinds, told apart by `type`
+(`'ORG'` or `'EMPLOYEE'`); which other fields are populated follows from it — `org*` for an
+organisation, `employee*` for a person.
+
+`emplId` and `sortName` were added on 2026-09-10. `emplId` is the employee number the
+photo URL is keyed on, and is a different field from `employeeNt`, which is the account
+the share payload addresses a person by. `sortName` is the short name both kinds are
+called by once chosen; the option list still shows an organisation's code beside its name,
+because that is where two units with the same name are told apart.
 
 ## Connector
 
-| Method | Path              | Request                       | Response          | 後端狀態   |
-| ------ | ----------------- | ----------------------------- | ----------------- | ---------- |
-| GET    | `/connectors`     | —                             | `Connector[]`     | ✅ 已接    |
-| PATCH  | `/connectors/:id` | `{ status: ConnectorStatus }` | `Connector`       | 前端未呼叫 |
-| POST   | `/connectors`     | `{ name: string }`            | `Connector` (201) | 前端未呼叫 |
+| Method | Path          | Request | Response      | 後端狀態 |
+| ------ | ------------- | ------- | ------------- | -------- |
+| GET    | `/connectors` | —       | `Connector[]` | ✅ 已接  |
 
-`Connector.status` is one of `connected` / `available` / `expired` / `no_access`.
-`PATCH /connectors/:id` connects or disconnects a data source from the Studio
-composer's Connectors panel. 這三條目前都不發請求：目錄是 `connectorApi` 裡的常數，
-使用者的選擇疊在上面並存 localStorage（`erd-cowork:connector-prefs`）。面板是**可以
-操作的**——「選了哪些資料來源」是真的使用者偏好，只是還沒有帳號層級的歸屬。
+```
+Connector { id, name, description, type, enabled }
+```
 
-`POST /connectors` backs the panel's "Add a custom data source" input. The id is
-slugified from the name (`c_<slug>`); posting a name that slugifies to an existing id
-returns that connector with 200 instead of creating a duplicate. Created connectors
-are `custom: true`, category `Custom`, and start `connected`.
+後端另外會送 `connectorId`（它自己的用途）與 `url`。**前端型別不收這兩欄**：`types/api`
+描述前端消費什麼，不是後端吐什麼（見 [ADR-0003](../adr/0003-verbatim-backend-wire-contract.md)
+的 2026-09-08 追記）。`url` 尤其不收——資料來源的位址沒有理由進到瀏覽器。
+
+`id` 是 Mongo UUID，前端送出與收到的每一個 connector 識別碼都是它。
+
+**兩個維度，刻意不合併。** `enabled` 是 connector 自己的事實：能不能被選。至於「哪一場
+對話正在用它」是那場對話的事實，存在 `SessionDetail.connectors`——同一個來源可以掛在
+A 對話而不掛在 B 對話，所以 `Connector` 上沒有任何欄位答得出這件事。`enabled: false`
+不區分原因（憑證過期、連線中斷、被停用），因為前端對這三者要做的事完全一樣。
+
+面板上顯示但不可選，不是濾掉：一個本來在清單上的來源突然消失，使用者無從得知發生了
+什麼。
+
+`PATCH /connectors/:id` 與 `POST /connectors` 已從契約移除。自訂資料來源（使用者自己
+登記一個後端不知道的來源）連同它們一起退場——後端不知道的來源 agent 讀不到。
 
 ## Schedule
 

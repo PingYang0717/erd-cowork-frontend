@@ -5,6 +5,7 @@ import { InfoCircleOutlined, SendOutlined } from '@ant-design/icons';
 import { useTranslations } from '@/i18n/useTranslations';
 import { useConnectorsPanelStore } from '@/stores/useConnectorsPanelStore';
 import type { QuestionAnswer, QuestionField, QuestionForm } from '@/types/api';
+import { DEFAULT_LIST_HEIGHT, listHeightUnder } from '@/utils/dropdownListHeight';
 
 import styles from './QuestionFormCard.module.css';
 
@@ -39,6 +40,57 @@ const rendersAsDropdown = (field: QuestionField): boolean => {
 
 export type Answers = Record<string, QuestionAnswer>;
 
+/** What the reader picked and what they typed, as one answer per field.
+ *
+ *  Only a `multi` field holds both: it can carry several options and one value of its own.
+ *  A `single` field's typed value stands instead of a pick — there is one slot — and a
+ *  `text` field has nothing to pick at all. */
+const mergeAnswers = (form: QuestionForm, picks: Answers, texts: Record<string, string>): Answers => {
+  const merged: Answers = { ...picks };
+
+  for (const field of form.fields) {
+    const typed = (texts[field.key] ?? '').trim();
+    if (field.kind === 'boolean') {
+      continue;
+    }
+    if (field.kind === 'text' || field.kind !== 'multi') {
+      if (typed !== '') {
+        merged[field.key] = typed;
+      }
+      continue;
+    }
+    const picked = pickedOptionsOf(field, picks[field.key]);
+    merged[field.key] = typed === '' || picked.includes(typed) ? picked : [...picked, typed];
+  }
+
+  return merged;
+};
+
+/** The part of an answer no option accounts for — what the reader typed rather than
+ *  picked. One per field: the box holds a value, not a list of them.
+ *
+ *  A multi field keeps it inside the array with the picked options, so typing adds to the
+ *  answer instead of replacing it. Writing the string over the array (which is what a
+ *  plain text field does) threw away every option already chosen. */
+const customValueOf = (field: QuestionField, answer: QuestionAnswer | undefined): string => {
+  const isOption = (value: string) => (field.options ?? []).some((option) => option.value === value);
+  if (field.kind === 'multi') {
+    return (Array.isArray(answer) ? answer : []).find((value) => !isOption(value)) ?? '';
+  }
+  return typeof answer === 'string' && answer !== '' && !isOption(answer) ? answer : '';
+};
+
+/** What the list itself shows as chosen: the options, never the typed value. The typed
+ *  value has its own box below — showing it in both says the same answer twice, and for a
+ *  single select antd would render it as though it were an option that exists. */
+const pickedOptionsOf = (field: QuestionField, answer: QuestionAnswer | undefined): string[] => {
+  const isOption = (value: string) => (field.options ?? []).some((option) => option.value === value);
+  if (field.kind === 'multi') {
+    return (Array.isArray(answer) ? answer : []).filter(isOption);
+  }
+  return typeof answer === 'string' && isOption(answer) ? [answer] : [];
+};
+
 const isVisible = (field: QuestionField, answers: Answers): boolean => {
   if (!field.visibleWhen) {
     return true;
@@ -62,11 +114,13 @@ interface ChipGroupProps {
   field: QuestionField;
   answers: Answers;
   onToggle: (value: string) => void;
+  /** The field's one slot is filled from the other control — see `singleSlotTaken`. */
+  locked?: boolean;
 }
 
 /** Chips are only ever offered for a handful of short options — anything long enough to
  *  need narrowing is a dropdown, which searches itself — so this shows all of them. */
-const ChipGroup: React.FC<ChipGroupProps> = ({ field, answers, onToggle }) => {
+const ChipGroup: React.FC<ChipGroupProps> = ({ field, answers, onToggle, locked = false }) => {
   const selected = answers[field.key];
   const isSelected = (value: string) => {
     if (Array.isArray(selected)) {
@@ -82,11 +136,16 @@ const ChipGroup: React.FC<ChipGroupProps> = ({ field, answers, onToggle }) => {
   const options = field.options ?? [];
 
   return (
-    <div className={styles.chipRow} role="group" aria-label={field.label}>
+    <div
+      className={locked ? `${styles.chipRow} ${styles.locked}` : styles.chipRow}
+      role="group"
+      aria-label={field.label}
+    >
       {options.map((option) => (
         <button
           key={option.value}
           type="button"
+          disabled={locked}
           aria-pressed={isSelected(option.value)}
           title={option.hint}
           className={isSelected(option.value) ? styles.chipSelected : styles.chip}
@@ -138,7 +197,18 @@ interface QuestionFormCardProps {
 const QuestionFormCard: React.FC<QuestionFormCardProps> = ({ form, onSubmit, disabled = false, answered }) => {
   const t = useTranslations();
 
-  const [editedAnswers, setEditedAnswers] = useState<Answers>({});
+  /** What was picked from the list, and what was typed beside it, held apart.
+   *
+   *  Deriving the typed part from the answer — "the value no option accounts for" — reads
+   *  the wrong thing the moment what is being typed passes through an option's own label:
+   *  typing `A14-9999` where `A14` is an option meant the third keystroke was absorbed as
+   *  a pick and the box reset, leaving `-9999`. They are two inputs; they are stored as
+   *  two, and `answers` below is what they add up to. */
+  const [editedPicks, setEditedPicks] = useState<Answers>({});
+  const [editedTexts, setEditedTexts] = useState<Record<string, string>>({});
+
+  // Only one list is open at a time, so one measurement serves every field on the card.
+  const [listHeight, setListHeight] = useState(DEFAULT_LIST_HEIGHT);
 
   // Changing a trigger discards whatever was answered beneath it. Hiding the answer but
   // keeping it would submit a Flow the user can no longer see, under a role it does not
@@ -147,17 +217,26 @@ const QuestionFormCard: React.FC<QuestionFormCardProps> = ({ form, onSubmit, dis
     for (const dependent of form.fields) {
       if (dependent.visibleWhen?.field === changed.key && !isVisible(dependent, next)) {
         delete next[dependent.key];
+        // The typed half goes with it: a field that is no longer shown must not submit
+        // what was typed into it before its trigger changed.
+        setEditedTexts((texts) => {
+          const { [dependent.key]: _dropped, ...rest } = texts;
+          return rest;
+        });
       }
     }
     return next;
   };
 
+  /** Writes what the reader typed. Only that: what they picked from the list is a
+   *  separate store, so the box beside a list adds to the answer rather than standing in
+   *  for it. */
   const setFieldText = (field: QuestionField, value: string) => {
-    setEditedAnswers((previous) => ({ ...previous, [field.key]: value }));
+    setEditedTexts((previous) => ({ ...previous, [field.key]: value }));
   };
 
   const toggle = (field: QuestionField, value: string) => {
-    setEditedAnswers((previous) => {
+    setEditedPicks((previous) => {
       const next: Answers =
         field.kind === 'boolean'
           ? { ...previous, [field.key]: previous[field.key] !== true }
@@ -171,7 +250,12 @@ const QuestionFormCard: React.FC<QuestionFormCardProps> = ({ form, onSubmit, dis
                     : [...current, value],
                 };
               })()
-            : { ...previous, [field.key]: value };
+            : // Clicking the lit chip clears it. A single field used to be one-way — once
+              // picked, the only move was picking something else — and with the typing box
+              // locked behind a filled slot, that was a door with no handle on this side.
+              // Emptied rather than set to undefined: the key stays, and every reader of it
+              // already treats '' as unanswered.
+              { ...previous, [field.key]: previous[field.key] === value ? '' : value };
 
       return clearDependentsOf(field, next);
     });
@@ -180,7 +264,7 @@ const QuestionFormCard: React.FC<QuestionFormCardProps> = ({ form, onSubmit, dis
   /** Writes a field's whole answer at once — what a dropdown reports, against the chips'
    *  one-value-at-a-time toggling. */
   const setFieldValue = (field: QuestionField, value: QuestionAnswer) => {
-    setEditedAnswers((previous) => clearDependentsOf(field, { ...previous, [field.key]: value }));
+    setEditedPicks((previous) => clearDependentsOf(field, { ...previous, [field.key]: value }));
   };
 
   // A read-only card has nothing to edit, so it renders from what it was given rather
@@ -188,7 +272,11 @@ const QuestionFormCard: React.FC<QuestionFormCardProps> = ({ form, onSubmit, dis
   // arrive later than that: they are recovered from the reply, which lands with the
   // history refetch after the card is already on screen. Held in state, the card sat
   // there empty until something remounted it, which in practice meant reloading the page.
-  const answers = disabled ? (answered ?? {}) : editedAnswers;
+  //
+  // Editing, the two stores add up: what was picked plus what was typed. `text` fields
+  // have nothing to pick, and a `single` field's typed answer stands instead of a pick —
+  // only a `multi` field carries both at once.
+  const answers = disabled ? (answered ?? {}) : mergeAnswers(form, editedPicks, editedTexts);
 
   const selectedCount = countAnswers(answers);
   const submitLabel = form.submitLabel.replace('{count}', String(selectedCount));
@@ -205,11 +293,20 @@ const QuestionFormCard: React.FC<QuestionFormCardProps> = ({ form, onSubmit, dis
         const asDropdown = rendersAsDropdown(field);
         const answer = answers[field.key];
         // A typed value that no chip offers — the mockup highlights the input for it.
-        const isCustom =
-          field.allowCustom &&
-          typeof answer === 'string' &&
-          answer !== '' &&
-          !options.some((option) => option.value === answer);
+        const customValue = disabled ? customValueOf(field, answer) : (editedTexts[field.key] ?? '');
+        const isCustom = customValue !== '';
+
+        // A single-answer field has one slot, and both controls write to it: the typed
+        // value simply replaced the pick (`mergeAnswers`), which meant a chip could sit
+        // lit while something else was what went out. Whichever control holds the answer
+        // locks the other, so the card says which one is speaking.
+        //
+        // Only `single`. A `multi` field holds several answers at once, so a typed value
+        // is one more of them rather than a replacement for anything.
+        const oneSlot = field.kind === 'single' && field.allowCustom === true && !disabled;
+        const picked = editedPicks[field.key];
+        const listLocked = oneSlot && isCustom;
+        const boxLocked = oneSlot && picked !== undefined && picked !== '' && picked !== false;
 
         return (
           <div key={field.key} className={styles.field}>
@@ -219,7 +316,7 @@ const QuestionFormCard: React.FC<QuestionFormCardProps> = ({ form, onSubmit, dis
               <input
                 aria-label={field.label}
                 placeholder={field.placeholder}
-                value={typeof answer === 'string' ? answer : ''}
+                value={disabled ? (typeof answer === 'string' ? answer : '') : (editedTexts[field.key] ?? '')}
                 className={styles.textInput}
                 onChange={(event) => setFieldText(field, event.target.value)}
               />
@@ -242,16 +339,36 @@ const QuestionFormCard: React.FC<QuestionFormCardProps> = ({ form, onSubmit, dis
                 // span — a disabled fieldset reaches neither. A settled card would still
                 // drop its list open, and show a control that looks like it takes the
                 // answer back.
-                disabled={disabled}
+                disabled={disabled || listLocked}
+                // A single-mode list can otherwise only be replaced, never emptied — so a
+                // reader who picked a row could never hand the slot back to the box.
+                allowClear={field.kind !== 'multi'}
                 // The card sits in a thread pane the reader can narrow to a column; a
                 // dropdown that keeps its own width would push the conversation sideways.
                 className={styles.select}
+                classNames={{ popup: { root: styles.selectPopup } }}
+                // Measured when it opens, from the trigger down to the edge of the
+                // conversation — see `listHeightUnder`. antd's own fit test is against the
+                // viewport, which the thread is only a fraction of.
+                listHeight={listHeight}
+                onOpenChange={(open) => {
+                  if (open) {
+                    setListHeight(listHeightUnder(document.getElementById(`question-${form.formKey}-${field.key}`)));
+                  }
+                }}
                 placeholder={field.placeholder}
                 showSearch
                 optionFilterProp="label"
+                // Only what was picked from the list. The typed answer lives in the box
+                // below, so feeding it in here would show it twice — and a single select
+                // would render it as though it were an option that exists.
                 value={
-                  field.kind === 'multi' ? ((answer as string[] | undefined) ?? []) : ((answer as string) ?? undefined)
+                  field.kind === 'multi'
+                    ? pickedOptionsOf(field, answer)
+                    : (pickedOptionsOf(field, answer)[0] ?? undefined)
                 }
+                // Picks only. What was typed lives in its own store and is merged back
+                // in by `mergeAnswers`, so the list never has to carry it.
                 onChange={(value: string | string[]) => setFieldValue(field, value)}
                 // `title` mirrors the label rather than carrying the option's hint: antd
                 // uses it for the row's tooltip AND as its accessible fallback, so a hint
@@ -265,15 +382,30 @@ const QuestionFormCard: React.FC<QuestionFormCardProps> = ({ form, onSubmit, dis
                 }))}
               />
             ) : (
-              <ChipGroup field={field} answers={answers} onToggle={(value) => toggle(field, value)} />
+              <ChipGroup
+                field={field}
+                answers={answers}
+                onToggle={(value) => toggle(field, value)}
+                locked={listLocked}
+              />
             )}
 
-            {field.allowCustom && (
+            {/* On a settled card the box is only there when it holds the answer: an
+                empty input under a question already answered is a control that does
+                nothing, on a card that can do nothing. */}
+            {/* The one place anything is typed, whatever the list above it is. A control
+                that picks and a control that types are different things, and a reader
+                should not have to discover that one of them quietly does both. */}
+            {field.allowCustom && (!disabled || isCustom) && (
               <input
                 aria-label={field.label}
-                placeholder={field.placeholder}
-                value={isCustom ? String(answer) : ''}
-                className={isCustom ? styles.customInputActive : styles.customInput}
+                // Its own wording, not the field's: `placeholder` belongs to the control
+                // the field is primarily rendered as — the list, or the text box when
+                // there is no list. This one is always the same thing.
+                placeholder={t.chat.questionCustomPlaceholder}
+                value={customValue}
+                disabled={boxLocked}
+                className={`${isCustom ? styles.customInputActive : styles.customInput}${boxLocked ? ` ${styles.locked}` : ''}`}
                 onChange={(event) => setFieldText(field, event.target.value)}
               />
             )}

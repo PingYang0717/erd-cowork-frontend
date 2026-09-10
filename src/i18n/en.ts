@@ -6,13 +6,14 @@ export const en: Translations = {
   share: {
     subtitle: 'This Artifact is published and ready to share.',
     recipientsLabel: 'Share with',
-    recipientsHint: 'Mix departments (A10INTD1-1), sections (INTD-1) and people (CHXXGHYC · 鄭凱宇)',
+    recipientsCount: (n: number) => ` (${n})`,
+    recipientsHint: 'Mix departments (A10INTD1-1), sections (INTD-1) and people (CHXXGHYC)',
     unavailable: 'Could not load the current recipients. Please try again.',
     searchFailed: 'Search failed. Please try again.',
     searching: 'Searching…',
     noMatch: 'No match',
     minChars: (n) => `Type at least ${n} characters`,
-    searchPlaceholder: (n) => `Type ${n}+ characters to search departments, sections, NT accounts or names`,
+    searchPlaceholder: (n) => `Type ${n}+ characters to search departments, sections or NT accounts`,
     linkLabel: 'Share link',
     copy: 'Copy',
     copied: 'Copied',
@@ -25,6 +26,8 @@ export const en: Translations = {
   },
 
   common: {
+    copy: 'Copy',
+    copied: 'Copied',
     cancel: 'Cancel',
     gotIt: 'Got it',
     retry: 'Retry',
@@ -86,9 +89,10 @@ export const en: Translations = {
 
   gallery: {
     sortLabel: 'Sort:',
-    sortPinned: 'Pinned first',
-    sortRecent: 'Most recent',
-    sortName: 'Name A→Z',
+    sortRecent: 'Newest first',
+    sortOldest: 'Oldest first',
+    sortNameAsc: 'Name A→Z',
+    sortNameDesc: 'Name Z→A',
     emptyAll: 'No Artifacts yet.',
     emptyYours: 'You have not produced any Artifacts yet.',
     emptyShared: 'Nothing has been shared with you yet.',
@@ -102,10 +106,9 @@ export const en: Translations = {
   },
 
   chat: {
+    retryRun: 'Try again',
     agentName: 'eRD AI',
     agentThinking: 'eRD AI is working…',
-    agentStopped: 'eRD AI · stopped',
-    stopped: '⏹ Generation stopped',
     networkError: '⚠ Connection lost — please send again',
     viewHtml: 'View HTML',
     htmlLive: 'HTML being written',
@@ -120,6 +123,9 @@ export const en: Translations = {
     questionTitle: 'Analysis conditions',
     questionSubmit: 'Send',
     questionDisabledHint: 'Answer the questions above first',
+    questionCustomPlaceholder: 'Or type your own…',
+    questionOpenPlaceholder: 'Type your answer…',
+    questionSelectPlaceholder: 'Choose…',
     uploadingWait: 'Files are still being processed — sending resumes once they finish',
     thinking: 'Thinking',
     workedThrough: (n: number) => `Worked through ${n} step${n === 1 ? '' : 's'}`,
@@ -156,7 +162,6 @@ export const en: Translations = {
     minutesAgo: (n: number) => `${n}m ago`,
     hoursAgo: (n: number) => `${n}h ago`,
     yesterday: 'Yesterday',
-    weekday: (day: number) => ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][day],
     monthDay: (month: number, date: number) =>
       `${['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][month]} ${date}`,
     monthDayYear: (month: number, date: number, year: number) =>
@@ -165,25 +170,22 @@ export const en: Translations = {
 
   connectors: {
     title: 'Connectors',
-    subtitle: (connected: number, total: number) =>
-      `Connect eRD AI to your RD data sources · ${connected} of ${total} connected.`,
+    subtitle: (selected: number, total: number) =>
+      `Connect eRD AI to your RD data sources · ${selected} of ${total} selected.`,
     selectedSources: 'Selected sources',
     clearAll: 'Clear all',
     noneSelected: 'No sources selected yet — connect one below.',
     searchPlaceholder: 'Search data sources…',
     filterAll: 'All',
-    filterConnected: 'Connected',
-    filterNotConnected: 'Not Connected',
+    filterSelected: 'Selected',
+    filterNotSelected: 'Not selected',
+    attached: 'Attached',
     showing: (shown: number, total: number) => `Showing ${shown} of ${total}`,
     submit: 'Submit',
-    add: 'Add',
-    addPlaceholder: 'Add a custom data source (e.g. My Team DB)…',
     noMatch: (keyword: string) => `No data sources match "${keyword}".`,
-    statusConnecting: 'Connecting…',
-    statusConnected: 'Connected',
-    statusExpired: 'Token expired',
-    statusNoAccess: 'No access',
-    statusNotConnected: 'Not connected',
+    statusSelected: 'Selected',
+    statusNotSelected: 'Not selected',
+    statusUnavailable: 'Unavailable',
   },
 
   fileModal: {

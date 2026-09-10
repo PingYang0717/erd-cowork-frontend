@@ -1,6 +1,9 @@
+/* A column, not a row: the meta line goes UNDER the bubble, not beside it. Left as a row
+   it became a third item in the same line and was pushed off the right edge of the pane. */
 .userRow {
   display: flex;
-  justify-content: flex-end;
+  flex-direction: column;
+  align-items: flex-end;
 }
 
 /* Attachment chips sit inside the blue bubble, above the text (mockup). */
@@ -192,4 +195,92 @@
   line-height: 1.6;
   color: var(--erd-color-text-secondary, #595959);
   white-space: pre-wrap;
+}
+
+/* What a message says about itself: how long it took, what to do about it, and when it
+   was sent. The controls sit between the two times, which read as context at the edges. */
+.meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 4px;
+  min-height: 22px;
+}
+
+/* The two readings at either end of the row. */
+.metaAside {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  /* Matches the icon buttons' box, so a row of 11px text and 24px buttons shares one
+     centre line rather than each finding its own. */
+  height: 24px;
+  line-height: 1;
+  font-size: 11px;
+  color: var(--erd-color-text-tertiary, #8c8c8c);
+  transition: opacity 0.12s ease;
+}
+
+/* How long the turn took stays on show: it is the reply describing its own cost, and a
+   reader comparing two runs should not have to hunt for it one hover at a time. */
+.metaTimer {
+  opacity: 1;
+}
+
+/* When it was sent is something a reader goes looking for, never something they opened
+   the thread to read — so it waits to be asked for, even on the newest turn. */
+.metaTime {
+  opacity: 0;
+}
+
+.metaAsideIcon {
+  font-size: 11px;
+}
+
+/* The controls. Hidden on an older turn, kept on the newest one — that is the reply the
+   reader is acting on, and hiding its controls behind a pointer makes them findable only
+   by accident. */
+.metaActions {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+
+.metaActionsAlways {
+  opacity: 1;
+}
+
+/* `:focus-within` is not a nicety here — without it a button is focusable while
+   invisible, which is worse than not having it at all (ADR-0014). */
+.userRow:hover .metaTime,
+.userRow:focus-within .metaTime,
+.aiRow:hover .metaTime,
+.aiRow:focus-within .metaTime,
+.userRow:hover .metaActions,
+.userRow:focus-within .metaActions,
+.aiRow:hover .metaActions,
+.aiRow:focus-within .metaActions {
+  opacity: 1;
+}
+
+.metaButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  font-size: 13px;
+  color: var(--erd-color-text-tertiary, #8c8c8c);
+  cursor: pointer;
+}
+
+.metaButton:hover {
+  background: var(--erd-color-fill-tertiary, rgba(0, 0, 0, 0.04));
+  color: var(--erd-color-text-secondary, #595959);
 }

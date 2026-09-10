@@ -77,8 +77,16 @@ _Avoid_: 生成、Generate（畫面上的按鈕曾叫「生成 Artifact」，但
 同一個 Artifact 的歷史產出版本，可在版本切換選單中選擇檢視。
 
 **Connector**:
-一個資料來源的連線狀態（已連線／可連線／已過期／無權限），例如 Inline、WAT、CP、Lot Info、Lot Abnormal、Process、Defect、TEM、Recipe、Offline Tool Log。跨 Session 共用；目前是**使用者偏好**（選了哪些來源，存 localStorage），後端連線端點落地後升級為帳號層級的事實。Scenario 執行時會參照已連線的 Connector 取得資料，**也決定分析條件表單上 Data type 有哪些可選**。
+一個 Agent 可以讀取的資料來源，例如 Inline、WAT、CP、Lot Info、Lot Abnormal、Process、Defect、TEM、Recipe、Offline Tool Log。目錄由後端提供（`GET /connectors`），跨 Session 共用。
+
+Connector 自己只有一個狀態：**可不可以被選**（`enabled`）。憑證過期、連線中斷、被管理員停用都是同一件事，因為使用者對這三者能做的事完全一樣。「這場對話正在用哪些來源」**不是 Connector 的事實**，是 Session 的（見下一條）。同一個來源可以掛在 A 對話而不掛在 B 對話，所以 Connector 上沒有任何欄位答得出這件事。
 _Avoid_: Data source, Integration
+
+**已選來源（Selected sources）**:
+一場 Session 正在讓 Agent 讀取的 Connector 集合，存在該 Session 上。使用者在 Connectors 面板上編輯草稿、按下送出才整組寫回——一次請求描述的是結果而不是一個改動。Scenario 執行時會參照它取得資料，**也決定分析條件表單上 Data type 有哪些可選**。
+
+使用者上次送出的組合會記在本機，只在一場對話**還沒選過任何來源**時當成面板的預設值。那是一個提議，不是事實：它從不代替使用者寫進 Session。
+_Avoid_: 已連線的 Connector（把 Session 的事實說成 Connector 的屬性，正是這一版拆開的東西）
 
 **保留期（Retention）**:
 上傳檔案與 workspace 依 Session 最後活動時間保留的期限（後端 `GET /config` 的 `retentionDays`）。逾期後後端清除檔案**內容**但保留那筆紀錄，這種檔案在畫面上標示「已過期」——它擋住送出，也讓修復（Repair）不可行，因為要重跑的資料已經不存在（FILES_EXPIRED）。

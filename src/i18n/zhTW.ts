@@ -15,7 +15,11 @@ export const zhTW = {
     /** The dialog's own subtitle, above the recipient picker. */
     subtitle: 'Artifact 已發布,可分享給團隊檢視。',
     recipientsLabel: '分享對象',
-    recipientsHint: '可混選部門(A10INTD1-1)、課別(INTD-1)與人員(CHXXGHYC · 鄭凱宇)',
+    recipientsCount: (n: number) => `（${n}）`,
+    /** The examples are what the search key can be. `GET /hr/employeesAndOrgs` does not
+     *  take Chinese input, so a 中文姓名 among them offers a way in that returns nothing —
+     *  and the reader who tries it concludes the person is not in the directory. */
+    recipientsHint: '可混選部門(A10INTD1-1)、課別(INTD-1)與人員(CHXXGHYC)',
     /** The list could not be read — deliberately not "shared with nobody", which is a
      *  different fact and the one a user would act on. */
     unavailable: '讀不到目前的分享對象,請稍後再試。',
@@ -23,7 +27,7 @@ export const zhTW = {
     searching: '搜尋中…',
     noMatch: '找不到符合的對象',
     minChars: (n: number) => `請至少輸入 ${n} 個字元`,
-    searchPlaceholder: (n: number) => `輸入 ${n} 個字元以上搜尋部門 / 課別 或 NT account · 姓名`,
+    searchPlaceholder: (n: number) => `輸入 ${n} 個字元以上搜尋部門 / 課別 或 NT account`,
     linkLabel: '分享連結',
     copy: '複製',
     copied: '已複製',
@@ -40,6 +44,8 @@ export const zhTW = {
 
   /** Words that appear in more than one place and mean the same thing in each. */
   common: {
+    copy: '複製',
+    copied: '已複製',
     cancel: '取消',
     gotIt: '知道了',
     retry: '重試',
@@ -116,9 +122,10 @@ export const zhTW = {
 
   gallery: {
     sortLabel: '排序:',
-    sortPinned: '釘選優先',
-    sortRecent: '最近建立',
-    sortName: '名稱 A→Z',
+    sortRecent: '時間 新到舊',
+    sortOldest: '時間 舊到新',
+    sortNameAsc: '名稱 A→Z',
+    sortNameDesc: '名稱 Z→A',
     emptyAll: '目前還沒有 Artifact。',
     emptyYours: '你還沒有生成任何 Artifact。',
     emptyShared: '目前沒有分享給你的 Artifact。',
@@ -135,11 +142,12 @@ export const zhTW = {
   },
 
   chat: {
+    /** Appends a turn — the backend can neither replace nor remove one, so this asks the
+     *  same question again rather than re-running the one that stopped. */
+    retryRun: '重新嘗試',
     /** The product's own name, unchanged in either language. */
     agentName: 'eRD AI',
     agentThinking: 'eRD AI 處理中…',
-    agentStopped: 'eRD AI · 已停止',
-    stopped: '⏹ 已停止生成',
     networkError: '⚠ 連線中斷，請重新送出一次',
     viewHtml: '查看 HTML',
     htmlLive: '產生中的 HTML',
@@ -158,6 +166,19 @@ export const zhTW = {
     questionTitle: '分析條件',
     questionSubmit: '送出',
     questionDisabledHint: '請先回答上面的問題',
+    /** The backend's flat question carries options and nothing else — no wording for the
+     *  box beside them — so the dictionary supplies it. An empty box with no placeholder
+     *  reads as something that failed to load rather than as an invitation.
+     *
+     *  Two of them, because "或" only makes sense when there is something to choose
+     *  instead: a question that offered no options has nothing for the reader to type
+     *  *rather than*. */
+    questionCustomPlaceholder: '或自行輸入…',
+    questionOpenPlaceholder: '請輸入…',
+    /** The list's own wording. It and the box below it are different controls doing
+     *  different things, so they must not read the same — sharing one string made the
+     *  card look like it was asking twice for the same thing. */
+    questionSelectPlaceholder: '請選擇…',
     /** Explains why sending is blocked while the file set is still settling — the input
      *  stays typable, only the send is held. */
     uploadingWait: '檔案處理中，完成後即可送出',
@@ -211,32 +232,36 @@ export const zhTW = {
     minutesAgo: (n: number) => `${n} 分鐘前`,
     hoursAgo: (n: number) => `${n} 小時前`,
     yesterday: '昨天',
-    weekday: (day: number) => ['週日', '週一', '週二', '週三', '週四', '週五', '週六'][day],
     monthDay: (month: number, date: number) => `${month + 1} 月 ${date} 日`,
     monthDayYear: (month: number, date: number, year: number) => `${year} 年 ${month + 1} 月 ${date} 日`,
   },
 
   connectors: {
     title: 'Connectors',
-    subtitle: (connected: number, total: number) =>
-      `把 eRD AI 連上你的 RD 資料來源 · ${total} 個中已連線 ${connected} 個。`,
+    /** 數的是「這次選了幾個」,不是「這場對話目前連著幾個」——面板在編輯的是前者,
+     *  後者由每一列自己的「已連結」標記說。 */
+    subtitle: (selected: number, total: number) =>
+      `把 eRD AI 連上你的 RD 資料來源 · ${total} 個中已選擇 ${selected} 個。`,
     selectedSources: '已選來源',
     clearAll: '全部清除',
     noneSelected: '尚未選擇任何來源 — 從下方連一個。',
     searchPlaceholder: '搜尋資料來源…',
     filterAll: '全部',
-    filterConnected: '已連線',
-    filterNotConnected: '未連線',
+    filterSelected: '已選擇',
+    filterNotSelected: '未選擇',
+    /** 這一列現在真的綁在這場對話上。與上面那些不同,它是關於對話的事實,不是關於
+     *  這個面板的:要按下送出才會變成真的。 */
+    attached: '已連結',
     showing: (shown: number, total: number) => `顯示 ${shown} / ${total}`,
     submit: '送出',
-    add: '新增',
-    addPlaceholder: '新增自訂資料來源（例如 My Team DB）…',
     noMatch: (keyword: string) => `沒有符合「${keyword}」的資料來源。`,
-    statusConnecting: '連線中…',
-    statusConnected: '已連線',
-    statusExpired: 'Token 已過期',
-    statusNoAccess: '無權限',
-    statusNotConnected: '未連線',
+    statusSelected: '已選擇',
+    statusNotSelected: '未選擇',
+    /** One state, not three. `enabled: false` covers an expired token, a connection that
+     *  is down and an administrator switching the source off — the reason stays with the
+     *  backend, which is the only party that knows it, and the reader has the same
+     *  nothing to do about any of them. */
+    statusUnavailable: '目前不可用',
   },
 
   fileModal: {

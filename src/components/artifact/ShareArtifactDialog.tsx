@@ -12,9 +12,11 @@ import type { Artifact, DirectoryEntry, ShareTarget } from '@/types/api';
 import { artifactHref } from '@/utils/artifactUrl';
 import {
   directoryEntryKey,
-  directoryEntryLabel,
   directoryEntryMatches,
+  directoryEntryOptionText,
+  directoryEntrySelectedName,
   directoryShareTarget,
+  employeeAvatarUrl,
 } from '@/utils/directoryEntry';
 
 import styles from './ShareArtifactDialog.module.css';
@@ -108,7 +110,10 @@ const ShareArtifactDialog: React.FC<ShareArtifactDialogProps> = ({ open, onClose
   };
 
   return (
-    <Modal open={open} onCancel={handleClose} title={t.share.title} width={460} footer={null} destroyOnHidden>
+    // Wider than the rest of the app's dialogs because of the recipient field: at 460 a
+    // share to a dozen people wrapped into four rows of tags, and every row pushed the
+    // link and the confirm further down.
+    <Modal open={open} onCancel={handleClose} title={t.share.title} width={560} footer={null} destroyOnHidden>
       <p className={styles.subtitle}>{t.share.subtitle}</p>
       <div className={styles.infoCard} aria-label="Artifact details">
         <span className={styles.infoCardIcon} aria-hidden>
@@ -129,7 +134,14 @@ const ShareArtifactDialog: React.FC<ShareArtifactDialogProps> = ({ open, onClose
       </div>
 
       <div className={styles.section}>
-        <div className={styles.sectionLabel}>{t.share.recipientsLabel}</div>
+        <div className={styles.sectionLabel}>
+          {t.share.recipientsLabel}
+          {/* Once the tags scroll among themselves the field stops answering "how many"
+              at a glance — and how many people can see this is the question the dialog
+              exists to settle. Absent at zero: "(0)" is noise beside a field that is
+              visibly empty. */}
+          {chosen.length > 0 && <span className={styles.sectionCount}>{t.share.recipientsCount(chosen.length)}</span>}
+        </div>
         <RecipientSelect value={chosen} loading={isLoading} disabled={isUnavailable} onChange={handleChoose} />
         {/* Editing is closed rather than the dialog: a delta built on a baseline nobody
             could read is not an edit the user meant to make. Submit stays pressable —
@@ -183,6 +195,36 @@ const ShareArtifactDialog: React.FC<ShareArtifactDialogProps> = ({ open, onClose
   );
 };
 
+/** A person's photo, or their initial when there is none to fetch. Round, because that is
+ *  how a person is drawn everywhere else in the app and a square would read as a logo.
+ *
+ *  `onError` rather than a HEAD request: the photo host answers for most employees and
+ *  not for some, and the only honest way to learn which is to ask for the image. */
+const RecipientAvatar: React.FC<{ entry: DirectoryEntry }> = ({ entry }) => {
+  const src = employeeAvatarUrl(entry.emplId);
+  const [failed, setFailed] = useState(false);
+  const name = directoryEntrySelectedName(entry);
+
+  if (src === null || failed) {
+    return (
+      <span aria-hidden className={styles.recipientAvatarFallback}>
+        {name.slice(0, 1)}
+      </span>
+    );
+  }
+  return (
+    <img
+      // Decorative: the name is right beside it, and a screen reader reading the same
+      // person twice is noise.
+      alt=""
+      aria-hidden
+      src={src}
+      className={styles.recipientAvatar}
+      onError={() => setFailed(true)}
+    />
+  );
+};
+
 interface RecipientSelectProps {
   /** The chosen entries themselves, not their keys: the share payload needs each one's
    *  type and id, which only the entry carries. */
@@ -202,33 +244,44 @@ interface RecipientSelectProps {
 const RecipientSelect: React.FC<RecipientSelectProps> = ({ value, loading, disabled, onChange }) => {
   const t = useTranslations();
 
+  // Two, not one. `typed` is what is in the box; `keyword` is what the list was built
+  // from. They part company at the moment of a pick: the box empties so the next name can
+  // be typed straight away, while the list stays exactly as it was — a list that collapsed
+  // on every pick would make choosing three people three searches.
+  const [typed, setTyped] = useState('');
   const [keyword, setKeyword] = useState('');
 
   // Below the state it feeds from, against the top-block rule: the search hook's input
   // is the debounced keyword, and a dependency is a hard constraint the grouping yields to.
   const { entries, isSearching, isError, enabled } = useDirectorySearch(useDebouncedValue(keyword));
 
-  // Every option the field can currently show: what the search just returned, plus
-  // everything already chosen. The chosen ones have to stay in the list — a value with no
-  // matching option renders as its raw key, which is how recipients loaded from the
-  // server first showed up as `ORG:INTD-1` instead of their name.
+  // What the search returned, less whoever is already chosen. A chosen recipient is a tag
+  // above the box; offering them again is offering something that cannot be taken.
+  //
+  // Chosen entries used to be merged in here instead, because a value with no matching
+  // option renders as its raw key — which is how recipients loaded from the server first
+  // showed up as `ORG:INTD-1`. `labelInValue` below is what makes their absence safe: the
+  // tag carries its own label and no longer has to find one in the list.
   const options = useMemo(() => {
-    const byKey = new Map(value.map((entry) => [directoryEntryKey(entry), entry]));
-    for (const entry of entries) {
-      byKey.set(directoryEntryKey(entry), entry);
-    }
-    return [...byKey.entries()].map(([key, entry]) => ({
-      value: key,
-      label: directoryEntryLabel(entry),
-      entry,
-    }));
+    const chosen = new Set(value.map(directoryEntryKey));
+    return entries
+      .filter((entry) => !chosen.has(directoryEntryKey(entry)))
+      .map((entry) => ({
+        value: directoryEntryKey(entry),
+        label: directoryEntrySelectedName(entry),
+        entry,
+      }));
   }, [entries, value]);
 
-  const handleChange = (keys: string[]) => {
+  const handleChange = (chosen: { value: string }[]) => {
+    // The box empties, the list does not: `keyword` is deliberately left where it is.
+    setTyped('');
     // Resolve the keys back to entries. The caller works in entries, not keys: the share
     // payload needs each one's kind and id, which only the entry carries.
     const known = new Map([...value, ...entries].map((entry) => [directoryEntryKey(entry), entry]));
-    onChange(keys.map((key) => known.get(key)).filter((entry): entry is DirectoryEntry => entry !== undefined));
+    onChange(
+      chosen.map(({ value: key }) => known.get(key)).filter((entry): entry is DirectoryEntry => entry !== undefined)
+    );
   };
 
   return (
@@ -246,14 +299,32 @@ const RecipientSelect: React.FC<RecipientSelectProps> = ({ value, loading, disab
         // never hides a row the backend returned, because it looks at more than the
         // backend was given.
         filterOption: (input, option) => option?.entry === undefined || directoryEntryMatches(option.entry, input),
-        searchValue: keyword,
-        onSearch: setKeyword,
+        searchValue: typed,
+        onSearch: (input) => {
+          setTyped(input);
+          setKeyword(input);
+        },
       }}
       loading={isSearching || loading}
       disabled={disabled}
-      value={value.map(directoryEntryKey)}
+      // The tag carries its own label, so a chosen recipient no longer needs an option to
+      // read their name off — which is what lets the list drop them entirely.
+      labelInValue
+      value={value.map((entry) => ({ value: directoryEntryKey(entry), label: directoryEntrySelectedName(entry) }))}
       onChange={handleChange}
       options={options}
+      optionRender={(option) => {
+        const entry = (option.data as { entry?: DirectoryEntry }).entry;
+        if (entry === undefined) {
+          return option.label;
+        }
+        return (
+          <span className={styles.recipientOption}>
+            {entry.type === 'EMPLOYEE' && <RecipientAvatar entry={entry} />}
+            {directoryEntryOptionText(entry)}
+          </span>
+        );
+      }}
       notFoundContent={
         isSearching
           ? t.share.searching
@@ -266,7 +337,7 @@ const RecipientSelect: React.FC<RecipientSelectProps> = ({ value, loading, disab
               : t.share.minChars(DIRECTORY_SEARCH_MIN_LENGTH)
       }
       placeholder={t.share.searchPlaceholder(DIRECTORY_SEARCH_MIN_LENGTH)}
-      style={{ width: '100%' }}
+      className={styles.recipientSelect}
     />
   );
 };

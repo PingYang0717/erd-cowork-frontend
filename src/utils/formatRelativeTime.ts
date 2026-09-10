@@ -7,7 +7,7 @@ const DAY_MS = 24 * HOUR_MS;
 /** A moment, relative to now, in the words of the current language.
  *
  *  Reads the dictionary at call time rather than importing a constant — the language
- *  can change while the app is open, and the weekday / month names differ between them.
+ *  can change while the app is open, and the month names differ between them.
  *  A pure function called at the point of display (not a component), so it uses
  *  `getTranslations()` like the other display-time helpers.
  *
@@ -41,9 +41,9 @@ export const formatRelativeTime = (isoString: string, now: Date = new Date()): s
   if (dayDiff === 1) {
     return t.yesterday;
   }
-  if (dayDiff > 1 && dayDiff < 7) {
-    return t.weekday(then.getDay());
-  }
+  // Past yesterday it says the date. A weekday on its own used to stand in for the first
+  // week — but "Thu" says which day of the week it was and nothing about which week, and
+  // on a shelf going back months that is the one thing the reader cannot work out.
   return then.getFullYear() === now.getFullYear()
     ? t.monthDay(then.getMonth(), then.getDate())
     : t.monthDayYear(then.getMonth(), then.getDate(), then.getFullYear());

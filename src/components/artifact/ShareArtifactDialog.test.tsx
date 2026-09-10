@@ -215,7 +215,9 @@ describe('Sharing an Artifact: picking recipients', () => {
 
     // Already there when the dialog opens — nothing was typed to find it, and it reads
     // with its name because the share list comes back in the picker's own shape.
-    const chip = await screen.findByTitle('INTD-1 | 整合技術一課');
+    // Chosen rows read as the one short name, both kinds alike — the code that told them
+    // apart in the list has no work left to do once the choice is settled.
+    const chip = await screen.findByTitle('整合技術一課');
     expect(chip).toBeInTheDocument();
 
     // antd's own remove affordance on the tag; there is no accessible name on it to
@@ -301,8 +303,74 @@ describe('Sharing an Artifact: picking recipients', () => {
       const chosen = Array.from(document.querySelectorAll('.ant-select-selection-item')).map((node) =>
         node.getAttribute('title')
       );
-      expect(chosen).toContain('INTD-1 | CHXXGHYC | 鄭凱宇');
+      expect(chosen).toContain('鄭凱宇');
     });
+  });
+
+  /** Once the tags scroll among themselves the list stops answering "how many" at a
+   *  glance, and how many people can see an Artifact is the question this dialog exists
+   *  to settle. */
+  it('says how many recipients are chosen', async () => {
+    const user = userEvent.setup();
+    renderDialog();
+
+    const field = await screen.findByRole('combobox');
+    await user.click(field);
+    await user.type(field, 'CHXXGHYC');
+    await user.click(await screen.findByTitle('鄭凱宇', {}, { timeout: 3000 }));
+
+    // Read off the element rather than queried by text: the count is its own node, and
+    // Testing Library's text matcher joins only an element's DIRECT text children — so
+    // neither half ever spells the whole line.
+    await waitFor(() =>
+      expect(document.querySelector('[class*="sectionLabel"]')?.textContent).toBe(`${en.share.recipientsLabel} (1)`)
+    );
+  });
+
+  /** Adding three people should be one search, not three. antd empties the box on a pick
+   *  and takes the option list down with it, so the second name meant typing the same
+   *  department code again. The box empties; the list stays where it was until the next
+   *  keystroke replaces it. */
+  it('clears the typed text on a pick but leaves the list standing', async () => {
+    const user = userEvent.setup();
+    renderDialog();
+
+    const field = await screen.findByRole('combobox');
+    await user.click(field);
+    await user.type(field, 'INTD-1');
+
+    // The search matches a section and the people in it.
+    await screen.findByTitle('鄭凱宇', {}, { timeout: 3000 });
+    await user.click(screen.getByTitle('鄭凱宇'));
+
+    // The box is empty and ready for the next name…
+    expect(field).toHaveValue('');
+    // …and the rest of that same search is still on offer, unsearched-for a second time.
+    expect(await screen.findByTitle('王思涵')).toBeInTheDocument();
+
+    // The row just picked has left the list. The tag above the box already says it is
+    // chosen, and a list whose whole job is offering the next one has nothing to gain by
+    // still offering the last one.
+    expect(document.querySelector('.ant-select-item-option[title="鄭凱宇"]')).toBeNull();
+  });
+
+  /** The list is where rows are told apart, so an organisation carries its code and a
+   *  person carries their photo. Once chosen both read as the one short name — see the
+   *  recipient tests above. */
+  it('draws a person with their photo and an organisation with its code', async () => {
+    const user = userEvent.setup();
+    renderDialog();
+
+    const field = await screen.findByRole('combobox');
+    await user.click(field);
+    await user.type(field, 'INTD-1');
+
+    const personRow = await screen.findByTitle('鄭凱宇', {}, { timeout: 3000 });
+    // Keyed on the employee number, which is a different field from the NT account the
+    // share payload addresses them by.
+    expect(personRow.querySelector('img')?.getAttribute('src')).toMatch(/901234\.jpg$/);
+
+    expect(await screen.findByText('整合技術一課 (INTD-1)')).toBeInTheDocument();
   });
 
   /** Submit both saves and closes, so closing proves nothing — an unchanged list leaves
