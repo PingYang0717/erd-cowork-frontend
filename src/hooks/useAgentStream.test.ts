@@ -305,7 +305,10 @@ describe('useAgentStream', () => {
     expect(result.current.state.durationMs).toBeGreaterThanOrEqual(0);
   });
 
-  it('clears everything from the previous run when reset', async () => {
+  /** Sending is what clears the last run — there is no separate reset, and there never
+   *  was a caller for the one this hook used to export. A second run inheriting the
+   *  first's answer or thinking would show one turn's words under the next turn's. */
+  it('clears everything from the previous run when the next one starts', async () => {
     const stream = mockAgentStream();
     const { result } = renderAgentStream();
 
@@ -318,11 +321,14 @@ describe('useAgentStream', () => {
     act(() => stream.close());
     await waitFor(() => expect(result.current.state.isStreaming).toBe(false));
 
-    act(() => result.current.reset());
+    act(() => {
+      void result.current.send({ question: 'Same analysis, next period.' });
+    });
 
     expect(result.current.state.answer).toBeNull();
     expect(result.current.state.thinking).toBe('');
     expect(result.current.state.durationMs).toBeNull();
+    expect(result.current.state.stopped).toBe(false);
   });
 
   it('aborts the in-flight request when the component unmounts', async () => {

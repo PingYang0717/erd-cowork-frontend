@@ -2,9 +2,9 @@ import React, { type ReactNode, useCallback, useEffect, useRef, useState } from 
 import { ThunderboltFilled } from '@ant-design/icons';
 
 import DataBoundary from '@/components/common/DataBoundary';
+import { INTERRUPTED_TEXTS } from '@/constants/wireStrings';
 import { type SendInput, useAgentStream } from '@/hooks/useAgentStream';
 import { useArtifactRepair } from '@/hooks/useArtifactRepair';
-import { useApplyRememberedDataSources } from '@/hooks/useConnectorMutations';
 import { useSessionDetail } from '@/hooks/useSessionDetail';
 import { useTranslations } from '@/i18n/useTranslations';
 import { useActiveRunStore } from '@/stores/useActiveRunStore';
@@ -98,8 +98,6 @@ const ThreadView: React.FC<ThreadViewProps> = ({ sessionId }) => {
   const setStreamedArtifact = useActiveRunStore((s) => s.setStreamedArtifact);
   const displayedArtifactId = useActiveRunStore((s) => s.displayedArtifactId);
 
-  const applyRememberedDataSources = useApplyRememberedDataSources(sessionId);
-
   /** What the screen reader hears when a run finishes: the complete reply, once. The
    *  thread itself is aria-live="off" (every token used to be re-read; ADR-0014 §live-region), so this
    *  sr-only region is the one place a finished answer is announced from. */
@@ -178,16 +176,18 @@ const ThreadView: React.FC<ThreadViewProps> = ({ sessionId }) => {
       // the end), so it does not defeat ChatComposer's memo mid-stream — the identity
       // changes once per completed turn, outside the token loop.
       setPending({ text: input.question, atLength: messages.length, isAnswer: !optimistic });
-      // Before the message, not after: this is the moment the session comes into being
-      // (ADR-0005), and the run this message starts should already have the capabilities
-      // the user habitually grants.
-      await applyRememberedDataSources(detail.dataSourceIds ?? []);
       await send({ baseArtifactId: displayedArtifactId ?? undefined, ...input });
     },
-    [send, displayedArtifactId, isStreaming, messages.length, applyRememberedDataSources, detail.dataSourceIds]
+    [send, displayedArtifactId, isStreaming, messages.length]
   );
 
   const handleSend = useCallback((input: SendInput) => submit(input, true), [submit]);
+
+  // The question the stopped run was answering. From the optimistic record when the
+  // refetch has not carried it home yet, else from the history's last USER message —
+  // between those two, one of them always has it.
+  const lastQuestion =
+    pending?.text ?? [...messages].reverse().find((message) => message.sender === 'USER')?.text ?? '';
 
   // The backend body is question-only, so a reask's answers travel as one prose
   // sentence composed from the form (labels stand in for values on the wire).
@@ -201,19 +201,43 @@ const ThreadView: React.FC<ThreadViewProps> = ({ sessionId }) => {
     [submit]
   );
 
-  // A run that ended cleanly hands over to the refetched history — the bubble it left
-  // behind and the one history renders are now the same component, so the swap is
-  // invisible. A run that stopped, failed or is waiting on a reask has something the
-  // history does not carry, so it stays.
-  const runEndedVisibly = state.stopped || state.error !== null || state.question !== null;
-  // `AgentStreamState` is structurally a `LiveRun` superset, so the reducer's state
-  // passes as-is — the twelve-field hand-copy this used to be meant every new live
-  // field touched four files.
-  const live: LiveRun | null = state.isStreaming || runEndedVisibly ? state : null;
+  // What this run put on screen. A stop before the first token leaves all of it empty,
+  // and a bubble drawn from nothing is a label and a stop notice with a blank between
+  // them — which reads as a reply that failed to render rather than as a run that never
+  // got going.
+  const runProducedSomething = Boolean(
+    state.liveText || state.answer || state.steps.length || state.artifact || state.thinking || state.codeText
+  );
 
   // Suppress the optimistic bubble once the refetched history has grown past the point
   // it was sent from — that growth is the refetch carrying the message home (ADR-0015 §optimistic-bubble).
   const stillAhead = pending !== null && showOptimisticBubble(messages.length, pending.atLength);
+
+  // Whether the backend's own record of the interruption is home. Asked of the history's
+  // tail rather than of its length: length grows for reasons that have nothing to do with
+  // this — the backend recording the question, a refetch racing the stop — and each of
+  // those would retire the bubble while the record was still on its way.
+  const lastMessage = messages[messages.length - 1];
+  const interruptionRecorded = lastMessage !== undefined && INTERRUPTED_TEXTS.includes(lastMessage.text);
+
+  // A run that ended cleanly hands over to the refetched history — the bubble it left
+  // behind and the one history renders are now the same component, so the swap is
+  // invisible. A run that failed or is waiting on a reask has something the history does
+  // not carry, so it stays.
+  //
+  // A stopped run hands over too, and that is the whole point: the backend writes its own
+  // record of the interruption, and what the reader is looking at has to be what the
+  // history holds — otherwise the screen says one thing now and another after a reload.
+  // So the bubble holds the half-written reply only until the refetch lands, and then the
+  // thread IS the history. (The half-written reply is not persisted, so it goes with it —
+  // that is the backend gap, made visible rather than papered over. See
+  // docs/api/backend-feedback.md.)
+  const runEndedVisibly =
+    (state.stopped && runProducedSomething && !interruptionRecorded) || state.error !== null || state.question !== null;
+  // `AgentStreamState` is structurally a `LiveRun` superset, so the reducer's state
+  // passes as-is — the twelve-field hand-copy this used to be meant every new live
+  // field touched four files.
+  const live: LiveRun | null = state.isStreaming || runEndedVisibly ? state : null;
   const optimisticUserText = stillAhead && !pending.isAnswer ? pending.text : null;
   /** A reask's answer that the refetched history has not caught up with yet. The card it
    *  was submitted from reads it back the same way it reads the settled reply.
@@ -244,6 +268,7 @@ const ThreadView: React.FC<ThreadViewProps> = ({ sessionId }) => {
           onAnswer={handleAnswer}
           // The offer is about the artifact this conversation just produced, so it
           // belongs at the tail of the thread and scrolls with it.
+          onRetry={() => void submit({ question: lastQuestion }, true)}
           bottomSlot={
             repairOffer ? (
               <RepairOfferCard

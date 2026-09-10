@@ -135,3 +135,9 @@ Gallery 只放已發布的。沒發布的待在產生它的 session 對話串裡
   必填。
 - **自訂資料源仍存在 localStorage**。把資料源加進**目錄**與把它附掛到**對話**是兩件
   事,只有後者有端點。新增時兩件一起做(新增即是選用)。
+
+**2026-09-08 追記。** 上面 Q5 那一行描述的形狀已經改了:`SessionDetail.dataSourceIds`
+更名為 `connectors` 並改為必填,`Connector` 的四態 `status` 收斂成布林 `enabled`,而
+`useConnectors` 不再 join——它把目錄與這場對話的選擇並排交出,兩個維度不合併。決策本身
+(「哪一場對話在用哪些來源」是 session 的事實,不是 connector 的屬性)沒有變,反而是這次
+把它落實到型別上。見 `docs/api/interface.md` 的 Connector 一節。

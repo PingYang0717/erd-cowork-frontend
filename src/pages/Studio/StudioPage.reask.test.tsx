@@ -32,7 +32,7 @@ const historyOf = (...messages: ReturnType<typeof message>[]) => {
         createdAt: new Date(0).toISOString(),
         messages,
         files: [],
-        dataSourceIds: [],
+        connectors: [],
       })
     )
   );

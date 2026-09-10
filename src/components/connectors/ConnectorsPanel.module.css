@@ -252,14 +252,6 @@
   padding: 1px 6px;
 }
 
-.customTag {
-  font-size: 10px;
-  color: var(--erd-color-text-tertiary, #8c8c8c);
-  border: 1px solid var(--erd-color-border, #d9d9d9);
-  border-radius: 5px;
-  padding: 0 5px;
-}
-
 .description {
   font-size: 11.5px;
   color: var(--erd-color-text-tertiary, #8c8c8c);
@@ -292,44 +284,27 @@
 
 /* Per-state toggle styling (the mockup shows connection state on the button
    itself): connected = solid primary with a white check, connecting =
-   primary-tinted with the spinner, expired = warning border, otherwise a
-   1.5px gray border. Doubled class specificity outranks antd's base rule. */
+   otherwise a 1.5px gray border. Doubled class specificity outranks antd's
+   base rule. */
 .row .toggleButton[data-state='connected'] {
   background: var(--erd-color-primary, #1677ff);
   border-color: var(--erd-color-primary, #1677ff);
   color: #fff;
 }
 
-.row .toggleButton[data-state='connecting'] {
-  background: var(--erd-color-primary-bg, #e6f4ff);
-  border-color: var(--erd-color-primary-border, #91caff);
-  color: var(--erd-color-primary, #1677ff);
-}
-
-.row .toggleButton[data-state='expired'] {
-  border-color: var(--erd-color-warning, #faad14);
-  color: var(--erd-color-warning, #faad14);
-}
-
 .row .toggleButton[data-state='available'],
-.row .toggleButton[data-state='no_access'] {
+.row .toggleButton[data-state='unavailable'] {
   border-width: 1.5px;
   border-color: var(--erd-color-border, #d9d9d9);
   color: var(--erd-color-text-secondary, rgba(0, 0, 0, 0.65));
 }
 
-.addRow {
-  flex: none;
-  display: flex;
-  gap: 8px;
-  margin-top: 16px;
-  padding-top: 14px;
-  border-top: 1px solid var(--erd-color-border-secondary, #f0f0f0);
-}
-
+/* 8px between the two buttons, matching ShareArtifactDialog's own pair. antd spaces a
+   default modal footer for you; this one is a custom node, so it has to say it. */
 .footer {
   display: flex;
   align-items: center;
+  gap: 8px;
   width: 100%;
 }
 
@@ -337,4 +312,16 @@
   font-size: 12px;
   color: var(--erd-color-text-tertiary, #8c8c8c);
   margin-right: auto;
+}
+
+/* The other dimension: this conversation is drawing on the source right now. Deliberately
+   quieter than the selection controls — it states a fact, it is not something to press. */
+.attachedTag {
+  flex: none;
+  padding: 1px 7px;
+  border-radius: 6px;
+  font-size: 10.5px;
+  line-height: 16px;
+  background: var(--erd-color-success-bg, #f6ffed);
+  color: var(--erd-color-success, #52c41a);
 }
