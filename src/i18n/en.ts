@@ -25,6 +25,8 @@ export const en: Translations = {
   },
 
   common: {
+    copy: 'Copy',
+    copied: 'Copied',
     cancel: 'Cancel',
     gotIt: 'Got it',
     retry: 'Retry',
