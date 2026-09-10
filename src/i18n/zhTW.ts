@@ -43,6 +43,8 @@ export const zhTW = {
 
   /** Words that appear in more than one place and mean the same thing in each. */
   common: {
+    copy: '複製',
+    copied: '已複製',
     cancel: '取消',
     gotIt: '知道了',
     retry: '重試',

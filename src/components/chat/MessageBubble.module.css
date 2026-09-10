@@ -1,6 +1,9 @@
+/* A column, not a row: the meta line goes UNDER the bubble, not beside it. Left as a row
+   it became a third item in the same line and was pushed off the right edge of the pane. */
 .userRow {
   display: flex;
-  justify-content: flex-end;
+  flex-direction: column;
+  align-items: flex-end;
 }
 
 /* Attachment chips sit inside the blue bubble, above the text (mockup). */
@@ -192,4 +195,52 @@
   line-height: 1.6;
   color: var(--erd-color-text-secondary, #595959);
   white-space: pre-wrap;
+}
+
+/* What a message says about itself. Out of the way until asked for: a time and a copy
+   control on every bubble, at full strength, would compete with the conversation. */
+.meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 4px;
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+
+/* `:focus-within` is not a nicety here — without it the copy button is focusable while
+   invisible, which is worse than not having it at all (ADR-0014). */
+.userRow:hover .meta,
+.userRow:focus-within .meta,
+.aiRow:hover .meta,
+.aiRow:focus-within .meta {
+  opacity: 1;
+}
+
+.metaTime {
+  font-size: 11px;
+  color: var(--erd-color-text-tertiary, #8c8c8c);
+}
+
+.metaCopy {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  font: inherit;
+  font-size: 11px;
+  color: var(--erd-color-text-tertiary, #8c8c8c);
+  cursor: pointer;
+}
+
+.metaCopy:hover {
+  background: var(--erd-color-fill-tertiary, rgba(0, 0, 0, 0.04));
+  color: var(--erd-color-text-secondary, #595959);
+}
+
+.metaCopyLabel {
+  line-height: 1;
 }

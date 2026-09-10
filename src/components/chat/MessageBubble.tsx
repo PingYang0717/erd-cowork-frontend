@@ -1,9 +1,17 @@
-import React, { useDeferredValue, useMemo } from 'react';
-import { AppstoreOutlined, LoadingOutlined, ThunderboltFilled, ToolOutlined } from '@ant-design/icons';
+import React, { useDeferredValue, useEffect, useMemo, useState } from 'react';
+import {
+  AppstoreOutlined,
+  CheckOutlined,
+  CopyOutlined,
+  LoadingOutlined,
+  ThunderboltFilled,
+  ToolOutlined,
+} from '@ant-design/icons';
 
 import { INTERRUPTED_TEXTS, REPAIR_RECORD_PREFIXES } from '@/constants/wireStrings';
 import type { AgentStreamState } from '@/hooks/useAgentStream';
 import type { QuestionForm, StepItem } from '@/types/api';
+import { formatRelativeTime } from '@/utils/formatRelativeTime';
 import { stripTableMarkers } from '@/utils/tableMarkers';
 import CollapsiblePanel from './CollapsiblePanel';
 import { Elapsed, LiveElapsed } from './Elapsed';
@@ -34,6 +42,68 @@ import { useTranslations } from '@/i18n/useTranslations';
 import type { Translations } from '@/i18n/zhTW';
 import ReplyText from './ReplyText';
 
+/** What a message says about itself: when it was sent, and an offer to copy it.
+ *
+ *  Always rendered, revealed by CSS on hover or focus. Mounting it on hover instead would
+ *  nudge every message below it on every pass of the pointer, and — worse — would put the
+ *  copy button out of a keyboard's reach entirely, since a keyboard never hovers. Invisible
+ *  but focusable is the trap that pattern usually falls into; `:focus-within` is what
+ *  keeps it out of it (ADR-0014).
+ *
+ *  The relative wording matches the session rail and the version menu. The exact moment is
+ *  on the `title`, where someone who needs it can find it and nobody else has to read it. */
+const MessageMeta: React.FC<{ createdAt?: string | null; copyText: string }> = ({ createdAt, copyText }) => {
+  const t = useTranslations();
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    if (!copied) {
+      return;
+    }
+    const timer = setTimeout(() => setCopied(false), 2000);
+    return () => clearTimeout(timer);
+  }, [copied]);
+
+  if (!createdAt && copyText === '') {
+    return null;
+  }
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(copyText);
+      // Inside the try. The tick is the only confirmation a copy gets, and saying it
+      // whether or not anything reached the clipboard is the mistake the share dialog
+      // already made once.
+      setCopied(true);
+    } catch {
+      // Nothing to add: the text is on screen and still selectable by hand.
+    }
+  };
+
+  return (
+    <div className={styles.meta}>
+      {createdAt && (
+        <time dateTime={createdAt} title={new Date(createdAt).toLocaleString()} className={styles.metaTime}>
+          {formatRelativeTime(createdAt)}
+        </time>
+      )}
+      {/* Nothing to copy — a reply that produced only an Artifact — offers no button: one
+          that copies an empty string claims to have done something it did not. */}
+      {copyText !== '' && (
+        <button
+          type="button"
+          className={styles.metaCopy}
+          aria-label={copied ? 'Copied' : 'Copy message'}
+          onClick={handleCopy}
+        >
+          {copied ? <CheckOutlined aria-hidden /> : <CopyOutlined aria-hidden />}
+          <span className={styles.metaCopyLabel}>{copied ? t.common.copied : t.common.copy}</span>
+        </button>
+      )}
+    </div>
+  );
+};
+
 export interface MessageBubbleProps {
   sender: 'USER' | 'AI';
   /** A settled message's text. The live bubble's text comes from `live.liveText`. */
@@ -57,6 +127,9 @@ export interface MessageBubbleProps {
   /** Puts this reply's artifact on the Artifact pane. Without it the chip is a plain
    *  label (full-page artifact view has no pane to hand to). */
   onPickArtifact?: (artifactId: string) => void;
+  /** When the message was sent. Absent on the live bubble — a run still being written has
+   *  no settled moment, and the backend supplies one when the history catches up. */
+  createdAt?: string | null;
   /** How long the turn behind this bubble took; shown once it is over. */
   durationMs?: number | null;
   /** The open (or visibly-ended) run this bubble fronts. One object instead of the
@@ -95,6 +168,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
   onAnswer,
   artifactShown = false,
   onPickArtifact,
+  createdAt,
   durationMs,
   live,
 }) => {
@@ -138,6 +212,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
         <div className={styles.userBubble}>
           <span className={styles.userText}>{text}</span>
         </div>
+        <MessageMeta createdAt={createdAt} copyText={text} />
       </div>
     );
   }
@@ -270,6 +345,13 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
           </p>
         )}
       </div>
+      {/* Outside the bubble, under it — the same place the user's own sits. Inside, its
+          reserved height showed as a strip of empty grey on every settled reply.
+
+          Not while the run is open: the text is still being written, and a copy taken
+          mid-sentence is half a reply. A record (an interruption, a repair) copies its own
+          wording — that IS its prose. */}
+      {!streaming && <MessageMeta createdAt={createdAt} copyText={recordKind ? text : answerText} />}
     </div>
   );
 };

@@ -1,5 +1,5 @@
 import { http, HttpResponse } from 'msw';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
@@ -206,5 +206,66 @@ describe('MessageBubble', () => {
     await user.click(screen.getByRole('button', { name: 'View HTML' }));
 
     expect(await screen.findByText('Could not load the source — please try again shortly')).toBeInTheDocument();
+  });
+});
+
+/** Claude's hover affordances: a message says when it was sent, and offers to copy
+ *  itself. Both are always in the DOM and revealed by CSS on hover or focus — a control
+ *  that only exists while the pointer is over it is a control a keyboard cannot reach. */
+describe('message time and copy', () => {
+  let writeText: ReturnType<typeof vi.spyOn>;
+
+  beforeEach(() => {
+    // Assigned onto the existing object: `navigator.clipboard` is a getter-only property,
+    // so replacing the whole thing throws.
+    writeText = vi.spyOn(navigator.clipboard, 'writeText').mockResolvedValue(undefined);
+  });
+
+  it('says when a message was sent', () => {
+    render(<MessageBubble sender="USER" text="幫我看 A14 的 SPC" createdAt="2026-09-10T02:00:00.000Z" />);
+
+    // Relative wording, like the session rail and the version menu; the machine-readable
+    // moment on `datetime`, and the exact one on `title` for a reader who wants it.
+    //
+    // Asserted on `datetime` rather than on either of those: the rendered wording is
+    // relative to now, and `title` is `toLocaleString()`, whose narrow no-break space
+    // Testing Library normalises out of the attribute but not out of the query.
+    const time = document.querySelector('time');
+    expect(time).toHaveAttribute('datetime', '2026-09-10T02:00:00.000Z');
+    expect(time?.getAttribute('title')).toContain('2026');
+  });
+
+  it('copies what the bubble says', async () => {
+    const user = userEvent.setup();
+    render(<MessageBubble sender="USER" text="幫我看 A14 的 SPC" createdAt="2026-09-10T02:00:00.000Z" />);
+
+    await user.click(screen.getByRole('button', { name: 'Copy message' }));
+    expect(writeText).toHaveBeenCalledWith('幫我看 A14 的 SPC');
+  });
+
+  /** The only confirmation a copy gets. Inside the success path, not beside it: it used
+   *  to be possible for a refused clipboard to still say "copied" — see the share
+   *  dialog, where the same mistake was made and fixed. */
+  it('says so once it is copied, and not when the clipboard refused', async () => {
+    const user = userEvent.setup();
+    render(<MessageBubble sender="AI" text="掃描比對到 6 個 Lot。" createdAt="2026-09-10T02:00:00.000Z" />);
+
+    await user.click(screen.getByRole('button', { name: 'Copy message' }));
+    expect(await screen.findByRole('button', { name: 'Copied' })).toBeInTheDocument();
+
+    writeText.mockRejectedValueOnce(new Error('denied'));
+    render(<MessageBubble sender="AI" text="另一則" createdAt="2026-09-10T02:00:00.000Z" />);
+    const [, second] = screen.getAllByRole('button', { name: /^Cop/ });
+    await user.click(second);
+    expect(second).toHaveAccessibleName('Copy message');
+  });
+
+  /** A reply that produced only an Artifact has no prose to copy, and a button that
+   *  copies an empty string is a button that lies about having done something. */
+  it('offers no copy when there is nothing to copy', () => {
+    render(<MessageBubble sender="AI" text="" createdAt="2026-09-10T02:00:00.000Z" />);
+    // The time still shows — it is the copy offer alone that has nothing to stand on.
+    expect(document.querySelector('time')).toHaveAttribute('datetime', '2026-09-10T02:00:00.000Z');
+    expect(screen.queryByRole('button', { name: /^Cop/ })).toBeNull();
   });
 });
