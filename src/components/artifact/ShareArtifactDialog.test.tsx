@@ -328,13 +328,10 @@ describe('Sharing an Artifact: picking recipients', () => {
     // …and the rest of that same search is still on offer, unsearched-for a second time.
     expect(await screen.findByTitle('王思涵')).toBeInTheDocument();
 
-    // The row just picked carries no mark. The tag above the box already says it is
-    // chosen; a tick here reads as "this is the current answer" on a list whose whole job
-    // is offering the next one.
-    // Scoped to the option row: the chosen tag carries the same title.
-    const pickedRow = document.querySelector('.ant-select-item-option[title="鄭凱宇"]');
-    expect(pickedRow).not.toBeNull();
-    expect(pickedRow?.querySelector('.anticon')).toBeNull();
+    // The row just picked has left the list. The tag above the box already says it is
+    // chosen, and a list whose whole job is offering the next one has nothing to gain by
+    // still offering the last one.
+    expect(document.querySelector('.ant-select-item-option[title="鄭凱宇"]')).toBeNull();
   });
 
   /** The list is where rows are told apart, so an organisation carries its code and a

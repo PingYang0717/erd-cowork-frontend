@@ -245,29 +245,33 @@ const RecipientSelect: React.FC<RecipientSelectProps> = ({ value, loading, disab
   // is the debounced keyword, and a dependency is a hard constraint the grouping yields to.
   const { entries, isSearching, isError, enabled } = useDirectorySearch(useDebouncedValue(keyword));
 
-  // Every option the field can currently show: what the search just returned, plus
-  // everything already chosen. The chosen ones have to stay in the list — a value with no
-  // matching option renders as its raw key, which is how recipients loaded from the
-  // server first showed up as `ORG:INTD-1` instead of their name.
+  // What the search returned, less whoever is already chosen. A chosen recipient is a tag
+  // above the box; offering them again is offering something that cannot be taken.
+  //
+  // Chosen entries used to be merged in here instead, because a value with no matching
+  // option renders as its raw key — which is how recipients loaded from the server first
+  // showed up as `ORG:INTD-1`. `labelInValue` below is what makes their absence safe: the
+  // tag carries its own label and no longer has to find one in the list.
   const options = useMemo(() => {
-    const byKey = new Map(value.map((entry) => [directoryEntryKey(entry), entry]));
-    for (const entry of entries) {
-      byKey.set(directoryEntryKey(entry), entry);
-    }
-    return [...byKey.entries()].map(([key, entry]) => ({
-      value: key,
-      label: directoryEntrySelectedName(entry),
-      entry,
-    }));
+    const chosen = new Set(value.map(directoryEntryKey));
+    return entries
+      .filter((entry) => !chosen.has(directoryEntryKey(entry)))
+      .map((entry) => ({
+        value: directoryEntryKey(entry),
+        label: directoryEntrySelectedName(entry),
+        entry,
+      }));
   }, [entries, value]);
 
-  const handleChange = (keys: string[]) => {
+  const handleChange = (chosen: { value: string }[]) => {
     // The box empties, the list does not: `keyword` is deliberately left where it is.
     setTyped('');
     // Resolve the keys back to entries. The caller works in entries, not keys: the share
     // payload needs each one's kind and id, which only the entry carries.
     const known = new Map([...value, ...entries].map((entry) => [directoryEntryKey(entry), entry]));
-    onChange(keys.map((key) => known.get(key)).filter((entry): entry is DirectoryEntry => entry !== undefined));
+    onChange(
+      chosen.map(({ value: key }) => known.get(key)).filter((entry): entry is DirectoryEntry => entry !== undefined)
+    );
   };
 
   return (
@@ -293,7 +297,10 @@ const RecipientSelect: React.FC<RecipientSelectProps> = ({ value, loading, disab
       }}
       loading={isSearching || loading}
       disabled={disabled}
-      value={value.map(directoryEntryKey)}
+      // The tag carries its own label, so a chosen recipient no longer needs an option to
+      // read their name off — which is what lets the list drop them entirely.
+      labelInValue
+      value={value.map((entry) => ({ value: directoryEntryKey(entry), label: directoryEntrySelectedName(entry) }))}
       onChange={handleChange}
       options={options}
       optionRender={(option) => {
@@ -308,11 +315,6 @@ const RecipientSelect: React.FC<RecipientSelectProps> = ({ value, loading, disab
           </span>
         );
       }}
-      // A row already chosen is a tag above the box; marking it in the list as well says
-      // the same thing twice, and the tick reads as "this row is the current answer" on a
-      // list whose whole job is offering the next one.
-      menuItemSelectedIcon={null}
-      classNames={{ popup: { root: styles.recipientPopup } }}
       notFoundContent={
         isSearching
           ? t.share.searching
