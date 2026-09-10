@@ -12,9 +12,11 @@ import type { Artifact, DirectoryEntry, ShareTarget } from '@/types/api';
 import { artifactHref } from '@/utils/artifactUrl';
 import {
   directoryEntryKey,
-  directoryEntryLabel,
   directoryEntryMatches,
+  directoryEntryOptionText,
+  directoryEntrySelectedName,
   directoryShareTarget,
+  employeeAvatarUrl,
 } from '@/utils/directoryEntry';
 
 import styles from './ShareArtifactDialog.module.css';
@@ -183,6 +185,36 @@ const ShareArtifactDialog: React.FC<ShareArtifactDialogProps> = ({ open, onClose
   );
 };
 
+/** A person's photo, or their initial when there is none to fetch. Round, because that is
+ *  how a person is drawn everywhere else in the app and a square would read as a logo.
+ *
+ *  `onError` rather than a HEAD request: the photo host answers for most employees and
+ *  not for some, and the only honest way to learn which is to ask for the image. */
+const RecipientAvatar: React.FC<{ entry: DirectoryEntry }> = ({ entry }) => {
+  const src = employeeAvatarUrl(entry.emplId);
+  const [failed, setFailed] = useState(false);
+  const name = directoryEntrySelectedName(entry);
+
+  if (src === null || failed) {
+    return (
+      <span aria-hidden className={styles.recipientAvatarFallback}>
+        {name.slice(0, 1)}
+      </span>
+    );
+  }
+  return (
+    <img
+      // Decorative: the name is right beside it, and a screen reader reading the same
+      // person twice is noise.
+      alt=""
+      aria-hidden
+      src={src}
+      className={styles.recipientAvatar}
+      onError={() => setFailed(true)}
+    />
+  );
+};
+
 interface RecipientSelectProps {
   /** The chosen entries themselves, not their keys: the share payload needs each one's
    *  type and id, which only the entry carries. */
@@ -202,6 +234,11 @@ interface RecipientSelectProps {
 const RecipientSelect: React.FC<RecipientSelectProps> = ({ value, loading, disabled, onChange }) => {
   const t = useTranslations();
 
+  // Two, not one. `typed` is what is in the box; `keyword` is what the list was built
+  // from. They part company at the moment of a pick: the box empties so the next name can
+  // be typed straight away, while the list stays exactly as it was — a list that collapsed
+  // on every pick would make choosing three people three searches.
+  const [typed, setTyped] = useState('');
   const [keyword, setKeyword] = useState('');
 
   // Below the state it feeds from, against the top-block rule: the search hook's input
@@ -219,12 +256,14 @@ const RecipientSelect: React.FC<RecipientSelectProps> = ({ value, loading, disab
     }
     return [...byKey.entries()].map(([key, entry]) => ({
       value: key,
-      label: directoryEntryLabel(entry),
+      label: directoryEntrySelectedName(entry),
       entry,
     }));
   }, [entries, value]);
 
   const handleChange = (keys: string[]) => {
+    // The box empties, the list does not: `keyword` is deliberately left where it is.
+    setTyped('');
     // Resolve the keys back to entries. The caller works in entries, not keys: the share
     // payload needs each one's kind and id, which only the entry carries.
     const known = new Map([...value, ...entries].map((entry) => [directoryEntryKey(entry), entry]));
@@ -246,14 +285,34 @@ const RecipientSelect: React.FC<RecipientSelectProps> = ({ value, loading, disab
         // never hides a row the backend returned, because it looks at more than the
         // backend was given.
         filterOption: (input, option) => option?.entry === undefined || directoryEntryMatches(option.entry, input),
-        searchValue: keyword,
-        onSearch: setKeyword,
+        searchValue: typed,
+        onSearch: (input) => {
+          setTyped(input);
+          setKeyword(input);
+        },
       }}
       loading={isSearching || loading}
       disabled={disabled}
       value={value.map(directoryEntryKey)}
       onChange={handleChange}
       options={options}
+      optionRender={(option) => {
+        const entry = (option.data as { entry?: DirectoryEntry }).entry;
+        if (entry === undefined) {
+          return option.label;
+        }
+        return (
+          <span className={styles.recipientOption}>
+            {entry.type === 'EMPLOYEE' && <RecipientAvatar entry={entry} />}
+            {directoryEntryOptionText(entry)}
+          </span>
+        );
+      }}
+      // A row already chosen is a tag above the box; marking it in the list as well says
+      // the same thing twice, and the tick reads as "this row is the current answer" on a
+      // list whose whole job is offering the next one.
+      menuItemSelectedIcon={null}
+      classNames={{ popup: { root: styles.recipientPopup } }}
       notFoundContent={
         isSearching
           ? t.share.searching

@@ -109,3 +109,47 @@
   font-size: 11px;
   color: var(--ant-color-error, #ff4d4f);
 }
+
+/* A directory row: the photo, then the name. */
+.recipientOption {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.recipientAvatar,
+.recipientAvatarFallback {
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+}
+
+.recipientAvatar {
+  object-fit: cover;
+  background: var(--erd-color-fill-tertiary, rgba(0, 0, 0, 0.04));
+}
+
+.recipientAvatarFallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  background: var(--erd-color-primary-bg, #e6f4ff);
+  color: var(--erd-color-primary, #1677ff);
+}
+
+/* Chosen rows carry no mark: the tags above the box already say who is chosen, and a
+   highlight here reads as "this is the current answer" on a list that exists to offer the
+   next one. */
+.recipientPopup :global(.ant-select-item-option-selected) {
+  background: transparent;
+  font-weight: inherit;
+}
+
+/* Dropping the tick leaves antd's slot for it behind — empty, but still holding its width
+   at the end of every row. */
+.recipientPopup :global(.ant-select-item-option-state) {
+  display: none;
+}

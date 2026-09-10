@@ -5,20 +5,73 @@ import type { DirectoryEntry } from '@/types/api';
 import { directoryEntryMatches } from '@/utils/directoryEntry';
 
 const ORGS: DirectoryEntry[] = [
-  { type: 'ORG', orgId: 'A10INTD1-1', orgName: '整合技術一部一課', orgLevel: 'DEPARTMENT' },
-  { type: 'ORG', orgId: 'A10INTD1-2', orgName: '整合技術一部二課', orgLevel: 'DEPARTMENT' },
-  { type: 'ORG', orgId: 'A10PITD1-1', orgName: '製程整合一部一課', orgLevel: 'DEPARTMENT' },
-  { type: 'ORG', orgId: 'INTD-1', orgName: '整合技術一課', orgLevel: 'SECTION' },
-  { type: 'ORG', orgId: 'INTD-2', orgName: '整合技術二課', orgLevel: 'SECTION' },
-  { type: 'ORG', orgId: 'PITD-1', orgName: '製程整合一課', orgLevel: 'SECTION' },
+  {
+    type: 'ORG',
+    orgId: 'A10INTD1-1',
+    orgName: '整合技術一部一課',
+    orgLevel: 'DEPARTMENT',
+    sortName: '整合技術一部一課',
+  },
+  {
+    type: 'ORG',
+    orgId: 'A10INTD1-2',
+    orgName: '整合技術一部二課',
+    orgLevel: 'DEPARTMENT',
+    sortName: '整合技術一部二課',
+  },
+  {
+    type: 'ORG',
+    orgId: 'A10PITD1-1',
+    orgName: '製程整合一部一課',
+    orgLevel: 'DEPARTMENT',
+    sortName: '製程整合一部一課',
+  },
+  { type: 'ORG', orgId: 'INTD-1', orgName: '整合技術一課', orgLevel: 'SECTION', sortName: '整合技術一課' },
+  { type: 'ORG', orgId: 'INTD-2', orgName: '整合技術二課', orgLevel: 'SECTION', sortName: '整合技術二課' },
+  { type: 'ORG', orgId: 'PITD-1', orgName: '製程整合一課', orgLevel: 'SECTION', sortName: '製程整合一課' },
 ];
 
 const EMPLOYEES: DirectoryEntry[] = [
-  { type: 'EMPLOYEE', employeeNt: 'CHXXGHYC', employeeName: '鄭凱宇', employeeOrgName: 'INTD-1' },
-  { type: 'EMPLOYEE', employeeNt: 'CHXXABCD', employeeName: '王思涵', employeeOrgName: 'INTD-1' },
-  { type: 'EMPLOYEE', employeeNt: 'CHXXKLWU', employeeName: '吳克良', employeeOrgName: 'INTD-2' },
-  { type: 'EMPLOYEE', employeeNt: 'CHXXSHLN', employeeName: '林淑惠', employeeOrgName: 'PITD-1' },
-  { type: 'EMPLOYEE', employeeNt: 'CHXXYCCN', employeeName: '陳彥志', employeeOrgName: 'PITD-1' },
+  {
+    type: 'EMPLOYEE',
+    employeeNt: 'CHXXGHYC',
+    employeeName: '鄭凱宇',
+    employeeOrgName: 'INTD-1',
+    emplId: '901234',
+    sortName: '鄭凱宇',
+  },
+  {
+    type: 'EMPLOYEE',
+    employeeNt: 'CHXXABCD',
+    employeeName: '王思涵',
+    employeeOrgName: 'INTD-1',
+    emplId: '901235',
+    sortName: '王思涵',
+  },
+  {
+    type: 'EMPLOYEE',
+    employeeNt: 'CHXXKLWU',
+    employeeName: '吳克良',
+    employeeOrgName: 'INTD-2',
+    emplId: '901236',
+    sortName: '吳克良',
+  },
+  {
+    type: 'EMPLOYEE',
+    employeeNt: 'CHXXSHLN',
+    employeeName: '林淑惠',
+    employeeOrgName: 'PITD-1',
+    emplId: '901237',
+    sortName: '林淑惠',
+  },
+  {
+    type: 'EMPLOYEE',
+    employeeNt: 'CHXXYCCN',
+    employeeName: '陳彥志',
+    employeeOrgName: 'PITD-1',
+    emplId: '901238',
+    sortName: '陳彥志',
+  },
 ];
 
 const DIRECTORY = [...ORGS, ...EMPLOYEES];
