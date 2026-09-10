@@ -287,3 +287,34 @@ describe('message time and copy', () => {
     expect(screen.queryByRole('button', { name: /^Cop/ })).toBeNull();
   });
 });
+
+/** Claude's rule: the newest turn keeps its actions on show, everything above it reveals
+ *  them on hover. The reply you have just been given is the one you act on, and hiding
+ *  its controls behind a pointer makes them findable only by accident. */
+describe('message actions: shown or revealed', () => {
+  it('keeps the newest turn’s actions on show', () => {
+    render(<MessageBubble sender="AI" text="Done." createdAt="2026-09-10T02:00:00.000Z" isLatest />);
+    expect(document.querySelector('[data-latest]')).toBeInTheDocument();
+  });
+
+  it('leaves an older turn’s actions to the pointer', () => {
+    render(<MessageBubble sender="AI" text="Done." createdAt="2026-09-10T02:00:00.000Z" />);
+    expect(document.querySelector('[data-latest]')).toBeNull();
+    // The row is still there — it is revealed, not absent, so a keyboard can reach it.
+    expect(document.querySelector('time')).toBeInTheDocument();
+  });
+
+  it('offers Try again at the end of the turn that stopped', async () => {
+    const onRetry = vi.fn();
+    render(
+      <MessageBubble sender="AI" text={INTERRUPTED_TEXTS[0]} createdAt="2026-09-10T02:00:00.000Z" onRetry={onRetry} />
+    );
+
+    const retry = screen.getByRole('button', { name: 'Retry' });
+    expect(retry).toHaveTextContent('Try again');
+    // Beside the copy control, not inside the record's own sentence.
+    expect(retry.closest('[class*="meta"]')).not.toBeNull();
+    await userEvent.click(retry);
+    expect(onRetry).toHaveBeenCalledTimes(1);
+  });
+});

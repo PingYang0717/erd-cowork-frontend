@@ -52,7 +52,18 @@ import ReplyText from './ReplyText';
  *
  *  The relative wording matches the session rail and the version menu. The exact moment is
  *  on the `title`, where someone who needs it can find it and nobody else has to read it. */
-const MessageMeta: React.FC<{ createdAt?: string | null; copyText: string }> = ({ createdAt, copyText }) => {
+const MessageMeta: React.FC<{
+  createdAt?: string | null;
+  copyText: string;
+  /** How long the turn took, for a run that has finished. */
+  durationMs?: number | null;
+  /** Offered on the turn that stopped: sends the same question again. */
+  onRetry?: () => void;
+  /** The newest turn keeps its row on show; older ones reveal on hover. Claude's rule,
+   *  and the reason is the same: the reply you have just been given is the one you act
+   *  on, and hiding its controls behind a pointer makes them findable only by accident. */
+  always?: boolean;
+}> = ({ createdAt, copyText, durationMs, onRetry, always = false }) => {
   const t = useTranslations();
   const [copied, setCopied] = useState(false);
 
@@ -64,7 +75,7 @@ const MessageMeta: React.FC<{ createdAt?: string | null; copyText: string }> = (
     return () => clearTimeout(timer);
   }, [copied]);
 
-  if (!createdAt && copyText === '') {
+  if (!createdAt && copyText === '' && durationMs == null && onRetry === undefined) {
     return null;
   }
 
@@ -81,7 +92,7 @@ const MessageMeta: React.FC<{ createdAt?: string | null; copyText: string }> = (
   };
 
   return (
-    <div className={styles.meta}>
+    <div className={always ? `${styles.meta} ${styles.metaAlways}` : styles.meta} data-latest={always || undefined}>
       {createdAt && (
         <time dateTime={createdAt} title={new Date(createdAt).toLocaleString()} className={styles.metaTime}>
           {formatRelativeTime(createdAt)}
@@ -98,6 +109,16 @@ const MessageMeta: React.FC<{ createdAt?: string | null; copyText: string }> = (
         >
           {copied ? <CheckOutlined aria-hidden /> : <CopyOutlined aria-hidden />}
           <span className={styles.metaCopyLabel}>{copied ? t.common.copied : t.common.copy}</span>
+        </button>
+      )}
+      {durationMs != null && <Elapsed ms={durationMs} />}
+      {/* At the end of the reply, where the reader has finished reading and is deciding
+          what to do next. It APPENDS a turn — the backend has no messages endpoint, so
+          the run that stopped cannot be replaced (docs/api/backend-feedback.md). */}
+      {onRetry && (
+        <button type="button" className={styles.metaCopy} aria-label="Retry" onClick={onRetry}>
+          <ReloadOutlined aria-hidden />
+          <span className={styles.metaCopyLabel}>{t.chat.retryRun}</span>
         </button>
       )}
     </div>
@@ -131,6 +152,9 @@ export interface MessageBubbleProps {
    *  one gets it — an interruption further up is settled history, and the run that
    *  followed it has already been asked. */
   onRetry?: () => void;
+  /** The newest turn in the thread: its actions stay on show rather than waiting for a
+   *  pointer. */
+  isLatest?: boolean;
   /** When the message was sent. Absent on the live bubble — a run still being written has
    *  no settled moment, and the backend supplies one when the history catches up. */
   createdAt?: string | null;
@@ -173,6 +197,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
   artifactShown = false,
   onPickArtifact,
   onRetry,
+  isLatest = false,
   createdAt,
   durationMs,
   live,
@@ -217,7 +242,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
         <div className={styles.userBubble}>
           <span className={styles.userText}>{text}</span>
         </div>
-        <MessageMeta createdAt={createdAt} copyText={text} />
+        <MessageMeta createdAt={createdAt} copyText={text} always={isLatest} />
       </div>
     );
   }
@@ -278,15 +303,6 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
         {recordKind === 'interrupted' && (
           <p data-record="true" className={styles.record}>
             {text}
-            {/* The record already tells the reader to send again; this is that sentence as
-                a button. It APPENDS a turn — the backend has no messages endpoint, so the
-                run that stopped cannot be replaced (docs/api/backend-feedback.md). */}
-            {onRetry && (
-              <button type="button" className={styles.recordAction} aria-label="Retry" onClick={onRetry}>
-                <ReloadOutlined aria-hidden />
-                {t.chat.retryRun}
-              </button>
-            )}
           </p>
         )}
         {recordKind === 'repair' && (
@@ -343,7 +359,6 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
         {/* Keyed on the start: a new turn gets a fresh timer rather than inheriting the
             last one's reading for up to a second. */}
         {streaming && timerStartedAt != null && <LiveElapsed key={timerStartedAt} startedAt={timerStartedAt} />}
-        {!streaming && durationMs != null && <Elapsed ms={durationMs} />}
 
         {/* Still an alert: the run ended in a way the user has to act on, and the
             dedicated wording is what distinguishes it from a backend refusal. */}
@@ -364,7 +379,15 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
           Not while the run is open: the text is still being written, and a copy taken
           mid-sentence is half a reply. A record (an interruption, a repair) copies its own
           wording — that IS its prose. */}
-      {!streaming && <MessageMeta createdAt={createdAt} copyText={recordKind ? text : answerText} />}
+      {!streaming && (
+        <MessageMeta
+          createdAt={createdAt}
+          copyText={recordKind ? text : answerText}
+          durationMs={durationMs}
+          onRetry={onRetry}
+          always={isLatest}
+        />
+      )}
     </div>
   );
 };

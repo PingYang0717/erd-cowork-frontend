@@ -210,7 +210,10 @@ describe('Streaming a run in the Studio', () => {
     expect(screen.getByText('<div id="chart"></div>')).toBeInTheDocument();
   });
 
-  it('reports how long the finished run took, on the bubble that took it', async () => {
+  /** In the turn's own actions row, beside the time it was sent and the offer to copy it
+   *  — not inside the bubble. A duration is something the turn says about itself, and it
+   *  belongs with the rest of what the turn says about itself. */
+  it('reports how long the finished run took, in the actions row of the turn that took it', async () => {
     const user = userEvent.setup();
     renderStudio();
 
@@ -218,8 +221,9 @@ describe('Streaming a run in the Studio', () => {
     await answerAnalysisConditions(user);
     const recap = await screen.findByRole('button', { name: /^Worked through \d+ steps$/ });
 
-    const bubble = recap.closest('div[class*="aiBubble"]') as HTMLElement;
-    expect(within(bubble).getByText(/^\d+(\.\d+)?s$/)).toBeInTheDocument();
+    const row = recap.closest('div[class*="aiRow"]') as HTMLElement;
+    const meta = row.querySelector('[class*="meta"]') as HTMLElement;
+    expect(within(meta).getByText(/^\d+(\.\d+)?s$/)).toBeInTheDocument();
   });
 
   it('shows the artifact in the right pane the moment the run reports it', async () => {
