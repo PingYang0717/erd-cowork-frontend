@@ -207,17 +207,30 @@
   min-height: 22px;
 }
 
-/* Both times, whichever end they are at. Always revealed rather than shown: a timestamp
-   is something a reader goes looking for, never something they are reading the thread
-   for — even on the newest turn. */
+/* The two readings at either end of the row. */
 .metaAside {
   display: inline-flex;
   align-items: center;
   gap: 5px;
+  /* Matches the icon buttons' box, so a row of 11px text and 24px buttons shares one
+     centre line rather than each finding its own. */
+  height: 24px;
+  line-height: 1;
   font-size: 11px;
   color: var(--erd-color-text-tertiary, #8c8c8c);
-  opacity: 0;
   transition: opacity 0.12s ease;
+}
+
+/* How long the turn took stays on show: it is the reply describing its own cost, and a
+   reader comparing two runs should not have to hunt for it one hover at a time. */
+.metaTimer {
+  opacity: 1;
+}
+
+/* When it was sent is something a reader goes looking for, never something they opened
+   the thread to read — so it waits to be asked for, even on the newest turn. */
+.metaTime {
+  opacity: 0;
 }
 
 .metaAsideIcon {
@@ -241,10 +254,10 @@
 
 /* `:focus-within` is not a nicety here — without it a button is focusable while
    invisible, which is worse than not having it at all (ADR-0014). */
-.userRow:hover .metaAside,
-.userRow:focus-within .metaAside,
-.aiRow:hover .metaAside,
-.aiRow:focus-within .metaAside,
+.userRow:hover .metaTime,
+.userRow:focus-within .metaTime,
+.aiRow:hover .metaTime,
+.aiRow:focus-within .metaTime,
 .userRow:hover .metaActions,
 .userRow:focus-within .metaActions,
 .aiRow:hover .metaActions,
