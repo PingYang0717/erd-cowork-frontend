@@ -2,7 +2,6 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { INTERRUPTED_TEXTS } from '@/constants/wireStrings';
 import { en } from '@/i18n/en';
 import { useConnectorsPanelStore } from '@/stores/useConnectorsPanelStore';
 import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
@@ -167,11 +166,8 @@ describe('Streaming a run in the Studio', () => {
     expect(
       within(screen.getByRole('log', { name: 'Messages' })).getByText('Recomputed control limits.')
     ).toBeInTheDocument();
-    // The interruption is stated by the record — the same wording the backend persists,
-    // so the screen reads the same before and after a reload. See StudioPage.stop.test.tsx.
-    expect(
-      within(screen.getByRole('log', { name: 'Messages' })).getByText(new RegExp(INTERRUPTED_TEXTS[0]))
-    ).toBeInTheDocument();
+    // How the interruption itself is stated — and what the thread settles on once the
+    // backend's own record of it lands — is StudioPage.stop.test.tsx's subject.
     expect(screen.getByRole('button', { name: 'Send message' })).toBeInTheDocument();
   });
 

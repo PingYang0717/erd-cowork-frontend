@@ -10,6 +10,8 @@ import { useStudioLayoutStore } from '@/stores/useStudioLayoutStore';
 import { mockAgentStream } from '@/test/agentStream';
 import { renderStudio, waitForComposer } from '@/test/renderStudio';
 
+const QUESTION = 'Run an SPC analysis on Vt (gate CD).';
+
 const selectASession = async (user: ReturnType<typeof userEvent.setup>) => {
   await user.click(await screen.findByRole('button', { name: 'New chat' }));
   await screen.findByRole('button', { name: 'New analysis' });
@@ -28,8 +30,32 @@ const message = (over: { id: string; sender: 'USER' | 'AI'; text: string }) => (
   ...over,
 });
 
-/** Stopping is not failing. What the run produced stays; what it did not produce is not
- *  drawn as an empty shell; and the fact that it stopped is stated once. */
+/** What the real backend leaves behind after the SSE client goes away mid-run: the
+ *  question, and its own record of the interruption. The half-written reply is NOT
+ *  persisted — see docs/api/backend-feedback.md. */
+const historyAfterInterruption = (sessionId: string) => {
+  server.use(
+    http.get(`/api/sessions/${sessionId}`, () =>
+      HttpResponse.json({
+        id: sessionId,
+        title: 'New analysis',
+        createdAt: '2026-09-10T00:00:00.000Z',
+        files: [],
+        connectors: [],
+        messages: [
+          message({ id: 'u1', sender: 'USER', text: QUESTION }),
+          message({ id: 'm1', sender: 'AI', text: INTERRUPTED_TEXTS[0] }),
+        ],
+      })
+    )
+  );
+};
+
+const interruptedRecord = () => within(thread()).queryAllByText(new RegExp(INTERRUPTED_TEXTS[0]));
+
+/** Stopping is not failing, and it is not the frontend's story to tell: the backend keeps
+ *  its own record of an interrupted run, and what the reader is looking at has to be what
+ *  the history holds — or the screen says one thing now and another after a reload. */
 describe('Stopping a run', () => {
   beforeEach(() => {
     useStudioLayoutStore.setState(useStudioLayoutStore.getInitialState());
@@ -46,18 +72,29 @@ describe('Stopping a run', () => {
 
     await selectASession(user);
     await user.click(screen.getByRole('button', { name: 'SPC analysis' }));
+
+    // What the refetch will find. The backend writes it on disconnect (doOnCancel); here
+    // it is staged before the stop so the two delayed refetches are guaranteed to see it.
+    historyAfterInterruption(useSessionSelectionStore.getState().selectedSessionId as string);
     await user.click(await screen.findByRole('button', { name: 'Stop' }));
 
     await waitFor(() => expect(screen.getByRole('button', { name: 'Send message' })).toBeInTheDocument());
-    // No half-drawn reply — but the interruption IS stated, the same way it will be
-    // stated after a reload.
-    expect(within(thread()).getByText(new RegExp(INTERRUPTED_TEXTS[0]))).toBeInTheDocument();
-    expect(within(thread()).queryByRole('button', { name: 'View HTML' })).toBeNull();
+    // No empty reply bubble. The record that lands below IS an AI bubble, so the claim
+    // has to be about content: nothing the agent "said" is blank.
+    for (const bubble of document.querySelectorAll('[class*="aiBubble"]')) {
+      expect(bubble.textContent).not.toBe('');
+    }
     // What the reader typed is still theirs, and still on screen.
-    expect(within(thread()).getByText('Run an SPC analysis on Vt (gate CD).')).toBeInTheDocument();
+    expect(within(thread()).getByText(QUESTION)).toBeInTheDocument();
+
+    // The interruption is stated by the backend's own record, once it lands.
+    await waitFor(() => expect(interruptedRecord()).toHaveLength(1), { timeout: 4000 });
   });
 
-  it('keeps what the run had already written', async () => {
+  /** The thread converges on what the history actually holds. The half-written reply is
+   *  not part of that — the backend does not persist it — so it goes when the record
+   *  arrives, and what the reader sees is what a reload would show. */
+  it('settles on the history the backend kept, not on what was on screen', async () => {
     const user = userEvent.setup();
     const stream = mockAgentStream();
     renderStudio();
@@ -67,67 +104,20 @@ describe('Stopping a run', () => {
     act(() => stream.push({ type: 'TOKEN', delta: 'Recomputed control limits.' }));
     await screen.findByText('Recomputed control limits.');
 
+    historyAfterInterruption(useSessionSelectionStore.getState().selectedSessionId as string);
     await user.click(await screen.findByRole('button', { name: 'Stop' }));
 
-    expect(within(thread()).getByText('Recomputed control limits.')).toBeInTheDocument();
-    expect(within(thread()).getByText(new RegExp(INTERRUPTED_TEXTS[0]))).toBeInTheDocument();
+    // The refetch brings the record home and the thread becomes the history — which the
+    // backend did not persist the half-written reply into. That loss is the point: the
+    // screen and the history agree, so a reload changes nothing.
+    await waitFor(() => expect(interruptedRecord()).toHaveLength(1), { timeout: 4000 });
+    expect(within(thread()).queryByText('Recomputed control limits.')).not.toBeInTheDocument();
   });
 
-  /** The backend persists its own record of the interruption, so once the refetch lands
-   *  two things say the run stopped. The bubble is the one on screen, so it speaks; the
-   *  record is what remains after a reload, so it speaks then. Never both at once. */
-  /** The record is drawn the instant the run stops, and the refetch that brings the real
-   *  one home replaces it with something identical — so what a reader sees now is what
-   *  they will still see after a reload. It used to be announced one way now (a stop
-   *  notice on the bubble) and another way later (the record), which read as two
-   *  different outcomes. And it is only ever said once. */
-  it('states the interruption immediately, once, in the wording that survives a reload', async () => {
-    const user = userEvent.setup();
-    const stream = mockAgentStream();
-    renderStudio();
-
-    await selectASession(user);
-    const sessionId = useSessionSelectionStore.getState().selectedSessionId as string;
-
-    await user.click(screen.getByRole('button', { name: 'SPC analysis' }));
-    act(() => stream.push({ type: 'TOKEN', delta: 'Recomputed control limits.' }));
-    await screen.findByText('Recomputed control limits.');
-
-    // What the real backend leaves behind: the question, and its own record that the SSE
-    // client went away mid-run. The partial text is NOT persisted — see
-    // docs/api/backend-feedback.md.
-    server.use(
-      http.get(`/api/sessions/${sessionId}`, () =>
-        HttpResponse.json({
-          id: sessionId,
-          title: 'New analysis',
-          createdAt: '2026-09-10T00:00:00.000Z',
-          files: [],
-          connectors: [],
-          messages: [
-            message({ id: 'u1', sender: 'USER', text: 'Run an SPC analysis on Vt (gate CD).' }),
-            message({ id: 'm1', sender: 'AI', text: INTERRUPTED_TEXTS[0] }),
-          ],
-        })
-      )
-    );
-
-    await user.click(await screen.findByRole('button', { name: 'Stop' }));
-
-    // Immediately, without waiting for anything to come back.
-    expect(within(thread()).getAllByText(new RegExp(INTERRUPTED_TEXTS[0]))).toHaveLength(1);
-
-    // And still once after the two delayed refetches an aborted run schedules.
-    await waitFor(() => expect(within(thread()).getAllByText(/Run an SPC analysis/)).not.toHaveLength(0), {
-      timeout: 4000,
-    });
-    expect(within(thread()).getAllByText(new RegExp(INTERRUPTED_TEXTS[0]))).toHaveLength(1);
-  });
-
-  /** The record already tells the reader to send again. This makes that a click — and
-   *  says plainly that it appends a new turn rather than replacing the one that stopped,
-   *  which is all the backend allows (there is no messages endpoint to edit or truncate). */
-  it('offers to send the same question again', async () => {
+  /** The record already tells the reader to send again. This makes that a click — and it
+   *  APPENDS a turn, which is all the backend allows: there is no messages endpoint, so
+   *  the run that stopped cannot be replaced. */
+  it('offers to send the same question again, from the record itself', async () => {
     const user = userEvent.setup();
     const stream = mockAgentStream();
     renderStudio();
@@ -136,11 +126,14 @@ describe('Stopping a run', () => {
     await user.click(screen.getByRole('button', { name: 'SPC analysis' }));
     act(() => stream.push({ type: 'TOKEN', delta: 'Recomputed' }));
     await screen.findByText('Recomputed');
+
+    historyAfterInterruption(useSessionSelectionStore.getState().selectedSessionId as string);
     await user.click(await screen.findByRole('button', { name: 'Stop' }));
 
-    await user.click(await screen.findByRole('button', { name: 'Retry' }));
+    const retry = await screen.findByRole('button', { name: 'Retry' }, { timeout: 4000 });
+    await user.click(retry);
 
     await waitFor(() => expect(stream.requests).toHaveLength(2));
-    expect(stream.requests[1]).toMatchObject({ question: 'Run an SPC analysis on Vt (gate CD).' });
+    expect(stream.requests[1]).toMatchObject({ question: QUESTION });
   });
 });
