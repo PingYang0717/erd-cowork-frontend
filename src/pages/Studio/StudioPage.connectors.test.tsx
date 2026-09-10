@@ -35,7 +35,9 @@ describe('Connectors panel', () => {
     renderStudio();
     await selectASessionAndOpenConnectors(user);
 
-    expect(await screen.findByRole('button', { name: 'Disconnect Inline' })).toHaveAttribute('data-state', 'connected');
+    // `selected`, not `connected`: this is what the panel is editing. Whether the
+    // conversation is actually drawing on the source is the row's own `Attached` mark.
+    expect(await screen.findByRole('button', { name: 'Disconnect Inline' })).toHaveAttribute('data-state', 'selected');
     expect(screen.getByRole('button', { name: 'Connect Lot Info' })).toHaveAttribute('data-state', 'available');
     expect(screen.getByRole('button', { name: 'Connect Recipe' })).toHaveAttribute('data-state', 'unavailable');
     expect(screen.getByRole('button', { name: 'Connect Offline Tool Log' })).toHaveAttribute(

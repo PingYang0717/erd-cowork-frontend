@@ -313,3 +313,15 @@
   color: var(--erd-color-text-tertiary, #8c8c8c);
   margin-right: auto;
 }
+
+/* The other dimension: this conversation is drawing on the source right now. Deliberately
+   quieter than the selection controls — it states a fact, it is not something to press. */
+.attachedTag {
+  flex: none;
+  padding: 1px 7px;
+  border-radius: 6px;
+  font-size: 10.5px;
+  line-height: 16px;
+  background: var(--erd-color-success-bg, #f6ffed);
+  color: var(--erd-color-success, #52c41a);
+}
