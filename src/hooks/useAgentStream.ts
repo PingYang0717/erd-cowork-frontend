@@ -5,10 +5,13 @@ import { isAccessDenied } from '@/api/accessDenied';
 import { type SendMessageArgs, streamAgentMessage } from '@/api/agentApi';
 import { AgentStreamHttpError } from '@/api/agentStreamError';
 import { isCanceled } from '@/api/apiError';
+import { INTERRUPTED_TEXTS } from '@/constants/wireStrings';
 import { getTranslations } from '@/i18n/useTranslations';
+import type { SessionDetail } from '@/types/api';
 import type { AgentEvent, QuestionForm, StepItem } from '@/types/api/agentEvent';
 import { copyForCode } from '@/utils/describeErrorCode';
 import { liftQuestions } from '@/utils/liftQuestions';
+import { sessionDetailQueryKey } from './useSessionDetail';
 import { sessionsQueryKey } from './useSessions';
 
 /** Everything about a run except which session it belongs to and how it is cancelled. */
@@ -48,6 +51,27 @@ type Action =
   | { type: 'DONE'; durationMs: number };
 
 const NETWORK_ERROR_CODE = 'NETWORK_ERROR';
+
+/** How long to keep looking for the backend's record of an interrupted run, and how far
+ *  apart. Front-loaded — most of the time it is there almost at once — and capped at a
+ *  little over six seconds in total, after which the thread keeps what it has rather than
+ *  asking forever. */
+const CANCEL_SETTLE_DELAYS_MS = [300, 600, 900, 1400, 1600, 2000] as const;
+
+/** A timeout that gives up when the signal does, so nothing is left pending after the
+ *  thread it belonged to is gone. */
+const wait = (ms: number, signal: AbortSignal): Promise<void> =>
+  new Promise((resolve) => {
+    const timer = setTimeout(resolve, ms);
+    signal.addEventListener(
+      'abort',
+      () => {
+        clearTimeout(timer);
+        resolve();
+      },
+      { once: true }
+    );
+  });
 const initialState: AgentStreamState = {
   isStreaming: false,
   stopped: false,
@@ -175,10 +199,15 @@ export const useAgentStream = (
   const [state, dispatch] = useReducer(reducer, initialState);
   const queryClient = useQueryClient();
   const controllerRef = useRef<AbortController | null>(null);
-  // The two delayed refetches an aborted run schedules (below). Kept so unmount can
+  // The settle loop an aborted run starts (below). Aborted on unmount so a thread left
   // clear them — without this they outlived the hook and fired invalidates against
   // the global queryClient up to 1.6s after the thread was gone.
-  const abortRefetchTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const settleControllerRef = useRef<AbortController | null>(null);
+  // Set by `stop`, read once the run ends. A user stop does not usually surface as a
+  // thrown cancel: `streamAgentMessage` cancels its reader when the signal fires, so the
+  // in-flight read resolves as *done* and the loop ends the way a finished run does. The
+  // difference is invisible from the shape of the ending — only this says which it was.
+  const stoppedRef = useRef(false);
   // True only while the async generator is still delivering events. `stop` reads it to
   // tell a real mid-stream interruption from a click that lands in the finishing window
   // (after the last event, while the history refetch runs before DONE) — where the
@@ -200,16 +229,43 @@ export const useAgentStream = (
   useEffect(
     () => () => {
       controllerRef.current?.abort();
-      for (const timer of abortRefetchTimersRef.current) {
-        clearTimeout(timer);
-      }
+      settleControllerRef.current?.abort();
     },
     []
   );
 
+  /** Refetches until the backend's record of the interruption is home.
+   *
+   *  It writes that record asynchronously (`doOnCancel`), so there is no moment the client
+   *  can compute — it can only look again. This used to be two fixed refetches 800ms
+   *  apart, which is a bet: land late and the thread kept showing a run the history had
+   *  already settled, and the only way out was a manual reload.
+   *
+   *  Bounded, and it stops as soon as the record appears. A backend that never writes one
+   *  (or a stop that raced the run finishing normally) must not leave this looping.
+   */
+  const settleAfterCancel = useCallback(async (): Promise<void> => {
+    settleControllerRef.current?.abort();
+    const controller = new AbortController();
+    settleControllerRef.current = controller;
+
+    for (const delay of CANCEL_SETTLE_DELAYS_MS) {
+      await wait(delay, controller.signal);
+      if (controller.signal.aborted) {
+        return;
+      }
+      await invalidateSessionData();
+      const settled = queryClient.getQueryData<SessionDetail>(sessionDetailQueryKey(sessionId))?.messages.at(-1);
+      if (settled !== undefined && INTERRUPTED_TEXTS.includes(settled.text)) {
+        return;
+      }
+    }
+  }, [invalidateSessionData, queryClient, sessionId]);
+
   const send = useCallback(
     async (input: SendInput): Promise<void> => {
       const startedAt = Date.now();
+      stoppedRef.current = false;
       dispatch({ type: 'START', startedAt });
 
       const controller = new AbortController();
@@ -232,16 +288,7 @@ export const useAgentStream = (
         // instead of racing it now.
         if (isCanceled(error)) {
           dispatch({ type: 'DONE', durationMs: Date.now() - startedAt });
-          abortRefetchTimersRef.current.push(
-            setTimeout(() => {
-              void invalidateSessionData();
-              abortRefetchTimersRef.current.push(
-                setTimeout(() => {
-                  void invalidateSessionData();
-                }, 800)
-              );
-            }, 800)
-          );
+          void settleAfterCancel();
           return;
         }
 
@@ -269,12 +316,23 @@ export const useAgentStream = (
       }
 
       receivingRef.current = false;
+
+      // A stopped run ends here rather than in the catch above — cancelling the reader
+      // ends the loop cleanly — so this is where most stops actually land. The backend
+      // writes its record of the interruption asynchronously, so refetching once, now,
+      // asks before there is anything to get.
+      if (stoppedRef.current) {
+        dispatch({ type: 'DONE', durationMs: Date.now() - startedAt });
+        void settleAfterCancel();
+        return;
+      }
+
       // Await before DONE: dispatching first would clear the live bubble while the
       // history is still stale, flashing the previous thread state.
       await invalidateSessionData();
       dispatch({ type: 'DONE', durationMs: Date.now() - startedAt });
     },
-    [sessionId, invalidateSessionData]
+    [sessionId, invalidateSessionData, settleAfterCancel]
   );
 
   const stop = useCallback((): void => {
@@ -286,6 +344,7 @@ export const useAgentStream = (
     }
     // Flag it before aborting so the UI shows the stop immediately, rather than
     // waiting for AbortError to propagate out of the async generator.
+    stoppedRef.current = true;
     dispatch({ type: 'STOPPED' });
     controllerRef.current?.abort();
   }, []);

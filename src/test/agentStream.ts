@@ -50,6 +50,12 @@ export const mockAgentStream = (): MockAgentStream => {
       userIds.push(request.headers.get('X-User-Id'));
       request.signal.addEventListener('abort', () => {
         aborted = true;
+        // Errored, not left to close quietly. A real `fetch` rejects the in-flight read
+        // with `AbortError` when the signal fires, and that rejection is what sends the
+        // hook down its cancel path. Without this the aborted run ended like a completed
+        // one here, so every test that stopped a run was exercising the success path —
+        // and the cancel path (its delayed settle, its DONE) had no coverage at all.
+        controller?.error(new DOMException('The user aborted a request.', 'AbortError'));
       });
 
       const body = new ReadableStream<Uint8Array>({

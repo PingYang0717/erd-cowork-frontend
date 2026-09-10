@@ -114,6 +114,50 @@ describe('Stopping a run', () => {
     expect(within(thread()).queryByText('Recomputed control limits.')).not.toBeInTheDocument();
   });
 
+  /** The backend writes its record asynchronously (doOnCancel), so when it lands is not
+   *  something the client can compute. This used to be two fixed refetches 800ms apart —
+   *  a bet, and one that loses whenever the record is slower than that: the thread kept
+   *  showing a run the history had already settled, and the only way out was a manual
+   *  reload. It now keeps looking until the record is there. */
+  it('converges on a record that lands later than any fixed delay would have caught', async () => {
+    const user = userEvent.setup();
+    const stream = mockAgentStream();
+    renderStudio();
+
+    await selectASession(user);
+    const sessionId = useSessionSelectionStore.getState().selectedSessionId as string;
+
+    await user.click(screen.getByRole('button', { name: 'SPC analysis' }));
+    act(() => stream.push({ type: 'TOKEN', delta: 'Recomputed control limits.' }));
+    await screen.findByText('Recomputed control limits.');
+
+    // Late: well past the 1.6s the old pair of refetches gave up at.
+    const writtenAt = Date.now() + 2500;
+    server.use(
+      http.get(`/api/sessions/${sessionId}`, () =>
+        HttpResponse.json({
+          id: sessionId,
+          title: 'New analysis',
+          createdAt: '2026-09-10T00:00:00.000Z',
+          files: [],
+          connectors: [],
+          messages:
+            Date.now() < writtenAt
+              ? [message({ id: 'u1', sender: 'USER', text: QUESTION })]
+              : [
+                  message({ id: 'u1', sender: 'USER', text: QUESTION }),
+                  message({ id: 'm1', sender: 'AI', text: INTERRUPTED_TEXTS[0] }),
+                ],
+        })
+      )
+    );
+
+    await user.click(await screen.findByRole('button', { name: 'Stop' }));
+
+    await waitFor(() => expect(interruptedRecord()).toHaveLength(1), { timeout: 8000 });
+    expect(within(thread()).queryByText('Recomputed control limits.')).not.toBeInTheDocument();
+  }, 15000);
+
   /** The record already tells the reader to send again. This makes that a click — and it
    *  APPENDS a turn, which is all the backend allows: there is no messages endpoint, so
    *  the run that stopped cannot be replaced. */
