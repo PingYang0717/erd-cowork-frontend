@@ -110,7 +110,10 @@ const ShareArtifactDialog: React.FC<ShareArtifactDialogProps> = ({ open, onClose
   };
 
   return (
-    <Modal open={open} onCancel={handleClose} title={t.share.title} width={460} footer={null} destroyOnHidden>
+    // Wider than the rest of the app's dialogs because of the recipient field: at 460 a
+    // share to a dozen people wrapped into four rows of tags, and every row pushed the
+    // link and the confirm further down.
+    <Modal open={open} onCancel={handleClose} title={t.share.title} width={560} footer={null} destroyOnHidden>
       <p className={styles.subtitle}>{t.share.subtitle}</p>
       <div className={styles.infoCard} aria-label="Artifact details">
         <span className={styles.infoCardIcon} aria-hidden>
@@ -327,7 +330,7 @@ const RecipientSelect: React.FC<RecipientSelectProps> = ({ value, loading, disab
               : t.share.minChars(DIRECTORY_SEARCH_MIN_LENGTH)
       }
       placeholder={t.share.searchPlaceholder(DIRECTORY_SEARCH_MIN_LENGTH)}
-      style={{ width: '100%' }}
+      className={styles.recipientSelect}
     />
   );
 };
