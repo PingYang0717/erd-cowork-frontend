@@ -1,5 +1,6 @@
 import React, { type ReactNode, useEffect, useMemo, useRef } from 'react';
 
+import { INTERRUPTED_TEXTS } from '@/constants/wireStrings';
 import { useActiveRunStore } from '@/stores/useActiveRunStore';
 import type { Message, QuestionForm, StepItem } from '@/types/api';
 import { parseAnswerText } from '@/utils/composeAnswerText';
@@ -219,6 +220,13 @@ const MessageList: React.FC<MessageListProps> = ({
         // message's text. Rendering the history copy beside the live one put exactly the
         // prose the live bubble withholds back on the screen, one bubble higher.
         if (drawnByLiveBubble) {
+          return null;
+        }
+        // The backend writes its own record when the SSE client goes away mid-run, so
+        // once the refetch lands two things say the run stopped. The bubble is the one on
+        // screen and it holds what the run had written, so it speaks; the record is what
+        // remains after a reload, and it speaks then.
+        if (index === lastIndex && live?.stopped === true && INTERRUPTED_TEXTS.includes(message.text)) {
           return null;
         }
 

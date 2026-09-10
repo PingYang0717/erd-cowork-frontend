@@ -1,5 +1,6 @@
-import React, { type ReactNode, useRef, useState } from 'react';
+import React, { type ReactNode, useEffect, useRef, useState } from 'react';
 import { Dropdown, Input } from 'antd';
+import type { TextAreaRef } from 'antd/es/input/TextArea';
 import {
   ApiOutlined,
   ArrowUpOutlined,
@@ -71,9 +72,13 @@ interface ChatComposerProps {
   /** While a run is streaming the send control becomes a stop control. */
   isStreaming: boolean;
   onStop: () => void;
+  /** Words to put in the box, unsent. The `nonce` is what makes asking twice for the same
+   *  text work: without it, a reader who typed over the prefill and pressed the same
+   *  button again would get nothing back. */
+  prefill?: { text: string; nonce: number } | null;
 }
 
-const ChatComposer: React.FC<ChatComposerProps> = ({ sessionId, onSend, disabled, isStreaming, onStop }) => {
+const ChatComposer: React.FC<ChatComposerProps> = ({ sessionId, onSend, disabled, isStreaming, onStop, prefill }) => {
   const t = useTranslations();
   const { retentionDays } = useAppConfig();
   const connectors = useConnectors(sessionId);
@@ -96,8 +101,23 @@ const ChatComposer: React.FC<ChatComposerProps> = ({ sessionId, onSend, disabled
   // A ref rather than state: nothing renders differently, and a re-render between
   // compositionend and keydown would be a race.
   const isComposingRef = useRef(false);
+  const inputRef = useRef<TextAreaRef>(null);
 
   const [draft, setDraft] = useState('');
+
+  // Keyed on the nonce, not the text: pressing the same button twice has to work.
+  const prefillNonce = prefill?.nonce ?? null;
+  const prefillText = prefill?.text ?? '';
+
+  useEffect(() => {
+    if (prefillNonce === null) {
+      return;
+    }
+    setDraft(prefillText);
+    inputRef.current?.focus();
+    // Only the nonce moves this: the text is read at the moment it fires.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [prefillNonce]);
   const [fileModalOpen, setFileModalOpen] = useState(false);
 
   // Retention has already deleted these files server-side. Anything sent now runs
@@ -209,6 +229,7 @@ const ChatComposer: React.FC<ChatComposerProps> = ({ sessionId, onSend, disabled
               the question they are waiting to send. `submitDraft` and the send
               button still hold the line — only sending waits for the file set. */}
           <Input.TextArea
+            ref={inputRef}
             className={styles.messageInput}
             variant="borderless"
             aria-label="Message"

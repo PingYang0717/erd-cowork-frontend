@@ -141,6 +141,10 @@ export const zhTW = {
   },
 
   chat: {
+    /** Both append a turn — the backend cannot replace or remove one. `editAndResend` is
+     *  named for what it does: it puts the words back in the box. */
+    retryRun: '重試',
+    editAndResend: '修改後再問',
     /** The product's own name, unchanged in either language. */
     agentName: 'eRD AI',
     agentThinking: 'eRD AI 處理中…',
