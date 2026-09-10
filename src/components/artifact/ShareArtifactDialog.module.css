@@ -155,3 +155,10 @@
   max-height: 124px;
   overflow-y: auto;
 }
+
+/* Beside the label, not in it: the count changes as recipients are added, and the
+   heading it sits next to does not. */
+.sectionCount {
+  color: var(--erd-color-text-tertiary, #8c8c8c);
+  font-weight: 400;
+}

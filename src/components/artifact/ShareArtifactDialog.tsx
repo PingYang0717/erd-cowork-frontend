@@ -134,7 +134,14 @@ const ShareArtifactDialog: React.FC<ShareArtifactDialogProps> = ({ open, onClose
       </div>
 
       <div className={styles.section}>
-        <div className={styles.sectionLabel}>{t.share.recipientsLabel}</div>
+        <div className={styles.sectionLabel}>
+          {t.share.recipientsLabel}
+          {/* Once the tags scroll among themselves the field stops answering "how many"
+              at a glance — and how many people can see this is the question the dialog
+              exists to settle. Absent at zero: "(0)" is noise beside a field that is
+              visibly empty. */}
+          {chosen.length > 0 && <span className={styles.sectionCount}>{t.share.recipientsCount(chosen.length)}</span>}
+        </div>
         <RecipientSelect value={chosen} loading={isLoading} disabled={isUnavailable} onChange={handleChoose} />
         {/* Editing is closed rather than the dialog: a delta built on a baseline nobody
             could read is not an edit the user meant to make. Submit stays pressable —

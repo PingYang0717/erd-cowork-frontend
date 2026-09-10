@@ -15,6 +15,7 @@ export const zhTW = {
     /** The dialog's own subtitle, above the recipient picker. */
     subtitle: 'Artifact 已發布,可分享給團隊檢視。',
     recipientsLabel: '分享對象',
+    recipientsCount: (n: number) => `（${n}）`,
     /** The examples are what the search key can be. `GET /hr/employeesAndOrgs` does not
      *  take Chinese input, so a 中文姓名 among them offers a way in that returns nothing —
      *  and the reader who tries it concludes the person is not in the directory. */

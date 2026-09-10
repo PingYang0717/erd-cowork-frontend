@@ -6,6 +6,7 @@ export const en: Translations = {
   share: {
     subtitle: 'This Artifact is published and ready to share.',
     recipientsLabel: 'Share with',
+    recipientsCount: (n: number) => ` (${n})`,
     recipientsHint: 'Mix departments (DEPT-11), sections (SEC-11) and people (NTDEMO01)',
     unavailable: 'Could not load the current recipients. Please try again.',
     searchFailed: 'Search failed. Please try again.',
