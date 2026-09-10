@@ -16,7 +16,6 @@ import ChatComposer from './ChatComposer';
 import MessageList, { type LiveRun } from './MessageList';
 import type { Answers } from './QuestionFormCard';
 import RepairOfferCard from './RepairOfferCard';
-import StoppedActions from './StoppedActions';
 
 import styles from './ThreadPanel.module.css';
 
@@ -120,10 +119,6 @@ const ThreadView: React.FC<ThreadViewProps> = ({ sessionId }) => {
   const [pending, setPending] = useState<{ text: string; atLength: number; isAnswer: boolean } | null>(null);
 
   const prevStreamingRef = useRef(false);
-
-  // Words handed back to the composer, unsent. The nonce is what lets the same question
-  // be handed back twice — see ChatComposer's `prefill`.
-  const [prefill, setPrefill] = useState<{ text: string; nonce: number } | null>(null);
 
   useEffect(() => {
     if (prevStreamingRef.current && !state.isStreaming) {
@@ -256,17 +251,14 @@ const ThreadView: React.FC<ThreadViewProps> = ({ sessionId }) => {
           onAnswer={handleAnswer}
           // The offer is about the artifact this conversation just produced, so it
           // belongs at the tail of the thread and scrolls with it.
+          // Draw the record ourselves exactly when history is not showing one at the
+          // tail — either because the refetch has not carried it home yet, or because
+          // the live bubble is on screen and MessageList suppresses it there (rendered
+          // from history it would sit ABOVE the half-written reply it interrupted).
+          stoppedRecordPending={state.stopped && (live !== null || stillAhead)}
+          onRetry={() => void submit({ question: lastQuestion }, true)}
           bottomSlot={
-            // A stopped run leaves the reader with two reasonable next moves, and the
-            // backend's own record already tells them to send again — this is that
-            // instruction as a pair of buttons. Both APPEND a turn; nothing here can
-            // replace the one that stopped (there is no messages endpoint).
-            state.stopped && lastQuestion !== '' ? (
-              <StoppedActions
-                onRetry={() => void submit({ question: lastQuestion }, true)}
-                onEdit={() => setPrefill({ text: lastQuestion, nonce: Date.now() })}
-              />
-            ) : repairOffer ? (
+            repairOffer ? (
               <RepairOfferCard
                 offer={repairOffer}
                 onConfirm={() => repair(repairOffer.artifactId, repairOffer.errors)}
@@ -292,7 +284,6 @@ const ThreadView: React.FC<ThreadViewProps> = ({ sessionId }) => {
             disabled={state.isStreaming}
             isStreaming={state.isStreaming}
             onStop={stop}
-            prefill={prefill}
           />
         </DataBoundary>
       </div>

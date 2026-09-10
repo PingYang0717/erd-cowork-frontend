@@ -49,8 +49,10 @@ describe('Stopping a run', () => {
     await user.click(await screen.findByRole('button', { name: 'Stop' }));
 
     await waitFor(() => expect(screen.getByRole('button', { name: 'Send message' })).toBeInTheDocument());
-    expect(within(thread()).queryByText(/eRD AI/)).not.toBeInTheDocument();
-    expect(within(thread()).queryByText('⏹ Generation stopped')).not.toBeInTheDocument();
+    // No half-drawn reply — but the interruption IS stated, the same way it will be
+    // stated after a reload.
+    expect(within(thread()).getByText(new RegExp(INTERRUPTED_TEXTS[0]))).toBeInTheDocument();
+    expect(within(thread()).queryByRole('button', { name: 'View HTML' })).toBeNull();
     // What the reader typed is still theirs, and still on screen.
     expect(within(thread()).getByText('Run an SPC analysis on Vt (gate CD).')).toBeInTheDocument();
   });
@@ -68,13 +70,18 @@ describe('Stopping a run', () => {
     await user.click(await screen.findByRole('button', { name: 'Stop' }));
 
     expect(within(thread()).getByText('Recomputed control limits.')).toBeInTheDocument();
-    expect(screen.getByText('⏹ Generation stopped')).toBeInTheDocument();
+    expect(within(thread()).getByText(new RegExp(INTERRUPTED_TEXTS[0]))).toBeInTheDocument();
   });
 
   /** The backend persists its own record of the interruption, so once the refetch lands
    *  two things say the run stopped. The bubble is the one on screen, so it speaks; the
    *  record is what remains after a reload, so it speaks then. Never both at once. */
-  it('states the stop once, not twice, when the backend’s record arrives', async () => {
+  /** The record is drawn the instant the run stops, and the refetch that brings the real
+   *  one home replaces it with something identical — so what a reader sees now is what
+   *  they will still see after a reload. It used to be announced one way now (a stop
+   *  notice on the bubble) and another way later (the record), which read as two
+   *  different outcomes. And it is only ever said once. */
+  it('states the interruption immediately, once, in the wording that survives a reload', async () => {
     const user = userEvent.setup();
     const stream = mockAgentStream();
     renderStudio();
@@ -107,14 +114,14 @@ describe('Stopping a run', () => {
 
     await user.click(await screen.findByRole('button', { name: 'Stop' }));
 
-    // The two delayed refetches an aborted run schedules bring that history in.
+    // Immediately, without waiting for anything to come back.
+    expect(within(thread()).getAllByText(new RegExp(INTERRUPTED_TEXTS[0]))).toHaveLength(1);
+
+    // And still once after the two delayed refetches an aborted run schedules.
     await waitFor(() => expect(within(thread()).getAllByText(/Run an SPC analysis/)).not.toHaveLength(0), {
       timeout: 4000,
     });
-
-    // The bubble is on screen and says it stopped, so the record stays quiet.
-    expect(screen.getByText('⏹ Generation stopped')).toBeInTheDocument();
-    expect(within(thread()).queryByText(INTERRUPTED_TEXTS[0])).not.toBeInTheDocument();
+    expect(within(thread()).getAllByText(new RegExp(INTERRUPTED_TEXTS[0]))).toHaveLength(1);
   });
 
   /** The record already tells the reader to send again. This makes that a click — and
@@ -135,26 +142,5 @@ describe('Stopping a run', () => {
 
     await waitFor(() => expect(stream.requests).toHaveLength(2));
     expect(stream.requests[1]).toMatchObject({ question: 'Run an SPC analysis on Vt (gate CD).' });
-  });
-
-  /** Editing a message is not something this backend can support — nothing can be
-   *  removed, so an "edit" would leave the original and its half-reply in place and add a
-   *  third turn. Putting the words back in the box is the honest half of it. */
-  it('puts the question back in the composer to be reworded', async () => {
-    const user = userEvent.setup();
-    const stream = mockAgentStream();
-    renderStudio();
-
-    await selectASession(user);
-    await user.click(screen.getByRole('button', { name: 'SPC analysis' }));
-    act(() => stream.push({ type: 'TOKEN', delta: 'Recomputed' }));
-    await screen.findByText('Recomputed');
-    await user.click(await screen.findByRole('button', { name: 'Stop' }));
-
-    await user.click(await screen.findByRole('button', { name: 'Edit and resend' }));
-
-    expect(screen.getByRole('textbox', { name: 'Message' })).toHaveValue('Run an SPC analysis on Vt (gate CD).');
-    // Nothing was sent by pressing it — the reader is mid-sentence.
-    expect(stream.requests).toHaveLength(1);
   });
 });

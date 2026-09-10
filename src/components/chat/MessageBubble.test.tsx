@@ -140,13 +140,31 @@ describe('MessageBubble', () => {
     }
   });
 
-  it('distinguishes a user-initiated stop from a dropped connection', () => {
+  /** A dropped connection is something the reader has to act on, so the bubble says it.
+   *  A user-initiated stop is not: they know, they did it — and the record the backend
+   *  writes is what states it, in the one wording that survives a reload. */
+  it('reports a dropped connection in the bubble, and leaves a stop to the record', () => {
     const { rerender } = render(<MessageBubble sender="AI" live={liveRun({ liveText: 'Partial', stopped: true })} />);
-    expect(screen.getByText('⏹ Generation stopped')).toBeInTheDocument();
+    expect(screen.getByText('eRD AI')).toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
 
     rerender(<MessageBubble sender="AI" live={liveRun({ liveText: 'Partial', networkError: true })} />);
-    expect(screen.queryByText('⏹ Generation stopped')).not.toBeInTheDocument();
     expect(screen.getByText('⚠ Connection lost — please send again')).toBeInTheDocument();
+  });
+
+  /** The trailing interruption is the only one still open, and the record already tells
+   *  the reader to send again — this makes that a button. */
+  it('offers a retry on an interrupted record when one is given', async () => {
+    const onRetry = vi.fn();
+    render(<MessageBubble sender="AI" text={INTERRUPTED_TEXTS[0]} onRetry={onRetry} />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Retry' }));
+    expect(onRetry).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows no retry on an interruption further up the thread', () => {
+    render(<MessageBubble sender="AI" text={INTERRUPTED_TEXTS[0]} />);
+    expect(screen.queryByRole('button', { name: 'Retry' })).toBeNull();
   });
 
   it('renders the backend’s own record messages as hints, not as agent prose', () => {

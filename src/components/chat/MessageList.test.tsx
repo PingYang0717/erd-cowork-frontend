@@ -40,6 +40,8 @@ const renderList = (live: LiveRun | null = null, optimisticUserText: string | nu
       pendingAnswerText={null}
       lastRunDurationMs={null}
       onAnswer={() => {}}
+      stoppedRecordPending={false}
+      onRetry={() => {}}
     />
   );
 };
@@ -75,6 +77,8 @@ describe('MessageList auto-scroll', () => {
         pendingAnswerText={null}
         lastRunDurationMs={null}
         onAnswer={() => {}}
+        stoppedRecordPending={false}
+        onRetry={() => {}}
       />
     );
 
@@ -97,6 +101,8 @@ describe('MessageList auto-scroll', () => {
         pendingAnswerText={null}
         lastRunDurationMs={null}
         onAnswer={() => {}}
+        stoppedRecordPending={false}
+        onRetry={() => {}}
       />
     );
 
@@ -119,6 +125,8 @@ describe('MessageList auto-scroll', () => {
         pendingAnswerText={null}
         lastRunDurationMs={null}
         onAnswer={() => {}}
+        stoppedRecordPending={false}
+        onRetry={() => {}}
       />
     );
 
