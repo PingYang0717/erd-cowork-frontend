@@ -67,16 +67,24 @@ const filterArtifacts = (artifacts: Artifact[], category: FilterCategory) => {
   }
 };
 
+/** Newest first — the shelf's resting order, and what every group falls back to. */
+const byNewest = (a: Artifact, b: Artifact) => b.createdAt.localeCompare(a.createdAt);
+
 const sortArtifacts = (artifacts: Artifact[], sort: SortKey) => {
   const sorted = [...artifacts];
   if (sort === 'name') {
     sorted.sort((a, b) => a.title.localeCompare(b.title));
   } else if (sort === 'recent') {
-    sorted.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    sorted.sort(byNewest);
   } else {
-    // Pinned first, most recently pinned leading — `pinnedAt` carries the moment, so
-    // the group has a real order rather than whatever the list arrived in.
-    sorted.sort((a, b) => (b.pinnedAt ?? '').localeCompare(a.pinnedAt ?? ''));
+    // Pinning lifts an Artifact to the top; it does not reorder what is under it. So this
+    // is one comparison — pinned or not — and newest-first inside each group.
+    //
+    // It used to order the pinned group by `pinnedAt`, which put an old Artifact above a
+    // newer one for a reason nothing on the card showed. The unpinned group fared worse:
+    // every `pinnedAt` was null, so they all compared equal and kept whatever order the
+    // response happened to arrive in.
+    sorted.sort((a, b) => Number(b.pinnedAt !== null) - Number(a.pinnedAt !== null) || byNewest(a, b));
   }
   return sorted;
 };
