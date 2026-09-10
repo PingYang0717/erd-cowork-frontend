@@ -2,6 +2,7 @@ import React, { useDeferredValue, useEffect, useMemo, useState } from 'react';
 import {
   AppstoreOutlined,
   CheckOutlined,
+  ClockCircleOutlined,
   CopyOutlined,
   LoadingOutlined,
   ReloadOutlined,
@@ -9,13 +10,15 @@ import {
   ToolOutlined,
 } from '@ant-design/icons';
 
+import Tooltip from '@/components/common/Tooltip';
 import { INTERRUPTED_TEXTS, REPAIR_RECORD_PREFIXES } from '@/constants/wireStrings';
 import type { AgentStreamState } from '@/hooks/useAgentStream';
 import type { QuestionForm, StepItem } from '@/types/api';
+import { formatDuration } from '@/utils/formatDuration';
 import { formatRelativeTime } from '@/utils/formatRelativeTime';
 import { stripTableMarkers } from '@/utils/tableMarkers';
 import CollapsiblePanel from './CollapsiblePanel';
-import { Elapsed, LiveElapsed } from './Elapsed';
+import { LiveElapsed } from './Elapsed';
 import HtmlCodePanel from './HtmlCodePanel';
 import QuestionFormCard, { type Answers } from './QuestionFormCard';
 import { StepRow, StepsRecap } from './StepList';
@@ -92,34 +95,48 @@ const MessageMeta: React.FC<{
   };
 
   return (
-    <div className={always ? `${styles.meta} ${styles.metaAlways}` : styles.meta} data-latest={always || undefined}>
+    <div className={styles.meta} data-latest={always || undefined}>
+      {/* How long the turn took, then what to do about it, then when it was sent. The two
+          times bracket the controls: they are context, and context reads at the edges. */}
+      {durationMs != null && (
+        <span className={styles.metaAside}>
+          <ClockCircleOutlined aria-hidden className={styles.metaAsideIcon} />
+          {formatDuration(durationMs)}
+        </span>
+      )}
+
+      {/* Icons alone. A row of labelled buttons under every reply competes with the reply;
+          the label lives in the tooltip, where it is one hover away and nowhere else. */}
+      <span className={always ? `${styles.metaActions} ${styles.metaActionsAlways}` : styles.metaActions}>
+        {/* Nothing to copy — a reply that produced only an Artifact — offers no button:
+            one that copies an empty string claims to have done something it did not. */}
+        {copyText !== '' && (
+          <Tooltip content={copied ? t.common.copied : t.common.copy}>
+            <button
+              type="button"
+              className={styles.metaButton}
+              aria-label={copied ? 'Copied' : 'Copy message'}
+              onClick={handleCopy}
+            >
+              {copied ? <CheckOutlined aria-hidden /> : <CopyOutlined aria-hidden />}
+            </button>
+          </Tooltip>
+        )}
+        {/* It APPENDS a turn — the backend has no messages endpoint, so the run that
+            stopped cannot be replaced (docs/api/backend-feedback.md). */}
+        {onRetry && (
+          <Tooltip content={t.chat.retryRun}>
+            <button type="button" className={styles.metaButton} aria-label="Retry" onClick={onRetry}>
+              <ReloadOutlined aria-hidden />
+            </button>
+          </Tooltip>
+        )}
+      </span>
+
       {createdAt && (
-        <time dateTime={createdAt} title={new Date(createdAt).toLocaleString()} className={styles.metaTime}>
+        <time dateTime={createdAt} title={new Date(createdAt).toLocaleString()} className={styles.metaAside}>
           {formatRelativeTime(createdAt)}
         </time>
-      )}
-      {/* Nothing to copy — a reply that produced only an Artifact — offers no button: one
-          that copies an empty string claims to have done something it did not. */}
-      {copyText !== '' && (
-        <button
-          type="button"
-          className={styles.metaCopy}
-          aria-label={copied ? 'Copied' : 'Copy message'}
-          onClick={handleCopy}
-        >
-          {copied ? <CheckOutlined aria-hidden /> : <CopyOutlined aria-hidden />}
-          <span className={styles.metaCopyLabel}>{copied ? t.common.copied : t.common.copy}</span>
-        </button>
-      )}
-      {durationMs != null && <Elapsed ms={durationMs} />}
-      {/* At the end of the reply, where the reader has finished reading and is deciding
-          what to do next. It APPENDS a turn — the backend has no messages endpoint, so
-          the run that stopped cannot be replaced (docs/api/backend-feedback.md). */}
-      {onRetry && (
-        <button type="button" className={styles.metaCopy} aria-label="Retry" onClick={onRetry}>
-          <ReloadOutlined aria-hidden />
-          <span className={styles.metaCopyLabel}>{t.chat.retryRun}</span>
-        </button>
       )}
     </div>
   );

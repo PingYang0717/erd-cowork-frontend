@@ -197,56 +197,77 @@
   white-space: pre-wrap;
 }
 
-/* What a message says about itself. Out of the way until asked for: a time and a copy
-   control on every bubble, at full strength, would compete with the conversation. */
+/* What a message says about itself: how long it took, what to do about it, and when it
+   was sent. The controls sit between the two times, which read as context at the edges. */
 .meta {
   display: flex;
   align-items: center;
   gap: 10px;
   margin-top: 4px;
+  min-height: 22px;
+}
+
+/* Both times, whichever end they are at. Always revealed rather than shown: a timestamp
+   is something a reader goes looking for, never something they are reading the thread
+   for — even on the newest turn. */
+.metaAside {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: var(--erd-color-text-tertiary, #8c8c8c);
   opacity: 0;
   transition: opacity 0.12s ease;
 }
 
-/* `:focus-within` is not a nicety here — without it the copy button is focusable while
-   invisible, which is worse than not having it at all (ADR-0014). */
-.userRow:hover .meta,
-.userRow:focus-within .meta,
-.aiRow:hover .meta,
-.aiRow:focus-within .meta {
+.metaAsideIcon {
+  font-size: 11px;
+}
+
+/* The controls. Hidden on an older turn, kept on the newest one — that is the reply the
+   reader is acting on, and hiding its controls behind a pointer makes them findable only
+   by accident. */
+.metaActions {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+
+.metaActionsAlways {
   opacity: 1;
 }
 
-.metaTime {
-  font-size: 11px;
-  color: var(--erd-color-text-tertiary, #8c8c8c);
+/* `:focus-within` is not a nicety here — without it a button is focusable while
+   invisible, which is worse than not having it at all (ADR-0014). */
+.userRow:hover .metaAside,
+.userRow:focus-within .metaAside,
+.aiRow:hover .metaAside,
+.aiRow:focus-within .metaAside,
+.userRow:hover .metaActions,
+.userRow:focus-within .metaActions,
+.aiRow:hover .metaActions,
+.aiRow:focus-within .metaActions {
+  opacity: 1;
 }
 
-.metaCopy {
+.metaButton {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 2px 6px;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
   border: none;
   border-radius: 6px;
   background: transparent;
-  font: inherit;
-  font-size: 11px;
+  font-size: 13px;
   color: var(--erd-color-text-tertiary, #8c8c8c);
   cursor: pointer;
 }
 
-.metaCopy:hover {
+.metaButton:hover {
   background: var(--erd-color-fill-tertiary, rgba(0, 0, 0, 0.04));
   color: var(--erd-color-text-secondary, #595959);
-}
-
-.metaCopyLabel {
-  line-height: 1;
-}
-
-/* The newest turn keeps its row. Everything above it is history, and history's controls
-   stay out of the way until asked for. */
-.metaAlways {
-  opacity: 1;
 }
