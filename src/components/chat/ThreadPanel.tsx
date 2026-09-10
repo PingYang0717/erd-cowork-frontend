@@ -16,6 +16,7 @@ import ChatComposer from './ChatComposer';
 import MessageList, { type LiveRun } from './MessageList';
 import type { Answers } from './QuestionFormCard';
 import RepairOfferCard from './RepairOfferCard';
+import StoppedActions from './StoppedActions';
 
 import styles from './ThreadPanel.module.css';
 
@@ -120,6 +121,10 @@ const ThreadView: React.FC<ThreadViewProps> = ({ sessionId }) => {
 
   const prevStreamingRef = useRef(false);
 
+  // Words handed back to the composer, unsent. The nonce is what lets the same question
+  // be handed back twice — see ChatComposer's `prefill`.
+  const [prefill, setPrefill] = useState<{ text: string; nonce: number } | null>(null);
+
   useEffect(() => {
     if (prevStreamingRef.current && !state.isStreaming) {
       setAnnouncement(state.liveText || state.answer || '');
@@ -182,6 +187,12 @@ const ThreadView: React.FC<ThreadViewProps> = ({ sessionId }) => {
 
   const handleSend = useCallback((input: SendInput) => submit(input, true), [submit]);
 
+  // The question the stopped run was answering. From the optimistic record when the
+  // refetch has not carried it home yet, else from the history's last USER message —
+  // between those two, one of them always has it.
+  const lastQuestion =
+    pending?.text ?? [...messages].reverse().find((message) => message.sender === 'USER')?.text ?? '';
+
   // The backend body is question-only, so a reask's answers travel as one prose
   // sentence composed from the form (labels stand in for values on the wire).
   // Composed from the form the card was drawn with, not from `state.question`: a reask
@@ -194,11 +205,19 @@ const ThreadView: React.FC<ThreadViewProps> = ({ sessionId }) => {
     [submit]
   );
 
+  // What this run put on screen. A stop before the first token leaves all of it empty,
+  // and a bubble drawn from nothing is a label and a stop notice with a blank between
+  // them — which reads as a reply that failed to render rather than as a run that never
+  // got going.
+  const runProducedSomething = Boolean(
+    state.liveText || state.answer || state.steps.length || state.artifact || state.thinking || state.codeText
+  );
+
   // A run that ended cleanly hands over to the refetched history — the bubble it left
   // behind and the one history renders are now the same component, so the swap is
-  // invisible. A run that stopped, failed or is waiting on a reask has something the
-  // history does not carry, so it stays.
-  const runEndedVisibly = state.stopped || state.error !== null || state.question !== null;
+  // invisible. A run that failed or is waiting on a reask has something the history does
+  // not carry, so it stays; a run that stopped stays only if it has something to hold.
+  const runEndedVisibly = (state.stopped && runProducedSomething) || state.error !== null || state.question !== null;
   // `AgentStreamState` is structurally a `LiveRun` superset, so the reducer's state
   // passes as-is — the twelve-field hand-copy this used to be meant every new live
   // field touched four files.
@@ -238,7 +257,16 @@ const ThreadView: React.FC<ThreadViewProps> = ({ sessionId }) => {
           // The offer is about the artifact this conversation just produced, so it
           // belongs at the tail of the thread and scrolls with it.
           bottomSlot={
-            repairOffer ? (
+            // A stopped run leaves the reader with two reasonable next moves, and the
+            // backend's own record already tells them to send again — this is that
+            // instruction as a pair of buttons. Both APPEND a turn; nothing here can
+            // replace the one that stopped (there is no messages endpoint).
+            state.stopped && lastQuestion !== '' ? (
+              <StoppedActions
+                onRetry={() => void submit({ question: lastQuestion }, true)}
+                onEdit={() => setPrefill({ text: lastQuestion, nonce: Date.now() })}
+              />
+            ) : repairOffer ? (
               <RepairOfferCard
                 offer={repairOffer}
                 onConfirm={() => repair(repairOffer.artifactId, repairOffer.errors)}
@@ -264,6 +292,7 @@ const ThreadView: React.FC<ThreadViewProps> = ({ sessionId }) => {
             disabled={state.isStreaming}
             isStreaming={state.isStreaming}
             onStop={stop}
+            prefill={prefill}
           />
         </DataBoundary>
       </div>

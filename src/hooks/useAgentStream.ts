@@ -171,7 +171,6 @@ export const useAgentStream = (
   state: AgentStreamState;
   send(input: SendInput): Promise<void>;
   stop(): void;
-  reset(): void;
 } => {
   const [state, dispatch] = useReducer(reducer, initialState);
   const queryClient = useQueryClient();
@@ -291,9 +290,5 @@ export const useAgentStream = (
     controllerRef.current?.abort();
   }, []);
 
-  const reset = useCallback((): void => {
-    dispatch({ type: 'RESET' });
-  }, []);
-
-  return { state, send, stop, reset };
+  return { state, send, stop };
 };
