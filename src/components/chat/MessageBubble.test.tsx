@@ -311,10 +311,15 @@ describe('message actions: shown or revealed', () => {
     );
 
     const retry = screen.getByRole('button', { name: 'Retry' });
-    expect(retry).toHaveTextContent('Try again');
+    // Icon only — the wording lives in the tooltip, one hover away and nowhere else.
+    expect(retry).toHaveTextContent('');
     // Beside the copy control, not inside the record's own sentence.
-    expect(retry.closest('[class*="meta"]')).not.toBeNull();
+    expect(retry.closest('[class*="metaActions"]')).not.toBeNull();
     await userEvent.click(retry);
     expect(onRetry).toHaveBeenCalledTimes(1);
+
+    // The label a pointer finds.
+    await userEvent.hover(retry);
+    expect(await screen.findByRole('tooltip')).toHaveTextContent('Try again');
   });
 });
