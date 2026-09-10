@@ -144,3 +144,54 @@ describe('ConnectorsPanel', () => {
     expect(screen.getByRole('button', { name: 'Submit' })).toBeEnabled();
   });
 });
+
+/** Two facts, not one. What the panel is editing is a *selection*, and Submit is what
+ *  turns it into an attachment — so a row can be picked and not yet attached (the
+ *  remembered combination a new conversation opens on is exactly that), or attached and
+ *  no longer picked (Submit will detach it). Calling the draft "connected" said the
+ *  conversation was drawing on sources it had never been given. */
+describe('ConnectorsPanel: chosen here vs attached to this conversation', () => {
+  beforeEach(() => localStorage.removeItem(CONNECTOR_PREFS_STORAGE_KEY));
+
+  const rowOf = (name: string) =>
+    screen.getByRole('button', { name: new RegExp(`^(Connect|Disconnect) ${name}$`) }).closest('li') as HTMLElement;
+
+  it('marks only what the conversation is actually drawing on', async () => {
+    const user = userEvent.setup();
+    renderPanel();
+
+    // The seeded session draws on Inline; Lot Info it has never been given.
+    await screen.findByRole('button', { name: 'Disconnect Inline' });
+    expect(within(rowOf('Inline')).getByText('Attached')).toBeInTheDocument();
+    expect(within(rowOf('Lot Info')).queryByText('Attached')).toBeNull();
+
+    // Picking one does not attach it — Submit does.
+    await user.click(screen.getByRole('button', { name: 'Connect Lot Info' }));
+    expect(within(rowOf('Lot Info')).queryByText('Attached')).toBeNull();
+
+    await submitSelection(user);
+    expect(within(rowOf('Lot Info')).getByText('Attached')).toBeInTheDocument();
+  });
+
+  /** The remembered combination is a convenience, not a claim. A conversation that has
+   *  been given nothing must not open saying it is connected to anything. */
+  it('opens a new conversation on the remembered picks without calling them attached', async () => {
+    const user = userEvent.setup();
+    renderPanel();
+    await user.click(await screen.findByRole('button', { name: 'Connect Lot Info' }));
+    await submitSelection(user);
+
+    // A different conversation, with nothing of its own.
+    renderPanel('session-blank', true);
+
+    const lotInfo = await screen.findAllByRole('button', { name: 'Disconnect Lot Info' });
+    expect(lotInfo).not.toHaveLength(0);
+
+    // Picked for them — and nothing attached until they submit it themselves.
+    const panel = screen.getAllByRole('dialog').at(-1) as HTMLElement;
+    expect(within(panel).queryByText('Attached')).toBeNull();
+
+    await user.click(within(panel).getByRole('button', { name: 'Submit' }));
+    await waitFor(() => expect(within(panel).getAllByText('Attached')).not.toHaveLength(0));
+  });
+});

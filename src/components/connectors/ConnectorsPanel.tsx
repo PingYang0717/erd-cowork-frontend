@@ -42,45 +42,51 @@ const CONNECTOR_ICONS: Record<string, ReactNode> = {
   tool: <ToolOutlined aria-hidden />,
 };
 
-/** How one row reads, from the two facts that decide it: whether the connector can be
- *  chosen at all, and whether this conversation's draft has chosen it. Derived per render
- *  rather than stored, so there is no third copy of the answer to fall out of step. */
-type RowState = 'connected' | 'available' | 'unavailable';
+/** What this panel is EDITING: whether the connector can be chosen at all, and whether
+ *  the draft has chosen it. Derived per render rather than stored, so there is no third
+ *  copy of the answer to fall out of step.
+ *
+ *  Deliberately not called "connected". Whether the conversation is actually drawing on a
+ *  source is a different fact — `SessionDetail.connectors`, drawn as its own mark on the
+ *  row — and it only becomes true at Submit. The two used to share this name, so a new
+ *  conversation opened on the remembered combination and announced itself connected to
+ *  sources it had never been given. */
+type RowState = 'selected' | 'available' | 'unavailable';
 
 const rowState = (connector: Connector, draftIds: string[]): RowState => {
   if (!connector.enabled) {
     return 'unavailable';
   }
-  return draftIds.includes(connector.id) ? 'connected' : 'available';
+  return draftIds.includes(connector.id) ? 'selected' : 'available';
 };
 
-type StatusFilter = 'All' | 'Connected' | 'Not Connected';
+type StatusFilter = 'All' | 'Selected' | 'Not Selected';
 
 /** Filter identity stays these English keys (tests and logic match on them); what the
  *  user reads is looked up per key at render time. */
-const STATUS_FILTERS: StatusFilter[] = ['All', 'Connected', 'Not Connected'];
+const STATUS_FILTERS: StatusFilter[] = ['All', 'Selected', 'Not Selected'];
 
 const matchesFilter = (state: RowState, filter: StatusFilter): boolean => {
   if (filter === 'All') return true;
-  return filter === 'Connected' ? state === 'connected' : state !== 'connected';
+  return filter === 'Selected' ? state === 'selected' : state !== 'selected';
 };
 
 /** Takes the copy rather than reaching for it, so the lookup stays a pure function
  *  of (state, dictionary). */
 const statusMeta = (state: RowState, t: Translations['connectors']) => {
   switch (state) {
-    case 'connected':
-      return { label: t.statusConnected, color: 'var(--erd-color-primary, #1677ff)' };
+    case 'selected':
+      return { label: t.statusSelected, color: 'var(--erd-color-primary, #1677ff)' };
     case 'unavailable':
       return { label: t.statusUnavailable, color: 'var(--erd-color-text-tertiary, #8c8c8c)' };
     default:
-      return { label: t.statusNotConnected, color: 'var(--erd-color-text-tertiary, #8c8c8c)' };
+      return { label: t.statusNotSelected, color: 'var(--erd-color-text-tertiary, #8c8c8c)' };
   }
 };
 
 const toggleIcon = (state: RowState) => {
   switch (state) {
-    case 'connected':
+    case 'selected':
       return <CheckOutlined aria-hidden />;
     case 'unavailable':
       return <LockOutlined aria-hidden />;
@@ -162,7 +168,7 @@ const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ sessionId, open, onCl
     setDataSources.mutate(draftIds, { onSuccess: onClose });
   };
 
-  const chosen = catalogue.filter((connector) => rowState(connector, draftIds) === 'connected');
+  const chosen = catalogue.filter((connector) => rowState(connector, draftIds) === 'selected');
   const isDirty = chosen.length !== attachedIds.length || chosen.some((c) => !attachedIds.includes(c.id));
   const visibleConnectors = catalogue.filter(
     (connector) =>
@@ -265,9 +271,9 @@ const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ sessionId, open, onCl
           >
             {filter === 'All'
               ? t.connectors.filterAll
-              : filter === 'Connected'
-                ? t.connectors.filterConnected
-                : t.connectors.filterNotConnected}
+              : filter === 'Selected'
+                ? t.connectors.filterSelected
+                : t.connectors.filterNotSelected}
             {filter !== 'All' && (
               <span className={styles.filterChipCount}>
                 {catalogue.filter((c) => matchesFilter(rowState(c, draftIds), filter)).length}
@@ -282,16 +288,22 @@ const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ sessionId, open, onCl
           visibleConnectors.map((connector) => {
             const state = rowState(connector, draftIds);
             const meta = statusMeta(state, t.connectors);
-            const isConnected = state === 'connected';
+            const isSelected = state === 'selected';
+            // The other dimension, and the only one that is a fact about the conversation
+            // rather than about this dialog: what it is drawing on right now. Unaffected
+            // by the draft — a row can be attached and no longer picked, which is exactly
+            // what "Submit will detach this" looks like.
+            const isAttached = attachedIds.includes(connector.id);
             return (
-              <li key={connector.id} className={styles.row} data-connected={isConnected}>
-                <span className={styles.icon} data-connected={isConnected} aria-hidden="true">
+              <li key={connector.id} className={styles.row} data-connected={isSelected} data-attached={isAttached}>
+                <span className={styles.icon} data-connected={isSelected} aria-hidden="true">
                   {CONNECTOR_ICONS[connector.id] ?? <ApiOutlined aria-hidden />}
                 </span>
                 <span className={styles.info}>
                   <span className={styles.nameRow}>
                     <span className={styles.name}>{connector.name}</span>
                     <span className={styles.categoryTag}>{connector.type}</span>
+                    {isAttached && <span className={styles.attachedTag}>{t.connectors.attached}</span>}
                   </span>
                   <span className={styles.description}>{connector.description}</span>
                   <span className={styles.status} data-status={state} style={{ color: meta.color }}>
@@ -305,7 +317,7 @@ const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ sessionId, open, onCl
                   shape="circle"
                   size="small"
                   disabled={state === 'unavailable'}
-                  aria-label={isConnected ? `Disconnect ${connector.name}` : `Connect ${connector.name}`}
+                  aria-label={isSelected ? `Disconnect ${connector.name}` : `Connect ${connector.name}`}
                   icon={toggleIcon(state)}
                   onClick={() => toggle(connector)}
                 />

@@ -238,20 +238,25 @@ export const zhTW = {
 
   connectors: {
     title: 'Connectors',
-    subtitle: (connected: number, total: number) =>
-      `把 eRD AI 連上你的 RD 資料來源 · ${total} 個中已連線 ${connected} 個。`,
+    /** 數的是「這次選了幾個」,不是「這場對話目前連著幾個」——面板在編輯的是前者,
+     *  後者由每一列自己的「已連結」標記說。 */
+    subtitle: (selected: number, total: number) =>
+      `把 eRD AI 連上你的 RD 資料來源 · ${total} 個中已選擇 ${selected} 個。`,
     selectedSources: '已選來源',
     clearAll: '全部清除',
     noneSelected: '尚未選擇任何來源 — 從下方連一個。',
     searchPlaceholder: '搜尋資料來源…',
     filterAll: '全部',
-    filterConnected: '已連線',
-    filterNotConnected: '未連線',
+    filterSelected: '已選擇',
+    filterNotSelected: '未選擇',
+    /** 這一列現在真的綁在這場對話上。與上面那些不同,它是關於對話的事實,不是關於
+     *  這個面板的:要按下送出才會變成真的。 */
+    attached: '已連結',
     showing: (shown: number, total: number) => `顯示 ${shown} / ${total}`,
     submit: '送出',
     noMatch: (keyword: string) => `沒有符合「${keyword}」的資料來源。`,
-    statusConnected: '已連線',
-    statusNotConnected: '未連線',
+    statusSelected: '已選擇',
+    statusNotSelected: '未選擇',
     /** One state, not three. `enabled: false` covers an expired token, a connection that
      *  is down and an administrator switching the source off — the reason stays with the
      *  backend, which is the only party that knows it, and the reader has the same

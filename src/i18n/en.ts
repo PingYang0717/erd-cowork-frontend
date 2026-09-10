@@ -170,20 +170,21 @@ export const en: Translations = {
 
   connectors: {
     title: 'Connectors',
-    subtitle: (connected: number, total: number) =>
-      `Connect eRD AI to your RD data sources · ${connected} of ${total} connected.`,
+    subtitle: (selected: number, total: number) =>
+      `Connect eRD AI to your RD data sources · ${selected} of ${total} selected.`,
     selectedSources: 'Selected sources',
     clearAll: 'Clear all',
     noneSelected: 'No sources selected yet — connect one below.',
     searchPlaceholder: 'Search data sources…',
     filterAll: 'All',
-    filterConnected: 'Connected',
-    filterNotConnected: 'Not Connected',
+    filterSelected: 'Selected',
+    filterNotSelected: 'Not selected',
+    attached: 'Attached',
     showing: (shown: number, total: number) => `Showing ${shown} of ${total}`,
     submit: 'Submit',
     noMatch: (keyword: string) => `No data sources match "${keyword}".`,
-    statusConnected: 'Connected',
-    statusNotConnected: 'Not connected',
+    statusSelected: 'Selected',
+    statusNotSelected: 'Not selected',
     statusUnavailable: 'Unavailable',
   },
 
