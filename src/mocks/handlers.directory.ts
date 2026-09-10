@@ -76,6 +76,11 @@ const EMPLOYEES: DirectoryEntry[] = [
 
 const DIRECTORY = [...ORGS, ...EMPLOYEES];
 
+/** The real endpoint does not take Chinese input (2026-09-10), so neither does this. The
+ *  roster is full of Chinese names and would happily answer to one — which would let the
+ *  picker be built and tested against a search that does not exist anywhere but here. */
+const HAS_CHINESE = /[\u4e00-\u9fff]/;
+
 export const directoryHandlers = [
   // The real endpoint searches the HR directory; here the same fixed roster is filtered,
   // so the wire shape and the minimum-length rule are what a test exercises. Reading the
@@ -83,7 +88,7 @@ export const directoryHandlers = [
   // than silently return the whole roster.
   http.get('/api/hr/employeesAndOrgs', ({ request }) => {
     const keyword = new URL(request.url).searchParams.get('keyword')?.trim() ?? '';
-    if (keyword.length < DIRECTORY_SEARCH_MIN_LENGTH) {
+    if (keyword.length < DIRECTORY_SEARCH_MIN_LENGTH || HAS_CHINESE.test(keyword)) {
       return HttpResponse.json({ content: [] });
     }
     // Matched on every field, the same way the picker narrows — a roster searchable only
