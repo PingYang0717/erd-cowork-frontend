@@ -121,9 +121,10 @@ export const zhTW = {
 
   gallery: {
     sortLabel: '排序:',
-    sortPinned: '釘選優先',
-    sortRecent: '最近建立',
-    sortName: '名稱 A→Z',
+    sortRecent: '時間 新到舊',
+    sortOldest: '時間 舊到新',
+    sortNameAsc: '名稱 A→Z',
+    sortNameDesc: '名稱 Z→A',
     emptyAll: '目前還沒有 Artifact。',
     emptyYours: '你還沒有生成任何 Artifact。',
     emptyShared: '目前沒有分享給你的 Artifact。',
@@ -229,7 +230,6 @@ export const zhTW = {
     minutesAgo: (n: number) => `${n} 分鐘前`,
     hoursAgo: (n: number) => `${n} 小時前`,
     yesterday: '昨天',
-    weekday: (day: number) => ['週日', '週一', '週二', '週三', '週四', '週五', '週六'][day],
     monthDay: (month: number, date: number) => `${month + 1} 月 ${date} 日`,
     monthDayYear: (month: number, date: number, year: number) => `${year} 年 ${month + 1} 月 ${date} 日`,
   },

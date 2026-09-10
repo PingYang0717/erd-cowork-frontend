@@ -5,8 +5,9 @@ import {
   CheckOutlined,
   ClockCircleOutlined,
   DownOutlined,
-  PushpinOutlined,
+  HistoryOutlined,
   SortAscendingOutlined,
+  SortDescendingOutlined,
 } from '@ant-design/icons';
 
 import { useArtifacts } from '@/hooks/useArtifacts';
@@ -19,12 +20,16 @@ import ArtifactCard from './ArtifactCard';
 import styles from './ArtifactsGallery.module.css';
 
 type FilterCategory = 'all' | 'yours' | 'shared' | 'pinned';
-type SortKey = 'pinned' | 'recent' | 'name';
+type SortKey = 'recent' | 'oldest' | 'nameAsc' | 'nameDesc';
 
+/** Pinned-first is not among these. It holds under every one of them — a rule, not an
+ *  alternative — and offering it as a fourth choice invited the reader to pick something
+ *  they already had, while making the other three look as though they turned it off. */
 const SORT_OPTIONS = [
-  { key: 'pinned', labelKey: 'sortPinned', icon: <PushpinOutlined aria-hidden /> },
   { key: 'recent', labelKey: 'sortRecent', icon: <ClockCircleOutlined aria-hidden /> },
-  { key: 'name', labelKey: 'sortName', icon: <SortAscendingOutlined aria-hidden /> },
+  { key: 'oldest', labelKey: 'sortOldest', icon: <HistoryOutlined aria-hidden /> },
+  { key: 'nameAsc', labelKey: 'sortNameAsc', icon: <SortAscendingOutlined aria-hidden /> },
+  { key: 'nameDesc', labelKey: 'sortNameDesc', icon: <SortDescendingOutlined aria-hidden /> },
 ] as const;
 
 /** Which line the empty grid shows, by key rather than by copy — the copy itself lives
@@ -67,26 +72,23 @@ const filterArtifacts = (artifacts: Artifact[], category: FilterCategory) => {
   }
 };
 
-/** Newest first — the shelf's resting order, and what every group falls back to. */
-const byNewest = (a: Artifact, b: Artifact) => b.createdAt.localeCompare(a.createdAt);
+/** The four orders on offer, each comparing two Artifacts within the same pinned group. */
+const COMPARATORS: Record<SortKey, (a: Artifact, b: Artifact) => number> = {
+  recent: (a, b) => b.createdAt.localeCompare(a.createdAt),
+  oldest: (a, b) => a.createdAt.localeCompare(b.createdAt),
+  nameAsc: (a, b) => a.title.localeCompare(b.title),
+  nameDesc: (a, b) => b.title.localeCompare(a.title),
+};
 
+/** Pinned first, always — then the chosen order inside each group.
+ *
+ *  Pinning lifts an Artifact to the top; it does not reorder what is under it. The pinned
+ *  group used to be ordered by `pinnedAt`, which put an old Artifact above a newer one for
+ *  a reason nothing on the card showed; the unpinned group fared worse, with every
+ *  `pinnedAt` null and equal, so they kept whatever order the response arrived in. */
 const sortArtifacts = (artifacts: Artifact[], sort: SortKey) => {
-  const sorted = [...artifacts];
-  if (sort === 'name') {
-    sorted.sort((a, b) => a.title.localeCompare(b.title));
-  } else if (sort === 'recent') {
-    sorted.sort(byNewest);
-  } else {
-    // Pinning lifts an Artifact to the top; it does not reorder what is under it. So this
-    // is one comparison — pinned or not — and newest-first inside each group.
-    //
-    // It used to order the pinned group by `pinnedAt`, which put an old Artifact above a
-    // newer one for a reason nothing on the card showed. The unpinned group fared worse:
-    // every `pinnedAt` was null, so they all compared equal and kept whatever order the
-    // response happened to arrive in.
-    sorted.sort((a, b) => Number(b.pinnedAt !== null) - Number(a.pinnedAt !== null) || byNewest(a, b));
-  }
-  return sorted;
+  const within = COMPARATORS[sort];
+  return [...artifacts].sort((a, b) => Number(b.pinnedAt !== null) - Number(a.pinnedAt !== null) || within(a, b));
 };
 
 const ArtifactsGallery: React.FC = () => {
@@ -95,7 +97,7 @@ const ArtifactsGallery: React.FC = () => {
   const { data } = useArtifacts();
   const dismissCoach = usePublishCoachStore((store) => store.dismiss);
 
-  const [sort, setSort] = useState<SortKey>('pinned');
+  const [sort, setSort] = useState<SortKey>('recent');
   const [category, setCategory] = useState<FilterCategory>('all');
 
   // The Gallery is a shelf of published work, not an index of everything ever made.

@@ -88,9 +88,10 @@ export const en: Translations = {
 
   gallery: {
     sortLabel: 'Sort:',
-    sortPinned: 'Pinned first',
-    sortRecent: 'Most recent',
-    sortName: 'Name A→Z',
+    sortRecent: 'Newest first',
+    sortOldest: 'Oldest first',
+    sortNameAsc: 'Name A→Z',
+    sortNameDesc: 'Name Z→A',
     emptyAll: 'No Artifacts yet.',
     emptyYours: 'You have not produced any Artifacts yet.',
     emptyShared: 'Nothing has been shared with you yet.',
@@ -161,7 +162,6 @@ export const en: Translations = {
     minutesAgo: (n: number) => `${n}m ago`,
     hoursAgo: (n: number) => `${n}h ago`,
     yesterday: 'Yesterday',
-    weekday: (day: number) => ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][day],
     monthDay: (month: number, date: number) =>
       `${['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][month]} ${date}`,
     monthDayYear: (month: number, date: number, year: number) =>
