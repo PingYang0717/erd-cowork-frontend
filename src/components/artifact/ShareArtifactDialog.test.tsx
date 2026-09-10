@@ -307,6 +307,26 @@ describe('Sharing an Artifact: picking recipients', () => {
     });
   });
 
+  /** Once the tags scroll among themselves the list stops answering "how many" at a
+   *  glance, and how many people can see an Artifact is the question this dialog exists
+   *  to settle. */
+  it('says how many recipients are chosen', async () => {
+    const user = userEvent.setup();
+    renderDialog();
+
+    const field = await screen.findByRole('combobox');
+    await user.click(field);
+    await user.type(field, 'CHXXGHYC');
+    await user.click(await screen.findByTitle('鄭凱宇', {}, { timeout: 3000 }));
+
+    // Read off the element rather than queried by text: the count is its own node, and
+    // Testing Library's text matcher joins only an element's DIRECT text children — so
+    // neither half ever spells the whole line.
+    await waitFor(() =>
+      expect(document.querySelector('[class*="sectionLabel"]')?.textContent).toBe(`${en.share.recipientsLabel} (1)`)
+    );
+  });
+
   /** Adding three people should be one search, not three. antd empties the box on a pick
    *  and takes the option list down with it, so the second name meant typing the same
    *  department code again. The box empties; the list stays where it was until the next
