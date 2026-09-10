@@ -144,7 +144,7 @@ export const zhTW = {
   chat: {
     /** Appends a turn — the backend can neither replace nor remove one, so this asks the
      *  same question again rather than re-running the one that stopped. */
-    retryRun: '重試',
+    retryRun: '重新嘗試',
     /** The product's own name, unchanged in either language. */
     agentName: 'eRD AI',
     agentThinking: 'eRD AI 處理中…',

@@ -106,7 +106,7 @@ export const en: Translations = {
   },
 
   chat: {
-    retryRun: 'Retry',
+    retryRun: 'Try again',
     agentName: 'eRD AI',
     agentThinking: 'eRD AI is working…',
     networkError: '⚠ Connection lost — please send again',

@@ -245,24 +245,8 @@
   line-height: 1;
 }
 
-/* Sits on the interrupted record, where the sentence telling the reader to send again
-   already is. */
-.recordAction {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  margin-inline-start: 8px;
-  padding: 1px 7px;
-  border: 1px solid var(--erd-color-border, #d9d9d9);
-  border-radius: 6px;
-  background: var(--erd-color-bg-container, #fff);
-  font: inherit;
-  font-size: 11.5px;
-  color: var(--erd-color-text-secondary, #595959);
-  cursor: pointer;
-}
-
-.recordAction:hover {
-  border-color: var(--erd-color-primary, #1677ff);
-  color: var(--erd-color-primary, #1677ff);
+/* The newest turn keeps its row. Everything above it is history, and history's controls
+   stay out of the way until asked for. */
+.metaAlways {
+  opacity: 1;
 }

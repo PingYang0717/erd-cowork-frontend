@@ -246,10 +246,15 @@ const MessageList: React.FC<MessageListProps> = ({
             // Only the trailing interruption is still open; anything above it has already
             // been answered by whatever came after.
             onRetry={index === lastIndex && INTERRUPTED_TEXTS.includes(message.text) ? onRetry : undefined}
+            // Only when nothing newer is on screen: the live bubble and the optimistic
+            // user bubble both sit below the history.
+            isLatest={index === lastIndex && live === null && optimisticUserText === null}
           />
         );
       })}
-      {optimisticUserText !== null && <MessageBubble sender="USER" text={optimisticUserText} />}
+      {optimisticUserText !== null && (
+        <MessageBubble sender="USER" text={optimisticUserText} isLatest={live === null} />
+      )}
       {live && (
         <MessageBubble
           sender="AI"
@@ -260,6 +265,7 @@ const MessageList: React.FC<MessageListProps> = ({
           // which is why the handler is wired here and not only after the stream closes.
           onAnswer={onAnswer}
           durationMs={live.isStreaming ? null : lastRunDurationMs}
+          isLatest
         />
       )}
       {bottomSlot}
