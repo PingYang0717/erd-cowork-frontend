@@ -99,7 +99,7 @@ const MessageMeta: React.FC<{
       {/* How long the turn took, then what to do about it, then when it was sent. The two
           times bracket the controls: they are context, and context reads at the edges. */}
       {durationMs != null && (
-        <span className={styles.metaAside}>
+        <span className={`${styles.metaAside} ${styles.metaTimer}`}>
           <ClockCircleOutlined aria-hidden className={styles.metaAsideIcon} />
           {formatDuration(durationMs)}
         </span>
@@ -134,7 +134,11 @@ const MessageMeta: React.FC<{
       </span>
 
       {createdAt && (
-        <time dateTime={createdAt} title={new Date(createdAt).toLocaleString()} className={styles.metaAside}>
+        <time
+          dateTime={createdAt}
+          title={new Date(createdAt).toLocaleString()}
+          className={`${styles.metaAside} ${styles.metaTime}`}
+        >
           {formatRelativeTime(createdAt)}
         </time>
       )}
