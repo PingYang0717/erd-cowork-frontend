@@ -41,6 +41,16 @@
   animation-duration: 55s;
 }
 
+/* Fog along the floor: in front of the town, slower than it, so it reads as low and
+   near rather than as part of the skyline. */
+.fog {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 56px;
+  animation: slide 120s linear infinite;
+}
+
 /* Snow: the same idea downwards. Twice the band's height, sliding by one band. */
 .snow {
   position: absolute;
