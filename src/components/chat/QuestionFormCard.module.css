@@ -1,4 +1,4 @@
-/* Mirrors the mockup's clarification card: eRDWorkspace20260819.html:82899-82905. */
+/* Mirrors the original mockup's clarification card (eRDWorkspace20260819.html:82899-82905, git history). */
 .card {
   /* A fieldset carries `min-inline-size: min-content` from the UA sheet, and nothing in
      this card is narrow: a picked value renders as a tag that will not wrap, so the card

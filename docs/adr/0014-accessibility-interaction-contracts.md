@@ -13,7 +13,7 @@
 
 同時這些代號標記的內容全都不是可有可無的註腳——它們是**跨檔案的契約**。A-1 同時約束
 `ThreadPanel` 的 sr-only 區域與 `MessageList` 的 `role="log"`,兩邊必須一致才成立;A-2
-同時約束 `SettingsMenu` 與 `VersionSwitcher` 兩個觸發器。一個跨 18 檔、被反覆引用的約定,
+同時約束 `SettingsMenu`(2026-09-15 起為 `AppHeader` 的頭像)與 `VersionSwitcher` 兩個觸發器。一個跨 18 檔、被反覆引用的約定,
 正是 ADR 存在的理由。
 
 ## 決策
@@ -44,7 +44,7 @@
 **`role="menu"` 的子節點只能是項目。** 標題 div 是非法子節點,某些閱讀器會因此整個略過
 這個 menu,所以標題必須放在 popup 內、但在帶 `role="menu"` 的元素**外面**。
 
-遵守這條的有 `SettingsMenu` 與 `VersionSwitcher` 兩個觸發器。
+遵守這條的有 `AppHeader` 的頭像(原 `SettingsMenu`)與 `VersionSwitcher` 兩個觸發器。
 
 ### dialog-focus:flyout 是真的 dialog
 

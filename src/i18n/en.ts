@@ -76,10 +76,9 @@ export const en: Translations = {
   },
 
   settings: {
-    title: 'Settings',
     language: 'Language',
-    languageZh: '中文',
-    languageEn: 'English',
+    languageZh: '中',
+    languageEn: 'EN',
     theme: 'Theme',
     themeLight: 'Light',
     themeDark: 'Dark',

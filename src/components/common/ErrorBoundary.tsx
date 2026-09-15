@@ -2,7 +2,6 @@ import { Component, type ErrorInfo, type ReactNode } from 'react';
 
 import { useTranslations } from '@/i18n/useTranslations';
 import { describeLoadError } from '@/utils/describeLoadError';
-import SettingsMenu from './SettingsMenu';
 
 import styles from './ErrorBoundary.module.css';
 
@@ -83,11 +82,8 @@ const ErrorPanel: React.FC<{ error: Error; onRetry: () => void }> = ({ error, on
         <button type="button" className={styles.retry} onClick={onRetry}>
           {t.common.retry}
         </button>
-        {/* The language exit rides the card. A failure card may be the only thing
-            left on screen (the full-page view fails whole), and its words are in a
-            language the reader may not read — settings is where the language lives,
-            so it must survive every failure that hides the rail's own entry. */}
-        <SettingsMenu variant="tile" />
+        {/* No language exit on the card any more: the header holds it, above every
+            boundary, so it survives whatever failure this card is reporting. */}
       </div>
     </div>
   );

@@ -1,5 +1,6 @@
 // The mockup's own palette, copied verbatim from the `:root` and
-// `:root[data-theme="dark"]` blocks of `eRDWorkspace20260819.html`.
+// `:root[data-theme="dark"]` blocks of `erd-cowork.html` (the same values its
+// predecessor, `eRDWorkspace20260819.html`, declared).
 //
 // ADR-0002 requires the app's colors to match the mockup rather than merely
 // resemble it, and antd's algorithms do not land on the same values: its dark

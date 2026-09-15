@@ -233,7 +233,7 @@ export const messageHandlers = [
     upsertSession(sessionId);
 
     // Sending consumes the session's files, so the composer's chip row empties —
-    // mirrors eRDWorkspace20260819.html. They are not snapshotted onto the message:
+    // mirrors the design. They are not snapshotted onto the message:
     // `Message` has no attachments on the wire.
     const allFiles = sessionFiles.read();
     if (allFiles.some((file) => file.sessionId === sessionId)) {

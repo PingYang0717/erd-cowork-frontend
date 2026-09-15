@@ -1,6 +1,7 @@
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { render, screen } from '@testing-library/react';
 
+import AppShell from '@/components/layouts/AppShell';
 import StudioShell from '@/components/layouts/StudioShell';
 import ArtifactsGalleryPage from '@/pages/ArtifactsGallery/ArtifactsGalleryPage';
 import StudioPage from '@/pages/Studio/StudioPage';
@@ -15,9 +16,10 @@ interface RenderStudioOptions {
 /** Renders the Studio the way the router does.
  *
  *  StudioPage is only the `/cowork` index route's content; the session rail lives in
- *  StudioShell, the route's shared parent (`app/router.tsx`). Mirroring that nesting is
- *  what makes the rendered tree match production — a test that rendered StudioPage alone
- *  would have no rail to click. The artifacts route is included because publishing
+ *  StudioShell, the route's shared parent, and the header in AppShell above that
+ *  (`app/router.tsx`). Mirroring that nesting is what makes the rendered tree match
+ *  production — a test that rendered StudioPage alone would have no rail to click and
+ *  no preferences to open. The artifacts route is included because publishing
  *  navigates there.
  *
  *  The providers come from `appWrapper`, which carries `AntdApp` as well as the query
@@ -27,9 +29,11 @@ export const renderStudio = ({ retry = true }: RenderStudioOptions = {}) => {
   return render(
     <MemoryRouter initialEntries={['/cowork']}>
       <Routes>
-        <Route path="/cowork" element={<StudioShell />}>
-          <Route index element={<StudioPage />} />
-          <Route path="artifacts" element={<ArtifactsGalleryPage />} />
+        <Route element={<AppShell />}>
+          <Route path="/cowork" element={<StudioShell />}>
+            <Route index element={<StudioPage />} />
+            <Route path="artifacts" element={<ArtifactsGalleryPage />} />
+          </Route>
         </Route>
       </Routes>
     </MemoryRouter>,

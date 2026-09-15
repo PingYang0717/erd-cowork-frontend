@@ -104,15 +104,14 @@ export const zhTW = {
     deleteConfirm: '刪除',
   },
 
+  /** The header's preferences panel. Each row shows what is in use and toggles on press. */
   settings: {
-    /** The rail entry and the panel it opens share a name — pressing the thing called
-     *  Settings should land you somewhere called Settings. */
-    title: '設定',
     language: '語言',
-    /** Each language names itself. A reader who cannot read the current interface still
-     *  has to find their own — so this is the one place a language is not translated. */
-    languageZh: '中文',
-    languageEn: 'English',
+    /** How the row names the language in use — the design's `中` / `EN`. Each language
+     *  names itself, so a reader who cannot read the current interface still finds
+     *  their own; this is the one place a string is not translated. */
+    languageZh: '中',
+    languageEn: 'EN',
     theme: '主題',
     themeLight: '淺色',
     themeDark: '深色',
