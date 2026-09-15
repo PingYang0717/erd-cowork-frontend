@@ -22,8 +22,9 @@
 
 /* ---------- motions ---------- */
 
-.glow {
-  animation: glow 4s ease-in-out infinite;
+.breathe {
+  transform-origin: 50% 50%;
+  animation: breathe 5s ease-in-out infinite;
 }
 
 .twinkle {
@@ -46,7 +47,7 @@
 
 .hop {
   transform-origin: 50% 100%;
-  animation: hop 1.6s ease-in-out infinite;
+  animation: hop 2.2s ease-in-out infinite;
 }
 
 .sway {
@@ -113,15 +114,13 @@
   animation-delay: -1.6s;
 }
 
-@keyframes glow {
+@keyframes breathe {
   0%,
   100% {
     transform: translateY(0) scale(1);
-    filter: drop-shadow(0 0 2px rgba(247, 215, 116, 0.5));
   }
   50% {
-    transform: translateY(-4px) scale(1.04);
-    filter: drop-shadow(0 0 8px rgba(247, 215, 116, 0.9));
+    transform: translateY(-3px) scale(1.05);
   }
 }
 
@@ -153,20 +152,20 @@
     transform: translateY(0) scaleY(1);
   }
   15% {
-    transform: translateY(0) scaleY(0.9);
+    transform: translateY(0) scaleY(0.92);
   }
   50% {
-    transform: translateY(-10px) scaleY(1.05);
+    transform: translateY(-8px) scaleY(1.04);
   }
 }
 
 @keyframes sway {
   0%,
   100% {
-    transform: rotate(-9deg);
+    transform: rotate(-7deg);
   }
   50% {
-    transform: rotate(9deg);
+    transform: rotate(7deg);
   }
 }
 
