@@ -38,15 +38,15 @@ provider 每次請求都會被呼叫,NEVER 快取它的回傳值——見
 
 ## Session
 
-| Method | Path                        | Request                                   | Response           | 後端狀態 |
-| ------ | --------------------------- | ----------------------------------------- | ------------------ | -------- |
-| GET    | `/sessions`                 | —                                         | `Session[]`        | 已實作   |
-| GET    | `/sessions/:id`             | —                                         | `SessionDetail`    | 已實作   |
-| POST   | `/sessions`                 | `{}` (title defaults to `"New analysis"`) | `Session` (201)    | 不會實作 |
-| PATCH  | `/sessions/:id`             | `{ title: string }`                       | `Session`          | 已實作   |
-| POST   | `/sessions/:id/pin`         | —(toggle)                                 | `{ id, pinnedAt }` | 已實作   |
-| DELETE | `/sessions/:id`             | —                                         | 200                | 已實作   |
-| PATCH  | `/sessions/:id/data-source` | `["<connectorId>", …]`（裸陣列）          | 200，無 body       | 已實作   |
+| Method | Path                        | Request                                   | Response                                | 後端狀態 |
+| ------ | --------------------------- | ----------------------------------------- | --------------------------------------- | -------- |
+| GET    | `/sessions`                 | —                                         | `Session[]`                             | 已實作   |
+| GET    | `/sessions/:id`             | —                                         | `SessionDetail`                         | 已實作   |
+| POST   | `/sessions`                 | `{}` (title defaults to `"New analysis"`) | `Session` (201)                         | 不會實作 |
+| PATCH  | `/sessions/:id/rename`      | `{ title: string }`                       | `{ sessionId, title }`                  | 已實作   |
+| PATCH  | `/sessions/:id/pin`         | —（toggle）                               | `{ sessionId, pinnedAt, owner, isOwn }` | 已實作   |
+| PATCH  | `/sessions/:id/soft-delete` | —                                         | 200                                     | 已實作   |
+| PATCH  | `/sessions/:id/data-source` | `["<connectorId>", …]`（裸陣列）          | 200，無 body                            | 已實作   |
 
 `GET /sessions/:id` 回 `SessionDetail`：session 的 messages 與 files 內嵌其中——後端
 **沒有**獨立的 messages 端點。`SessionDetail.connectors` 是這場對話正在用的資料來源，
@@ -58,7 +58,7 @@ provider 每次請求都會被呼叫,NEVER 快取它的回傳值——見
 
 `POST /sessions` 標為「不會實作」：session 由 client 指定 id、第一次送訊息時 upsert
 （[ADR-0005](../adr/0005-new-chat-is-a-client-side-draft.md)），沒有建立端點這件事是決策
-不是缺口。改名／釘選／刪除都已接真後端；釘選是切換式的 `POST /sessions/:id/pin`，方向由後端決定
+不是缺口。改名／釘選／刪除都已接真後端；釘選是切換式的 `PATCH /sessions/:id/pin`，方向由後端決定
 並蓋時間戳。草稿列不提供這三個操作——草稿在後端還不存在。
 
 ## Message / Chat

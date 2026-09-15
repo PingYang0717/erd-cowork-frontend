@@ -71,7 +71,7 @@ session、C 拋錯建立新 offer → A 的結果(`repaired:false`→`setStatus(
   零延遲 mock 下測不出來。
 - `useArtifactRepair` 的 `invalidateQueries(artifactContentQueryKey)` 之後才 bump nonce
   → 該次 invalidate 實質無作用(無害,但誤導,可刪)。
-- `useAgentStream.reset()` 全 app 無人呼叫;`controllerRef` 跑完後未清空(無害)。
+- ~~`useAgentStream.reset()` 全 app 無人呼叫~~ — ✅ 已移除(2026-09-09,commit `77537fb`);`controllerRef` 跑完後未清空(無害)。
 
 ---
 

@@ -158,6 +158,58 @@ describe('Stopping a run', () => {
     expect(within(thread()).queryByText('Recomputed control limits.')).not.toBeInTheDocument();
   }, 15000);
 
+  /** The tail of the history is an interruption record after every stopped run. So a
+   *  retry that is itself stopped — before the backend has written the new question —
+   *  used to find the PREVIOUS run's record on the first look, call the history settled,
+   *  and never fetch the record for this run. "Settled" is judged against how long the
+   *  history was when the stop happened, not against the tail alone. */
+  it('keeps looking past the previous run’s record when a retry is stopped too', async () => {
+    const user = userEvent.setup();
+    const stream = mockAgentStream();
+    renderStudio();
+
+    await selectASession(user);
+    const sessionId = useSessionSelectionStore.getState().selectedSessionId as string;
+
+    await user.click(screen.getByRole('button', { name: 'SPC analysis' }));
+    act(() => stream.push({ type: 'TOKEN', delta: 'Recomputed' }));
+    await screen.findByText('Recomputed');
+    historyAfterInterruption(sessionId);
+    await user.click(await screen.findByRole('button', { name: 'Stop' }));
+    await user.click(await screen.findByRole('button', { name: 'Retry' }, { timeout: 4000 }));
+    await waitFor(() => expect(stream.requests).toHaveLength(2));
+
+    // The backend writes the retry's question and record later than the first look.
+    const first = [
+      message({ id: 'u1', sender: 'USER', text: QUESTION }),
+      message({ id: 'm1', sender: 'AI', text: INTERRUPTED_TEXTS[0] }),
+    ];
+    const writtenAt = Date.now() + 1500;
+    server.use(
+      http.get(`/api/sessions/${sessionId}`, () =>
+        HttpResponse.json({
+          id: sessionId,
+          title: 'New analysis',
+          createdAt: '2026-09-10T00:00:00.000Z',
+          files: [],
+          connectors: [],
+          messages:
+            Date.now() < writtenAt
+              ? first
+              : [
+                  ...first,
+                  message({ id: 'u2', sender: 'USER', text: QUESTION }),
+                  message({ id: 'm2', sender: 'AI', text: INTERRUPTED_TEXTS[0] }),
+                ],
+        })
+      )
+    );
+
+    await user.click(await screen.findByRole('button', { name: 'Stop' }));
+
+    await waitFor(() => expect(interruptedRecord()).toHaveLength(2), { timeout: 8000 });
+  }, 15000);
+
   /** The record already tells the reader to send again. This makes that a click — and it
    *  APPENDS a turn, which is all the backend allows: there is no messages endpoint, so
    *  the run that stopped cannot be replaced. */

@@ -11,7 +11,7 @@ import {
 } from '@ant-design/icons';
 
 import Tooltip from '@/components/common/Tooltip';
-import { INTERRUPTED_TEXTS, REPAIR_RECORD_PREFIXES } from '@/constants/wireStrings';
+import { isInterruptionRecord, REPAIR_RECORD_PREFIXES } from '@/constants/wireStrings';
 import type { AgentStreamState } from '@/hooks/useAgentStream';
 import type { QuestionForm, StepItem } from '@/types/api';
 import { formatDuration } from '@/utils/formatDuration';
@@ -197,7 +197,7 @@ export interface MessageBubbleProps {
 /** Messages the backend persists on its own behalf — an interrupted response, a repair
  *  outcome. They are records, not agent prose, so they never reach the Markdown renderer. */
 const systemRecordKind = (text: string): 'interrupted' | 'repair' | null => {
-  if (INTERRUPTED_TEXTS.includes(text)) {
+  if (isInterruptionRecord(text)) {
     return 'interrupted';
   }
   return REPAIR_RECORD_PREFIXES.some((prefix) => text.startsWith(prefix)) ? 'repair' : null;

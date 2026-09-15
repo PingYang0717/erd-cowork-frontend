@@ -2,7 +2,7 @@ import React, { type ReactNode, useCallback, useEffect, useRef, useState } from 
 import { ThunderboltFilled } from '@ant-design/icons';
 
 import DataBoundary from '@/components/common/DataBoundary';
-import { INTERRUPTED_TEXTS } from '@/constants/wireStrings';
+import { isInterruptionRecord } from '@/constants/wireStrings';
 import { type SendInput, useAgentStream } from '@/hooks/useAgentStream';
 import { useArtifactRepair } from '@/hooks/useArtifactRepair';
 import { useSessionDetail } from '@/hooks/useSessionDetail';
@@ -218,7 +218,7 @@ const ThreadView: React.FC<ThreadViewProps> = ({ sessionId }) => {
   // this — the backend recording the question, a refetch racing the stop — and each of
   // those would retire the bubble while the record was still on its way.
   const lastMessage = messages[messages.length - 1];
-  const interruptionRecorded = lastMessage !== undefined && INTERRUPTED_TEXTS.includes(lastMessage.text);
+  const interruptionRecorded = lastMessage !== undefined && isInterruptionRecord(lastMessage.text);
 
   // A run that ended cleanly hands over to the refetched history — the bubble it left
   // behind and the one history renders are now the same component, so the swap is

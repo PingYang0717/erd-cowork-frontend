@@ -46,7 +46,8 @@ Pin 是**切換式**的:方向由後端決定並蓋時間戳,client 不送它可
 | 7   | `POST /sessions/{id}/messages` | `{ question: string, baseArtifactId?: string }`,`Accept: text/event-stream` | SSE:`AgentEvent` 流(`STEP`/`TOKEN`/`ANSWER`/`ARTIFACT`/`THINKING`/`QUESTION`/`CODE`/`ERROR`) | ✅ 已接 |                             |
 
 要點:`ERROR` 事件**不關閉串流**(後端還會送收尾 STEP,連線關閉才算結束);中止靠
-client abort,前端會在 abort 後兩段 800ms invalidate 追後端非同步落庫。
+client abort,前端在 abort 後反覆 invalidate(300ms 起、遞增、最多六次)直到歷史多出
+那則中止記錄為止,追後端非同步落庫(`useAgentStream.settleAfterCancel`)。
 `Message.stepsJson` / `questionsJson` 是 JSON 字串(Mongo 文件形狀直出)。
 
 ## 4. Session files

@@ -24,6 +24,11 @@ export const INTERRUPTED_TEXTS: readonly string[] = [
   '（回應已中斷，請重新送出以繼續）',
 ] as const;
 
+/** Whether a persisted message is the backend's own record of an interruption. The one
+ *  place that question is answered: four call sites used to each hold the `includes`,
+ *  and a change to how the record is recognised would have had to find them all. */
+export const isInterruptionRecord = (text: string): boolean => INTERRUPTED_TEXTS.includes(text);
+
 /** Prefixes of the repair-outcome records the backend persists as AI messages. The
  *  bubble renders a match as a small hint rather than routing it through Markdown.
  *  NEVER compare against raw string literals — always reference this array. */

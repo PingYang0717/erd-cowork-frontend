@@ -5,7 +5,7 @@ import { isAccessDenied } from '@/api/accessDenied';
 import { type SendMessageArgs, streamAgentMessage } from '@/api/agentApi';
 import { AgentStreamHttpError } from '@/api/agentStreamError';
 import { isCanceled } from '@/api/apiError';
-import { INTERRUPTED_TEXTS } from '@/constants/wireStrings';
+import { isInterruptionRecord } from '@/constants/wireStrings';
 import { getTranslations } from '@/i18n/useTranslations';
 import type { SessionDetail } from '@/types/api';
 import type { AgentEvent, QuestionForm, StepItem } from '@/types/api/agentEvent';
@@ -199,9 +199,10 @@ export const useAgentStream = (
   const [state, dispatch] = useReducer(reducer, initialState);
   const queryClient = useQueryClient();
   const controllerRef = useRef<AbortController | null>(null);
-  // The settle loop an aborted run starts (below). Aborted on unmount so a thread left
-  // clear them — without this they outlived the hook and fired invalidates against
-  // the global queryClient up to 1.6s after the thread was gone.
+  // The settle loop an aborted run starts (below). Aborted on unmount, and by the next
+  // `send`: left alone it outlived the thread it belonged to and fired invalidates against
+  // the global queryClient for the rest of its schedule — several seconds, into whatever
+  // came next.
   const settleControllerRef = useRef<AbortController | null>(null);
   // Set by `stop`, read once the run ends. A user stop does not usually surface as a
   // thrown cancel: `streamAgentMessage` cancels its reader when the signal fires, so the
@@ -243,11 +244,20 @@ export const useAgentStream = (
    *
    *  Bounded, and it stops as soon as the record appears. A backend that never writes one
    *  (or a stop that raced the run finishing normally) must not leave this looping.
+   *
+   *  "Appears" is judged against the history as it stood when the stop happened, not
+   *  against the tail alone. The tail is an interruption record after every stopped run,
+   *  so a retry that is itself stopped — before the backend has written the new question
+   *  — found the previous run's record on the first look and called it done, and the
+   *  record for this run was never fetched.
    */
   const settleAfterCancel = useCallback(async (): Promise<void> => {
     settleControllerRef.current?.abort();
     const controller = new AbortController();
     settleControllerRef.current = controller;
+
+    const history = () => queryClient.getQueryData<SessionDetail>(sessionDetailQueryKey(sessionId))?.messages ?? [];
+    const lengthAtStop = history().length;
 
     for (const delay of CANCEL_SETTLE_DELAYS_MS) {
       await wait(delay, controller.signal);
@@ -255,8 +265,9 @@ export const useAgentStream = (
         return;
       }
       await invalidateSessionData();
-      const settled = queryClient.getQueryData<SessionDetail>(sessionDetailQueryKey(sessionId))?.messages.at(-1);
-      if (settled !== undefined && INTERRUPTED_TEXTS.includes(settled.text)) {
+      const messages = history();
+      const tail = messages.at(-1);
+      if (messages.length > lengthAtStop && tail !== undefined && isInterruptionRecord(tail.text)) {
         return;
       }
     }
@@ -266,6 +277,9 @@ export const useAgentStream = (
     async (input: SendInput): Promise<void> => {
       const startedAt = Date.now();
       stoppedRef.current = false;
+      // A settle loop still running from the last stop is looking for a record this run
+      // will overtake; its refetches would land in the middle of the new stream.
+      settleControllerRef.current?.abort();
       dispatch({ type: 'START', startedAt });
 
       const controller = new AbortController();
@@ -284,8 +298,8 @@ export const useAgentStream = (
         receivingRef.current = false;
         // A user-initiated stop is not a failure: the run simply ends where it is,
         // and everything already streamed stays on screen. The backend persists an
-        // aborted run asynchronously (doOnCancel), so refetch in two delayed stages
-        // instead of racing it now.
+        // aborted run asynchronously (doOnCancel), so keep looking for its record
+        // (`settleAfterCancel`) instead of racing it now.
         if (isCanceled(error)) {
           dispatch({ type: 'DONE', durationMs: Date.now() - startedAt });
           void settleAfterCancel();

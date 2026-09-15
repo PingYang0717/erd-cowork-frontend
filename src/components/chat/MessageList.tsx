@@ -1,6 +1,6 @@
 import React, { type ReactNode, useEffect, useMemo, useRef } from 'react';
 
-import { INTERRUPTED_TEXTS } from '@/constants/wireStrings';
+import { isInterruptionRecord } from '@/constants/wireStrings';
 import { useActiveRunStore } from '@/stores/useActiveRunStore';
 import type { Message, QuestionForm, StepItem } from '@/types/api';
 import { parseAnswerText } from '@/utils/composeAnswerText';
@@ -245,7 +245,7 @@ const MessageList: React.FC<MessageListProps> = ({
             durationMs={live === null && index === lastIndex && message.sender === 'AI' ? lastRunDurationMs : null}
             // Only the trailing interruption is still open; anything above it has already
             // been answered by whatever came after.
-            onRetry={index === lastIndex && INTERRUPTED_TEXTS.includes(message.text) ? onRetry : undefined}
+            onRetry={index === lastIndex && isInterruptionRecord(message.text) ? onRetry : undefined}
             // Only when nothing newer is on screen: the live bubble and the optimistic
             // user bubble both sit below the history.
             isLatest={index === lastIndex && live === null && optimisticUserText === null}
