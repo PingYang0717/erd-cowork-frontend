@@ -252,6 +252,9 @@
   display: inline-flex;
   align-items: center;
   gap: 2px;
+  /* A pixel down: the icons' visual centre sits above the caption's x-height centre
+     when the two boxes are merely centred on each other. */
+  transform: translateY(1px);
   opacity: 0;
   transition: opacity 0.12s ease;
 }
