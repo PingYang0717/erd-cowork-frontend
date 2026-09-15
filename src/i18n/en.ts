@@ -186,6 +186,7 @@ export const en: Translations = {
     statusSelected: 'Selected',
     statusNotSelected: 'Not selected',
     statusUnavailable: 'Unavailable',
+    statusSelectedUnavailable: 'Selected, unavailable',
   },
 
   fileModal: {

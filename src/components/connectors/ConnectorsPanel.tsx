@@ -2,7 +2,6 @@ import React, { type ReactNode, useMemo, useState } from 'react';
 import { Button, Input, Modal } from 'antd';
 import {
   ApiOutlined,
-  AppstoreOutlined,
   CheckCircleFilled,
   CheckOutlined,
   CloseCircleFilled,
@@ -10,13 +9,13 @@ import {
   ContainerOutlined,
   DotChartOutlined,
   ExperimentOutlined,
+  LineChartOutlined,
   LockOutlined,
   PictureOutlined,
   PlusOutlined,
   RadarChartOutlined,
   SearchOutlined,
   ToolOutlined,
-  WarningOutlined,
 } from '@ant-design/icons';
 
 import { readRememberedSelection } from '@/api/connectorApi';
@@ -29,18 +28,22 @@ import type { Connector } from '@/types/api';
 
 import styles from './ConnectorsPanel.module.css';
 
+/** One icon per `type` — the classification the backend serves beside the name. Keyed
+ *  by type rather than by id: an id is a Mongo UUID (interface.md), so a table of ids
+ *  could only ever match the mock catalogue, and every real row fell through to the
+ *  fallback. */
 const CONNECTOR_ICONS: Record<string, ReactNode> = {
-  inline: <DotChartOutlined aria-hidden />,
-  wat: <ExperimentOutlined aria-hidden />,
-  cp: <AppstoreOutlined aria-hidden />,
-  lot: <ContainerOutlined aria-hidden />,
-  lotabn: <WarningOutlined aria-hidden />,
-  process: <ExperimentOutlined aria-hidden />,
-  defect: <RadarChartOutlined aria-hidden />,
-  tem: <PictureOutlined aria-hidden />,
-  recipe: <ExperimentOutlined aria-hidden />,
-  tool: <ToolOutlined aria-hidden />,
+  Process: <DotChartOutlined aria-hidden />,
+  Test: <ExperimentOutlined aria-hidden />,
+  Lot: <ContainerOutlined aria-hidden />,
+  Defect: <RadarChartOutlined aria-hidden />,
+  Physical: <PictureOutlined aria-hidden />,
+  Equipment: <ToolOutlined aria-hidden />,
+  CRCP: <LineChartOutlined aria-hidden />,
 };
+
+const connectorIcon = (connector: Connector): ReactNode =>
+  CONNECTOR_ICONS[connector.type] ?? <ApiOutlined aria-hidden />;
 
 /** What this panel is EDITING: whether the connector can be chosen at all, and whether
  *  the draft has chosen it. Derived per render rather than stored, so there is no third
@@ -51,14 +54,21 @@ const CONNECTOR_ICONS: Record<string, ReactNode> = {
  *  row — and it only becomes true at Submit. The two used to share this name, so a new
  *  conversation opened on the remembered combination and announced itself connected to
  *  sources it had never been given. */
-type RowState = 'selected' | 'available' | 'unavailable';
+type RowState = 'selected' | 'available' | 'unavailable' | 'selectedUnavailable';
 
+/** The fourth state is a source the draft holds that can no longer be chosen: attached
+ *  to this conversation, then disabled behind it. It stays in the draft — an untouched
+ *  Submit sends it back as it was — and the reader may let go of it, but not take it on
+ *  again once it has been dropped. */
 const rowState = (connector: Connector, draftIds: string[]): RowState => {
+  const picked = draftIds.includes(connector.id);
   if (!connector.enabled) {
-    return 'unavailable';
+    return picked ? 'selectedUnavailable' : 'unavailable';
   }
-  return draftIds.includes(connector.id) ? 'selected' : 'available';
+  return picked ? 'selected' : 'available';
 };
+
+const isChosen = (state: RowState): boolean => state === 'selected' || state === 'selectedUnavailable';
 
 type StatusFilter = 'All' | 'Selected' | 'Not Selected';
 
@@ -68,31 +78,32 @@ const STATUS_FILTERS: StatusFilter[] = ['All', 'Selected', 'Not Selected'];
 
 const matchesFilter = (state: RowState, filter: StatusFilter): boolean => {
   if (filter === 'All') return true;
-  return filter === 'Selected' ? state === 'selected' : state !== 'selected';
+  return filter === 'Selected' ? isChosen(state) : !isChosen(state);
 };
 
-/** Takes the copy rather than reaching for it, so the lookup stays a pure function
- *  of (state, dictionary). */
-const statusMeta = (state: RowState, t: Translations['connectors']) => {
-  switch (state) {
-    case 'selected':
-      return { label: t.statusSelected, color: 'var(--erd-color-primary, #1677ff)' };
-    case 'unavailable':
-      return { label: t.statusUnavailable, color: 'var(--erd-color-text-tertiary, #8c8c8c)' };
-    default:
-      return { label: t.statusNotSelected, color: 'var(--erd-color-text-tertiary, #8c8c8c)' };
-  }
-};
+interface RowMeta {
+  /** Takes the copy rather than reaching for it, so the lookup stays a pure function
+   *  of (state, dictionary). */
+  label: (t: Translations['connectors']) => string;
+  color: string;
+  /** What the toggle shows: the action it offers, or the lock when it offers none. */
+  icon: ReactNode;
+}
 
-const toggleIcon = (state: RowState) => {
-  switch (state) {
-    case 'selected':
-      return <CheckOutlined aria-hidden />;
-    case 'unavailable':
-      return <LockOutlined aria-hidden />;
-    default:
-      return <PlusOutlined aria-hidden />;
-  }
+const PRIMARY = 'var(--erd-color-primary, #1677ff)';
+const TERTIARY = 'var(--erd-color-text-tertiary, #8c8c8c)';
+
+/** Everything the row draws for a state, in one place — the label and the icon used to
+ *  be two switches on the same value, and a state added to one was missed by the other. */
+const ROW_META: Record<RowState, RowMeta> = {
+  selected: { label: (t) => t.statusSelected, color: PRIMARY, icon: <CheckOutlined aria-hidden /> },
+  selectedUnavailable: {
+    label: (t) => t.statusSelectedUnavailable,
+    color: TERTIARY,
+    icon: <CheckOutlined aria-hidden />,
+  },
+  available: { label: (t) => t.statusNotSelected, color: TERTIARY, icon: <PlusOutlined aria-hidden /> },
+  unavailable: { label: (t) => t.statusUnavailable, color: TERTIARY, icon: <LockOutlined aria-hidden /> },
 };
 
 interface ConnectorsPanelProps {
@@ -117,13 +128,22 @@ const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ sessionId, open, onCl
    *  know; a session id that has gone the same way is a source the user cannot see in the
    *  list, so counting it would claim they are using something invisible.
    *
+   *  The conversation's own ids are kept whether or not they can still be chosen. A source
+   *  it already draws on that has since been disabled is still a fact about the session,
+   *  and dropping it from the draft made an untouched Submit detach it without a word.
+   *  The remembered combination is only a default, so it is not offered on anything that
+   *  cannot be chosen.
+   *
    *  A default offered here and nowhere else. Nothing is attached to a session on the
    *  user's behalf: it reaches the backend when they press Submit, like every other
    *  choice on this panel. */
   const openingDraft = useMemo(() => {
-    const known = new Set(catalogue.filter((connector) => connector.enabled).map((connector) => connector.id));
-    const source = attachedIds.length > 0 ? attachedIds : readRememberedSelection();
-    return source.filter((id) => known.has(id));
+    const served = new Set(catalogue.map((connector) => connector.id));
+    if (attachedIds.length > 0) {
+      return attachedIds.filter((id) => served.has(id));
+    }
+    const choosable = new Set(catalogue.filter((connector) => connector.enabled).map((connector) => connector.id));
+    return readRememberedSelection().filter((id) => choosable.has(id));
   }, [catalogue, attachedIds]);
 
   const [search, setSearch] = useState('');
@@ -152,12 +172,14 @@ const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ sessionId, open, onCl
   }
 
   const toggle = (connector: Connector) => {
-    if (!connector.enabled) {
-      return;
-    }
-    setDraftIds((previous) =>
-      previous.includes(connector.id) ? previous.filter((id) => id !== connector.id) : [...previous, connector.id]
-    );
+    setDraftIds((previous) => {
+      if (previous.includes(connector.id)) {
+        return previous.filter((id) => id !== connector.id);
+      }
+      // Letting go of a source is always allowed; taking one on is not, once it cannot
+      // be chosen.
+      return connector.enabled ? [...previous, connector.id] : previous;
+    });
   };
 
   /** Writes the decision as one set, then closes.
@@ -168,7 +190,7 @@ const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ sessionId, open, onCl
     setDataSources.mutate(draftIds, { onSuccess: onClose });
   };
 
-  const chosen = catalogue.filter((connector) => rowState(connector, draftIds) === 'selected');
+  const chosen = catalogue.filter((connector) => isChosen(rowState(connector, draftIds)));
   const isDirty = chosen.length !== attachedIds.length || chosen.some((c) => !attachedIds.includes(c.id));
   const visibleConnectors = catalogue.filter(
     (connector) =>
@@ -224,7 +246,7 @@ const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ sessionId, open, onCl
             chosen.map((connector) => (
               <span key={connector.id} className={styles.selectedChip}>
                 <span className={styles.selectedChipIcon} aria-hidden="true">
-                  {CONNECTOR_ICONS[connector.id] ?? <ApiOutlined aria-hidden />}
+                  {connectorIcon(connector)}
                 </span>
                 <span className={styles.selectedChipName}>{connector.name}</span>
                 <button
@@ -287,8 +309,8 @@ const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ sessionId, open, onCl
         {visibleConnectors.length ? (
           visibleConnectors.map((connector) => {
             const state = rowState(connector, draftIds);
-            const meta = statusMeta(state, t.connectors);
-            const isSelected = state === 'selected';
+            const meta = ROW_META[state];
+            const isSelected = isChosen(state);
             // The other dimension, and the only one that is a fact about the conversation
             // rather than about this dialog: what it is drawing on right now. Unaffected
             // by the draft — a row can be attached and no longer picked, which is exactly
@@ -297,7 +319,7 @@ const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ sessionId, open, onCl
             return (
               <li key={connector.id} className={styles.row} data-connected={isSelected} data-attached={isAttached}>
                 <span className={styles.icon} data-connected={isSelected} aria-hidden="true">
-                  {CONNECTOR_ICONS[connector.id] ?? <ApiOutlined aria-hidden />}
+                  {connectorIcon(connector)}
                 </span>
                 <span className={styles.info}>
                   <span className={styles.nameRow}>
@@ -308,7 +330,7 @@ const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ sessionId, open, onCl
                   <span className={styles.description}>{connector.description}</span>
                   <span className={styles.status} data-status={state} style={{ color: meta.color }}>
                     <span className={styles.statusDot} style={{ background: meta.color }} />
-                    {meta.label}
+                    {meta.label(t.connectors)}
                   </span>
                 </span>
                 <Button
@@ -318,7 +340,7 @@ const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ sessionId, open, onCl
                   size="small"
                   disabled={state === 'unavailable'}
                   aria-label={isSelected ? `Disconnect ${connector.name}` : `Connect ${connector.name}`}
-                  icon={toggleIcon(state)}
+                  icon={meta.icon}
                   onClick={() => toggle(connector)}
                 />
               </li>

@@ -262,6 +262,10 @@ export const zhTW = {
      *  backend, which is the only party that knows it, and the reader has the same
      *  nothing to do about any of them. */
     statusUnavailable: '目前不可用',
+    /** Attached to this conversation, then disabled behind it. Still in the draft — so an
+     *  untouched Submit leaves it alone — and the reader may drop it, but not pick it
+     *  again once dropped. */
+    statusSelectedUnavailable: '已選擇，目前不可用',
   },
 
   fileModal: {

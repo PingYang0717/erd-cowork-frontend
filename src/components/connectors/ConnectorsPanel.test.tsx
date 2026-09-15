@@ -124,6 +124,46 @@ describe('ConnectorsPanel', () => {
     expect(within(screen.getByRole('dialog')).getAllByText('Unavailable').length).toBeGreaterThan(0);
   });
 
+  /** A source the conversation already draws on that has since been disabled is still
+   *  the conversation's. It opens in the draft, so an untouched Submit has nothing to
+   *  write — the panel used to drop it from the draft on open, which made Submit detach
+   *  it without saying so. The reader may let go of it; they may not pick it up again. */
+  it('keeps a disabled source the conversation already draws on, and submits it unchanged', async () => {
+    const user = userEvent.setup();
+    const queryClient = new QueryClient();
+    // Recipe is `enabled: false` in the catalogue; this conversation was given it
+    // before that happened.
+    queryClient.setQueryData(['sessions', 'session-recipe'], {
+      id: 'session-recipe',
+      title: 'New analysis',
+      createdAt: '2026-08-31T00:00:00.000Z',
+      messages: [],
+      files: [],
+      connectors: ['recipe', 'inline'],
+    });
+    render(
+      <Suspense fallback={null}>
+        <ConnectorsPanel sessionId="session-recipe" open onClose={() => {}} />
+      </Suspense>,
+      { wrapper: appWrapper({ queryClient }) }
+    );
+
+    // Opens on what the session holds — Recipe included — with nothing to submit.
+    const recipeToggle = await screen.findByRole('button', { name: 'Disconnect Recipe' });
+    expect(within(selectedSources()).getByText('Recipe')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Submit' })).toBeDisabled();
+
+    // Another change rides along; Recipe goes back to the backend as it was.
+    await user.click(screen.getByRole('button', { name: 'Connect Lot Info' }));
+    await submitSelection(user);
+    expect(screen.getByRole('button', { name: 'Disconnect Recipe' })).toBeInTheDocument();
+
+    // Letting go is allowed; the lock only stops it being picked again.
+    await user.click(recipeToggle);
+    expect(within(selectedSources()).queryByText('Recipe')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Connect Recipe' })).toBeDisabled();
+  });
+
   /** The remembered combination is a default for the dialog and nothing more: it is
    *  offered on a conversation that has chosen nothing, and never written to a session on
    *  the user's behalf. A conversation with its own selection outranks it. */
