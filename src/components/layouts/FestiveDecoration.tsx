@@ -80,60 +80,36 @@ const MidAutumn: React.FC = () => (
       />
     </PatternLayer>
 
-    {/* near: the moon, and a rabbit watching it from the clouds */}
-    <svg className={styles.near} style={{ left: '38%' }} viewBox="0 0 64 56" width="64" height="56">
+    {/* near: flat shapes in the same language as the silhouettes behind them — a soft
+        moon, a rabbit sitting on the cloud bank, a lantern hung at each end. */}
+    <svg className={styles.near} style={{ left: '40%', top: 4 }} viewBox="0 0 48 48" width="40" height="40">
       <defs>
         <radialGradient id="fd-ma-halo" cx="50%" cy="50%" r="50%">
-          <stop offset="40%" stopColor="#f6d365" stopOpacity="0.5" />
+          <stop offset="45%" stopColor="#f6d365" stopOpacity="0.35" />
           <stop offset="100%" stopColor="#f6d365" stopOpacity="0" />
-        </radialGradient>
-        <radialGradient id="fd-ma-moon" cx="38%" cy="35%" r="70%">
-          <stop offset="0%" stopColor="#fff6c7" />
-          <stop offset="55%" stopColor="#f8dc7a" />
-          <stop offset="100%" stopColor="#e3b64a" />
         </radialGradient>
       </defs>
       <g className={styles.breathe}>
-        <circle cx="32" cy="24" r="26" fill="url(#fd-ma-halo)" />
+        <circle cx="24" cy="24" r="24" fill="url(#fd-ma-halo)" />
       </g>
-      <circle cx="32" cy="24" r="15" fill="url(#fd-ma-moon)" />
-      <g fill="#d9a83f" opacity="0.3">
-        <circle cx="26" cy="19" r="2.6" />
-        <circle cx="37" cy="27" r="3.6" />
-        <circle cx="29" cy="31" r="1.6" />
-      </g>
+      <circle cx="24" cy="24" r="12" fill="#f5d777" />
+      <circle cx="20" cy="20" r="2.2" fill="#e8c35a" opacity="0.7" />
+      <circle cx="28" cy="27" r="3" fill="#e8c35a" opacity="0.7" />
     </svg>
-    <svg className={styles.near} style={{ left: '52%' }} viewBox="0 0 30 34" width="22" height="26">
-      <g fill="#fff" stroke="#d3d3dc" strokeWidth="0.8">
-        <path d="M9 18c-3-6-3-13 0-16 2 0 3.5 6 3.5 14z" />
-        <path d="M21 18c3-6 3-13 0-16-2 0-3.5 6-3.5 14z" />
-        <ellipse cx="15" cy="24" rx="11" ry="9" />
-      </g>
-      <path d="M9.6 15c-1.4-4-1.4-8.5 0-10.5.9 1.5 1.4 5.5 1.2 10z" fill="#f6c1cf" />
-      <path d="M20.4 15c1.4-4 1.4-8.5 0-10.5-.9 1.5-1.4 5.5-1.2 10z" fill="#f6c1cf" />
-      <circle cx="11" cy="22" r="1.2" fill="#3b3b46" />
-      <circle cx="19" cy="22" r="1.2" fill="#3b3b46" />
-      <ellipse cx="15" cy="25.5" rx="1.5" ry="1" fill="#f0a5b8" />
+    <svg className={styles.near} style={{ left: '52%', top: 56 - 18 }} viewBox="0 0 24 24" width="18" height="18" opacity="0.85">
+      <path d="M7 12c-2-4-2-8 0-10 1.5 0 2.5 4 2.5 9zM17 12c2-4 2-8 0-10-1.5 0-2.5 4-2.5 9z" fill={INK} opacity="0.55" />
+      <ellipse cx="12" cy="17" rx="8" ry="6.5" fill={INK} opacity="0.55" />
+      <circle cx="9.5" cy="16" r="0.9" fill="#fff" />
+      <circle cx="14.5" cy="16" r="0.9" fill="#fff" />
     </svg>
-    {/* two lanterns hang at the far ends, framing the scene */}
-    {['6%', '90%'].map((left) => (
-      <svg key={left} className={styles.near} style={{ left, top: 0 }} viewBox="0 0 24 44" width="18" height="34">
-        <defs>
-          <linearGradient id="fd-ma-lantern" x1="0" x2="1">
-            <stop offset="0%" stopColor="#ff7b7b" />
-            <stop offset="50%" stopColor="#e63946" />
-            <stop offset="100%" stopColor="#b8202c" />
-          </linearGradient>
-        </defs>
-        <path d="M12 0v5" stroke="#c9a04a" strokeWidth="1.2" />
-        <rect x="7" y="5" width="10" height="3.5" rx="1.5" fill="#e6c168" />
-        <ellipse cx="12" cy="20" rx="10.5" ry="11.5" fill="url(#fd-ma-lantern)" />
-        <g fill="none" stroke="#ffd6d6" strokeWidth="0.8" opacity="0.7">
-          <ellipse cx="12" cy="20" rx="4" ry="11.5" />
-          <ellipse cx="12" cy="20" rx="7.5" ry="11.5" />
-        </g>
-        <rect x="7" y="31" width="10" height="3.5" rx="1.5" fill="#e6c168" />
-        <path d="M10 34.5v6.5M12 34.5v8M14 34.5v6.5" stroke="#e6c168" strokeWidth="1.1" strokeLinecap="round" />
+    {['5%', '92%'].map((left) => (
+      <svg key={left} className={styles.near} style={{ left, top: 0 }} viewBox="0 0 20 40" width="16" height="32" opacity="0.9">
+        <path d="M10 0v4" stroke="#c9a04a" strokeWidth="1.2" />
+        <rect x="6" y="4" width="8" height="3" rx="1.2" fill="#d9b25c" />
+        <ellipse cx="10" cy="18" rx="8.5" ry="10" fill="#e0454f" />
+        <ellipse cx="10" cy="18" rx="3.2" ry="10" fill="none" stroke="#f08a8e" strokeWidth="0.7" opacity="0.6" />
+        <rect x="6" y="28" width="8" height="3" rx="1.2" fill="#d9b25c" />
+        <path d="M9 31v6M11 31v7" stroke="#d9b25c" strokeWidth="1" strokeLinecap="round" />
       </svg>
     ))}
   </>
@@ -169,55 +145,33 @@ const Halloween: React.FC = () => (
       </g>
     </PatternLayer>
 
-    {/* near: a crescent moon, a ghost fading in and out, pumpkins on the floor */}
-    <svg className={styles.near} style={{ left: '12%', top: 4 }} viewBox="0 0 32 32" width="26" height="26">
-      <path d="M22 3a13 13 0 1 0 8 23A11 11 0 0 1 22 3z" fill="#f8dc7a" opacity="0.9" />
+    {/* near: flat shapes — a crescent, a ghost fading in and out, pumpkins on the floor
+        whose faces are the only thing that glows */}
+    <svg className={styles.near} style={{ left: '10%', top: 4 }} viewBox="0 0 32 32" width="22" height="22">
+      <path d="M22 3a13 13 0 1 0 8 23A11 11 0 0 1 22 3z" fill="#f5d777" opacity="0.85" />
     </svg>
-    <svg className={`${styles.near} ${styles.breathe}`} style={{ left: '60%', top: 6 }} viewBox="0 0 32 40" width="24" height="30">
-      <defs>
-        <linearGradient id="fd-hw-ghost" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#ffffff" />
-          <stop offset="100%" stopColor="#e4e4ee" />
-        </linearGradient>
-      </defs>
-      <path d="M4 38V16a12 12 0 0 1 24 0v22c-2-2.4-4-2.4-6 0-2-2.4-4-2.4-6 0-2-2.4-4-2.4-6 0-2-2.4-4-2.4-6 0z" fill="url(#fd-hw-ghost)" stroke="#cfcfdd" strokeWidth="0.8" opacity="0.9" />
+    <svg className={`${styles.near} ${styles.breathe}`} style={{ left: '62%', top: 8 }} viewBox="0 0 32 40" width="18" height="22">
+      <path d="M4 38V16a12 12 0 0 1 24 0v22c-2-2.4-4-2.4-6 0-2-2.4-4-2.4-6 0-2-2.4-4-2.4-6 0-2-2.4-4-2.4-6 0z" fill="#f2f2f7" opacity="0.9" />
       <ellipse cx="11.5" cy="16" rx="2" ry="2.6" fill="#3b3b46" />
       <ellipse cx="20.5" cy="16" rx="2" ry="2.6" fill="#3b3b46" />
       <ellipse cx="16" cy="23" rx="2" ry="2.8" fill="#3b3b46" />
     </svg>
     {[
-      { left: '30%', size: 30 },
-      { left: '44%', size: 22 },
-      { left: '80%', size: 26 },
+      { left: '31%', size: 22 },
+      { left: '43%', size: 16 },
+      { left: '80%', size: 19 },
     ].map(({ left, size }) => (
       <svg key={left} className={styles.near} style={{ left, top: 56 - size }} viewBox="0 0 44 44" width={size} height={size}>
-        <defs>
-          <radialGradient id="fd-hw-pumpkin" cx="38%" cy="32%" r="75%">
-            <stop offset="0%" stopColor="#ffb457" />
-            <stop offset="60%" stopColor="#f28c28" />
-            <stop offset="100%" stopColor="#c8621a" />
-          </radialGradient>
-          <filter id="fd-hw-glow" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation="1.4" />
-          </filter>
-        </defs>
         <path d="M20 6c1-2.5 3.5-3 5.5-1.5L25 13h-5z" fill="#5f8f3e" />
-        <ellipse cx="22" cy="28" rx="20" ry="15" fill="url(#fd-hw-pumpkin)" />
-        <g fill="none" stroke="#b9571a" strokeWidth="1.2" opacity="0.5">
+        <ellipse cx="22" cy="28" rx="20" ry="15" fill="#ef8a2c" />
+        <g fill="none" stroke="#c9691c" strokeWidth="1.4" opacity="0.45">
           <ellipse cx="11" cy="28" rx="7" ry="14.5" />
           <ellipse cx="33" cy="28" rx="7" ry="14.5" />
         </g>
-        <g className={styles.breathe}>
-          <g fill="#ffd166" filter="url(#fd-hw-glow)" opacity="0.8">
-            <path d="M11 24l6 6H6z" />
-            <path d="M33 24l6 6h-12z" />
-            <path d="M9 33q13 10 26 0l-3 3.5h-3.5l-2 2.5-2-2.5h-5l-2 2.5-2-2.5H12z" />
-          </g>
-          <g fill="#fff0b8">
-            <path d="M11 24l6 6H6z" />
-            <path d="M33 24l6 6h-12z" />
-            <path d="M9 33q13 10 26 0l-3 3.5h-3.5l-2 2.5-2-2.5h-5l-2 2.5-2-2.5H12z" />
-          </g>
+        <g className={styles.breathe} fill="#fff0b8">
+          <path d="M11 24l6 6H6z" />
+          <path d="M33 24l6 6h-12z" />
+          <path d="M9 33q13 10 26 0l-3 3.5h-3.5l-2 2.5-2-2.5h-5l-2 2.5-2-2.5H12z" />
         </g>
       </svg>
     ))}
@@ -270,53 +224,34 @@ const Christmas: React.FC = () => (
       <rect width="100%" height="112" fill="url(#fd-xm-snow)" opacity="0.9" />
     </svg>
 
-    {/* near: the decorated tree and two gifts, standing on the floor */}
-    <svg className={styles.near} style={{ left: '34%', top: 4 }} viewBox="0 0 44 54" width="42" height="52">
-      <defs>
-        <linearGradient id="fd-xm-tier" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#5cc282" />
-          <stop offset="100%" stopColor="#2a7a47" />
-        </linearGradient>
-        <filter id="fd-xm-light" x="-100%" y="-100%" width="300%" height="300%">
-          <feGaussianBlur stdDeviation="1.6" />
-        </filter>
-      </defs>
-      <path d="M22 2l2.7 5.6 6.2.8-4.5 4.3 1.2 6.1L22 15.9l-5.6 2.9 1.2-6.1-4.5-4.3 6.2-.8z" fill="#f8dc7a" stroke="#e3b64a" strokeWidth="0.6" />
-      <path d="M22 11l11 14H11z" fill="url(#fd-xm-tier)" />
-      <path d="M22 20l14 16H8z" fill="url(#fd-xm-tier)" />
-      <path d="M22 30l17 18H5z" fill="url(#fd-xm-tier)" />
-      <rect x="18" y="47" width="8" height="7" rx="1" fill="#8a5a2b" />
+    {/* near: a small flat tree with its lights, two gifts beside it, all on the floor and
+        off to the left so the forest keeps the middle */}
+    <svg className={styles.near} style={{ left: '22%', top: 56 - 34 }} viewBox="0 0 30 36" width="28" height="34">
+      <path d="M15 1l1.6 3.4 3.7.5-2.7 2.6.7 3.7L15 9.4l-3.3 1.8.7-3.7-2.7-2.6 3.7-.5z" fill="#f5d777" />
+      <path d="M15 7l7 9H8z" fill="#3f9a63" />
+      <path d="M15 13l9 11H6z" fill="#358a57" />
+      <path d="M15 20l11 12H4z" fill="#2c7a4b" />
+      <rect x="12.5" y="32" width="5" height="4" fill="#7a4e2a" />
       {(
         [
-          [17, 24, '#ff5c5c', styles.twinkle],
-          [27, 31, '#f8dc7a', styles.twinkleLate],
-          [13, 41, '#5eaefc', styles.twinkle],
-          [30, 43, '#ff5c5c', styles.twinkleLate],
-          [22, 37, '#f8dc7a', styles.twinkleLate],
-          [21, 20, '#5eaefc', styles.twinkle],
+          [12, 15, '#ff6b6b', styles.twinkle],
+          [18, 20, '#f5d777', styles.twinkleLate],
+          [10, 27, '#6fb3ff', styles.twinkle],
+          [20, 29, '#ff6b6b', styles.twinkleLate],
+          [15, 24, '#f5d777', styles.twinkleLate],
         ] as const
       ).map(([x, y, color, cls]) => (
-        <g key={`${x}-${y}`} className={cls}>
-          <circle cx={x} cy={y} r="3.2" fill={color} opacity="0.6" filter="url(#fd-xm-light)" />
-          <circle cx={x} cy={y} r="1.6" fill={color} />
-        </g>
+        <circle key={`${x}-${y}`} className={cls} cx={x} cy={y} r="1.3" fill={color} />
       ))}
     </svg>
     {[
-      { left: '44%', w: 24, h: 21 },
-      { left: '49%', w: 18, h: 16 },
+      { left: '27%', w: 14, h: 12 },
+      { left: '29.5%', w: 10, h: 9 },
     ].map(({ left, w, h }) => (
       <svg key={left} className={styles.near} style={{ left, top: 56 - h }} viewBox="0 0 32 28" width={w} height={h}>
-        <defs>
-          <linearGradient id="fd-xm-gift" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#ff6b6b" />
-            <stop offset="100%" stopColor="#c62f3a" />
-          </linearGradient>
-        </defs>
-        <rect x="2" y="10" width="28" height="17" rx="2.5" fill="url(#fd-xm-gift)" />
-        <rect x="1" y="7" width="30" height="6.5" rx="2" fill="#d63a45" />
-        <rect x="13" y="7" width="6" height="20" fill="#f8dc7a" />
-        <path d="M16 7c-5-6-8-4-6 0M16 7c5-6 8-4 6 0" fill="none" stroke="#f8dc7a" strokeWidth="2.2" strokeLinecap="round" />
+        <rect x="2" y="8" width="28" height="19" rx="2" fill="#e04e56" />
+        <rect x="13" y="8" width="6" height="19" fill="#f5d777" />
+        <rect x="1" y="7" width="30" height="5" rx="1.5" fill="#c93a42" />
       </svg>
     ))}
   </>
