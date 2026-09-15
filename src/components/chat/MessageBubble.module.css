@@ -7,6 +7,13 @@
 }
 
 /* Attachment chips sit inside the blue bubble, above the text (mockup). */
+/* Long unbroken runs — a URL, a lot id, a hash — wrap inside the bubble rather than run
+   out of it. Inherited, so the text, the steps and the thinking body all get it. */
+.userBubble,
+.aiBubble {
+  overflow-wrap: anywhere;
+}
+
 .userBubble {
   max-width: 85%;
   background: var(--erd-color-primary, #1677ff);
@@ -197,53 +204,57 @@
   white-space: pre-wrap;
 }
 
-/* What a message says about itself: how long it took, what to do about it, and when it
-   was sent. The controls sit between the two times, which read as context at the edges. */
+/* What a message says about itself, under the bubble: one caption (how long, and on
+   hover when), then one cluster of controls. Two things, not three — a button between
+   two readings read as three unrelated items. The user's row is mirrored so the caption
+   keeps the bubble's edge and the controls sit inboard of it. */
 .meta {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-top: 4px;
-  min-height: 22px;
+  gap: 8px;
+  margin-top: 5px;
+  height: 22px;
 }
 
-/* The two readings at either end of the row. */
-.metaAside {
+.userRow .meta {
+  flex-direction: row-reverse;
+}
+
+/* The caption: small tertiary type on one line, at the icon buttons' centre. */
+.metaCaption {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  /* Matches the icon buttons' box, so a row of 11px text and 24px buttons shares one
-     centre line rather than each finding its own. */
-  height: 24px;
+  height: 22px;
   line-height: 1;
   font-size: 11px;
   color: var(--erd-color-text-tertiary, #8c8c8c);
-  transition: opacity 0.12s ease;
-}
-
-/* How long the turn took stays on show: it is the reply describing its own cost, and a
-   reader comparing two runs should not have to hunt for it one hover at a time. */
-.metaTimer {
-  opacity: 1;
+  white-space: nowrap;
 }
 
 /* When it was sent is something a reader goes looking for, never something they opened
-   the thread to read — so it waits to be asked for, even on the newest turn. */
+   the thread to read — so it waits to be asked for, even on the newest turn. It follows
+   the duration after a dot, so the line reads as one sentence when it appears. */
 .metaTime {
+  display: inline-flex;
+  align-items: center;
   opacity: 0;
+  transition: opacity 0.12s ease;
 }
 
-.metaAsideIcon {
-  font-size: 11px;
+.metaDot {
+  margin: 0 5px;
 }
 
-/* The controls. Hidden on an older turn, kept on the newest one — that is the reply the
-   reader is acting on, and hiding its controls behind a pointer makes them findable only
-   by accident. */
+/* The controls: a tight cluster of icon buttons. Hidden on an older turn, kept on the
+   newest one — that is the reply the reader is acting on, and hiding its controls behind
+   a pointer makes them findable only by accident. */
 .metaActions {
   display: inline-flex;
   align-items: center;
   gap: 2px;
+  /* A pixel down: the icons' visual centre sits above the caption's x-height centre
+     when the two boxes are merely centred on each other. */
+  transform: translateY(1px);
   opacity: 0;
   transition: opacity 0.12s ease;
 }
@@ -269,13 +280,13 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
+  width: 22px;
+  height: 22px;
   padding: 0;
   border: none;
   border-radius: 6px;
   background: transparent;
-  font-size: 13px;
+  font-size: 12px;
   color: var(--erd-color-text-tertiary, #8c8c8c);
   cursor: pointer;
 }

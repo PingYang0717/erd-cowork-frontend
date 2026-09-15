@@ -9,6 +9,12 @@ import styles from './Elapsed.module.css';
  *  (a number it is handed) and `LiveElapsed` for one still going (its own second-by-
  *  second timer).
  *
+ *  One drawing for both, so the reading does not jump when the run ends: the live timer
+ *  and the settled duration sit in the same slot of the same row under the bubble, and
+ *  the only thing that changes at the hand-over is that the number stops. They used to
+ *  be two — the live one inside the bubble, the settled one in the meta row beneath it —
+ *  and the clock moved down and left the moment a reply finished.
+ *
  *  Its own file because the ticking one owns an interval — a piece of lifecycle that has
  *  nothing to do with drawing a message, and is easier to reason about apart from it.
  */
@@ -33,9 +39,9 @@ interface ElapsedProps {
 
 export const Elapsed: React.FC<ElapsedProps> = ({ ms }) => {
   return (
-    <p className={styles.elapsed}>
+    <span className={styles.elapsed}>
       <ClockCircleOutlined aria-hidden className={styles.elapsedIcon} />
       {formatDuration(ms)}
-    </p>
+    </span>
   );
 };
