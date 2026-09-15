@@ -71,6 +71,26 @@
   background: var(--erd-color-primary-hover, #4096ff);
 }
 
+/* The hat sits on the disc's upper left, outside the circle — so the button must not
+   clip, and the disc stays the round thing the hat is on. */
+.avatar {
+  position: relative;
+  overflow: visible;
+}
+
+.hat {
+  position: absolute;
+  top: -11px;
+  left: -7px;
+  transform: rotate(-18deg);
+  pointer-events: none;
+}
+
+/* A pumpkin is its own shape; the primary disc behind it would show at the edges. */
+.avatar[data-festival='halloween'] {
+  background: transparent;
+}
+
 .panel {
   display: flex;
   flex-direction: column;

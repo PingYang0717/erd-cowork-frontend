@@ -1,0 +1,110 @@
+/* The middle of the header, between the brand and the avatar. Sized to the bar, never
+   taller than it, and transparent to the pointer. */
+.stage {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  height: 56px;
+  min-width: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.float {
+  animation: float 4s ease-in-out infinite;
+}
+
+.floatSlow {
+  animation: float 6s ease-in-out infinite;
+  animation-delay: -2s;
+}
+
+.cloud {
+  animation: drift 9s ease-in-out infinite;
+}
+
+.batLeft {
+  animation: flap 3.2s ease-in-out infinite;
+}
+
+.batRight {
+  animation: flap 3.2s ease-in-out infinite;
+  animation-delay: -1.6s;
+}
+
+.fall,
+.fallLate,
+.fallLater {
+  animation: fall 5s linear infinite;
+}
+
+.fallLate {
+  animation-delay: -1.7s;
+}
+
+.fallLater {
+  animation-delay: -3.4s;
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(-2px);
+  }
+  50% {
+    transform: translateY(3px);
+  }
+}
+
+@keyframes drift {
+  0%,
+  100% {
+    transform: translateX(-6px);
+  }
+  50% {
+    transform: translateX(6px);
+  }
+}
+
+@keyframes flap {
+  0%,
+  100% {
+    transform: translateY(-3px) rotate(-6deg);
+  }
+  50% {
+    transform: translateY(3px) rotate(6deg);
+  }
+}
+
+@keyframes fall {
+  0% {
+    transform: translateY(-30px) rotate(0deg);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(30px) rotate(180deg);
+    opacity: 0;
+  }
+}
+
+/* Still figures for anyone who asked their system for less motion. */
+@media (prefers-reduced-motion: reduce) {
+  .float,
+  .floatSlow,
+  .cloud,
+  .batLeft,
+  .batRight,
+  .fall,
+  .fallLate,
+  .fallLater {
+    animation: none;
+  }
+}

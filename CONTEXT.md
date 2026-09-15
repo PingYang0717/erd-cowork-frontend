@@ -12,6 +12,10 @@ _Avoid_: Chat app, Assistant, Workspace（已不存在的平台外殼）
 每個畫面最上方橫跨整寬的那一條：放品牌、登入者的頭像（HR 目錄裡的相片或姓名首字）、以及偏好設定（語言、主題）的唯一入口。它在所有路由之上，任何一個 pane 失敗它都還在。有別於各 pane 自己的 pane header（thread 的「Cowork · Data studio」、Artifact 面板的版本切換列）。
 _Avoid_: Navbar（裡面沒有導覽）、Top bar、App bar
 
+**節慶裝飾（Festive decoration）**:
+Header 在節日前後（前 14 天到當天後 1 天）加上的裝飾層：中間一組小圖案、頭像的帽子或南瓜。純視覺、不帶功能、不能關閉，也是畫面上唯一不出自設計稿的東西。目前三個節日：中秋、萬聖節、聖誕節。
+_Avoid_: 主題（那是深淺色）、活動（它不對應任何功能或流程）
+
 **Studio**:
 Cowork 內的主要工作畫面，由 Session 列表、對話串（Thread）、Artifact 面板三欄組成。
 _Avoid_: Chat view, Main view
