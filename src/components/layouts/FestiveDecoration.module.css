@@ -56,6 +56,14 @@
   display: block;
 }
 
+/* A line strung across the whole band (the lantern string), stretched to its width. */
+.string {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: block;
+}
+
 .breathe {
   transform-origin: 50% 50%;
   animation: breathe 5s ease-in-out infinite;

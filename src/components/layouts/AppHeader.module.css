@@ -86,13 +86,17 @@
   justify-content: center;
 }
 
-/* Level on top of the disc, worn rather than hovering: the brim overlaps the disc's
-   top quarter, the pom clears it to the right. */
+/* A small hat perched on the upper right of the disc and tipped a little further that
+   way — worn at a jaunty angle rather than sitting squarely on top. */
 .hat {
   position: absolute;
-  top: -13px;
-  left: -5px;
+  top: -9px;
+  left: 11px;
   z-index: 2;
+  width: 26px;
+  height: auto;
+  transform: rotate(18deg);
+  transform-origin: 30% 90%;
   pointer-events: none;
 }
 

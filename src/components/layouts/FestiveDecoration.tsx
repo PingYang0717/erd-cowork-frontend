@@ -52,66 +52,141 @@ const PatternLayer: React.FC<PatternLayerProps> = ({ id, tile, className, opacit
 
 const INK = 'var(--erd-color-text, rgba(0, 0, 0, 0.88))';
 
-/* ---------- Mid-Autumn: a moonlit sky over a bank of clouds ---------- */
+/* ---------- Mid-Autumn: a lantern string over misty hills, the moon and its rabbits ---------- */
+
+/** One lantern on the string, hung at a fraction of the band's width. The string sags
+ *  as a quadratic curve (`M0 2 q200 14 400 0`, so y = 2 + 28·t·(1−t)); each lantern's
+ *  drop is read off that curve, so they hang from the line wherever the band ends up. */
+const StrungLantern: React.FC<{ at: number; size: number }> = ({ at, size }) => {
+  const drop = 2 + 28 * at * (1 - at);
+  return (
+    <svg
+      className={styles.near}
+      style={{ left: `${at * 100}%`, top: drop, transform: 'translateX(-50%)' }}
+      viewBox="-10 0 20 30"
+      width={20 * size}
+      height={30 * size}
+    >
+      <path d="M0 0v3" stroke="#c9a04a" strokeWidth="1" />
+      <ellipse className={styles.breathe} cx="0" cy="12" rx="9" ry="10" fill="#f6b26b" opacity="0.28" />
+      <rect x="-3.5" y="3" width="7" height="2.2" rx="1" fill="#d9b25c" />
+      <ellipse cx="0" cy="11.5" rx="6.5" ry="7.5" fill="#e0454f" />
+      <ellipse cx="0" cy="11.5" rx="2.6" ry="7.5" fill="#ee6a72" opacity="0.7" />
+      <rect x="-3.5" y="18" width="7" height="2.2" rx="1" fill="#d9b25c" />
+      <path d="M-1 20.2v4M1 20.2v5" stroke="#d9b25c" strokeWidth="0.9" strokeLinecap="round" />
+    </svg>
+  );
+};
 
 const MidAutumn: React.FC = () => (
   <>
-    <div className={styles.sky} style={{ background: 'linear-gradient(90deg, rgba(74, 92, 168, 0) 0%, rgba(74, 92, 168, 0.10) 35%, rgba(74, 92, 168, 0.10) 65%, rgba(74, 92, 168, 0) 100%)' }} />
+    <div
+      className={styles.sky}
+      style={{
+        background:
+          'linear-gradient(180deg, rgba(44, 52, 128, 0.12) 0%, rgba(44, 52, 128, 0.02) 70%, rgba(44, 52, 128, 0) 100%), linear-gradient(90deg, rgba(60, 70, 160, 0) 0%, rgba(60, 70, 160, 0.10) 30%, rgba(60, 70, 160, 0.10) 70%, rgba(60, 70, 160, 0) 100%)',
+      }}
+    />
 
-    {/* far: small stars, and a thin high cloud line */}
-    <PatternLayer id="fd-ma-far" tile={320} className={styles.far} opacity={0.3}>
-      <g fill="#f8dc7a">
-        <circle cx="24" cy="10" r="1.2" />
-        <circle cx="88" cy="22" r="0.9" />
-        <circle cx="140" cy="7" r="1.4" />
-        <circle cx="196" cy="18" r="0.9" />
-        <circle cx="252" cy="9" r="1.2" />
-        <circle cx="300" cy="26" r="0.8" />
+    {/* far: a sky of small stars, and two ranges of hills with mist between them */}
+    <PatternLayer id="fd-ma-far" tile={360} className={styles.far} opacity={0.5}>
+      <g fill="#f5d777">
+        <circle cx="18" cy="9" r="1.1" />
+        <circle cx="52" cy="20" r="0.7" />
+        <circle cx="96" cy="6" r="1.3" />
+        <circle cx="131" cy="15" r="0.8" />
+        <circle cx="170" cy="4" r="0.9" />
+        <circle cx="214" cy="12" r="1.2" />
+        <circle cx="258" cy="21" r="0.7" />
+        <circle cx="296" cy="8" r="1" />
+        <circle cx="338" cy="17" r="0.8" />
+        <path d="M76 24c.3 2 1.4 3.1 3.4 3.4-2 .3-3.1 1.4-3.4 3.4-.3-2-1.4-3.1-3.4-3.4 2-.3 3.1-1.4 3.4-3.4z" />
+        <path d="M240 3c.3 2 1.4 3.1 3.4 3.4-2 .3-3.1 1.4-3.4 3.4-.3-2-1.4-3.1-3.4-3.4 2-.3 3.1-1.4 3.4-3.4z" />
       </g>
-      <path d="M40 30h60a5 5 0 0 0-2-9 8 8 0 0 0-15-2 6 6 0 0 0-10 3 5 5 0 0 0-33 8Z" fill={INK} opacity="0.35" />
-      <path d="M210 24h50a4 4 0 0 0-2-7 7 7 0 0 0-13-1 5 5 0 0 0-8 2 4 4 0 0 0-27 6Z" fill={INK} opacity="0.3" />
+      <path d="M0 56V38c20-10 40-14 62-8 18 5 34 2 52-6 22-10 44-8 66 2 16 7 34 6 52-2 22-10 46-8 68 2 20 9 40 8 60 0V56Z" fill={INK} opacity="0.22" />
+      <path d="M0 56V46c26-8 50-10 76-4 20 5 40 3 60-4 24-8 48-6 72 2 18 6 36 5 54-2 24-9 50-7 74 1 10 3 18 4 24 3V56Z" fill={INK} opacity="0.14" />
     </PatternLayer>
 
-    {/* mid: a rolling bank of clouds, resting on the floor of the band */}
-    <PatternLayer id="fd-ma-mid" tile={320} className={styles.mid} opacity={0.08}>
-      <path
-        d="M0 56V44a10 10 0 0 1 18-6 12 12 0 0 1 22-4 9 9 0 0 1 16 2 14 14 0 0 1 26-2 8 8 0 0 1 14 3 11 11 0 0 1 20-2 13 13 0 0 1 24 4 9 9 0 0 1 16-1 12 12 0 0 1 22 2 10 10 0 0 1 18 3 8 8 0 0 1 14-2 11 11 0 0 1 20 3 9 9 0 0 1 16 0 13 13 0 0 1 24 3 10 10 0 0 1 18 2 8 8 0 0 1 12 1V56Z"
-        fill={INK}
-      />
+    {/* mid: a bank of auspicious clouds along the floor, the hills' mist rolling through */}
+    <PatternLayer id="fd-ma-mid" tile={320} className={styles.mid} opacity={0.14}>
+      <g fill={INK}>
+        <path d="M0 56V48a8 8 0 0 1 14-5 10 10 0 0 1 18-3 7 7 0 0 1 12 2 11 11 0 0 1 20-1 6 6 0 0 1 10 2 9 9 0 0 1 16-2 10 10 0 0 1 18 3 7 7 0 0 1 12-1 9 9 0 0 1 16 2 8 8 0 0 1 14 2 6 6 0 0 1 10-2 9 9 0 0 1 16 3 7 7 0 0 1 12 0 10 10 0 0 1 18 3 8 8 0 0 1 14 1 6 6 0 0 1 10 1 8 8 0 0 1 12-1 9 9 0 0 1 16 3 8 8 0 0 1 12 1V56Z" />
+        <path d="M24 46a5 5 0 0 1 8-3 4 4 0 0 1 6 1 5 5 0 0 1-1 6H26a4 4 0 0 1-2-4z" opacity="0.5" />
+        <path d="M150 44a5 5 0 0 1 8-3 4 4 0 0 1 6 1 5 5 0 0 1-1 6h-11a4 4 0 0 1-2-4z" opacity="0.5" />
+        <path d="M262 45a5 5 0 0 1 8-3 4 4 0 0 1 6 1 5 5 0 0 1-1 6h-11a4 4 0 0 1-2-4z" opacity="0.5" />
+      </g>
     </PatternLayer>
 
-    {/* near: flat shapes in the same language as the silhouettes behind them — a soft
-        moon, a rabbit sitting on the cloud bank, a lantern hung at each end. */}
-    <svg className={styles.near} style={{ left: '40%', top: 4 }} viewBox="0 0 48 48" width="40" height="40">
+    {/* near: the moon with the jade rabbit on its face, two rabbits and a mooncake on the
+        cloud below it, an osmanthus branch at the right, and a string of lanterns across
+        the top of the whole band */}
+    <svg className={styles.near} style={{ left: '46%', top: 2 }} viewBox="0 0 52 52" width="44" height="44">
       <defs>
         <radialGradient id="fd-ma-halo" cx="50%" cy="50%" r="50%">
-          <stop offset="45%" stopColor="#f6d365" stopOpacity="0.35" />
+          <stop offset="42%" stopColor="#f6d365" stopOpacity="0.4" />
+          <stop offset="70%" stopColor="#f6d365" stopOpacity="0.12" />
           <stop offset="100%" stopColor="#f6d365" stopOpacity="0" />
         </radialGradient>
       </defs>
       <g className={styles.breathe}>
-        <circle cx="24" cy="24" r="24" fill="url(#fd-ma-halo)" />
+        <circle cx="26" cy="26" r="26" fill="url(#fd-ma-halo)" />
       </g>
-      <circle cx="24" cy="24" r="12" fill="#f5d777" />
-      <circle cx="20" cy="20" r="2.2" fill="#e8c35a" opacity="0.7" />
-      <circle cx="28" cy="27" r="3" fill="#e8c35a" opacity="0.7" />
+      <circle cx="26" cy="26" r="13.5" fill="#f5d777" />
+      <circle cx="26" cy="26" r="13.5" fill="none" stroke="#fff3c4" strokeWidth="0.8" opacity="0.8" />
+      {/* the jade rabbit, pounding under the osmanthus tree — the shape people know */}
+      <g fill="#d9b453" opacity="0.6">
+        <path d="M22 32c-1-3 0-6 2-7 .6-2 .4-4-.3-6 1.2.4 2 1.6 2.3 3 .8-1.4 1.8-2.4 3-2.6-.8 2-.9 4-.4 6 2.2.6 3.6 2.6 3.4 5.2-.2 1.6-1.2 2.6-2.8 3H24a3 3 0 0 1-2-1.6z" />
+        <circle cx="31" cy="20" r="2.6" />
+        <path d="M30 22l2 6" stroke="#d9b453" strokeWidth="1" />
+      </g>
     </svg>
-    <svg className={styles.near} style={{ left: '52%', top: 56 - 18 }} viewBox="0 0 24 24" width="18" height="18" opacity="0.85">
-      <path d="M7 12c-2-4-2-8 0-10 1.5 0 2.5 4 2.5 9zM17 12c2-4 2-8 0-10-1.5 0-2.5 4-2.5 9z" fill={INK} opacity="0.55" />
-      <ellipse cx="12" cy="17" rx="8" ry="6.5" fill={INK} opacity="0.55" />
-      <circle cx="9.5" cy="16" r="0.9" fill="#fff" />
-      <circle cx="14.5" cy="16" r="0.9" fill="#fff" />
+
+    {/* two rabbits on the cloud, one small, the mooncake between them */}
+    <svg className={styles.near} style={{ left: '56%', top: 56 - 17 }} viewBox="0 0 48 22" width="40" height="17">
+      <g fill={INK} opacity="0.62">
+        <path d="M6 10C4 6 4 2 6 0c1.5 0 2.5 4 2.5 9zM15 10c2-4 2-8 0-10-1.5 0-2.5 4-2.5 9z" />
+        <ellipse cx="10.5" cy="15" rx="8" ry="6.5" />
+        <path d="M36 12c-1.6-3-1.6-6 0-8 1.2 0 2 3.2 2 7.2zM43 12c1.6-3 1.6-6 0-8-1.2 0-2 3.2-2 7.2z" />
+        <ellipse cx="39.5" cy="16.5" rx="6.5" ry="5" />
+      </g>
+      <circle cx="8" cy="14" r="0.9" fill="#fff" />
+      <circle cx="13" cy="14" r="0.9" fill="#fff" />
+      <circle cx="37.5" cy="16" r="0.8" fill="#fff" />
+      <circle cx="41.5" cy="16" r="0.8" fill="#fff" />
+      {/* the mooncake: a round cake with its pressed pattern */}
+      <ellipse cx="25" cy="18" rx="6" ry="3.6" fill="#c98a3c" />
+      <ellipse cx="25" cy="16.6" rx="6" ry="3.4" fill="#e0a752" />
+      <ellipse cx="25" cy="16.6" rx="3.6" ry="2" fill="none" stroke="#b8752e" strokeWidth="0.7" />
+      <path d="M25 14.8v3.6M23 16.6h4" stroke="#b8752e" strokeWidth="0.6" />
     </svg>
-    {['5%', '92%'].map((left) => (
-      <svg key={left} className={styles.near} style={{ left, top: 0 }} viewBox="0 0 20 40" width="16" height="32" opacity="0.9">
-        <path d="M10 0v4" stroke="#c9a04a" strokeWidth="1.2" />
-        <rect x="6" y="4" width="8" height="3" rx="1.2" fill="#d9b25c" />
-        <ellipse cx="10" cy="18" rx="8.5" ry="10" fill="#e0454f" />
-        <ellipse cx="10" cy="18" rx="3.2" ry="10" fill="none" stroke="#f08a8e" strokeWidth="0.7" opacity="0.6" />
-        <rect x="6" y="28" width="8" height="3" rx="1.2" fill="#d9b25c" />
-        <path d="M9 31v6M11 31v7" stroke="#d9b25c" strokeWidth="1" strokeLinecap="round" />
-      </svg>
-    ))}
+
+    {/* osmanthus: a branch with clusters of tiny gold flowers, leaning in from the right */}
+    <svg className={styles.near} style={{ right: 0, top: 10 }} viewBox="0 0 70 46" width="70" height="46">
+      <path d="M70 6c-12 2-24 8-34 18-8 8-16 14-26 18" fill="none" stroke={INK} strokeWidth="1.1" opacity="0.5" strokeLinecap="round" />
+      <path d="M52 14c-4 1-8 5-9 9M40 26c-4 2-8 6-9 10" fill="none" stroke={INK} strokeWidth="0.9" opacity="0.4" strokeLinecap="round" />
+      <g fill={INK} opacity="0.45">
+        <path d="M58 9c-4-1-8 1-9 4 4 1 8-1 9-4z" />
+        <path d="M46 20c-4-1-7 1-8 4 3 1 7-1 8-4z" />
+        <path d="M33 31c-4-1-7 1-8 4 3 1 7-1 8-4z" />
+        <path d="M20 40c-4-1-7 1-8 4 3 1 7-1 8-4z" />
+      </g>
+      <g fill="#f2c14e">
+        <circle cx="53" cy="17" r="1.3" /><circle cx="56" cy="19.5" r="1.1" /><circle cx="51" cy="20.5" r="1" /><circle cx="54.5" cy="22" r="1.2" />
+        <circle cx="41" cy="27" r="1.3" /><circle cx="44" cy="29.5" r="1.1" /><circle cx="39" cy="30.5" r="1" /><circle cx="42.5" cy="32" r="1.2" />
+        <circle cx="28" cy="37" r="1.2" /><circle cx="31" cy="39" r="1" /><circle cx="26.5" cy="40" r="1" />
+      </g>
+    </svg>
+
+    {/* the lantern string: one line sagging gently across the band, six lanterns on it */}
+    <svg className={styles.string} viewBox="0 0 400 56" preserveAspectRatio="none" width="100%" height="56">
+      <path d="M0 2q200 14 400 0" fill="none" stroke={INK} strokeWidth="0.8" opacity="0.35" />
+    </svg>
+    <StrungLantern at={0.07} size={0.95} />
+    <StrungLantern at={0.22} size={0.8} />
+    <StrungLantern at={0.36} size={1} />
+    <StrungLantern at={0.64} size={0.85} />
+    <StrungLantern at={0.78} size={1} />
+    <StrungLantern at={0.93} size={0.8} />
   </>
 );
 
