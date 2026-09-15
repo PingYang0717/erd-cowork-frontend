@@ -86,16 +86,17 @@
   justify-content: center;
 }
 
-/* A small hat perched on the upper right of the disc and tipped a little further that
-   way — worn at a jaunty angle rather than sitting squarely on top. */
+/* A small hat perched on the disc's upper-right edge and tipped that way — worn at a
+   jaunty angle rather than sitting squarely on top. Anchored to the button, which is
+   always 32px, so it lands in the same place whatever the photo behind it. */
 .hat {
   position: absolute;
-  top: -9px;
-  left: 11px;
+  top: -12px;
+  left: 15px;
   z-index: 2;
-  width: 26px;
+  width: 24px;
   height: auto;
-  transform: rotate(18deg);
+  transform: rotate(24deg);
   transform-origin: 30% 90%;
   pointer-events: none;
 }

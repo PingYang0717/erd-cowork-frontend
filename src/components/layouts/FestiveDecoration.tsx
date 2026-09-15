@@ -104,6 +104,9 @@ const MidAutumn: React.FC = () => (
         <path d="M240 3c.3 2 1.4 3.1 3.4 3.4-2 .3-3.1 1.4-3.4 3.4-.3-2-1.4-3.1-3.4-3.4 2-.3 3.1-1.4 3.4-3.4z" />
       </g>
       <path d="M0 56V38c20-10 40-14 62-8 18 5 34 2 52-6 22-10 44-8 66 2 16 7 34 6 52-2 22-10 46-8 68 2 20 9 40 8 60 0V56Z" fill={INK} opacity="0.22" />
+      {/* a pavilion on the ridge */}
+      <path d="M186 33h2v-3l-6-4-6 4v3h2v-6l4-3 4 3zM178 33h16v1h-16z M180 34h12v6h-12z" fill={INK} opacity="0.3" />
+      <path d="M176 30l10-7 10 7-1 1-9-6-9 6z" fill={INK} opacity="0.3" />
       <path d="M0 56V46c26-8 50-10 76-4 20 5 40 3 60-4 24-8 48-6 72 2 18 6 36 5 54-2 24-9 50-7 74 1 10 3 18 4 24 3V56Z" fill={INK} opacity="0.14" />
     </PatternLayer>
 
@@ -140,6 +143,20 @@ const MidAutumn: React.FC = () => (
         <path d="M30 22l2 6" stroke="#d9b453" strokeWidth="1" />
       </g>
     </svg>
+
+    {/* fireflies low over the clouds */}
+    {[
+      { left: '14%', top: 40, cls: styles.twinkle },
+      { left: '22%', top: 46, cls: styles.twinkleLate },
+      { left: '33%', top: 43, cls: styles.twinkle },
+      { left: '70%', top: 44, cls: styles.twinkleLate },
+      { left: '76%', top: 39, cls: styles.twinkle },
+    ].map(({ left, top, cls }) => (
+      <svg key={left} className={`${styles.near} ${cls}`} style={{ left, top }} viewBox="0 0 6 6" width="5" height="5">
+        <circle cx="3" cy="3" r="2.6" fill="#f5d777" opacity="0.5" />
+        <circle cx="3" cy="3" r="1.2" fill="#fff3b0" />
+      </svg>
+    ))}
 
     {/* two rabbits on the cloud, one small, the mooncake between them */}
     <svg className={styles.near} style={{ left: '56%', top: 56 - 17 }} viewBox="0 0 48 22" width="40" height="17">
@@ -190,51 +207,111 @@ const MidAutumn: React.FC = () => (
   </>
 );
 
-/* ---------- Halloween: a flock over a haunted skyline ---------- */
+/* ---------- Halloween: bunting over a haunted town ---------- */
+
+const BAT =
+  'M24 6c-1.2-2.4-3-3.6-3-3.6l.6 3.2c-3.6-4.2-9.6-4.8-15-1.2C3.4 6.4 1 9.6 0 12.4c3.2-1.6 6-1.4 8.2.4-1 2.2-1 4.2-.2 6.4 2.2-2 4.6-2.6 7.2-1.8.4 2 1.6 3.4 3.6 4.2.8-1.6 2.4-2.8 5.2-3.4 2.8.6 4.4 1.8 5.2 3.4 2-.8 3.2-2.2 3.6-4.2 2.6-.8 5-.2 7.2 1.8.8-2.2.8-4.2-.2-6.4 2.2-1.8 5-2 8.2-.4-1-2.8-3.4-6-6.6-8-5.4-3.6-11.4-3-15 1.2l.6-3.2s-1.8 1.2-3 3.6z';
+
+/** One flag on the bunting, hung by a fraction of the width off the same sagging line
+ *  the lanterns use. Orange and purple alternate down the string. */
+const BuntingFlag: React.FC<{ at: number; color: string }> = ({ at, color }) => {
+  const drop = 2 + 28 * at * (1 - at);
+  return (
+    <svg
+      className={styles.near}
+      style={{ left: `${at * 100}%`, top: drop - 1, transform: 'translateX(-50%)' }}
+      viewBox="-6 0 12 12"
+      width="12"
+      height="12"
+    >
+      <path d="M-5.5 0h11L0 11z" fill={color} opacity="0.9" />
+    </svg>
+  );
+};
 
 const Halloween: React.FC = () => (
   <>
-    <div className={styles.sky} style={{ background: 'linear-gradient(90deg, rgba(122, 70, 160, 0) 0%, rgba(122, 70, 160, 0.12) 35%, rgba(122, 70, 160, 0.12) 65%, rgba(122, 70, 160, 0) 100%)' }} />
+    <div
+      className={styles.sky}
+      style={{
+        background:
+          'linear-gradient(180deg, rgba(96, 52, 140, 0.14) 0%, rgba(96, 52, 140, 0.03) 70%, rgba(96, 52, 140, 0) 100%), linear-gradient(90deg, rgba(122, 70, 160, 0) 0%, rgba(122, 70, 160, 0.10) 30%, rgba(122, 70, 160, 0.10) 70%, rgba(122, 70, 160, 0) 100%)',
+      }}
+    />
 
-    {/* far: a flock of bats, small and pale */}
-    <PatternLayer id="fd-hw-far" tile={360} className={styles.far} opacity={0.28}>
-      <g fill={INK}>
-        <path transform="translate(20 10) scale(0.55)" d="M24 6c-1.2-2.4-3-3.6-3-3.6l.6 3.2c-3.6-4.2-9.6-4.8-15-1.2C3.4 6.4 1 9.6 0 12.4c3.2-1.6 6-1.4 8.2.4-1 2.2-1 4.2-.2 6.4 2.2-2 4.6-2.6 7.2-1.8.4 2 1.6 3.4 3.6 4.2.8-1.6 2.4-2.8 5.2-3.4 2.8.6 4.4 1.8 5.2 3.4 2-.8 3.2-2.2 3.6-4.2 2.6-.8 5-.2 7.2 1.8.8-2.2.8-4.2-.2-6.4 2.2-1.8 5-2 8.2-.4-1-2.8-3.4-6-6.6-8-5.4-3.6-11.4-3-15 1.2l.6-3.2s-1.8 1.2-3 3.6z" />
-        <path transform="translate(120 22) scale(0.4)" d="M24 6c-1.2-2.4-3-3.6-3-3.6l.6 3.2c-3.6-4.2-9.6-4.8-15-1.2C3.4 6.4 1 9.6 0 12.4c3.2-1.6 6-1.4 8.2.4-1 2.2-1 4.2-.2 6.4 2.2-2 4.6-2.6 7.2-1.8.4 2 1.6 3.4 3.6 4.2.8-1.6 2.4-2.8 5.2-3.4 2.8.6 4.4 1.8 5.2 3.4 2-.8 3.2-2.2 3.6-4.2 2.6-.8 5-.2 7.2 1.8.8-2.2.8-4.2-.2-6.4 2.2-1.8 5-2 8.2-.4-1-2.8-3.4-6-6.6-8-5.4-3.6-11.4-3-15 1.2l.6-3.2s-1.8 1.2-3 3.6z" />
-        <path transform="translate(230 6) scale(0.5)" d="M24 6c-1.2-2.4-3-3.6-3-3.6l.6 3.2c-3.6-4.2-9.6-4.8-15-1.2C3.4 6.4 1 9.6 0 12.4c3.2-1.6 6-1.4 8.2.4-1 2.2-1 4.2-.2 6.4 2.2-2 4.6-2.6 7.2-1.8.4 2 1.6 3.4 3.6 4.2.8-1.6 2.4-2.8 5.2-3.4 2.8.6 4.4 1.8 5.2 3.4 2-.8 3.2-2.2 3.6-4.2 2.6-.8 5-.2 7.2 1.8.8-2.2.8-4.2-.2-6.4 2.2-1.8 5-2 8.2-.4-1-2.8-3.4-6-6.6-8-5.4-3.6-11.4-3-15 1.2l.6-3.2s-1.8 1.2-3 3.6z" />
-        <path transform="translate(300 18) scale(0.35)" d="M24 6c-1.2-2.4-3-3.6-3-3.6l.6 3.2c-3.6-4.2-9.6-4.8-15-1.2C3.4 6.4 1 9.6 0 12.4c3.2-1.6 6-1.4 8.2.4-1 2.2-1 4.2-.2 6.4 2.2-2 4.6-2.6 7.2-1.8.4 2 1.6 3.4 3.6 4.2.8-1.6 2.4-2.8 5.2-3.4 2.8.6 4.4 1.8 5.2 3.4 2-.8 3.2-2.2 3.6-4.2 2.6-.8 5-.2 7.2 1.8.8-2.2.8-4.2-.2-6.4 2.2-1.8 5-2 8.2-.4-1-2.8-3.4-6-6.6-8-5.4-3.6-11.4-3-15 1.2l.6-3.2s-1.8 1.2-3 3.6z" />
+    {/* far: stars, a flock of bats, and low hills */}
+    <PatternLayer id="fd-hw-far" tile={360} className={styles.far} opacity={0.4}>
+      <g fill="#f5d777" opacity="0.7">
+        <circle cx="30" cy="8" r="0.9" />
+        <circle cx="90" cy="16" r="0.7" />
+        <circle cx="150" cy="5" r="1" />
+        <circle cx="205" cy="13" r="0.7" />
+        <circle cx="270" cy="7" r="0.9" />
+        <circle cx="330" cy="18" r="0.8" />
       </g>
+      <g fill={INK}>
+        <path transform="translate(20 12) scale(0.5)" d={BAT} />
+        <path transform="translate(120 24) scale(0.36)" d={BAT} />
+        <path transform="translate(230 8) scale(0.46)" d={BAT} />
+        <path transform="translate(300 20) scale(0.32)" d={BAT} />
+      </g>
+      <path d="M0 56V44c30-8 60-8 90-2s60 4 90-4 60-6 90 0 60 8 90 2V56Z" fill={INK} opacity="0.25" />
     </PatternLayer>
 
-    {/* mid: rooftops, a bare tree, a picket fence */}
-    <PatternLayer id="fd-hw-mid" tile={360} className={styles.mid} opacity={0.11}>
+    {/* mid: the town — rooftops, a church, bare trees, gravestones, a fence */}
+    <PatternLayer id="fd-hw-mid" tile={360} className={styles.mid} opacity={0.12}>
       <g fill={INK}>
         <path d="M0 56V40h14l6-10 6 10h6V30h4v-6l3-4 3 4v6h3v10h10l8-12 8 12h4V38h18v18Z" />
         <path d="M96 56V46l1-1 .5-8 2.5-3 2.5 3 .5 8 1 1v10Z" />
         <path d="M118 56V42c-3-2-4-6-3-10-2 1-4 0-5-2 3 0 5-2 6-4 1 2 3 3 5 2-1 3 0 6 2 8 3-1 5-3 5-6 1 3 0 6-2 8 3 1 5 3 4 6-3-1-5 0-6 2 1 2 2 4 1 6-2-1-4-2-4-4V56Z" />
         <path d="M150 56V44h3v-4l2-3 2 3v4h4v-4l2-3 2 3v4h4v-4l2-3 2 3v4h4v-4l2-3 2 3v4h3v12Z" />
         <path d="M200 56V36h6V28l5-7 5 7v8h6v-4h4v4h6v20Z" />
-        <path d="M250 56V44h8l4-8 4 8h6v-6h5v6h8V56Z" />
+        <path d="M232 56v-8a4 4 0 0 1 8 0v8zM244 56v-6a3 3 0 0 1 6 0v6z" />
+        <path d="M260 56V44h8l4-8 4 8h6v-6h5v6h8V56Z" />
         <path d="M300 56V46l1-1 .5-8 2.5-3 2.5 3 .5 8 1 1v10Z" />
         <path d="M322 56V44h3v-4l2-3 2 3v4h4v-4l2-3 2 3v4h4v-4l2-3 2 3v4h3v12Z" />
       </g>
     </PatternLayer>
 
-    {/* near: flat shapes — a crescent, a ghost fading in and out, pumpkins on the floor
-        whose faces are the only thing that glows */}
-    <svg className={styles.near} style={{ left: '10%', top: 4 }} viewBox="0 0 32 32" width="22" height="22">
-      <path d="M22 3a13 13 0 1 0 8 23A11 11 0 0 1 22 3z" fill="#f5d777" opacity="0.85" />
+    {/* near: the crescent with a witch crossing it, a cobweb in the corner, the ghost,
+        a cauldron, a black cat, pumpkins and a haunted house on the floor, a bare
+        branch at the right; bunting strung across the top */}
+    <svg className={styles.near} style={{ left: '9%', top: 3 }} viewBox="0 0 40 32" width="30" height="24">
+      <path d="M26 2a13 13 0 1 0 8 23A11 11 0 0 1 26 2z" fill="#f5d777" opacity="0.85" />
+      {/* the witch on her broom, silhouetted against it */}
+      <path d="M8 18l14-3 1-2 3 1-2 3 8 1-1 1.5-8-.5-1 2.5 2 3-3-1-1-3-12 1z" fill={INK} opacity="0.7" />
+      <path d="M22 13l-4-7 6 1z" fill={INK} opacity="0.7" />
     </svg>
-    <svg className={`${styles.near} ${styles.breathe}`} style={{ left: '62%', top: 8 }} viewBox="0 0 32 40" width="18" height="22">
+    <svg className={styles.near} style={{ left: 0, top: 0 }} viewBox="0 0 30 30" width="26" height="26">
+      <g fill="none" stroke={INK} strokeWidth="0.6" opacity="0.35">
+        <path d="M0 0v26M0 0h26M0 0l20 20" />
+        <path d="M0 8q4 1 6 6M0 15q7 2 11 11M0 22q9 3 14 8" />
+        <path d="M8 0q1 4 6 6M15 0q2 7 11 11M22 0q3 9 8 14" />
+      </g>
+    </svg>
+    <svg className={`${styles.near} ${styles.breathe}`} style={{ left: '61%', top: 8 }} viewBox="0 0 32 40" width="18" height="22">
       <path d="M4 38V16a12 12 0 0 1 24 0v22c-2-2.4-4-2.4-6 0-2-2.4-4-2.4-6 0-2-2.4-4-2.4-6 0-2-2.4-4-2.4-6 0z" fill="#f2f2f7" opacity="0.9" />
       <ellipse cx="11.5" cy="16" rx="2" ry="2.6" fill="#3b3b46" />
       <ellipse cx="20.5" cy="16" rx="2" ry="2.6" fill="#3b3b46" />
       <ellipse cx="16" cy="23" rx="2" ry="2.8" fill="#3b3b46" />
     </svg>
+    {/* cauldron */}
+    <svg className={styles.near} style={{ left: '22%', top: 56 - 18 }} viewBox="0 0 24 24" width="18" height="18">
+      <g className={styles.breathe} fill="#7ed957">
+        <circle cx="8" cy="6" r="1.6" opacity="0.8" />
+        <circle cx="14" cy="3" r="1.1" opacity="0.6" />
+        <circle cx="17" cy="7" r="1.3" opacity="0.7" />
+      </g>
+      <ellipse cx="12" cy="10" rx="9" ry="2.4" fill="#5fb84a" />
+      <path d="M3 10q9 4 18 0v4a9 8 0 0 1-18 0z" fill="#2b2b33" />
+      <path d="M3 10q9 4 18 0" fill="none" stroke="#3d3d48" strokeWidth="1" />
+      <path d="M6 22h3M15 22h3" stroke="#2b2b33" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+    {/* pumpkins */}
     {[
       { left: '31%', size: 22 },
       { left: '43%', size: 16 },
-      { left: '80%', size: 19 },
+      { left: '82%', size: 19 },
     ].map(({ left, size }) => (
       <svg key={left} className={styles.near} style={{ left, top: 56 - size }} viewBox="0 0 44 44" width={size} height={size}>
         <path d="M20 6c1-2.5 3.5-3 5.5-1.5L25 13h-5z" fill="#5f8f3e" />
@@ -250,30 +327,98 @@ const Halloween: React.FC = () => (
         </g>
       </svg>
     ))}
+    {/* the black cat, sitting */}
+    <svg className={styles.near} style={{ left: '51%', top: 56 - 16 }} viewBox="0 0 20 20" width="16" height="16">
+      <path d="M4 20v-8a5 5 0 0 1 4-5V4l2 2 2-2v3a5 5 0 0 1 4 5v8z" fill="#1f1f26" />
+      <path d="M16 18q4-2 2-8" fill="none" stroke="#1f1f26" strokeWidth="2" strokeLinecap="round" />
+      <circle cx="8.3" cy="9.5" r="0.9" fill="#8fe388" />
+      <circle cx="11.7" cy="9.5" r="0.9" fill="#8fe388" />
+    </svg>
+    {/* the haunted house, windows lit */}
+    <svg className={styles.near} style={{ left: '68%', top: 56 - 30 }} viewBox="0 0 34 30" width="34" height="30">
+      <path d="M2 30V14l7-8 7 8v16zM16 30V10l8-8 8 8v20z" fill={INK} opacity="0.75" />
+      <path d="M13 6h3V1h-3z" fill={INK} opacity="0.75" />
+      <g className={styles.breathe} fill="#ffcf5c">
+        <rect x="6" y="16" width="3.5" height="4" />
+        <rect x="20" y="13" width="3.5" height="4.5" />
+        <rect x="26" y="13" width="3.5" height="4.5" />
+        <rect x="21" y="23" width="4" height="7" opacity="0.7" />
+      </g>
+    </svg>
+    {/* a bare branch leaning in from the right, a bat hanging from it */}
+    <svg className={styles.near} style={{ right: 0, top: 2 }} viewBox="0 0 70 46" width="70" height="46">
+      <path d="M70 4c-10 4-20 12-30 22-8 8-18 14-30 18" fill="none" stroke={INK} strokeWidth="1.2" opacity="0.55" strokeLinecap="round" />
+      <path d="M56 12c-5 0-9 3-11 7M42 26c-5 1-9 4-11 8M50 16c3-4 8-6 12-6" fill="none" stroke={INK} strokeWidth="0.9" opacity="0.45" strokeLinecap="round" />
+      <path transform="translate(28 30) scale(0.42)" d={BAT} fill={INK} opacity="0.7" />
+    </svg>
+    {/* bunting */}
+    <svg className={styles.string} viewBox="0 0 400 56" preserveAspectRatio="none" width="100%" height="56">
+      <path d="M0 2q200 14 400 0" fill="none" stroke={INK} strokeWidth="0.8" opacity="0.35" />
+    </svg>
+    {[0.06, 0.15, 0.24, 0.33, 0.42, 0.51, 0.6, 0.69, 0.78, 0.87, 0.95].map((at, i) => (
+      <BuntingFlag key={at} at={at} color={i % 2 === 0 ? '#ef8a2c' : '#7a5cc6'} />
+    ))}
   </>
 );
 
-/* ---------- Christmas: snow over a pine forest ---------- */
+/* ---------- Christmas: fairy lights over a snowy village ---------- */
+
+/** One bulb on the light string, hung by a fraction of the width off the same sagging
+ *  line; the colours cycle, and two twinkle phases alternate along it. */
+const FairyLight: React.FC<{ at: number; color: string; late: boolean }> = ({ at, color, late }) => {
+  const drop = 2 + 28 * at * (1 - at);
+  return (
+    <svg
+      className={`${styles.near} ${late ? styles.twinkleLate : styles.twinkle}`}
+      style={{ left: `${at * 100}%`, top: drop - 1, transform: 'translateX(-50%)' }}
+      viewBox="-6 0 12 12"
+      width="12"
+      height="12"
+    >
+      <path d="M0 0v2" stroke="#8a8a96" strokeWidth="0.8" />
+      <circle cx="0" cy="6" r="5" fill={color} opacity="0.3" />
+      <circle cx="0" cy="6" r="2.4" fill={color} />
+    </svg>
+  );
+};
+
+const LIGHT_COLORS = ['#ff5c5c', '#f5d777', '#5cc282', '#6fb3ff'];
 
 const Christmas: React.FC = () => (
   <>
-    <div className={styles.sky} style={{ background: 'linear-gradient(90deg, rgba(90, 150, 220, 0) 0%, rgba(90, 150, 220, 0.12) 35%, rgba(90, 150, 220, 0.12) 65%, rgba(90, 150, 220, 0) 100%)' }} />
+    <div
+      className={styles.sky}
+      style={{
+        background:
+          'linear-gradient(180deg, rgba(60, 100, 170, 0.14) 0%, rgba(60, 100, 170, 0.03) 70%, rgba(60, 100, 170, 0) 100%), linear-gradient(90deg, rgba(90, 150, 220, 0) 0%, rgba(90, 150, 220, 0.10) 30%, rgba(90, 150, 220, 0.10) 70%, rgba(90, 150, 220, 0) 100%)',
+      }}
+    />
 
-    {/* far: snowy hills with distant pines */}
-    <PatternLayer id="fd-xm-far" tile={320} className={styles.far} opacity={0.12}>
-      <path d="M0 56V40c30-8 60-8 90 0s60 8 90 0 60-8 90 0 40 6 50 6V56Z" fill={INK} />
-      <g fill={INK}>
+    {/* far: stars, snowy hills with distant pines */}
+    <PatternLayer id="fd-xm-far" tile={320} className={styles.far} opacity={0.4}>
+      <g fill="#fff" opacity="0.8">
+        <circle cx="24" cy="8" r="0.9" />
+        <circle cx="80" cy="15" r="0.7" />
+        <circle cx="140" cy="5" r="1" />
+        <circle cx="200" cy="12" r="0.7" />
+        <circle cx="260" cy="7" r="0.9" />
+        <circle cx="300" cy="17" r="0.7" />
+      </g>
+      <path d="M0 56V40c30-8 60-8 90 0s60 8 90 0 60-8 90 0 40 6 50 6V56Z" fill={INK} opacity="0.3" />
+      <g fill={INK} opacity="0.3">
         <path d="M40 40l5-12 5 12zM100 42l4-10 4 10zM190 41l5-13 5 13zM260 43l4-9 4 9z" />
       </g>
     </PatternLayer>
 
-    {/* mid: a row of pines */}
-    <PatternLayer id="fd-xm-mid" tile={320} className={styles.mid} opacity={0.15}>
+    {/* mid: the village edge — pines, a hut, a fence, a church */}
+    <PatternLayer id="fd-xm-mid" tile={320} className={styles.mid} opacity={0.14}>
       <g fill={INK}>
         <path d="M0 56V48l8-14 3 5 2-4 9 13v8Z" />
         <path d="M40 56v-6l10-18 3 6 3-5 11 17v6Z" />
-        <path d="M90 56v-8l7-12 3 4 2-3 8 11v8Z" />
-        <path d="M140 56v-5l9-16 3 5 2-4 10 15v5Z" />
+        <path d="M76 56V44l9-8 9 8v12z" />
+        <path d="M100 56v-8l7-12 3 4 2-3 8 11v8Z" />
+        <path d="M130 56v-6h3v-2h2v2h3v-2h2v2h3v-2h2v2h3v6z" />
+        <path d="M160 56V40h8V32l4-6 4 6v8h4v-4h3v4h5v16z" />
         <path d="M200 56v-7l8-14 3 5 2-4 9 13v7Z" />
         <path d="M250 56v-6l10-18 3 6 3-5 11 17v6Z" />
         <path d="M300 56v-8l7-12 3 4 2-3 8 11v8Z" />
@@ -299,9 +444,10 @@ const Christmas: React.FC = () => (
       <rect width="100%" height="112" fill="url(#fd-xm-snow)" opacity="0.9" />
     </svg>
 
-    {/* near: a small flat tree with its lights, two gifts beside it, all on the floor and
-        off to the left so the forest keeps the middle */}
-    <svg className={styles.near} style={{ left: '22%', top: 56 - 34 }} viewBox="0 0 30 36" width="28" height="34">
+    {/* near: the tree and gifts, a snowman, candy canes in the snow, a cabin with its
+        window lit, a reindeer on the ridge, holly at the right; fairy lights strung
+        across the top */}
+    <svg className={styles.near} style={{ left: '20%', top: 56 - 34 }} viewBox="0 0 30 36" width="28" height="34">
       <path d="M15 1l1.6 3.4 3.7.5-2.7 2.6.7 3.7L15 9.4l-3.3 1.8.7-3.7-2.7-2.6 3.7-.5z" fill="#f5d777" />
       <path d="M15 7l7 9H8z" fill="#3f9a63" />
       <path d="M15 13l9 11H6z" fill="#358a57" />
@@ -320,14 +466,80 @@ const Christmas: React.FC = () => (
       ))}
     </svg>
     {[
-      { left: '27%', w: 14, h: 12 },
-      { left: '29.5%', w: 10, h: 9 },
+      { left: '25%', w: 14, h: 12 },
+      { left: '27.5%', w: 10, h: 9 },
     ].map(({ left, w, h }) => (
       <svg key={left} className={styles.near} style={{ left, top: 56 - h }} viewBox="0 0 32 28" width={w} height={h}>
         <rect x="2" y="8" width="28" height="19" rx="2" fill="#e04e56" />
         <rect x="13" y="8" width="6" height="19" fill="#f5d777" />
         <rect x="1" y="7" width="30" height="5" rx="1.5" fill="#c93a42" />
       </svg>
+    ))}
+    {/* candy canes stuck in the snow */}
+    <svg className={styles.near} style={{ left: '33%', top: 56 - 16 }} viewBox="0 0 20 20" width="16" height="16">
+      <g fill="none" strokeLinecap="round">
+        <path d="M4 20V8a3.5 3.5 0 0 1 7 0" stroke="#e5e5ec" strokeWidth="3.4" />
+        <path d="M4 20V8a3.5 3.5 0 0 1 7 0" stroke="#fff" strokeWidth="2.8" />
+        <path d="M4 20V8a3.5 3.5 0 0 1 7 0" stroke="#e5484d" strokeWidth="2.8" strokeDasharray="2.2 2.2" />
+        <path d="M12 20v-8a3 3 0 0 1 6 0" stroke="#e5e5ec" strokeWidth="3" />
+        <path d="M12 20v-8a3 3 0 0 1 6 0" stroke="#fff" strokeWidth="2.4" />
+        <path d="M12 20v-8a3 3 0 0 1 6 0" stroke="#e5484d" strokeWidth="2.4" strokeDasharray="2 2" />
+      </g>
+    </svg>
+    {/* the snowman */}
+    <svg className={styles.near} style={{ left: '42%', top: 56 - 26 }} viewBox="0 0 22 28" width="20" height="26">
+      <circle cx="11" cy="20" r="7.5" fill="#fff" stroke="#d6dbe6" strokeWidth="0.8" />
+      <circle cx="11" cy="9" r="5.5" fill="#fff" stroke="#d6dbe6" strokeWidth="0.8" />
+      <rect x="6" y="1" width="10" height="2" rx="0.6" fill="#2b2b33" />
+      <rect x="7.5" y="-2" width="7" height="4" fill="#2b2b33" />
+      <circle cx="9" cy="8" r="0.8" fill="#2b2b33" />
+      <circle cx="13" cy="8" r="0.8" fill="#2b2b33" />
+      <path d="M11 9.5l4 1-4 1z" fill="#f28c28" />
+      <path d="M6 13.5q5 2.5 10 0l1 2q-6 3-12 0z" fill="#e5484d" />
+      <circle cx="11" cy="18" r="0.8" fill="#2b2b33" />
+      <circle cx="11" cy="21.5" r="0.8" fill="#2b2b33" />
+      <path d="M4 17l-4-3M18 17l4-3" stroke="#7a4e2a" strokeWidth="1" strokeLinecap="round" />
+    </svg>
+    {/* the cabin, window lit */}
+    <svg className={styles.near} style={{ left: '58%', top: 56 - 26 }} viewBox="0 0 36 26" width="36" height="26">
+      <rect x="5" y="10" width="26" height="16" fill="#7a4e2a" />
+      <path d="M2 11l16-9 16 9z" fill="#fff" stroke="#d6dbe6" strokeWidth="0.8" />
+      <rect x="24" y="1" width="4" height="7" fill="#5a3a20" />
+      <rect x="8" y="14" width="7" height="12" fill="#5a3a20" />
+      <g className={styles.breathe}>
+        <rect x="19" y="14" width="8" height="7" fill="#ffcf5c" />
+        <rect x="19" y="14" width="8" height="7" fill="none" stroke="#5a3a20" strokeWidth="0.8" />
+        <path d="M23 14v7M19 17.5h8" stroke="#5a3a20" strokeWidth="0.8" />
+      </g>
+      <rect x="4" y="9" width="28" height="2" fill="#fff" />
+    </svg>
+    {/* the reindeer, on the ridge */}
+    <svg className={styles.near} style={{ left: '74%', top: 56 - 22 }} viewBox="0 0 26 22" width="24" height="20">
+      <g fill={INK} opacity="0.7">
+        <path d="M6 22v-8l-2-4 3-3h8l4 2 3-4 2 1-3 5v11h-2v-7h-2v7h-2v-6H9v6z" />
+        <path d="M17 6l-2-4 1-1 2 4zM19 5l1-4h1l-1 4z" />
+      </g>
+      <circle cx="21.5" cy="7.5" r="1" fill="#ff5c5c" />
+    </svg>
+    {/* holly leaning in from the right */}
+    <svg className={styles.near} style={{ right: 0, top: 6 }} viewBox="0 0 70 46" width="70" height="46">
+      <path d="M70 6c-12 2-24 8-34 18-8 8-16 14-26 18" fill="none" stroke="#2c7a4b" strokeWidth="1.2" opacity="0.7" strokeLinecap="round" />
+      <g fill="#3f9a63" opacity="0.85">
+        <path d="M58 10c-3-2-7-1-9 2 1 1 3 1 3 3-2 0-3 2-2 4 3 0 6-2 7-5 2 0 3-2 1-4z" />
+        <path d="M44 22c-3-2-7-1-9 2 1 1 3 1 3 3-2 0-3 2-2 4 3 0 6-2 7-5 2 0 3-2 1-4z" />
+        <path d="M30 33c-3-2-7-1-9 2 1 1 3 1 3 3-2 0-3 2-2 4 3 0 6-2 7-5 2 0 3-2 1-4z" />
+      </g>
+      <g fill="#e5484d">
+        <circle cx="52" cy="18" r="1.6" /><circle cx="49" cy="20" r="1.4" /><circle cx="53" cy="21.5" r="1.3" />
+        <circle cx="38" cy="30" r="1.6" /><circle cx="35" cy="32" r="1.4" /><circle cx="39" cy="33.5" r="1.3" />
+      </g>
+    </svg>
+    {/* fairy lights */}
+    <svg className={styles.string} viewBox="0 0 400 56" preserveAspectRatio="none" width="100%" height="56">
+      <path d="M0 2q200 14 400 0" fill="none" stroke="#8a8a96" strokeWidth="0.8" opacity="0.5" />
+    </svg>
+    {[0.05, 0.13, 0.21, 0.29, 0.37, 0.45, 0.53, 0.61, 0.69, 0.77, 0.85, 0.93].map((at, i) => (
+      <FairyLight key={at} at={at} color={LIGHT_COLORS[i % LIGHT_COLORS.length]} late={i % 2 === 1} />
     ))}
   </>
 );
