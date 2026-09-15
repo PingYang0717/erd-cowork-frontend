@@ -2,6 +2,8 @@ import React, { useCallback, useRef, useState } from 'react';
 import { Popover } from 'antd';
 import { MoonOutlined, SunOutlined, UserOutlined } from '@ant-design/icons';
 
+import EmployeeAvatar from '@/components/common/EmployeeAvatar';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useTranslations } from '@/i18n/useTranslations';
 import { useLanguageStore } from '@/stores/useLanguageStore';
 import { useThemeStore } from '@/stores/useThemeStore';
@@ -21,10 +23,13 @@ import styles from './AppHeader.module.css';
  *  Two rows that toggle on press rather than a control naming both options: the design
  *  draws it that way, and each row shows what is in use — `EN` / `中`, `Light` / `Dark`.
  *
- *  The avatar is a generic figure, not initials. The design hard-codes `KL`; this app's
- *  identity is an anonymous UUID (ADR-0007) and there is no profile to read a name from,
- *  so initials would be a value made up at runtime (ADR-0006). */
+ *  The avatar is the signed-in user as the HR directory knows them (`GET /hr/userInfo`,
+ *  asked once at start): their photo, or their initial when there is no photo to fetch —
+ *  drawn by the same component as a share recipient. Until the profile answers, or if it
+ *  never does, a generic figure stands in: the design hard-codes `KL`, but a made-up
+ *  initial would be a value invented at runtime (ADR-0006). */
 const AppHeader: React.FC = () => {
+  const user = useCurrentUser();
   const t = useTranslations();
 
   const language = useLanguageStore((state) => state.language);
@@ -102,7 +107,7 @@ const AppHeader: React.FC = () => {
             aria-expanded={open}
             onKeyDown={handleKeyDown}
           >
-            <UserOutlined aria-hidden />
+            {user ? <EmployeeAvatar entry={user} size={32} tone="solid" /> : <UserOutlined aria-hidden />}
           </button>
         </Popover>
       </div>

@@ -80,5 +80,6 @@ eRD Workspace 這個平台已不存在(CONTEXT.md 同日改寫)。
 這一輪只對齊 header(`AppHeader`,掛在所有路由之上的 `AppShell`);其餘區域與新稿的
 差異留待之後逐區比對。chat panel 以 cowork 上游為準的例外不變。
 
-新稿寫死頭像縮寫「KL」,本專案改放通用的使用者圖示:身分是匿名 UUID(ADR-0007),沒有
-資料可以拿來當縮寫,寫死一組就是執行時的假資料(ADR-0006)。
+新稿寫死頭像縮寫「KL」,本專案改讀 `GET /hr/userInfo`——登入者的 `DirectoryEntry`,
+相片與首字退回跟分享對話框的收件者同一套(`EmployeeAvatar`)。拿到之前或拿不到時放通用
+的使用者圖示:寫死一組縮寫就是執行時的假資料(ADR-0006)。

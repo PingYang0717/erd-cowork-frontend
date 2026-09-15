@@ -3,6 +3,7 @@ import { App, Button, Input, Modal, Select } from 'antd';
 import { CheckOutlined, CopyOutlined, FundOutlined, LinkOutlined } from '@ant-design/icons';
 
 import { DIRECTORY_SEARCH_MIN_LENGTH } from '@/api/directoryApi';
+import EmployeeAvatar from '@/components/common/EmployeeAvatar';
 import { useUpdateArtifactShares } from '@/hooks/useArtifactMutations';
 import { useArtifactShares } from '@/hooks/useArtifactShares';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
@@ -16,7 +17,6 @@ import {
   directoryEntryOptionText,
   directoryEntrySelectedName,
   directoryShareTarget,
-  employeeAvatarUrl,
 } from '@/utils/directoryEntry';
 
 import styles from './ShareArtifactDialog.module.css';
@@ -195,40 +195,6 @@ const ShareArtifactDialog: React.FC<ShareArtifactDialogProps> = ({ open, onClose
   );
 };
 
-/** A person's photo, or their initial when there is none to fetch. Round, because that is
- *  how a person is drawn everywhere else in the app and a square would read as a logo.
- *
- *  `onError` rather than a HEAD request: the photo host answers for most employees and
- *  not for some, and the only honest way to learn which is to ask for the image. */
-interface RecipientAvatarProps {
-  entry: DirectoryEntry;
-}
-
-const RecipientAvatar: React.FC<RecipientAvatarProps> = ({ entry }) => {
-  const src = employeeAvatarUrl(entry.emplId);
-  const [failed, setFailed] = useState(false);
-  const name = directoryEntrySelectedName(entry);
-
-  if (src === null || failed) {
-    return (
-      <span aria-hidden className={styles.recipientAvatarFallback}>
-        {name.slice(0, 1)}
-      </span>
-    );
-  }
-  return (
-    <img
-      // Decorative: the name is right beside it, and a screen reader reading the same
-      // person twice is noise.
-      alt=""
-      aria-hidden
-      src={src}
-      className={styles.recipientAvatar}
-      onError={() => setFailed(true)}
-    />
-  );
-};
-
 interface RecipientSelectProps {
   /** The chosen entries themselves, not their keys: the share payload needs each one's
    *  type and id, which only the entry carries. */
@@ -324,7 +290,7 @@ const RecipientSelect: React.FC<RecipientSelectProps> = ({ value, loading, disab
         }
         return (
           <span className={styles.recipientOption}>
-            {entry.type === 'EMPLOYEE' && <RecipientAvatar entry={entry} />}
+            {entry.type === 'EMPLOYEE' && <EmployeeAvatar entry={entry} size={22} tone="soft" />}
             {directoryEntryOptionText(entry)}
           </span>
         );

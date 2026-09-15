@@ -9,7 +9,7 @@
 _Avoid_: Chat app, Assistant, Workspace（已不存在的平台外殼）
 
 **Header**:
-每個畫面最上方橫跨整寬的那一條：放品牌與偏好設定（語言、主題）的唯一入口。它在所有路由之上，任何一個 pane 失敗它都還在。有別於各 pane 自己的 pane header（thread 的「Cowork · Data studio」、Artifact 面板的版本切換列）。
+每個畫面最上方橫跨整寬的那一條：放品牌、登入者的頭像（HR 目錄裡的相片或姓名首字）、以及偏好設定（語言、主題）的唯一入口。它在所有路由之上，任何一個 pane 失敗它都還在。有別於各 pane 自己的 pane header（thread 的「Cowork · Data studio」、Artifact 面板的版本切換列）。
 _Avoid_: Navbar（裡面沒有導覽）、Top bar、App bar
 
 **Studio**:
