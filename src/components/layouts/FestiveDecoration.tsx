@@ -104,6 +104,13 @@ const MidAutumn: React.FC = () => (
         <path d="M240 3c.3 2 1.4 3.1 3.4 3.4-2 .3-3.1 1.4-3.4 3.4-.3-2-1.4-3.1-3.4-3.4 2-.3 3.1-1.4 3.4-3.4z" />
       </g>
       <path d="M0 56V38c20-10 40-14 62-8 18 5 34 2 52-6 22-10 44-8 66 2 16 7 34 6 52-2 22-10 46-8 68 2 20 9 40 8 60 0V56Z" fill={INK} opacity="0.22" />
+      {/* a skein of geese crossing the sky */}
+      <g fill={INK} opacity="0.5">
+        <path d="M250 12l4 2-4 2 1-2zM258 10l4 2-4 2 1-2zM266 8l4 2-4 2 1-2zM274 10l4 2-4 2 1-2zM282 12l4 2-4 2 1-2z" />
+        <path d="M60 22l3 1.5-3 1.5.8-1.5zM66 20l3 1.5-3 1.5.8-1.5zM72 22l3 1.5-3 1.5.8-1.5z" />
+      </g>
+      {/* a pagoda on the far ridge */}
+      <path d="M318 40h10v-3h-1v-3h-8v3h-1zM317 34l6-4 6 4zM319 30h8v-2h-8zM318 28l5-3 5 3zM320 25h6v-2h-6zM320 23l3-3 3 3z" fill={INK} opacity="0.32" />
       {/* a pavilion on the ridge */}
       <path d="M186 33h2v-3l-6-4-6 4v3h2v-6l4-3 4 3zM178 33h16v1h-16z M180 34h12v6h-12z" fill={INK} opacity="0.3" />
       <path d="M176 30l10-7 10 7-1 1-9-6-9 6z" fill={INK} opacity="0.3" />
@@ -118,7 +125,32 @@ const MidAutumn: React.FC = () => (
         <path d="M150 44a5 5 0 0 1 8-3 4 4 0 0 1 6 1 5 5 0 0 1-1 6h-11a4 4 0 0 1-2-4z" opacity="0.5" />
         <path d="M262 45a5 5 0 0 1 8-3 4 4 0 0 1 6 1 5 5 0 0 1-1 6h-11a4 4 0 0 1-2-4z" opacity="0.5" />
       </g>
+      {/* reeds at the water's edge */}
+      <g fill="none" stroke={INK} strokeWidth="0.8" strokeLinecap="round" opacity="0.7">
+        <path d="M70 56c1-5 0-9-2-12M74 56c0-5 2-8 5-10M78 56c-1-4-1-8 1-11" />
+        <path d="M196 56c1-5 0-9-2-12M200 56c0-5 2-8 5-10M204 56c-1-4-1-8 1-11M208 56c1-3 0-6-1-8" />
+        <path d="M300 56c1-5 0-9-2-12M304 56c0-5 2-8 5-10" />
+      </g>
+      <g fill={INK} opacity="0.7">
+        <ellipse cx="68" cy="43" rx="1" ry="2.6" /><ellipse cx="79.5" cy="44.5" rx="1" ry="2.6" />
+        <ellipse cx="194" cy="43" rx="1" ry="2.6" /><ellipse cx="205.5" cy="44.5" rx="1" ry="2.6" />
+        <ellipse cx="298" cy="43" rx="1" ry="2.6" />
+      </g>
     </PatternLayer>
+
+    {/* sky lanterns: a tile of small warm lights sliding upward, so they rise as one */}
+    <svg className={styles.rise} style={{ ['--fd-tile' as string]: '56px' }} width="100%" height="112">
+      <defs>
+        <pattern id="fd-ma-skylanterns" width="200" height="56" patternUnits="userSpaceOnUse">
+          <g>
+            <path d="M30 20l3-6h4l3 6-1 5h-8z" fill="#f6b26b" opacity="0.7" /><circle cx="35" cy="17" r="4" fill="#ffd28a" opacity="0.35" />
+            <path d="M120 44l2.5-5h3.5l2.5 5-.8 4h-6.9z" fill="#f6b26b" opacity="0.6" /><circle cx="124" cy="41" r="3.5" fill="#ffd28a" opacity="0.3" />
+            <path d="M172 8l2-4h3l2 4-.6 3.5h-5.8z" fill="#f6b26b" opacity="0.5" /><circle cx="175.5" cy="6" r="3" fill="#ffd28a" opacity="0.3" />
+          </g>
+        </pattern>
+      </defs>
+      <rect width="100%" height="112" fill="url(#fd-ma-skylanterns)" />
+    </svg>
 
     {/* near: the moon with the jade rabbit on its face, two rabbits and a mooncake on the
         cloud below it, an osmanthus branch at the right, and a string of lanterns across
@@ -157,6 +189,48 @@ const MidAutumn: React.FC = () => (
         <circle cx="3" cy="3" r="1.2" fill="#fff3b0" />
       </svg>
     ))}
+
+    {/* a rabbit out with its lantern, at the left */}
+    <svg className={styles.near} style={{ left: '17%', top: 56 - 20 }} viewBox="0 0 26 22" width="24" height="20">
+      <g fill={INK} opacity="0.62">
+        <path d="M9 10C7 6 7 2 9 0c1.5 0 2.5 4 2.5 9zM18 10c2-4 2-8 0-10-1.5 0-2.5 4-2.5 9z" />
+        <ellipse cx="13.5" cy="15" rx="7.5" ry="6.5" />
+        <path d="M20 12l4-4" stroke={INK} strokeWidth="1" strokeLinecap="round" />
+      </g>
+      <circle cx="11" cy="14" r="0.9" fill="#fff" />
+      <circle cx="16" cy="14" r="0.9" fill="#fff" />
+      <path d="M24 8v2" stroke="#c9a04a" strokeWidth="0.8" />
+      <ellipse cx="24" cy="13" rx="2.6" ry="3" fill="#e0454f" />
+      <ellipse cx="24" cy="13" rx="3.6" ry="4" fill="#f6b26b" opacity="0.3" className={styles.breathe} />
+    </svg>
+    {/* tea for the moon-watching: a pot and two cups */}
+    <svg className={styles.near} style={{ left: '35%', top: 56 - 12 }} viewBox="0 0 30 14" width="28" height="13">
+      <path d="M4 13a6 6 0 0 1 12 0z" fill="#8c6b4a" />
+      <ellipse cx="10" cy="7.5" rx="6" ry="1.6" fill="#a58462" />
+      <rect x="9" y="4" width="2" height="3" fill="#8c6b4a" />
+      <path d="M16 8q4-2 3 3" fill="none" stroke="#8c6b4a" strokeWidth="1.2" strokeLinecap="round" />
+      <path d="M4 9q-3-1-1 3" fill="none" stroke="#8c6b4a" strokeWidth="1.2" strokeLinecap="round" />
+      <path d="M21 13a2.5 2.5 0 0 1 5 0zM19.5 10h8" fill="#c9c9d2" stroke="#c9c9d2" strokeWidth="0.8" />
+      <path d="M21 10.5a2.5 2.5 0 0 1 5 0z" fill="#d6d6dc" />
+    </svg>
+    {/* a pomelo on the cloud */}
+    <svg className={styles.near} style={{ left: '66%', top: 56 - 13 }} viewBox="0 0 16 14" width="15" height="13">
+      <ellipse cx="8" cy="8.5" rx="6.5" ry="5.5" fill="#cddc6a" />
+      <ellipse cx="6" cy="6.5" rx="2" ry="1.4" fill="#e3ec9a" opacity="0.7" />
+      <path d="M8 3q3-3 6-1-3 1-6 1z" fill="#3f9a63" />
+    </svg>
+    {/* a second osmanthus at the left, fainter, mirroring the right */}
+    <svg className={styles.near} style={{ left: 0, top: 14 }} viewBox="0 0 70 46" width="56" height="37" opacity="0.7">
+      <path d="M0 6c12 2 24 8 34 18 8 8 16 14 26 18" fill="none" stroke={INK} strokeWidth="1.1" opacity="0.5" strokeLinecap="round" />
+      <g fill={INK} opacity="0.45">
+        <path d="M12 9c4-1 8 1 9 4-4 1-8-1-9-4z" />
+        <path d="M24 20c4-1 7 1 8 4-3 1-7-1-8-4z" />
+      </g>
+      <g fill="#f2c14e">
+        <circle cx="17" cy="17" r="1.2" /><circle cx="14" cy="19.5" r="1" /><circle cx="19" cy="20.5" r="0.9" />
+        <circle cx="29" cy="27" r="1.2" /><circle cx="26" cy="29.5" r="1" /><circle cx="31" cy="30.5" r="0.9" />
+      </g>
+    </svg>
 
     {/* two rabbits on the cloud, one small, the mooncake between them */}
     <svg className={styles.near} style={{ left: '56%', top: 56 - 17 }} viewBox="0 0 48 22" width="40" height="17">
@@ -198,6 +272,21 @@ const MidAutumn: React.FC = () => (
     <svg className={styles.string} viewBox="0 0 400 56" preserveAspectRatio="none" width="100%" height="56">
       <path d="M0 2q200 14 400 0" fill="none" stroke={INK} strokeWidth="0.8" opacity="0.35" />
     </svg>
+    {[0.145, 0.29, 0.5, 0.71, 0.855].map((at) => (
+      <svg
+        key={at}
+        className={styles.near}
+        style={{ left: `${at * 100}%`, top: 2 + 28 * at * (1 - at), transform: 'translateX(-50%)' }}
+        viewBox="-4 0 8 14"
+        width="8"
+        height="14"
+      >
+        <path d="M0 0v2" stroke="#c9a04a" strokeWidth="0.8" />
+        <path d="M0 2l3 3-3 3-3-3z" fill="#e0454f" />
+        <path d="M0 4.5l1.5 1.5L0 7.5 -1.5 6z" fill="#f08a8e" />
+        <path d="M-1.2 8v5M1.2 8v5" stroke="#e0454f" strokeWidth="0.9" strokeLinecap="round" />
+      </svg>
+    ))}
     <StrungLantern at={0.07} size={0.95} />
     <StrungLantern at={0.22} size={0.8} />
     <StrungLantern at={0.36} size={1} />

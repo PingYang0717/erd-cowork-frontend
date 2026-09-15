@@ -49,6 +49,14 @@
   animation: fall 14s linear infinite;
 }
 
+/* Sky lanterns: the same idea upwards, slower. */
+.rise {
+  position: absolute;
+  top: 0;
+  left: 0;
+  animation: rise 26s linear infinite;
+}
+
 /* The near pieces stand still on the band's floor; only their light breathes. */
 .near {
   position: absolute;
@@ -93,6 +101,15 @@
   }
   to {
     transform: translateY(var(--fd-tile));
+  }
+}
+
+@keyframes rise {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(calc(-1 * var(--fd-tile)));
   }
 }
 
