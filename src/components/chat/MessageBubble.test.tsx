@@ -140,6 +140,32 @@ describe('MessageBubble', () => {
     }
   });
 
+  /** The clock must not move when the run ends. It used to sit inside the bubble while
+   *  streaming and drop into the meta row beneath once settled; now both readings are
+   *  drawn by the same component in the same row, outside the bubble. */
+  it('keeps the timer in the same row under the bubble, live and settled', () => {
+    vi.useFakeTimers();
+    try {
+      const startedAt = Date.now();
+      const { rerender } = render(<MessageBubble sender="AI" live={liveRun({ isStreaming: true, startedAt })} />);
+      act(() => {
+        vi.advanceTimersByTime(2000);
+      });
+      const live = screen.getByText('2s');
+      expect(live.closest('[class*="aiBubble"]')).toBeNull();
+      const liveRow = live.closest('[class*="meta"]');
+      expect(liveRow).not.toBeNull();
+
+      rerender(<MessageBubble sender="AI" text="Done." durationMs={2000} />);
+      const settled = screen.getByText('2s');
+      expect(settled.closest('[class*="aiBubble"]')).toBeNull();
+      expect(settled.closest('[class*="meta"]')?.className).toBe(liveRow?.className);
+      expect(settled.className).toBe(live.className);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   /** A dropped connection is something the reader has to act on, so the bubble says it.
    *  A user-initiated stop is not: they know, they did it — and the record the backend
    *  writes is what states it, in the one wording that survives a reload. */

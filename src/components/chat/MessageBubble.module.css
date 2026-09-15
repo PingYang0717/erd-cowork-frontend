@@ -7,6 +7,13 @@
 }
 
 /* Attachment chips sit inside the blue bubble, above the text (mockup). */
+/* Long unbroken runs — a URL, a lot id, a hash — wrap inside the bubble rather than run
+   out of it. Inherited, so the text, the steps and the thinking body all get it. */
+.userBubble,
+.aiBubble {
+  overflow-wrap: anywhere;
+}
+
 .userBubble {
   max-width: 85%;
   background: var(--erd-color-primary, #1677ff);
@@ -221,20 +228,10 @@
   transition: opacity 0.12s ease;
 }
 
-/* How long the turn took stays on show: it is the reply describing its own cost, and a
-   reader comparing two runs should not have to hunt for it one hover at a time. */
-.metaTimer {
-  opacity: 1;
-}
-
 /* When it was sent is something a reader goes looking for, never something they opened
    the thread to read — so it waits to be asked for, even on the newest turn. */
 .metaTime {
   opacity: 0;
-}
-
-.metaAsideIcon {
-  font-size: 11px;
 }
 
 /* The controls. Hidden on an older turn, kept on the newest one — that is the reply the

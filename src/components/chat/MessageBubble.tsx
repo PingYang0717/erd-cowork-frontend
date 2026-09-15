@@ -2,7 +2,6 @@ import React, { useDeferredValue, useEffect, useMemo, useState } from 'react';
 import {
   AppstoreOutlined,
   CheckOutlined,
-  ClockCircleOutlined,
   CopyOutlined,
   LoadingOutlined,
   ReloadOutlined,
@@ -14,11 +13,10 @@ import Tooltip from '@/components/common/Tooltip';
 import { isInterruptionRecord, REPAIR_RECORD_PREFIXES } from '@/constants/wireStrings';
 import type { AgentStreamState } from '@/hooks/useAgentStream';
 import type { QuestionForm, StepItem } from '@/types/api';
-import { formatDuration } from '@/utils/formatDuration';
 import { formatRelativeTime } from '@/utils/formatRelativeTime';
 import { stripTableMarkers } from '@/utils/tableMarkers';
 import CollapsiblePanel from './CollapsiblePanel';
-import { LiveElapsed } from './Elapsed';
+import { Elapsed, LiveElapsed } from './Elapsed';
 import HtmlCodePanel from './HtmlCodePanel';
 import QuestionFormCard, { type Answers } from './QuestionFormCard';
 import { StepRow, StepsRecap } from './StepList';
@@ -100,12 +98,7 @@ const MessageMeta: React.FC<MessageMetaProps> = ({ createdAt, copyText, duration
     <div className={styles.meta} data-latest={always || undefined}>
       {/* How long the turn took, then what to do about it, then when it was sent. The two
           times bracket the controls: they are context, and context reads at the edges. */}
-      {durationMs != null && (
-        <span className={`${styles.metaAside} ${styles.metaTimer}`}>
-          <ClockCircleOutlined aria-hidden className={styles.metaAsideIcon} />
-          {formatDuration(durationMs)}
-        </span>
-      )}
+      {durationMs != null && <Elapsed ms={durationMs} />}
 
       {/* Icons alone. A row of labelled buttons under every reply competes with the reply;
           the label lives in the tooltip, where it is one hover away and nowhere else. */}
@@ -379,10 +372,6 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
           />
         )}
 
-        {/* Keyed on the start: a new turn gets a fresh timer rather than inheriting the
-            last one's reading for up to a second. */}
-        {streaming && timerStartedAt != null && <LiveElapsed key={timerStartedAt} startedAt={timerStartedAt} />}
-
         {/* Still an alert: the run ended in a way the user has to act on, and the
             dedicated wording is what distinguishes it from a backend refusal. */}
         {networkError && (
@@ -410,6 +399,14 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
           onRetry={onRetry}
           always={isLatest}
         />
+      )}
+      {/* The open turn's clock, in the row and slot the settled duration will take over:
+          the reading must not move when the run ends. Keyed on the start, so a new turn
+          gets a fresh timer rather than inheriting the last one's reading for a second. */}
+      {streaming && timerStartedAt != null && (
+        <div className={styles.meta} data-latest>
+          <LiveElapsed key={timerStartedAt} startedAt={timerStartedAt} />
+        </div>
       )}
     </div>
   );
