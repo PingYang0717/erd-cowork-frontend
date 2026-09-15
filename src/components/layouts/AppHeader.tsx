@@ -8,7 +8,7 @@ import { useTranslations } from '@/i18n/useTranslations';
 import { useLanguageStore } from '@/stores/useLanguageStore';
 import { useThemeStore } from '@/stores/useThemeStore';
 import { currentFestival } from '@/utils/festival';
-import FestiveDecoration, { PumpkinAvatar, SantaHat } from './FestiveDecoration';
+import FestiveDecoration, { PumpkinBehind, PumpkinTeeth, SantaHat } from './FestiveDecoration';
 
 import styles from './AppHeader.module.css';
 
@@ -121,13 +121,11 @@ const AppHeader: React.FC = () => {
             aria-expanded={open}
             onKeyDown={handleKeyDown}
           >
-            {festival === 'halloween' ? (
-              <PumpkinAvatar size={32} />
-            ) : user ? (
-              <EmployeeAvatar entry={user} size={32} tone="solid" />
-            ) : (
-              <UserOutlined aria-hidden />
-            )}
+            {festival === 'halloween' && <PumpkinBehind className={styles.pumpkinBehind} />}
+            <span className={styles.face}>
+              {user ? <EmployeeAvatar entry={user} size={32} tone="solid" /> : <UserOutlined aria-hidden />}
+            </span>
+            {festival === 'halloween' && <PumpkinTeeth className={styles.pumpkinTeeth} />}
             {festival === 'christmas' && <SantaHat className={styles.hat} />}
           </button>
         </Popover>

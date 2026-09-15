@@ -84,15 +84,15 @@ describe('AppHeader festive decoration', () => {
     await waitFor(() => expect(avatarButton().querySelector('img')).not.toBeNull());
   });
 
-  it('turns the avatar into a pumpkin at Halloween', async () => {
+  it('puts the avatar inside a pumpkin’s mouth at Halloween', async () => {
     localStorage.setItem(FESTIVAL_PREVIEW_STORAGE_KEY, 'halloween');
     renderHeader();
 
     expect(stage()).toHaveAttribute('data-festival', 'halloween');
     expect(avatarButton()).toHaveAttribute('data-festival', 'halloween');
-    // The pumpkin stands in for the photo entirely.
-    await new Promise((resolve) => setTimeout(resolve, 50));
-    expect(avatarButton().querySelector('img')).toBeNull();
+    // Two layers around the face, and the face itself still there between them.
+    expect(avatarButton().querySelectorAll(':scope > svg')).toHaveLength(2);
+    await waitFor(() => expect(avatarButton().querySelector('img')).not.toBeNull());
     expect(avatarButton()).toHaveAccessibleName('Preferences');
   });
 
