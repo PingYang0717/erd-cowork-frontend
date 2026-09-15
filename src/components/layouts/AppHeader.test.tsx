@@ -1,3 +1,7 @@
+// @vitest-environment-options {"url":"http://localhost:5199/"}
+// The header only dresses up on a listed host (utils/festival.ts). This file runs at the
+// dev server's host so the calendar-driven cases below are about the calendar; the host
+// gate itself has its own file.
 import { http, HttpResponse } from 'msw';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';

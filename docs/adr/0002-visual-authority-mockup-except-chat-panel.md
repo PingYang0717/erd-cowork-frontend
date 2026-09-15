@@ -93,6 +93,8 @@ eRD Workspace 這個平台已不存在(CONTEXT.md 同日改寫)。
 空著的中間區與頭像上方;圖案用 inline SVG 而不是 emoji,理由與圖示規則相同(跨平台一致、
 能配深色)。**不看 `prefers-reduced-motion`**:原本設計是系統要求減少動態就靜止,但開發機的
 瀏覽器回報 `reduce` 而系統設定是關的、來源查不到,結果看起來像動畫壞了;圖案小、慢、
-又不在視線焦點上,決定一律播放(2026-09-15)。沒有關閉選項;預覽用 localStorage 鍵
+又不在視線焦點上,決定一律播放(2026-09-15)。沒有關閉選項,但**只在指定的部署上出現**:`utils/festival.ts` 的 `FESTIVE_HOSTS` 列出會裝飾的 host
+(含 port,對的是 `location.host`),目前是 mock 清單,只有開發用的 `localhost:5199`;正式清單
+之後跟部署設定放一起。預覽用 localStorage 鍵
 `erd-cowork:festival-preview`。中秋日期是寫死的年度表(2026–2030),有測試在表的最後一年
 會失敗提醒補表。

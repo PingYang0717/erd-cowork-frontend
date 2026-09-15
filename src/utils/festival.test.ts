@@ -5,6 +5,8 @@ import {
   activeFestival,
   currentFestival,
   festivalDate,
+  FESTIVE_HOSTS,
+  isFestiveHost,
   LAST_MID_AUTUMN_YEAR,
   MID_AUTUMN_DATES,
   readFestivalPreview,
@@ -60,14 +62,46 @@ describe('festivalDate', () => {
   });
 });
 
+/** Only the deployments on the list dress up. The list names hosts with their port —
+ *  `location.host` — so the dev server on one port is in and the same machine on another
+ *  port is not. */
+describe('the host gate', () => {
+  const festiveHost = FESTIVE_HOSTS[0];
+
+  it('names hosts with their port', () => {
+    expect(isFestiveHost(festiveHost)).toBe(true);
+    expect(isFestiveHost(festiveHost.split(':')[0])).toBe(false);
+    expect(isFestiveHost('cowork.example')).toBe(false);
+  });
+
+  it('dresses up on a listed host and stays plain elsewhere, on the same day', () => {
+    expect(currentFestival(at('2026-12-20'), festiveHost)).toBe('christmas');
+    expect(currentFestival(at('2026-12-20'), 'cowork.example')).toBeNull();
+  });
+
+  /** jsdom runs this file at a host that is not on the list, so the default argument —
+   *  the page's own host — is what a plain deployment sees. */
+  it('reads the page host by default', () => {
+    expect(isFestiveHost()).toBe(false);
+    expect(currentFestival(at('2026-12-20'))).toBeNull();
+  });
+});
+
 describe('the preview override', () => {
   it('forces a festival on, and ignores a value that is not one', () => {
     localStorage.setItem(FESTIVAL_PREVIEW_STORAGE_KEY, 'halloween');
     expect(readFestivalPreview()).toBe('halloween');
-    expect(currentFestival(at('2026-03-03'))).toBe('halloween');
+    expect(currentFestival(at('2026-03-03'), FESTIVE_HOSTS[0])).toBe('halloween');
 
     localStorage.setItem(FESTIVAL_PREVIEW_STORAGE_KEY, 'easter');
     expect(readFestivalPreview()).toBeNull();
-    expect(currentFestival(at('2026-03-03'))).toBeNull();
+    expect(currentFestival(at('2026-03-03'), FESTIVE_HOSTS[0])).toBeNull();
+  });
+
+  /** The preview is for looking at a festival wherever you happen to be, so it does not
+   *  care which host the page is on. */
+  it('works on a host that does not dress up', () => {
+    localStorage.setItem(FESTIVAL_PREVIEW_STORAGE_KEY, 'christmas');
+    expect(currentFestival(at('2026-03-03'), 'cowork.example')).toBe('christmas');
   });
 });
