@@ -3,8 +3,8 @@
 .elapsed {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  height: 24px;
+  gap: 4px;
+  height: 22px;
   margin: 0;
   line-height: 1;
   font-size: 11px;

@@ -96,9 +96,25 @@ const MessageMeta: React.FC<MessageMetaProps> = ({ createdAt, copyText, duration
 
   return (
     <div className={styles.meta} data-latest={always || undefined}>
-      {/* How long the turn took, then what to do about it, then when it was sent. The two
-          times bracket the controls: they are context, and context reads at the edges. */}
-      {durationMs != null && <Elapsed ms={durationMs} />}
+      {/* One caption, then one cluster of controls. The caption is what the message says
+          about itself — how long it took, and (on hover) when — as a single line of small
+          type; the controls are what can be done about it. The two used to be three loose
+          items with a button between two readings, which read as three unrelated things. */}
+      {(durationMs != null || createdAt) && (
+        <span className={styles.metaCaption}>
+          {durationMs != null && <Elapsed ms={durationMs} />}
+          {createdAt && (
+            <time dateTime={createdAt} title={new Date(createdAt).toLocaleString()} className={styles.metaTime}>
+              {durationMs != null && (
+                <span aria-hidden className={styles.metaDot}>
+                  ·
+                </span>
+              )}
+              {formatRelativeTime(createdAt)}
+            </time>
+          )}
+        </span>
+      )}
 
       {/* Icons alone. A row of labelled buttons under every reply competes with the reply;
           the label lives in the tooltip, where it is one hover away and nowhere else. */}
@@ -127,16 +143,6 @@ const MessageMeta: React.FC<MessageMetaProps> = ({ createdAt, copyText, duration
           </Tooltip>
         )}
       </span>
-
-      {createdAt && (
-        <time
-          dateTime={createdAt}
-          title={new Date(createdAt).toLocaleString()}
-          className={`${styles.metaAside} ${styles.metaTime}`}
-        >
-          {formatRelativeTime(createdAt)}
-        </time>
-      )}
     </div>
   );
 };
@@ -405,7 +411,9 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
           gets a fresh timer rather than inheriting the last one's reading for a second. */}
       {streaming && timerStartedAt != null && (
         <div className={styles.meta} data-latest>
-          <LiveElapsed key={timerStartedAt} startedAt={timerStartedAt} />
+          <span className={styles.metaCaption}>
+            <LiveElapsed key={timerStartedAt} startedAt={timerStartedAt} />
+          </span>
         </div>
       )}
     </div>
