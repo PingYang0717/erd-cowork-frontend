@@ -43,7 +43,7 @@ describe('directoryEntryOptionText', () => {
    *  row that arrived without one still has to read as something. */
   it('falls back when the wire left the short name out', () => {
     expect(directoryEntryOptionText({ ...employee, sortName: undefined })).toBe('示範甲');
-    expect(directoryEntryOptionText({ type: 'ORG', orgId: 'SEC-19' })).toBe('SEC-19');
+    expect(directoryEntryOptionText({ type: 'ORG', orgId: 'SEC-99' })).toBe('SEC-99');
   });
 });
 
