@@ -4,6 +4,7 @@ import type { AgentEvent, QuestionForm, StepItem } from '@/types/api/agentEvent'
 import type { Connector } from '@/types/api/connector';
 import type { Message } from '@/types/api/message';
 import type { ScenarioKey } from '@/types/api/scenario';
+import { attachedConnectors } from '@/utils/connectorSelectors';
 import type { ArtifactKind } from './artifactFixtures';
 import { currentUser } from './currentUser';
 import { artifacts, type StoredArtifact } from './handlers.artifacts';
@@ -55,15 +56,14 @@ export const messages = createPersistedResource<StoredMessage>('erd-cowork:messa
  *  its own, which is how the two used to disagree: a source connected in the panel never
  *  appeared in the question, and the test that "covered" this asserted the absent one
  *  was absent. */
-const attachedConnectors = (sessionId: string): Connector[] => {
-  const attached = new Set(
-    sessionDataSources
+const sessionConnectors = (sessionId: string): Connector[] =>
+  attachedConnectors({
+    catalogue: CATALOGUE,
+    attachedIds: sessionDataSources
       .read()
       .filter((link) => link.sessionId === sessionId)
-      .map((link) => link.connectorId)
-  );
-  return CATALOGUE.filter((connector) => attached.has(connector.id));
-};
+      .map((link) => link.connectorId),
+  });
 
 // Session-level files per the backend contract (POST /sessions/{id}/files).
 
@@ -291,7 +291,7 @@ export const messageHandlers = [
     // iteration whose scenario was inherited (a regenerate, a "make it tighter")
     // already has its conditions from the base run, so it runs straight away.
     const inherited = matchScenario(question) === null && baseArtifact !== undefined;
-    const form = inherited ? null : openingQuestion(scenarioKey, attachedConnectors(sessionId));
+    const form = inherited ? null : openingQuestion(scenarioKey, sessionConnectors(sessionId));
     if (form) {
       pendingRuns.set(sessionId, { scenarioKey, artifactKind, form, stage: 'conditions' });
       return sseResponse([{ type: 'QUESTION', questions: flattenQuestionForm(form), form }]);

@@ -29,7 +29,7 @@ const ALLOWED: Record<string, string[]> = {
   // Wire-format labels the backend defines, compared byte-for-byte.
   'components/chat/StepList.tsx': ['Pending', 'Running', 'Done', 'Failed'],
   // Filter identity keys — what the user reads is looked up per key at render time.
-  'components/connectors/ConnectorsPanel.tsx': ['All', 'Connected', 'Not Connected'],
+  'components/connectors/ConnectorsPanel.tsx': ['All', 'Selected', 'Not Selected'],
 };
 
 const SRC = join(__dirname, '..');

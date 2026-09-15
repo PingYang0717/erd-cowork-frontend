@@ -98,7 +98,6 @@ const ChatComposer: React.FC<ChatComposerProps> = ({ sessionId, onSend, disabled
   const isComposingRef = useRef(false);
 
   const [draft, setDraft] = useState('');
-
   const [fileModalOpen, setFileModalOpen] = useState(false);
 
   // Retention has already deleted these files server-side. Anything sent now runs
@@ -125,7 +124,7 @@ const ChatComposer: React.FC<ChatComposerProps> = ({ sessionId, onSend, disabled
     setDraft('');
   };
 
-  const connectedConnectorCount = attachedConnectors(connectors.catalogue, connectors.attachedIds).length;
+  const connectedConnectorCount = attachedConnectors(connectors).length;
 
   return (
     <div>

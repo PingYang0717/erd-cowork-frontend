@@ -167,7 +167,7 @@ const ShareArtifactDialog: React.FC<ShareArtifactDialogProps> = ({ open, onClose
             icon={copied ? <CheckOutlined aria-hidden /> : <CopyOutlined aria-hidden />}
             onClick={handleCopy}
           >
-            {copied ? t.share.copied : t.share.copy}
+            {copied ? t.common.copied : t.common.copy}
           </Button>
         </div>
         {/* Styled as a hint, not as the green success banner it used to be: the link is
@@ -200,7 +200,11 @@ const ShareArtifactDialog: React.FC<ShareArtifactDialogProps> = ({ open, onClose
  *
  *  `onError` rather than a HEAD request: the photo host answers for most employees and
  *  not for some, and the only honest way to learn which is to ask for the image. */
-const RecipientAvatar: React.FC<{ entry: DirectoryEntry }> = ({ entry }) => {
+interface RecipientAvatarProps {
+  entry: DirectoryEntry;
+}
+
+const RecipientAvatar: React.FC<RecipientAvatarProps> = ({ entry }) => {
   const src = employeeAvatarUrl(entry.emplId);
   const [failed, setFailed] = useState(false);
   const name = directoryEntrySelectedName(entry);

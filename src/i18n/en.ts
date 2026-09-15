@@ -15,8 +15,6 @@ export const en: Translations = {
     minChars: (n) => `Type at least ${n} characters`,
     searchPlaceholder: (n) => `Type ${n}+ characters to search departments, sections or NT accounts`,
     linkLabel: 'Share link',
-    copy: 'Copy',
-    copied: 'Copied',
     linkHint: 'Added to Artifacts on the left — open or share it again from there.',
     submit: 'Submit',
     title: 'Share Artifact',

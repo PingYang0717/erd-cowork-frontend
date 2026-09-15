@@ -29,8 +29,6 @@ export const zhTW = {
     minChars: (n: number) => `請至少輸入 ${n} 個字元`,
     searchPlaceholder: (n: number) => `輸入 ${n} 個字元以上搜尋部門 / 課別 或 NT account`,
     linkLabel: '分享連結',
-    copy: '複製',
-    copied: '已複製',
     linkHint: '已加入左側 Artifacts 清單 — 可到 Artifacts 開啟或再次分享。',
     submit: 'Submit',
     title: '分享 Artifact',

@@ -183,12 +183,6 @@ const ThreadView: React.FC<ThreadViewProps> = ({ sessionId }) => {
 
   const handleSend = useCallback((input: SendInput) => submit(input, true), [submit]);
 
-  // The question the stopped run was answering. From the optimistic record when the
-  // refetch has not carried it home yet, else from the history's last USER message —
-  // between those two, one of them always has it.
-  const lastQuestion =
-    pending?.text ?? [...messages].reverse().find((message) => message.sender === 'USER')?.text ?? '';
-
   // The backend body is question-only, so a reask's answers travel as one prose
   // sentence composed from the form (labels stand in for values on the wire).
   // Composed from the form the card was drawn with, not from `state.question`: a reask
@@ -200,6 +194,17 @@ const ThreadView: React.FC<ThreadViewProps> = ({ sessionId }) => {
     },
     [submit]
   );
+
+  // The question the stopped run was answering. From the optimistic record when the
+  // refetch has not carried it home yet, else from the history's last USER message —
+  // between those two, one of them always has it. Beside its only consumer (ADR-0010).
+  const lastQuestion =
+    pending?.text ?? [...messages].reverse().find((message) => message.sender === 'USER')?.text ?? '';
+
+  // Stable, like `handleSend`: it reaches MessageBubble through MessageList's memo, and an
+  // inline arrow here was a fresh identity on every streamed token — which re-rendered
+  // every bubble the memo exists to protect.
+  const handleRetry = useCallback(() => void submit({ question: lastQuestion }, true), [submit, lastQuestion]);
 
   // What this run put on screen. A stop before the first token leaves all of it empty,
   // and a bubble drawn from nothing is a label and a stop notice with a blank between
@@ -268,7 +273,7 @@ const ThreadView: React.FC<ThreadViewProps> = ({ sessionId }) => {
           onAnswer={handleAnswer}
           // The offer is about the artifact this conversation just produced, so it
           // belongs at the tail of the thread and scrolls with it.
-          onRetry={() => void submit({ question: lastQuestion }, true)}
+          onRetry={handleRetry}
           bottomSlot={
             repairOffer ? (
               <RepairOfferCard

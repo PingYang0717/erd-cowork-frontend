@@ -53,7 +53,8 @@ const mergeAnswers = (form: QuestionForm, picks: Answers, texts: Record<string, 
     if (field.kind === 'boolean') {
       continue;
     }
-    if (field.kind === 'text' || field.kind !== 'multi') {
+    // `text` and `single` alike: one slot, and what was typed takes it.
+    if (field.kind !== 'multi') {
       if (typed !== '') {
         merged[field.key] = typed;
       }
@@ -72,8 +73,14 @@ const mergeAnswers = (form: QuestionForm, picks: Answers, texts: Record<string, 
  *  A multi field keeps it inside the array with the picked options, so typing adds to the
  *  answer instead of replacing it. Writing the string over the array (which is what a
  *  plain text field does) threw away every option already chosen. */
+/** Whether a value is one of the field's own options, as opposed to something typed. */
+const isOptionOf =
+  (field: QuestionField) =>
+  (value: string): boolean =>
+    (field.options ?? []).some((option) => option.value === value);
+
 const customValueOf = (field: QuestionField, answer: QuestionAnswer | undefined): string => {
-  const isOption = (value: string) => (field.options ?? []).some((option) => option.value === value);
+  const isOption = isOptionOf(field);
   if (field.kind === 'multi') {
     return (Array.isArray(answer) ? answer : []).find((value) => !isOption(value)) ?? '';
   }
@@ -84,12 +91,16 @@ const customValueOf = (field: QuestionField, answer: QuestionAnswer | undefined)
  *  value has its own box below — showing it in both says the same answer twice, and for a
  *  single select antd would render it as though it were an option that exists. */
 const pickedOptionsOf = (field: QuestionField, answer: QuestionAnswer | undefined): string[] => {
-  const isOption = (value: string) => (field.options ?? []).some((option) => option.value === value);
+  const isOption = isOptionOf(field);
   if (field.kind === 'multi') {
     return (Array.isArray(answer) ? answer : []).filter(isOption);
   }
   return typeof answer === 'string' && isOption(answer) ? [answer] : [];
 };
+
+/** The record minus those keys. */
+const without = <T,>(record: Record<string, T>, keys: string[]): Record<string, T> =>
+  Object.fromEntries(Object.entries(record).filter(([key]) => !keys.includes(key)));
 
 const isVisible = (field: QuestionField, answers: Answers): boolean => {
   if (!field.visibleWhen) {
@@ -212,20 +223,20 @@ const QuestionFormCard: React.FC<QuestionFormCardProps> = ({ form, onSubmit, dis
 
   // Changing a trigger discards whatever was answered beneath it. Hiding the answer but
   // keeping it would submit a Flow the user can no longer see, under a role it does not
-  // belong to. Mutates `next`, which is always a copy the caller just made.
-  const clearDependentsOf = (changed: QuestionField, next: Answers): Answers => {
-    for (const dependent of form.fields) {
-      if (dependent.visibleWhen?.field === changed.key && !isVisible(dependent, next)) {
-        delete next[dependent.key];
-        // The typed half goes with it: a field that is no longer shown must not submit
-        // what was typed into it before its trigger changed.
-        setEditedTexts((texts) => {
-          const { [dependent.key]: _dropped, ...rest } = texts;
-          return rest;
-        });
-      }
+  // belong to. Both halves go — the picks and the typed text: a field that is no longer
+  // shown must not submit what was typed into it before its trigger changed.
+  //
+  // Computed from the picks as they are and written as two plain sets, rather than inside
+  // a `setEditedPicks` updater that also called `setEditedTexts`: an updater is meant to
+  // be pure, and StrictMode runs it twice.
+  const commitPicks = (changed: QuestionField, next: Answers) => {
+    const hidden = form.fields
+      .filter((dependent) => dependent.visibleWhen?.field === changed.key && !isVisible(dependent, next))
+      .map((dependent) => dependent.key);
+    setEditedPicks(without(next, hidden));
+    if (hidden.length > 0) {
+      setEditedTexts((texts) => without(texts, hidden));
     }
-    return next;
   };
 
   /** Writes what the reader typed. Only that: what they picked from the list is a
@@ -236,35 +247,32 @@ const QuestionFormCard: React.FC<QuestionFormCardProps> = ({ form, onSubmit, dis
   };
 
   const toggle = (field: QuestionField, value: string) => {
-    setEditedPicks((previous) => {
-      const next: Answers =
-        field.kind === 'boolean'
-          ? { ...previous, [field.key]: previous[field.key] !== true }
-          : field.kind === 'multi'
-            ? (() => {
-                const current = (previous[field.key] as string[] | undefined) ?? [];
-                return {
-                  ...previous,
-                  [field.key]: current.includes(value)
-                    ? current.filter((entry) => entry !== value)
-                    : [...current, value],
-                };
-              })()
-            : // Clicking the lit chip clears it. A single field used to be one-way — once
-              // picked, the only move was picking something else — and with the typing box
-              // locked behind a filled slot, that was a door with no handle on this side.
-              // Emptied rather than set to undefined: the key stays, and every reader of it
-              // already treats '' as unanswered.
-              { ...previous, [field.key]: previous[field.key] === value ? '' : value };
+    const previous = editedPicks;
+    const next: Answers =
+      field.kind === 'boolean'
+        ? { ...previous, [field.key]: previous[field.key] !== true }
+        : field.kind === 'multi'
+          ? (() => {
+              const current = (previous[field.key] as string[] | undefined) ?? [];
+              return {
+                ...previous,
+                [field.key]: current.includes(value) ? current.filter((entry) => entry !== value) : [...current, value],
+              };
+            })()
+          : // Clicking the lit chip clears it. A single field used to be one-way — once
+            // picked, the only move was picking something else — and with the typing box
+            // locked behind a filled slot, that was a door with no handle on this side.
+            // Emptied rather than set to undefined: the key stays, and every reader of it
+            // already treats '' as unanswered.
+            { ...previous, [field.key]: previous[field.key] === value ? '' : value };
 
-      return clearDependentsOf(field, next);
-    });
+    commitPicks(field, next);
   };
 
   /** Writes a field's whole answer at once — what a dropdown reports, against the chips'
    *  one-value-at-a-time toggling. */
   const setFieldValue = (field: QuestionField, value: QuestionAnswer) => {
-    setEditedPicks((previous) => clearDependentsOf(field, { ...previous, [field.key]: value }));
+    commitPicks(field, { ...editedPicks, [field.key]: value });
   };
 
   // A read-only card has nothing to edit, so it renders from what it was given rather
@@ -294,7 +302,9 @@ const QuestionFormCard: React.FC<QuestionFormCardProps> = ({ form, onSubmit, dis
         const answer = answers[field.key];
         // A typed value that no chip offers — the mockup highlights the input for it.
         const customValue = disabled ? customValueOf(field, answer) : (editedTexts[field.key] ?? '');
-        const isCustom = customValue !== '';
+        // Trimmed, as `mergeAnswers` trims: a box holding only spaces locked the chips
+        // while sending nothing.
+        const isCustom = customValue.trim() !== '';
 
         // A single-answer field has one slot, and both controls write to it: the typed
         // value simply replaced the pick (`mergeAnswers`), which meant a chip could sit

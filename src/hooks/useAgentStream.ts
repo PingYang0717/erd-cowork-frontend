@@ -72,6 +72,7 @@ const wait = (ms: number, signal: AbortSignal): Promise<void> =>
       { once: true }
     );
   });
+
 const initialState: AgentStreamState = {
   isStreaming: false,
   stopped: false,

@@ -42,8 +42,11 @@ const CONNECTOR_ICONS: Record<string, ReactNode> = {
   CRCP: <LineChartOutlined aria-hidden />,
 };
 
-const connectorIcon = (connector: Connector): ReactNode =>
-  CONNECTOR_ICONS[connector.type] ?? <ApiOutlined aria-hidden />;
+// A block body, not an expression: `=> X ?? <Icon />` reads as a JSX text node to the
+// bare-literal scan in noBareLiterals.test.ts.
+const connectorIcon = (connector: Connector): ReactNode => {
+  return CONNECTOR_ICONS[connector.type] ?? <ApiOutlined aria-hidden />;
+};
 
 /** What this panel is EDITING: whether the connector can be chosen at all, and whether
  *  the draft has chosen it. Derived per render rather than stored, so there is no third

@@ -1,17 +1,10 @@
 import { useSuspenseQuery } from '@tanstack/react-query';
 
 import { listCatalogue } from '@/api/connectorApi';
-import type { Connector } from '@/types/api';
+import type { SessionConnectors } from '@/utils/connectorSelectors';
 import { useSessionDetail } from './useSessionDetail';
 
 export const connectorsQueryKey = ['connectors'] as const;
-
-export interface SessionConnectors {
-  /** Every data source this user may reach, as the catalogue serves it. */
-  catalogue: Connector[];
-  /** Of those, the ids this conversation is drawing on. */
-  attachedIds: string[];
-}
 
 /** The catalogue and this session's selection, side by side.
  *

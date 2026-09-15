@@ -55,7 +55,7 @@ import ReplyText from './ReplyText';
  *
  *  The relative wording matches the session rail and the version menu. The exact moment is
  *  on the `title`, where someone who needs it can find it and nobody else has to read it. */
-const MessageMeta: React.FC<{
+interface MessageMetaProps {
   createdAt?: string | null;
   copyText: string;
   /** How long the turn took, for a run that has finished. */
@@ -66,7 +66,9 @@ const MessageMeta: React.FC<{
    *  and the reason is the same: the reply you have just been given is the one you act
    *  on, and hiding its controls behind a pointer makes them findable only by accident. */
   always?: boolean;
-}> = ({ createdAt, copyText, durationMs, onRetry, always = false }) => {
+}
+
+const MessageMeta: React.FC<MessageMetaProps> = ({ createdAt, copyText, durationMs, onRetry, always = false }) => {
   const t = useTranslations();
   const [copied, setCopied] = useState(false);
 
