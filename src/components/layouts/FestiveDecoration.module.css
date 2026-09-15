@@ -264,9 +264,8 @@
   }
 }
 
-/* Still figures for anyone who asked their system for less motion. */
-@media (prefers-reduced-motion: reduce) {
-  .stage * {
-    animation: none !important;
-  }
-}
+/* No `prefers-reduced-motion` rule, on purpose (2026-09-15). The decoration used to go
+   still under it, and on the machine it was built on the browser reported `reduce`
+   with the system setting off and no source anyone could find — so the rule read as
+   "the animation is broken". The figures are small, slow and off to the side of
+   anything the eye is on; they play regardless. Recorded in ADR-0002. */
