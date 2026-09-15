@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
+import AppShell from '@/components/layouts/AppShell';
 import StudioShell from '@/components/layouts/StudioShell';
 import { en } from '@/i18n/en';
 import { server } from '@/mocks/server';
@@ -19,11 +20,13 @@ const renderArtifactPageAt = (path: string) => {
   return render(
     <MemoryRouter initialEntries={[path]}>
       <Routes>
-        <Route path="/cowork" element={<StudioShell />}>
-          <Route index element={<StudioPage />} />
-          <Route path="artifacts" element={<ArtifactsGalleryPage />} />
+        <Route element={<AppShell />}>
+          <Route path="/cowork" element={<StudioShell />}>
+            <Route index element={<StudioPage />} />
+            <Route path="artifacts" element={<ArtifactsGalleryPage />} />
+          </Route>
+          <Route path="/cowork/artifact/:artifactId" element={<ArtifactPage />} />
         </Route>
-        <Route path="/cowork/artifact/:artifactId" element={<ArtifactPage />} />
       </Routes>
     </MemoryRouter>,
     { wrapper: appWrapper() }
@@ -169,13 +172,13 @@ describe('Artifact full-page view', () => {
   });
 
   /** A shared-link recipient can land here with the backend down, facing an error card
-   *  in a language they may not read. The card carries the settings entry (ErrorPanel),
-   *  so the language exit survives the very failure that hid every other entry. */
-  it('keeps a Settings entry on the failure card when the artifacts list cannot load', async () => {
+   *  in a language they may not read. The header sits above the boundary that shows the
+   *  card, so the language exit survives the very failure that hid everything else. */
+  it('keeps the Preferences entry in the header when the artifacts list cannot load', async () => {
     server.use(http.get('/api/artifacts', () => new HttpResponse(null, { status: 500 })));
     renderArtifactPageAt('/cowork/artifact/artifact-1');
 
     expect(await screen.findByText(en.errors.loadFailedHeading)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Settings' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Preferences' })).toBeInTheDocument();
   });
 });

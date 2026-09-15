@@ -2,7 +2,6 @@ import React, { useCallback } from 'react';
 import { Outlet } from 'react-router-dom';
 
 import DataBoundary from '@/components/common/DataBoundary';
-import SettingsMenu from '@/components/common/SettingsMenu';
 import CollapsedSessionRail from '@/components/session/CollapsedSessionRail';
 import SessionList from '@/components/session/SessionList';
 import { useArtifacts } from '@/hooks/useArtifacts';
@@ -17,10 +16,10 @@ import ResizeHandle from './ResizeHandle';
 
 import styles from './StudioShell.module.css';
 
-// The Cowork app shell: the session rail persists across Studio, Artifacts,
-// and Schedule (only the single-Artifact full-page view, routed separately
-// in router.tsx, hides it) — matching the rail's role in the original
-// mockup, where switching cwView never unmounted it.
+// The Studio shell, under the header (AppShell): the session rail persists across
+// Studio, Artifacts, and Schedule (only the single-Artifact full-page view, routed
+// separately in router.tsx, hides it) — matching the rail's role in the design, where
+// switching cwView never unmounted it.
 // Split out so the shell itself never suspends: the rail is what needs data, and it
 // sits inside its own boundary.
 interface ExpandedSessionRailProps {
@@ -73,13 +72,6 @@ const StudioShell: React.FC = () => {
               <ExpandedSessionRail onCollapse={toggleSessionRailCollapsed} />
             )}
           </DataBoundary>
-        </div>
-        {/* OUTSIDE the boundary, deliberately: settings is where the language lives,
-            and a reader facing a failed pane in a language they cannot read needs
-            this entry to survive exactly that failure. It used to sit inside the
-            rail components, behind the very query whose error card replaced it. */}
-        <div className={styles.railSettings}>
-          <SettingsMenu variant={isSessionRailCollapsed ? 'tile' : 'rail'} />
         </div>
       </nav>
 

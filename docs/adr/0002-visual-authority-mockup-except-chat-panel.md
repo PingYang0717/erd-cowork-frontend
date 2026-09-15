@@ -64,3 +64,22 @@ cowork 沒有深色模式,那幾個深色值是本專案自定的,對齊既有�
 **2026-09-08 追記。** 上面「跟過去的(呈現)」清單裡的 `ResultTable` 已經不存在——後端不再
 送 TABLE 事件,前端整條渲染路徑一併移除。決策本身沒有變(chat panel 以 cowork 為準),
 變的只是那份清單少了一項,依慣例保留原文而不改寫。
+
+**2026-09-15 追記:設計稿換了。** 視覺權威改為根目錄的 `erd-cowork.html`,取代
+`eRDWorkspace20260819.html`(已刪除,git 歷史仍找得到)。新設計稿來自
+`https://github.com/Orangeyes26/erdcowork`(commit `2b0457e`,2026-09-14),是一份打包後的
+單檔 React 成品而不是原始碼——樣式全是 inline style、圖示走 Iconify 的 `ant-design` 集;
+「圖示一律用 `@ant-design/icons`、色票經 `tokens.ts`」的落地方式不變,兩份設計稿的
+`:root` 色票值相同。
+
+兩份設計稿最大的差別是**沒有 Workspace 外殼了**:舊稿的 56px 頂欄屬於 eRD Workspace
+平台(品牌字「Workspace」,有收合鈕、搜尋、通知),新稿把它縮成 Cowork 自己的
+header——品牌區「eRD Cowork / R&D platform」加一顆頭像,語言與主題收進頭像選單。
+eRD Workspace 這個平台已不存在(CONTEXT.md 同日改寫)。
+
+這一輪只對齊 header(`AppHeader`,掛在所有路由之上的 `AppShell`);其餘區域與新稿的
+差異留待之後逐區比對。chat panel 以 cowork 上游為準的例外不變。
+
+新稿寫死頭像縮寫「KL」,本專案改讀 `GET /hr/userInfo`——登入者的 `DirectoryEntry`,
+相片與首字退回跟分享對話框的收件者同一套(`EmployeeAvatar`)。拿到之前或拿不到時放通用
+的使用者圖示:寫死一組縮寫就是執行時的假資料(ADR-0006)。

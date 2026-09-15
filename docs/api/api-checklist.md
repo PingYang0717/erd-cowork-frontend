@@ -78,7 +78,7 @@ client abort,前端在 abort 後反覆 invalidate(300ms 起、遞增、最多六
 `GET /artifacts/{id}` **沒有 theme 參數**,Artifact HTML 只有單一配色
 ([ADR-0001](../adr/0001-artifact-rendered-via-sandboxed-iframe.md))。
 `Artifact.type`(`'dashboard' | 'slides'`)尚未回到契約,見
-[backend-feedback](./backend-feedback.md) #6。
+後端回饋清單（已移出 repo，見團隊內部筆記） #6。
 
 ## 6. Directory(分享收件者)
 

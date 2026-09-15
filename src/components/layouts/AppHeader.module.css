@@ -1,0 +1,115 @@
+/* The header, as erd-cowork.html draws it: 56px, container surface, a hairline below.
+   Held in place by the AppShell column rather than by position: sticky. */
+.header {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  height: 56px;
+  padding: 0 16px 0 14px;
+  background: var(--erd-color-bg-container, #fff);
+  border-bottom: 1px solid var(--erd-color-border-secondary, #f0f0f0);
+}
+
+.brand {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-right: 8px;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  background: var(--erd-color-primary, #1677ff);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.name {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.tagline {
+  font-size: 11px;
+  color: var(--erd-color-text-tertiary, #8c8c8c);
+}
+
+.actions {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+}
+
+.avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--erd-color-primary, #1677ff);
+  color: #fff;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+/* The design's shared icon-button hover (a faint fill) would wash the primary disc out
+   to grey; the primary hover shade keeps it a button that is still the avatar. */
+.avatar:hover {
+  background: var(--erd-color-primary-hover, #4096ff);
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+}
+
+/* One row per preference: label on the left, what is in use on the right, the whole
+   row a button. Pressing it toggles — the design's `.erd-navrow`. */
+.row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 10px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--erd-color-text, rgba(0, 0, 0, 0.88));
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.row:hover {
+  background: var(--erd-color-fill-tertiary, #f0f0f0);
+}
+
+.rowLabel {
+  flex: 1 1 auto;
+}
+
+.rowValue {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--erd-color-text-tertiary, #8c8c8c);
+}
+
+.rowValue .anticon {
+  font-size: 14px;
+}

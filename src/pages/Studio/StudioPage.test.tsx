@@ -115,23 +115,6 @@ describe('StudioPage three-pane layout', () => {
     expect(rail.style.width).toBe('270px');
   });
 
-  /** Language and theme live only in the rail now, so they have to survive it collapsing
-   *  — otherwise a collapsed rail puts them out of reach until the user thinks to expand
-   *  it again. */
-  it('offers Settings in both rail states', async () => {
-    const user = userEvent.setup();
-    renderStudio();
-
-    await user.click(await screen.findByRole('button', { name: 'Settings' }));
-    expect(await screen.findByRole('radio', { name: en.settings.languageEn })).toBeInTheDocument();
-    await user.keyboard('{Escape}');
-
-    await user.click(screen.getByRole('button', { name: 'Collapse session list' }));
-
-    await user.click(await screen.findByRole('button', { name: 'Settings' }));
-    expect(await screen.findByRole('radio', { name: en.settings.languageEn })).toBeInTheDocument();
-  });
-
   /** The collapse state persists now, so "reload while collapsed" is an ordinary
    *  path — and the collapsed rail reads the same suspense query as the expanded one.
    *  Without its own boundary a failing sessions fetch had nothing above it to catch:
@@ -146,10 +129,10 @@ describe('StudioPage three-pane layout', () => {
     expect(await screen.findByText(en.errors.loadFailedHeading)).toBeInTheDocument();
     // The rest of the shell survives alongside the failed rail.
     expect(screen.getByRole('banner', { name: 'Thread header' })).toBeInTheDocument();
-    // And so does Settings — it sits OUTSIDE the boundary now. It used to live inside
-    // the rail components, so the very failure whose card a reader might not be able
-    // to read also removed their only way to switch language.
-    expect(screen.getAllByRole('button', { name: 'Settings' }).length).toBeGreaterThan(0);
+    // And so does the language exit — the header sits above every boundary. It used
+    // to live inside the rail components, so the very failure whose card a reader
+    // might not be able to read also removed their only way to switch language.
+    expect(screen.getByRole('button', { name: 'Preferences' })).toBeInTheDocument();
   });
 
   /** The divider used to be pointer-only: role="separator" with no tabIndex and no

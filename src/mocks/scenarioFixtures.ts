@@ -6,9 +6,10 @@ interface ScenarioFixture {
   reply: string;
 }
 
-// A slides request replays its scenario and then adds this step, mirroring
-// eRDWorkspace20260819.html's eR(), which appends "Generate slides" to the
-// same base step list rather than defining a scenario of its own.
+// A slides request replays its scenario and then adds this step, mirroring the
+// original mockup's eR() (eRDWorkspace20260819.html, git history), which appends
+// "Generate slides" to the same base step list rather than defining a scenario of
+// its own.
 export const SLIDES_STEP: StepItem = {
   stepKey: '4',
   title: 'Generate slides',

@@ -22,6 +22,11 @@ interface DirectorySearchResponse {
  *  It raises rather than answering with an empty list. "No such person" is a real answer
  *  and a useful one; a broken response wearing that answer sends the user off to re-check
  *  a spelling that was never the problem. */
+/** Who is signed in, as one directory row — the same shape the search answers with, so a
+ *  person is drawn from the same fields whether they are the reader or a recipient. Bare,
+ *  not enveloped: a single row has no list to wrap. */
+export const getUserInfo = (signal?: AbortSignal) => apiClient.get<DirectoryEntry>('/hr/userInfo', { signal });
+
 export const searchDirectory = async (keyword: string, signal?: AbortSignal): Promise<DirectoryEntry[]> => {
   const body = await apiClient.get<DirectorySearchResponse>('/hr/employeesAndOrgs', {
     params: { keyword },

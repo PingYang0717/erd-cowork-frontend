@@ -1,16 +1,16 @@
 # eRD Cowork
 
-一個半導體廠務 R&D 平台（eRD Workspace）內的 AI 對話式分析工具，工程師以自然語言請求分析，系統回覆一段可視化的分析成果（Artifact）。
+一個給半導體廠務 R&D 工程師用的 AI 對話式分析工具，工程師以自然語言請求分析，系統回覆一段可視化的分析成果（Artifact）。
 
 ## Language
 
-**Workspace**:
-最外層的 R&D 平台外殼，包含左側 App 切換 rail 與 Home 首頁，`eRD Cowork` 是其中一個 App。
-_Avoid_: Portal, Platform
-
 **Cowork**:
-`eRD Cowork`，Workspace 內以 AI 對話驅動分析的核心 App。
-_Avoid_: Chat app, Assistant
+`eRD Cowork`，這個以 AI 對話驅動分析的 app 本身。它是獨立的一個 app：曾經設想它掛在一個叫 eRD Workspace 的平台外殼（App 切換 rail、Home 首頁）底下，那個平台已不存在，本 app 不再是誰的其中一個 App。
+_Avoid_: Chat app, Assistant, Workspace（已不存在的平台外殼）
+
+**Header**:
+每個畫面最上方橫跨整寬的那一條：放品牌、登入者的頭像（HR 目錄裡的相片或姓名首字）、以及偏好設定（語言、主題）的唯一入口。它在所有路由之上，任何一個 pane 失敗它都還在。有別於各 pane 自己的 pane header（thread 的「Cowork · Data studio」、Artifact 面板的版本切換列）。
+_Avoid_: Navbar（裡面沒有導覽）、Top bar、App bar
 
 **Studio**:
 Cowork 內的主要工作畫面，由 Session 列表、對話串（Thread）、Artifact 面板三欄組成。

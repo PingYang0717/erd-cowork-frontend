@@ -119,13 +119,13 @@ Session（含改名、釘選、刪除）、對話串流、檔案上傳、Artifac
 透過 `createPersistedResource` 存在 `localStorage`，讓測試能驗跨重整的行為。
 
 仍需後端配合的能力（分析條件表單、結構化答案、Connector 端點等）集中在
-[`docs/api/backend-feedback.md`](./docs/api/backend-feedback.md)。
+後端回饋清單（已移出 repo，見團隊內部筆記）。
 
 ---
 
 ## 主題與視覺對齊
 
-設計稿 `eRDWorkspace20260819.html` 不是「參考」而是**必須符合**的基準
+設計稿 `erd-cowork.html`(2026-09-15 起,取代 `eRDWorkspace20260819.html`)不是「參考」而是**必須符合**的基準
 （[ADR-0002](./docs/adr/0002-visual-authority-mockup-except-chat-panel.md)）：版面、間距、
 圖示（一律用 `@ant-design/icons`，不用文字或 emoji 頂替）都要對齊。**唯一的例外是
 chat panel**，它的呈現語彙以 cowork 上游為準。

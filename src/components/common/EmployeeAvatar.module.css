@@ -1,0 +1,27 @@
+.avatar {
+  flex: 0 0 auto;
+  border-radius: 50%;
+}
+
+.photo {
+  object-fit: cover;
+  background: var(--erd-color-fill-tertiary, rgba(0, 0, 0, 0.04));
+}
+
+.fallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.soft {
+  background: var(--erd-color-primary-bg, #e6f4ff);
+  color: var(--erd-color-primary, #1677ff);
+}
+
+.solid {
+  background: var(--erd-color-primary, #1677ff);
+  color: #fff;
+  font-weight: 600;
+}

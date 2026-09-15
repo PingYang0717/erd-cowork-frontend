@@ -76,12 +76,19 @@ const EMPLOYEES: DirectoryEntry[] = [
 
 const DIRECTORY = [...ORGS, ...EMPLOYEES];
 
+/** Who the mock backend says is signed in — one of the roster, so the header draws the
+ *  same person the picker could find. Test-only, like the roster. */
+export const CURRENT_EMPLOYEE: DirectoryEntry = EMPLOYEES[0];
+
 /** The real endpoint does not take Chinese input (2026-09-10), so neither does this. The
  *  roster is full of Chinese names and would happily answer to one — which would let the
  *  picker be built and tested against a search that does not exist anywhere but here. */
 const HAS_CHINESE = /[\u4e00-\u9fff]/;
 
 export const directoryHandlers = [
+  // The signed-in user, as one bare directory row (no `content` envelope: it is not a
+  // list). Asked once at app start by the header.
+  http.get('/api/hr/userInfo', () => HttpResponse.json(CURRENT_EMPLOYEE)),
   // The real endpoint searches the HR directory; here the same fixed roster is filtered,
   // so the wire shape and the minimum-length rule are what a test exercises. Reading the
   // param by name is deliberate: a rename on either side should fail loudly here rather

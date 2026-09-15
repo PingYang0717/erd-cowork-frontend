@@ -112,7 +112,7 @@ Gallery 只放已發布的。沒發布的待在產生它的 session 對話串裡
 
 ## 待後端
 
-依阻塞程度排序。詳細問法見 `docs/api/backend-questions-artifact.md`。
+依阻塞程度排序。詳細問法見後端問題清單（已移出 repo，見團隊內部筆記）。
 
 1. **`Artifact.pinnedAt` 是否 per-user** — 契約自相矛盾,且是現在就存在的問題(釘選
    別人分享來的 Artifact 會改到擁有者的資料)。

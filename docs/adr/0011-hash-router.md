@@ -39,3 +39,8 @@ React Router 的 data router 能力(`loader` / `action` / `defer`)專案一項�
   這兩個地方知道。已經流出去的舊連結會失效,那是換回去時要一起考慮的。
 - `router.test.tsx` 的 `renderAppAt()` 把 URL 推進 fragment 而非 pathname;推錯的話
   router 會停在 `/`,每個斷言都會在錯的畫面上失敗,而不是在它要測的東西上。
+
+**2026-09-15 追記:前提之一消失了。** 「這個 app 會掛在 eRD Workspace 底下,由不一定歸
+我們管的那層代理服務」——eRD Workspace 已不存在(ADR-0002 同日追記、CONTEXT.md)。剩下
+的理由(repo 裡沒有任何部署設定,SPA fallback 是一份沒人擁有的知識)仍然成立,所以決策
+不動。要換回 history 路由的話,依上面「後果」第三點,改的地方只有兩處。

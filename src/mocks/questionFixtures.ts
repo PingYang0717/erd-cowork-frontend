@@ -2,12 +2,13 @@ import type { Question, QuestionField, QuestionForm } from '@/types/api/agentEve
 import type { Connector } from '@/types/api/connector';
 import type { ScenarioKey } from '@/types/api/scenario';
 
-// eRDWorkspace20260819.html:9315
+// From the original mockup (eRDWorkspace20260819.html:9315, removed 2026-09-15 — see
+// git history).
 const TIME_RANGES = ['Last 24h', 'Last 7 days', 'Last 30 days', 'Last quarter'];
 
 const PART_IDS = ['PT-01', 'PT-01-B', 'PT-07', 'PT-07-P', 'PT-08'];
 
-// eRDWorkspace20260819.html:9561-9571
+// Original mockup, eRDWorkspace20260819.html:9561-9571 (git history).
 const CP_ROLES = [
   { value: 'baseline', label: 'INT Baseline', hint: '看整段 flow' },
   { value: 'loop', label: 'INT Loop', hint: '看自己的 loop' },

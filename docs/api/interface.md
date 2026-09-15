@@ -87,7 +87,7 @@ scenario 與 kind，而非重新從文字推斷。
 **回覆反問**就是下一則訊息：正在等待反問的 session 收到的任何 `question` 都視為答案。
 表單答案由前端組成一段自然語言（`utils/composeAnswerText.ts`，值以選項 label 呈現）當
 新訊息送出；結構化的 `{ answers, inReplyTo }` 已不在線路上，列入
-[後端回饋清單](./backend-feedback.md)。
+後端回饋清單（已移出 repo，見團隊內部筆記）。
 
 ### 回應：Agent event 串流
 
@@ -215,7 +215,7 @@ QUESTION 的線路承載是後端的扁平 `Question[]`（純字串選項、`mul
 `utils/liftQuestions.ts` 把它抬升成一排 chip 的表單——**單向且失真**。
 
 **要驅動完整的分析條件表單，後端必須改送 `QuestionForm` 本身**；連同結構化
-答案 `{ answers, inReplyTo }`，這兩項都在[後端回饋清單](./backend-feedback.md)。
+答案 `{ answers, inReplyTo }`，這兩項都在後端回饋清單（已移出 repo，見團隊內部筆記）。
 
 ## Artifact
 
@@ -231,6 +231,7 @@ QUESTION 的線路承載是後端的扁平 `Question[]`（純字串選項、`mul
 | DELETE | `/artifacts/:id`         | —                                                            | 200                                   | 已實作   |
 | POST   | `/artifacts/:id/share`   | `{ targetIds: string[] }`                                    | `{ url: string; artifact: Artifact }` | 已實作   |
 | GET    | `/hr/employeesAndOrgs`   | `?keyword=`                                                  | `{ content: DirectoryEntry[] }`       | ✅ 已接  |
+| GET    | `/hr/userInfo`           | —                                                            | `DirectoryEntry`（裸物件，無信封）    | ✅ 已接  |
 
 **`Artifact` 定版（2026-08-27）**：
 
@@ -306,6 +307,11 @@ comes back false), not produced by this endpoint.
 the share dialog's recipient picker. One shape carries both kinds, told apart by `type`
 (`'ORG'` or `'EMPLOYEE'`); which other fields are populated follows from it — `org*` for an
 organisation, `employee*` for a person.
+
+`GET /hr/userInfo`（2026-09-15）回**目前登入者**的一列 `DirectoryEntry`——跟搜尋結果同一個形狀，
+但不包 `content` 信封（單一列沒有清單可包）。App 一啟動就打一次（header 掛在所有路由之上），
+整個 session 只問這一次；拿到的 `emplId` 用同一套 `employeeAvatarUrl` 取相片，失敗退回姓名
+首字，跟分享對話框畫收件者的方式完全一樣。這支失敗不會擋住畫面：header 仍然畫，頭像退回通用圖示。
 
 `emplId` and `sortName` were added on 2026-09-10. `emplId` is the employee number the
 photo URL is keyed on, and is a different field from `employeeNt`, which is the account

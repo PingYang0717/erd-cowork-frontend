@@ -26,6 +26,8 @@ const ALLOWED: Record<string, string[]> = {
   ],
   // Product name, not copy (same reasoning as the dictionary's own `eRD AI`).
   'components/chat/ThreadPanel.tsx': ['Cowork · Data studio'],
+  // The brand block: the product's name and its line, the same in both languages.
+  'components/layouts/AppHeader.tsx': ['eRD Cowork', 'R&amp;D platform'],
   // Wire-format labels the backend defines, compared byte-for-byte.
   'components/chat/StepList.tsx': ['Pending', 'Running', 'Done', 'Failed'],
   // Filter identity keys — what the user reads is looked up per key at render time.
