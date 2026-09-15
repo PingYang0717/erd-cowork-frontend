@@ -7,6 +7,8 @@ import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useTranslations } from '@/i18n/useTranslations';
 import { useLanguageStore } from '@/stores/useLanguageStore';
 import { useThemeStore } from '@/stores/useThemeStore';
+import { currentFestival } from '@/utils/festival';
+import FestiveDecoration, { PumpkinBehind, PumpkinTeeth, SantaHat } from './FestiveDecoration';
 
 import styles from './AppHeader.module.css';
 
@@ -27,10 +29,18 @@ import styles from './AppHeader.module.css';
  *  asked once at start): their photo, or their initial when there is no photo to fetch —
  *  drawn by the same component as a share recipient. Until the profile answers, or if it
  *  never does, a generic figure stands in: the design hard-codes `KL`, but a made-up
- *  initial would be a value invented at runtime (ADR-0006). */
+ *  initial would be a value invented at runtime (ADR-0006).
+ *
+ *  Around a festival the bar dresses up (CONTEXT.md, 節慶裝飾): a small scene in the
+ *  empty middle, and the avatar in a hat or, at Halloween, a pumpkin. The one thing on
+ *  screen the design does not draw — recorded as a deliberate exception in ADR-0002. */
 const AppHeader: React.FC = () => {
   const user = useCurrentUser();
   const t = useTranslations();
+
+  // Read per render rather than memoised: a preview key set in devtools should show on
+  // the next paint, and the calendar check is a handful of date arithmetic.
+  const festival = currentFestival();
 
   const language = useLanguageStore((state) => state.language);
   const setLanguage = useLanguageStore((state) => state.setLanguage);
@@ -85,6 +95,8 @@ const AppHeader: React.FC = () => {
         </div>
       </div>
 
+      {festival !== null && <FestiveDecoration festival={festival} />}
+
       <div className={styles.actions}>
         <Popover
           open={open}
@@ -101,13 +113,20 @@ const AppHeader: React.FC = () => {
             ref={triggerRef}
             type="button"
             className={styles.avatar}
+            // Only when the avatar itself is dressed: Mid-Autumn leaves it alone.
+            data-festival={festival === 'halloween' || festival === 'christmas' ? festival : undefined}
             aria-label="Preferences"
             title="Preferences"
             aria-haspopup="dialog"
             aria-expanded={open}
             onKeyDown={handleKeyDown}
           >
-            {user ? <EmployeeAvatar entry={user} size={32} tone="solid" /> : <UserOutlined aria-hidden />}
+            {festival === 'halloween' && <PumpkinBehind className={styles.pumpkinBehind} />}
+            <span className={styles.face}>
+              {user ? <EmployeeAvatar entry={user} size={32} tone="solid" /> : <UserOutlined aria-hidden />}
+            </span>
+            {festival === 'halloween' && <PumpkinTeeth className={styles.pumpkinTeeth} />}
+            {festival === 'christmas' && <SantaHat className={styles.hat} />}
           </button>
         </Popover>
       </div>

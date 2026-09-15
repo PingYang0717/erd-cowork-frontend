@@ -23,3 +23,7 @@ export const LANGUAGE_STORAGE_KEY = 'erd-cowork:language';
  *  a preference like the theme beside it — losing it on every reload made the drag
  *  pointless. */
 export const STUDIO_LAYOUT_STORAGE_KEY = 'erd-cowork:studio-layout';
+
+/** Forces a festival's decoration on, for previewing it outside its dates. Set by hand
+ *  in this browser only — a preview must not travel in a shared link. */
+export const FESTIVAL_PREVIEW_STORAGE_KEY = 'erd-cowork:festival-preview';

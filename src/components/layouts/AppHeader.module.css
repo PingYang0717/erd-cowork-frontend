@@ -71,6 +71,61 @@
   background: var(--erd-color-primary-hover, #4096ff);
 }
 
+/* The dressing sits outside the circle — so the button must not clip, and the face
+   stays the round thing it is on. */
+.avatar {
+  position: relative;
+  overflow: visible;
+}
+
+.face {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* A small hat perched on the disc's upper-right edge and tipped that way — worn at a
+   jaunty angle rather than sitting squarely on top. Anchored to the button, which is
+   always 32px, so it lands in the same place whatever the photo behind it. */
+.hat {
+  position: absolute;
+  top: -12px;
+  left: 15px;
+  z-index: 2;
+  width: 24px;
+  height: auto;
+  transform: rotate(24deg);
+  transform-origin: 30% 90%;
+  pointer-events: none;
+}
+
+/* The pumpkin's mouth is where the face is: its body behind the disc, its teeth in front
+   along the rim. Both layers share one 56×56 box whose mouth centre (28,36) is put on the
+   disc's centre (16,16) — so the pumpkin reaches out past the disc all round, and the
+   eyes and stem sit above the head rather than on it. */
+.pumpkinBehind,
+.pumpkinTeeth {
+  position: absolute;
+  top: -20px;
+  left: -12px;
+  pointer-events: none;
+}
+
+.pumpkinBehind {
+  z-index: 0;
+}
+
+.pumpkinTeeth {
+  z-index: 2;
+}
+
+/* The disc's own primary fill would show through the mouth around a photo. */
+.avatar[data-festival='halloween'] {
+  background: transparent;
+}
+
 .panel {
   display: flex;
   flex-direction: column;
