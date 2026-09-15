@@ -102,14 +102,14 @@
 }
 
 /* The pumpkin's mouth is where the face is: its body behind the disc, its teeth in front
-   along the rim. Both layers share one box, centred on the disc (the mouth's centre is
-   at 24,33 of a 48×50 drawing; the disc's is at 16,16 — the box sits 2px lower than that
-   would put it, so the stem stays inside the bar). */
+   along the rim. Both layers share one 56×56 box whose mouth centre (28,36) is put on the
+   disc's centre (16,16) — so the pumpkin reaches out past the disc all round, and the
+   eyes and stem sit above the head rather than on it. */
 .pumpkinBehind,
 .pumpkinTeeth {
   position: absolute;
-  top: -15px;
-  left: -8px;
+  top: -20px;
+  left: -12px;
   pointer-events: none;
 }
 

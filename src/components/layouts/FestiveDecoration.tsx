@@ -675,38 +675,36 @@ export const SantaHat: React.FC<{ className?: string }> = ({ className }) => (
 
 /** The Halloween mouth: the pumpkin sits behind the disc with its mouth where the face
  *  is, and the teeth come back in front along the disc's rim — so the head is inside the
- *  mouth rather than replaced by it. Two layers, one component each. */
+ *  mouth rather than replaced by it. The mouth is a size larger than the disc, so a dark
+ *  rim shows all round the head and the eyes and stem sit clear above it. Two layers,
+ *  one component each; both share one 56×56 box whose mouth centre (28,36) the CSS puts
+ *  on the disc's centre. */
 export const PumpkinBehind: React.FC<{ className?: string }> = ({ className }) => (
-  <svg className={className} viewBox="0 0 48 50" width="48" height="50">
-    <defs>
-      <radialGradient id="fd-pumpkin-avatar" cx="40%" cy="30%" r="75%">
-        <stop offset="0%" stopColor="#ffb457" />
-        <stop offset="60%" stopColor="#f28c28" />
-        <stop offset="100%" stopColor="#c8621a" />
-      </radialGradient>
-    </defs>
-    <path d="M22 7c1-2.5 3.5-3 5.5-1.5L27 13h-5z" fill="#5f8f3e" />
-    <ellipse cx="24" cy="30" rx="24" ry="19" fill="url(#fd-pumpkin-avatar)" />
-    <g fill="none" stroke="#b9571a" strokeWidth="1.2" opacity="0.55">
-      <ellipse cx="12" cy="30" rx="7" ry="18.5" />
-      <ellipse cx="36" cy="30" rx="7" ry="18.5" />
+  <svg className={className} viewBox="0 0 56 56" width="56" height="56">
+    <path d="M25 8c1.5-3 4.5-3.5 7-1.5L31 14h-6z" fill="#5f8f3e" />
+    <ellipse cx="28" cy="34" rx="28" ry="22" fill="#ef8a2c" />
+    <g fill="none" stroke="#c9691c" strokeWidth="1.4" opacity="0.5">
+      <ellipse cx="13" cy="34" rx="8" ry="21" />
+      <ellipse cx="43" cy="34" rx="8" ry="21" />
     </g>
-    <path d="M12 13l5 6H7z" fill="#3b1d0c" />
-    <path d="M36 13l5 6H31z" fill="#3b1d0c" />
-    <circle cx="24" cy="33" r="17" fill="#3b1d0c" />
+    <path d="M12 16l6 7H6z" fill="#3b1d0c" />
+    <path d="M44 16l6 7H38z" fill="#3b1d0c" />
+    <circle cx="28" cy="36" r="18.5" fill="#3b1d0c" />
   </svg>
 );
 
 export const PumpkinTeeth: React.FC<{ className?: string }> = ({ className }) => (
-  <svg className={className} viewBox="0 0 48 50" width="48" height="50">
-    <g fill="#f6a24a">
-      <path d="M11.5 22.5l5-3.5 1 7z" />
-      <path d="M17.5 18.5l5-2 .5 7z" />
-      <path d="M25 16.5l5 2-.5 7z" />
-      <path d="M31.5 19l5 3.5-6 3.5z" />
-      <path d="M13 44l5 3 .5-6.5z" />
-      <path d="M21.5 48.5l5 0-2.5-6.5z" />
-      <path d="M30 47l5-3-6-3.5z" />
+  <svg className={className} viewBox="0 0 56 56" width="56" height="56">
+    {/* Two even rows along the mouth's rim: four hanging from the top, three rising from
+        the bottom, in the pumpkin's own orange. */}
+    <g fill="#ef8a2c">
+      <path d="M13 24l5-3.5 1.5 7z" />
+      <path d="M20 19.5l5-1.5.5 7z" />
+      <path d="M31 18l5 1.5-.5 7z" />
+      <path d="M37.5 20.5l5 3.5-6.5 3.5z" />
+      <path d="M15 47l5 3.5 1-7z" />
+      <path d="M25 52.5h6l-3-7z" />
+      <path d="M36 50.5l5-3.5-6-3.5z" />
     </g>
   </svg>
 );
