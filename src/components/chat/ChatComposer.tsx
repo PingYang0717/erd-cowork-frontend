@@ -176,6 +176,11 @@ const ChatComposer: React.FC<ChatComposerProps> = ({ sessionId, onSend, disabled
         <div className={styles.inputRow}>
           <Dropdown
             trigger={['click']}
+            // The mockup's composer menu is wider and roomier than the row menus
+            // (`.erd-menu`): 210px, br11, items 9/10 at fs13 with 16px icons — its own
+            // root class in index.css. No slide, like the others: it just appears.
+            classNames={{ root: 'erd-composer-menu' }}
+            transitionName=""
             menu={{
               items: [
                 {

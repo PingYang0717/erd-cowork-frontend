@@ -69,9 +69,10 @@
   color: inherit;
 }
 
+/* The mockup's count pill: fs11 at the row's own line height, on the tertiary fill.
+   The active row recolours the number to primary but leaves the fill alone. */
 .countBadge {
   font-size: 11px;
-  line-height: 1;
   padding: 1px 7px;
   border-radius: 9px;
   background: var(--erd-color-fill-tertiary, rgba(0, 0, 0, 0.06));
@@ -135,7 +136,6 @@
 }
 
 .navShortcut[aria-current='page'] .countBadge {
-  background: var(--erd-color-primary-bg, #e6f4ff);
   color: var(--erd-color-primary, #1677ff);
 }
 
@@ -280,32 +280,23 @@
   flex-direction: column;
 }
 
+/* The mockup's session row (`h3`): one padded, rounded box holding the pin mark, the
+   title-and-time column and the more-actions dots — so the hover and selected fills
+   run under the dots too, and the dots sit inside the row's radius rather than beside
+   it. The box is the list item; the button inside it is the clickable name and carries
+   `aria-current`, which is what the tests and readers look at. */
 .sessionRowContainer {
+  box-sizing: border-box;
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 8px;
   margin: 0 6px;
-}
-
-.sessionRow {
-  box-sizing: border-box;
-  flex: 1 1 auto;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 1px;
-  text-align: left;
   padding: 8px 8px 8px 10px;
   border: 1px solid transparent;
-  background: transparent;
   border-radius: 9px;
-  cursor: pointer;
-  font-size: 13px;
-  color: var(--erd-color-text, inherit);
 }
 
-.sessionRow:hover {
+.sessionRowContainer:hover {
   background: var(--erd-color-fill-tertiary, rgba(0, 0, 0, 0.04));
 }
 
@@ -316,12 +307,45 @@
    The fill alone marks it. A tinted ring around a tinted row states the same thing
    twice, and in a column of rows the rings read as separate boxes rather than as one
    list. The base `1px solid transparent` stays so nothing shifts on selection. */
-.sessionRow[aria-current='true'] {
+.sessionRowContainer[data-selected='true'] {
   background: var(--erd-color-primary-bg, #e6f4ff);
+}
+
+/* While renaming, the box is the mockup's field wrapper: pad 6 8, nothing else. */
+.sessionRowContainerRenaming {
+  padding: 6px 8px;
+}
+
+.sessionRowContainerRenaming:hover {
+  background: transparent;
+}
+
+.sessionRow {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--erd-color-text, inherit);
 }
 
 .sessionRow[aria-current='true'] .sessionRowTitle {
   font-weight: 600;
+}
+
+/* Title over time, one column beside the pin mark. */
+.sessionRowBody {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
 }
 
 .sessionRowTitle {
@@ -346,7 +370,7 @@
 
 .pinIndicator {
   flex: none;
-  margin-right: 6px;
+  font-size: 12px;
   color: var(--erd-color-text-tertiary, #8c8c8c);
 }
 
@@ -361,14 +385,16 @@
   background: transparent;
   border-radius: 6px;
   cursor: pointer;
+  font-size: 14px;
   /* Declared rather than inherited. Without this the dots took whatever colour the row
      happened to pass down, which in dark mode was not a colour meant for them. Same
      token as the counts beside it — both are quiet marks on a row, not its content. */
   color: var(--erd-color-text-tertiary, #8c8c8c);
 }
 
+/* The mockup's `.erd-fav-remove:hover`: the same tertiary fill the row itself takes. */
 .moreActionsButton:hover {
-  background: var(--erd-color-fill-quaternary, rgba(0, 0, 0, 0.04));
+  background: var(--erd-color-fill-tertiary, rgba(0, 0, 0, 0.06));
 }
 
 /* The mockup's rename field: primary-tinted border, br7. Doubled class

@@ -102,7 +102,7 @@ const SessionRow: React.FC<SessionRowProps> = ({ session, isSelected, isDraft, o
 
   if (isRenaming) {
     return (
-      <li className={styles.sessionRowContainer}>
+      <li className={`${styles.sessionRowContainer} ${styles.sessionRowContainerRenaming}`}>
         <Input
           className={styles.renameInput}
           autoFocus
@@ -122,7 +122,9 @@ const SessionRow: React.FC<SessionRowProps> = ({ session, isSelected, isDraft, o
   }
 
   return (
-    <li className={styles.sessionRowContainer}>
+    // `data-selected` on the box, `aria-current` on the button: the fill belongs to the
+    // whole row (dots included), the state belongs to the thing that is pressed.
+    <li className={styles.sessionRowContainer} data-selected={isSelected ? 'true' : undefined}>
       <button
         type="button"
         className={styles.sessionRow}
@@ -132,15 +134,18 @@ const SessionRow: React.FC<SessionRowProps> = ({ session, isSelected, isDraft, o
         title={session.title}
         onClick={() => onSelect(session.id)}
       >
-        <span className={styles.sessionRowTitle}>
-          {isPinned && <PushpinOutlined aria-hidden className={styles.pinIndicator} />}
-          {/* Its own box, because text-overflow elides text boxes, not flex rows: the
-              name shrinks to "…" when the rail is narrow and comes back whole when
-              there is room. */}
-          <span className={styles.sessionRowTitleText}>{session.title}</span>
-        </span>
-        <span className={styles.sessionRowTimestamp} aria-hidden="true">
-          {formatRelativeTime(session.updatedAt)}
+        {/* The pin mark stands beside both lines, as the mockup draws it. */}
+        {isPinned && <PushpinOutlined aria-hidden className={styles.pinIndicator} />}
+        <span className={styles.sessionRowBody}>
+          <span className={styles.sessionRowTitle}>
+            {/* Its own box, because text-overflow elides text boxes, not flex rows: the
+                name shrinks to "…" when the rail is narrow and comes back whole when
+                there is room. */}
+            <span className={styles.sessionRowTitleText}>{session.title}</span>
+          </span>
+          <span className={styles.sessionRowTimestamp} aria-hidden="true">
+            {formatRelativeTime(session.updatedAt)}
+          </span>
         </span>
       </button>
       {!isDraft && (

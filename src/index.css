@@ -122,3 +122,33 @@ body {
   color: var(--erd-color-error, #ff4d4f);
   opacity: 0.75;
 }
+
+/* The composer's + menu, as the mockup draws it: 210px, br11, the medium shadow, 4px
+   of padding around rows that are 9/10 with an 8px radius, fs13 in the text colour,
+   16px secondary icons a 10px gap from the words. Not `.erd-menu` — that is the row
+   menus' 150px/12.5px shape, and the mockup gives this one more room. */
+.erd-composer-menu .ant-dropdown-menu {
+  width: 210px;
+  padding: 4px;
+  border-radius: 11px;
+  background: var(--erd-color-bg-elevated, #fff);
+  border: 1px solid var(--erd-color-border-secondary, #f0f0f0);
+  box-shadow: var(--shadow-md, 0 6px 16px rgba(0, 0, 0, 0.08));
+}
+
+.erd-composer-menu .ant-dropdown-menu .ant-dropdown-menu-item {
+  padding: 9px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--erd-color-text, rgba(0, 0, 0, 0.88));
+}
+
+.erd-composer-menu .ant-dropdown-menu .ant-dropdown-menu-item .ant-dropdown-menu-item-icon {
+  margin-inline-end: 10px;
+  font-size: 16px;
+  color: var(--erd-color-text-secondary, rgba(0, 0, 0, 0.65));
+}
+
+.erd-composer-menu .ant-dropdown-menu .ant-dropdown-menu-item:not(.ant-dropdown-menu-item-disabled):hover {
+  background: var(--erd-color-fill-tertiary, rgba(0, 0, 0, 0.04));
+}
