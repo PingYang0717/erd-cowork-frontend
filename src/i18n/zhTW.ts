@@ -62,7 +62,11 @@ export const zhTW = {
     /** Said when the load failed for a reason that is not "gone" — the Artifact may be
      *  perfectly fine and the request simply did not get through. */
     loadFailed: '這個 Artifact 載入失敗,請稍後重試。',
-    publishedToast: '已發布 — 已加入左側 Artifacts 清單。',
+    /** The post-publish card beside the rail's Artifacts entry. Artifact, not the
+     *  mockup's 「Artifact 已生成」／「dashboard」: publishing creates nothing, and the kind is
+     *  not in the contract (CONTEXT.md). */
+    publishedTitle: 'Artifact 已發布',
+    publishedDetail: '你的 Artifact 都會存在這裡——以後隨時能從側邊欄的「Artifacts」開啟、分享或釘選。',
     goToArtifacts: '前往 Artifacts',
     /** Artifact, not 產出. The version menu deliberately avoids 「版本」 — these are
      *  siblings, not a chain (artifact-model-decisions Q2) — but that decision was about

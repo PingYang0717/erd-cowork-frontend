@@ -139,24 +139,132 @@
   color: var(--erd-color-primary, #1677ff);
 }
 
-/* Coach highlight after generating an Artifact: pulses the row until the
-   toast is dismissed. */
-/* An outline that pulses, and nothing else. The filled background this used to carry is
-   how the rail marks the page you are actually on (`aria-current`), so wearing it made a
-   nudge look like a location — the entry read as selected while the user was still
-   somewhere else entirely. */
+/* Coach ring after publishing an Artifact, until the flyout beside it is dismissed: the
+   mockup's `.erd-coach`, a still 1.5px ring in the primary border colour. An outline and
+   nothing else. The filled background the mockup also paints is how the rail marks the
+   page you are actually on (`aria-current`), so wearing it made a nudge look like a
+   location — the entry read as selected while the user was still somewhere else. */
 .navShortcut[data-coach='true'] {
-  animation: coach-pulse 1.2s ease-in-out infinite;
+  box-shadow: 0 0 0 1.5px var(--erd-color-primary-border, #91caff);
 }
 
-@keyframes coach-pulse {
-  0%,
-  100% {
-    box-shadow: 0 0 0 1px var(--erd-color-primary-border, #91caff) inset;
+/* The Artifacts entry and the card that hangs off it share this box so the card can be
+   placed against the row's edge. */
+.navShortcutAnchor {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+/* The mockup's post-publish card: 256px, hung 14px off the row's right edge and centred
+   on it, elevated surface with the large shadow, rising in over 0.16s. It reaches out of
+   the rail into the thread — which is why the rail no longer clips (StudioShell). */
+.publishedFlyout {
+  position: absolute;
+  top: 50%;
+  left: calc(100% - 8px + 14px);
+  transform: translateY(-50%);
+  z-index: 130;
+  width: 256px;
+  padding: 13px;
+  border-radius: 12px;
+  background: var(--erd-color-bg-elevated, #fff);
+  border: 1px solid var(--erd-color-border-secondary, #f0f0f0);
+  box-shadow: var(--shadow-lg, 0 12px 40px rgba(0, 0, 0, 0.28));
+  cursor: default;
+  animation: published-flyout-in 0.16s ease-out;
+}
+
+@keyframes published-flyout-in {
+  from {
+    opacity: 0;
+    transform: translateY(calc(-50% + 10px));
   }
-  50% {
-    box-shadow: 0 0 0 2px var(--erd-color-primary, #1677ff) inset;
+  to {
+    opacity: 1;
+    transform: translateY(-50%);
   }
+}
+
+/* An 11px square turned 45°, showing its left and bottom edges as the point. */
+.publishedFlyoutArrow {
+  position: absolute;
+  left: -6px;
+  top: 50%;
+  width: 11px;
+  height: 11px;
+  transform: translateY(-50%) rotate(45deg);
+  background: var(--erd-color-bg-elevated, #fff);
+  border-left: 1px solid var(--erd-color-border-secondary, #f0f0f0);
+  border-bottom: 1px solid var(--erd-color-border-secondary, #f0f0f0);
+}
+
+.publishedFlyoutHead {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+}
+
+.publishedFlyoutIcon {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: var(--erd-color-primary-bg, #e6f4ff);
+  color: var(--erd-color-primary, #1677ff);
+  font-size: 16px;
+}
+
+.publishedFlyoutBody {
+  flex: 1;
+  min-width: 0;
+}
+
+.publishedFlyoutTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--erd-color-text, rgba(0, 0, 0, 0.88));
+}
+
+.publishedFlyoutDetail {
+  margin-top: 2px;
+  font-size: 11.5px;
+  line-height: 1.55;
+  color: var(--erd-color-text-secondary, rgba(0, 0, 0, 0.65));
+}
+
+.publishedFlyoutActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 11px;
+}
+
+.publishedFlyoutPrimary {
+  flex: 1;
+  height: 31px;
+  border: none;
+  border-radius: 8px;
+  background: var(--erd-color-primary, #1677ff);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.publishedFlyoutDismiss {
+  flex: none;
+  height: 31px;
+  padding: 0 13px;
+  border: 1px solid var(--erd-color-border, #d9d9d9);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--erd-color-text-secondary, rgba(0, 0, 0, 0.65));
+  font-size: 12px;
+  cursor: pointer;
 }
 
 .navShortcutLabel {

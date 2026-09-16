@@ -84,6 +84,47 @@ interface SessionListProps {
   artifactsCount?: number;
 }
 
+/** The mockup's post-publish notice: a small card hung off the right of the Artifacts
+ *  entry, pointing at it, saying where the Artifact went and offering the jump. It lives
+ *  here rather than in the Artifact pane because it is about this entry — the coach ring
+ *  on the row and the card share one state and clear together. The collapsed rail does
+ *  not show it, as the mockup's does not either. */
+const PublishedFlyout: React.FC = () => {
+  const t = useTranslations();
+  const navigate = useNavigate();
+  const dismiss = usePublishCoachStore((s) => s.dismiss);
+
+  return (
+    <div role="status" aria-label="Artifact published" className={styles.publishedFlyout}>
+      <span className={styles.publishedFlyoutArrow} aria-hidden="true" />
+      <div className={styles.publishedFlyoutHead}>
+        <span className={styles.publishedFlyoutIcon} aria-hidden="true">
+          <AppstoreOutlined />
+        </span>
+        <div className={styles.publishedFlyoutBody}>
+          <div className={styles.publishedFlyoutTitle}>{t.artifact.publishedTitle}</div>
+          <div className={styles.publishedFlyoutDetail}>{t.artifact.publishedDetail}</div>
+        </div>
+      </div>
+      <div className={styles.publishedFlyoutActions}>
+        <button
+          type="button"
+          className={styles.publishedFlyoutPrimary}
+          onClick={() => {
+            dismiss();
+            navigate('/cowork/artifacts');
+          }}
+        >
+          {t.artifact.goToArtifacts}
+        </button>
+        <button type="button" className={styles.publishedFlyoutDismiss} onClick={dismiss}>
+          {t.common.gotIt}
+        </button>
+      </div>
+    </div>
+  );
+};
+
 const SessionList: React.FC<SessionListProps> = ({ onCollapse, artifactsCount }) => {
   const t = useTranslations();
   const navigate = useNavigate();
@@ -123,17 +164,22 @@ const SessionList: React.FC<SessionListProps> = ({ onCollapse, artifactsCount })
           <ClockCircleOutlined aria-hidden />
           <span className={styles.navShortcutLabel}>{t.session.schedule}</span>
         </button>
-        <button
-          type="button"
-          className={styles.navShortcut}
-          aria-current={location.pathname === '/cowork/artifacts' ? 'page' : undefined}
-          data-coach={isCoaching ? 'true' : undefined}
-          onClick={() => navigate('/cowork/artifacts')}
-        >
-          <AppstoreOutlined aria-hidden />
-          <span className={styles.navShortcutLabel}>{t.session.artifacts}</span>
-          {artifactsCount != null && <span className={styles.countBadge}>{artifactsCount}</span>}
-        </button>
+        {/* The flyout is a sibling, not a child: a button cannot contain buttons, and the
+            entry's accessible name must stay "Artifacts" for the coach to be found by. */}
+        <div className={styles.navShortcutAnchor}>
+          <button
+            type="button"
+            className={styles.navShortcut}
+            aria-current={location.pathname === '/cowork/artifacts' ? 'page' : undefined}
+            data-coach={isCoaching ? 'true' : undefined}
+            onClick={() => navigate('/cowork/artifacts')}
+          >
+            <AppstoreOutlined aria-hidden />
+            <span className={styles.navShortcutLabel}>{t.session.artifacts}</span>
+            {artifactsCount != null && <span className={styles.countBadge}>{artifactsCount}</span>}
+          </button>
+          {isCoaching && <PublishedFlyout />}
+        </div>
       </nav>
       <div className={styles.scrollRegion} data-testid="session-scroll">
         <SessionGroup

@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { AppstoreOutlined, CheckOutlined, ExportOutlined, ReloadOutlined, ShareAltOutlined } from '@ant-design/icons';
 
 import { isNotFound } from '@/api/apiError';
@@ -298,41 +297,6 @@ const ArtifactPanelContent: React.FC<ArtifactPanelContentProps> = ({
         }}
       />
       {artifact && <ShareArtifactDialog open={isShareOpen} onClose={() => setIsShareOpen(false)} artifact={artifact} />}
-      <PublishedToast />
-    </div>
-  );
-};
-
-// The mockup's post-publish toast: confirms where the Artifact landed and
-// offers a jump to the gallery. The rail's coach highlight shares its state
-// and both clear together on dismiss.
-const PublishedToast: React.FC = () => {
-  const t = useTranslations();
-  const navigate = useNavigate();
-
-  const dismiss = usePublishCoachStore((s) => s.dismiss);
-  const isActive = usePublishCoachStore((s) => s.isActive);
-
-  if (!isActive) {
-    return null;
-  }
-
-  return (
-    <div role="status" aria-label="Artifact published" className={styles.publishedToast}>
-      <span className={styles.publishedToastText}>{t.artifact.publishedToast}</span>
-      <button
-        type="button"
-        className={styles.publishedToastPrimary}
-        onClick={() => {
-          dismiss();
-          navigate('/cowork/artifacts');
-        }}
-      >
-        {t.artifact.goToArtifacts}
-      </button>
-      <button type="button" className={styles.publishedToastDismiss} onClick={dismiss}>
-        {t.common.gotIt}
-      </button>
     </div>
   );
 };

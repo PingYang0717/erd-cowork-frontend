@@ -4,11 +4,14 @@
   min-height: 0;
 }
 
+/* No `overflow: hidden` here: the post-publish card hangs off the Artifacts entry and
+   reaches into the thread beside it (the mockup's rail does not clip either). Vertical
+   scrolling belongs to the list region inside, and the width is set outright, so
+   nothing else depended on the clip. */
 .sessionRail {
   flex: 0 0 auto;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
   background: var(--erd-color-bg-container, #fff);
   border-right: 1px solid var(--erd-color-border-secondary, #f0f0f0);
 }
