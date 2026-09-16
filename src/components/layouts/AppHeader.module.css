@@ -1,4 +1,4 @@
-/* The header, as erd-cowork.html draws it: 56px, container surface, a hairline below.
+/* The header, as the design mockup draws it: 56px, container surface, a hairline below.
    Held in place by the AppShell column rather than by position: sticky. */
 .header {
   flex: 0 0 auto;

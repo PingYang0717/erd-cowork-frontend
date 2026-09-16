@@ -125,7 +125,7 @@ Session（含改名、釘選、刪除）、對話串流、檔案上傳、Artifac
 
 ## 主題與視覺對齊
 
-設計稿 `erd-cowork.html`(2026-09-15 起,取代 `eRDWorkspace20260819.html`)不是「參考」而是**必須符合**的基準
+設計稿(不在 repo 內,由團隊另行保管)不是「參考」而是**必須符合**的基準
 （[ADR-0002](./docs/adr/0002-visual-authority-mockup-except-chat-panel.md)）：版面、間距、
 圖示（一律用 `@ant-design/icons`，不用文字或 emoji 頂替）都要對齊。**唯一的例外是
 chat panel**，它的呈現語彙以 cowork 上游為準。

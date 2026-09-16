@@ -21,3 +21,8 @@ Thumbs.db
 
 # vitest --coverage 的產物。eslint 與 prettier 的 ignore 都有它,git 先前沒有。
 coverage/
+
+# 設計稿(UI/UX 的打包成品)不進版本控制,由團隊在 repo 外保管。見 ADR-0002 的
+# 2026-09-16 追記。
+erd-cowork.html
+eRDWorkspace20260819.html

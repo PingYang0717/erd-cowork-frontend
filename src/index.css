@@ -5,7 +5,7 @@ body,
   margin: 0;
 }
 
-/* Global chrome: antialiased type (erd-cowork.html) and the 9px custom
+/* Global chrome: antialiased type (from the design mockup) and the 9px custom
    scrollbar from the cowork mockup (ADR-0002; WebKit/Blink, Firefox keeps its
    native bar).
    The stack must stay in step with `FONT_FAMILY` in `theme/antdTheme.ts`, which
@@ -47,7 +47,7 @@ body {
   box-sizing: border-box;
 }
 
-/* Dialog chrome from the design (erd-cowork.html): an elevated card with a
+/* Dialog chrome from the design mockup: an elevated card with a
    hairline border and the deep dialog shadow, over a 42%-black mask with a 1px
    blur. These parts belong to antd's own portaled markup, so a CSS Module
    cannot reach them. The dialog panel is `.ant-modal-container` as of antd v6

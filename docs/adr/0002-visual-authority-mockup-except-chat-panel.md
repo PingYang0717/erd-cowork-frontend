@@ -4,7 +4,7 @@
 
 ## 背景
 
-專案有兩份可以當視覺基準的東西:UI/UX 設計稿 `eRDWorkspace20260819.html`,以及
+專案有兩份可以當視覺基準的東西:UI/UX 設計稿(不在 repo 內,見文末 2026-09-16 追記),以及
 cowork 上游前端(`https://github.com/Michelle12369/cowork.git`)。兩邊接同一個後端、
 服務同一群使用者。
 
@@ -65,8 +65,7 @@ cowork 沒有深色模式,那幾個深色值是本專案自定的,對齊既有�
 送 TABLE 事件,前端整條渲染路徑一併移除。決策本身沒有變(chat panel 以 cowork 為準),
 變的只是那份清單少了一項,依慣例保留原文而不改寫。
 
-**2026-09-15 追記:設計稿換了。** 視覺權威改為根目錄的 `erd-cowork.html`,取代
-`eRDWorkspace20260819.html`(已刪除,git 歷史仍找得到)。新設計稿來自
+**2026-09-15 追記:設計稿換了。** 視覺權威改為新版設計稿,取代舊版。新設計稿來自
 `https://github.com/Orangeyes26/erdcowork`(commit `2b0457e`,2026-09-14),是一份打包後的
 單檔 React 成品而不是原始碼——樣式全是 inline style、圖示走 Iconify 的 `ant-design` 集;
 「圖示一律用 `@ant-design/icons`、色票經 `tokens.ts`」的落地方式不變,兩份設計稿的
@@ -99,3 +98,13 @@ eRD Workspace 這個平台已不存在(CONTEXT.md 同日改寫)。
 不是部署的事。預覽用 localStorage 鍵
 `erd-cowork:festival-preview`。中秋日期是寫死的年度表(2026–2030),有測試在表的最後一年
 會失敗提醒補表。
+
+**2026-09-16 追記:設計稿不再放進 repo。** 兩份設計稿(新版與它取代的舊版)都是 UI/UX
+打包後的單檔成品,裡面連同 mock 資料一起帶著不適合進入版本控制的內容。兩個檔案已從工作樹
+與整個 git 歷史移除,由團隊在 repo 外保管;`.gitignore` 擋著,避免哪天又被 `git add .` 掃進來。
+
+**決策本身不變**:視覺權威仍然是設計稿,不是「參考」而是必須符合的基準,chat panel 以
+cowork 上游為準的例外也不變。變的只是**取得方式**——要核對版面、間距或色票時,向團隊要那份
+檔案在本機開,不要指望 `git show` 或 git 歷史找得到。本文與 `architecture.md`、
+`tokens.ts`、各處註解裡原本寫著檔名與行號的地方一併改掉了:那些座標現在指不到東西,留著只會
+害人白找。

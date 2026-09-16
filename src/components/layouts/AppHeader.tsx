@@ -15,7 +15,7 @@ import styles from './AppHeader.module.css';
 
 /** The header: the 56px bar across the top of every screen (CONTEXT.md). It names the
  *  app and holds the one entry to the interface's own preferences — language and theme —
- *  behind the avatar. Nothing in between: the design (erd-cowork.html) draws no
+ *  behind the avatar. Nothing in between: the design mockup draws no
  *  navigation, search or notifications here.
  *
  *  The preferences used to be a Settings entry at the foot of the session rail, with a
@@ -40,7 +40,6 @@ import styles from './AppHeader.module.css';
 const AppHeader: React.FC = () => {
   const user = useCurrentUser();
   const t = useTranslations();
-
 
   const language = useLanguageStore((state) => state.language);
   const setLanguage = useLanguageStore((state) => state.setLanguage);

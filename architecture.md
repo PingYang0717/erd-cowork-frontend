@@ -384,9 +384,9 @@ npm install -D oxlint eslint-plugin-oxlint \
 
 ## 8. 主題色票(light / dark)
 
-色票唯一來源是 `src/theme/tokens.ts`,整份逐值抄自設計稿
-`erd-cowork.html` 的 `:root` / `:root[data-theme="dark"]`(ADR-0002;與它取代的
-`eRDWorkspace20260819.html` 同值)。
+色票唯一來源是 `src/theme/tokens.ts`,整份逐值抄自設計稿的 `:root` /
+`:root[data-theme="dark"]`(ADR-0002;新舊兩份設計稿同值)。設計稿不在 repo 內,
+由團隊另行保管。
 不要在元件裡寫死顏色,也不要依賴 antd 演算法的預設值 —— 它的 dark 表面色
 (`#000000` / `#141414` / `#1f1f1f`)與設計稿(`#17181c` / `#1f1f22` /
 `#262629`)並不相同。

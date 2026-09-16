@@ -8,7 +8,7 @@ import styles from './ResizeHandle.module.css';
  *  step — fine enough to hit any width, coarse enough not to need thirty presses. */
 const KEYBOARD_STEP_PX = 16;
 
-// The draggable pane divider, matching the design's `erd-resize` (erd-cowork.html):
+// The draggable pane divider, matching the design's `erd-resize`:
 // a 9px grab area with a 1px line that is always visible and turns primary on
 // hover or while dragging, so the boundary between two panes stays findable.
 interface ResizeHandleProps {
