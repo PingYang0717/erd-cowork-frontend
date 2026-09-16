@@ -5,6 +5,7 @@ import { MoonOutlined, SunOutlined, UserOutlined } from '@ant-design/icons';
 import EmployeeAvatar from '@/components/common/EmployeeAvatar';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useTranslations } from '@/i18n/useTranslations';
+import { useFestiveStore } from '@/stores/useFestiveStore';
 import { useLanguageStore } from '@/stores/useLanguageStore';
 import { useThemeStore } from '@/stores/useThemeStore';
 import { currentFestival } from '@/utils/festival';
@@ -33,14 +34,13 @@ import styles from './AppHeader.module.css';
  *
  *  Around a festival the bar dresses up (CONTEXT.md, 節慶裝飾): a small scene in the
  *  empty middle, and the avatar in a hat or, at Halloween, a pumpkin. The one thing on
- *  screen the design does not draw — recorded as a deliberate exception in ADR-0002. */
+ *  screen the design does not draw — recorded as a deliberate exception in ADR-0002 —
+ *  and the one preference here that is not about the interface's language or colour:
+ *  the third row switches it off for whoever would rather not. */
 const AppHeader: React.FC = () => {
   const user = useCurrentUser();
   const t = useTranslations();
 
-  // Read per render rather than memoised: a preview key set in devtools should show on
-  // the next paint, and the calendar check is a handful of date arithmetic.
-  const festival = currentFestival();
 
   const language = useLanguageStore((state) => state.language);
   const setLanguage = useLanguageStore((state) => state.setLanguage);
@@ -48,12 +48,16 @@ const AppHeader: React.FC = () => {
   const isDarkMode = useThemeStore((state) => state.isDarkMode);
   const setDarkMode = useThemeStore((state) => state.setDarkMode);
 
+  const festiveEnabled = useFestiveStore((state) => state.enabled);
+  const setFestiveEnabled = useFestiveStore((state) => state.setEnabled);
+
   const triggerRef = useRef<HTMLButtonElement>(null);
 
   const [open, setOpen] = useState(false);
 
   const toggleLanguage = useCallback(() => setLanguage(language === 'zh-TW' ? 'en' : 'zh-TW'), [language, setLanguage]);
   const toggleTheme = useCallback(() => setDarkMode(!isDarkMode), [isDarkMode, setDarkMode]);
+  const toggleFestive = useCallback(() => setFestiveEnabled(!festiveEnabled), [festiveEnabled, setFestiveEnabled]);
 
   /** The dialog keyboard contract this repo adopted (ADR-0014 §menu-keyboard/§dialog-focus):
    *  Escape closes and puts focus back on the opener. antd's Popover does neither for a
@@ -65,6 +69,11 @@ const AppHeader: React.FC = () => {
       triggerRef.current?.focus();
     }
   }, []);
+
+  // Read per render rather than memoised: a preview key set in devtools should show on
+  // the next paint, and the calendar check is a handful of date arithmetic. The switch
+  // comes first: off means off, whatever the calendar or a preview key says.
+  const festival = festiveEnabled ? currentFestival() : null;
 
   const panel = (
     <div className={styles.panel} onKeyDown={handleKeyDown}>
@@ -78,6 +87,10 @@ const AppHeader: React.FC = () => {
           {isDarkMode ? <MoonOutlined aria-hidden /> : <SunOutlined aria-hidden />}
           {isDarkMode ? t.settings.themeDark : t.settings.themeLight}
         </span>
+      </button>
+      <button type="button" className={styles.row} onClick={toggleFestive}>
+        <span className={styles.rowLabel}>{t.settings.festive}</span>
+        <span className={styles.rowValue}>{festiveEnabled ? t.settings.festiveOn : t.settings.festiveOff}</span>
       </button>
     </div>
   );

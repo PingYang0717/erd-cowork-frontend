@@ -115,6 +115,10 @@ export const zhTW = {
     theme: '主題',
     themeLight: '淺色',
     themeDark: '深色',
+    /** 節慶裝飾的開關（CONTEXT.md 節慶裝飾）。 */
+    festive: '節慶裝飾',
+    festiveOn: '開',
+    festiveOff: '關',
   },
 
   gallery: {

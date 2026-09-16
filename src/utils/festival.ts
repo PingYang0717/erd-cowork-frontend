@@ -88,18 +88,9 @@ export const readFestivalPreview = (): Festival | null => {
   }
 };
 
-/** Where the decoration is switched on: the deployments that dress up, named by host
- *  (with the port when there is one — it is `location.host`, not `hostname`). A mock
- *  list for now: the dev server this was built against. The real list belongs with
- *  deployment config once there is such a place; until then, adding a host is adding a
- *  line here. */
-export const FESTIVE_HOSTS: readonly string[] = ['localhost:5199'];
-
-export const isFestiveHost = (host: string = window.location.host): boolean => FESTIVE_HOSTS.includes(host);
-
-/** What the header should dress up as right now: the preview if one is set (it is for
- *  looking at a festival wherever you are, so it ignores the host), else what the
- *  calendar says — and only on a host that dresses up at all. */
-export const currentFestival = (now: Date = new Date(), host?: string): Festival | null => {
-  return readFestivalPreview() ?? (isFestiveHost(host) ? activeFestival(now) : null);
+/** What the header should dress up as right now: the preview if one is set, else what
+ *  the calendar says. Whether to dress up at all is the reader's switch
+ *  (`useFestiveStore`), which the header consults before asking this. */
+export const currentFestival = (now: Date = new Date()): Festival | null => {
+  return readFestivalPreview() ?? activeFestival(now);
 };

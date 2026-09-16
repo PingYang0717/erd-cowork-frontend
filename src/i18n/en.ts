@@ -82,6 +82,9 @@ export const en: Translations = {
     theme: 'Theme',
     themeLight: 'Light',
     themeDark: 'Dark',
+    festive: 'Festive',
+    festiveOn: 'On',
+    festiveOff: 'Off',
   },
 
   gallery: {
