@@ -161,4 +161,4 @@ stub,不會 suspend 也不會 fail,所以無感;但**真的 `GET /directory` 上
 | **C(需決策)⚖**      | S-3、S-4                             | 前端無法單方面決定,產出 ADR / 後端契約 |
 
 後端問題(`Artifact.pinnedAt` 歸屬、排程歸屬、`Artifact.type`、`GET /directory`、分享
-層級、lineage)另見 `docs/api/backend-questions-artifact.md`,不在前端待辦內。
+層級、lineage)記在團隊內部筆記,不在前端待辦內。

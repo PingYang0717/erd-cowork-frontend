@@ -42,7 +42,7 @@ multipart、Artifact 內容直接回 `text/html`、反問是扁平的 `Question[
 **6. ERROR 事件不關閉串流。** 錯誤發生後後端仍會送出收尾的 STEP,串流由連線關閉本身
 結束。這一點反直覺但是刻意的,寫在這裡與 `docs/api/interface.md` 裡以免被「修正」。
 
-**7. 後端補不上的能力整理成[後端回饋清單](../api/backend-feedback.md)**,不在前端硬湊。
+**7. 後端補不上的能力另外整理成回饋清單**(在團隊內部筆記,不進 repo),不在前端硬湊。
 
 ## 後果
 
