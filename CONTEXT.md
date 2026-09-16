@@ -90,6 +90,8 @@ _Avoid_: Data source, Integration
 一場 Session 正在讓 Agent 讀取的 Connector 集合，存在該 Session 上。使用者在 Connectors 面板上編輯草稿、按下送出才整組寫回——一次請求描述的是結果而不是一個改動。Scenario 執行時會參照它取得資料，**也決定分析條件表單上 Data type 有哪些可選**。
 
 使用者上次送出的組合會記在本機，只在一場對話**還沒選過任何來源**時當成面板的預設值。那是一個提議，不是事實：它從不代替使用者寫進 Session。
+
+**一場 Session 只用一種資料來源**：Connector 或上傳的檔案，兩者擇一。掛了其中一種，另一種的入口就關上——選單項目反灰並說明原因，Connectors 面板若仍被開到（反問卡有連結）就只說明、不可操作。規則上線前兩種都有的 Session 照舊顯示、照樣能送，只是不能再加；它的 Connectors 面板仍可編輯，清掉來源就回到一種。
 _Avoid_: 已連線的 Connector（把 Session 的事實說成 Connector 的屬性，正是這一版拆開的東西）
 
 **保留期（Retention）**:

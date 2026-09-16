@@ -184,6 +184,8 @@ export const en: Translations = {
     statusNotSelected: 'Not selected',
     statusUnavailable: 'Unavailable',
     statusSelectedUnavailable: 'Selected, unavailable',
+    blockedByFiles:
+      'This conversation has files attached. A conversation draws on one kind of data source — remove the files to connect data sources.',
   },
 
   fileModal: {
@@ -203,6 +205,8 @@ export const en: Translations = {
     cpTestStatus: 'CP Test status',
     attachFiles: 'Attach files',
     connectors: 'Connectors',
+    attachBlockedByConnectors: 'This conversation draws on data sources; clear them to attach files',
+    connectorsBlockedByFiles: 'This conversation has files attached; remove them to connect data sources',
     placeholder: 'Ask eRD AI, or attach .csv / .xlsx…',
   },
 

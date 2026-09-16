@@ -151,6 +151,22 @@
   width: 100%;
 }
 
+.menuItemText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* Why the item is off, under its name: the rule is learned here, at the moment it
+   applies, rather than from a toast after the fact. */
+.menuItemHint {
+  max-width: 240px;
+  font-size: 11px;
+  line-height: 1.4;
+  white-space: normal;
+  color: var(--erd-color-text-tertiary, #8c8c8c);
+}
+
 .menuItemBadge {
   margin-left: auto;
   font-size: 11px;

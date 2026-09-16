@@ -22,6 +22,7 @@ import { readRememberedSelection } from '@/api/connectorApi';
 import { useSetSessionDataSources } from '@/hooks/useConnectorMutations';
 import { useConnectors } from '@/hooks/useConnectors';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
+import { useSessionDetail } from '@/hooks/useSessionDetail';
 import { useTranslations } from '@/i18n/useTranslations';
 import type { Translations } from '@/i18n/zhTW';
 import type { Connector } from '@/types/api';
@@ -119,7 +120,15 @@ interface ConnectorsPanelProps {
 const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ sessionId, open, onClose }) => {
   const t = useTranslations();
   const { catalogue, attachedIds } = useConnectors(sessionId);
+  const { data: detail } = useSessionDetail(sessionId);
   const setDataSources = useSetSessionDataSources(sessionId);
+
+  // One kind of data source per conversation (CONTEXT.md, 已選來源). A conversation
+  // that has files and no sources yet cannot take sources on. The composer greys its
+  // entry out, but the question card links here too — so the panel still opens, says
+  // why, and offers nothing to press. A conversation that already had both keeps its
+  // sources editable, which is how it gets back to one kind.
+  const blockedByFiles = detail.files.length > 0 && attachedIds.length === 0;
 
   // Above the state it seeds, against the top-block order: `draftIds` initialises from
   // it on mount, and a dependency is a hard constraint the grouping yields to (ADR-0010).
@@ -145,9 +154,14 @@ const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ sessionId, open, onCl
     if (attachedIds.length > 0) {
       return attachedIds.filter((id) => served.has(id));
     }
+    // No default either when the conversation cannot take sources on: a remembered
+    // combination offered here would make Submit live on a panel that must not write.
+    if (blockedByFiles) {
+      return [];
+    }
     const choosable = new Set(catalogue.filter((connector) => connector.enabled).map((connector) => connector.id));
     return readRememberedSelection().filter((id) => choosable.has(id));
-  }, [catalogue, attachedIds]);
+  }, [catalogue, attachedIds, blockedByFiles]);
 
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('All');
@@ -225,13 +239,23 @@ const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ sessionId, open, onCl
         <div className={styles.footer}>
           <span className={styles.footerCount}>{t.connectors.showing(visibleConnectors.length, catalogue.length)}</span>
           <Button onClick={onClose}>{t.common.cancel}</Button>
-          <Button type="primary" loading={setDataSources.isPending} disabled={!isDirty} onClick={submit}>
+          <Button
+            type="primary"
+            loading={setDataSources.isPending}
+            disabled={!isDirty || blockedByFiles}
+            onClick={submit}
+          >
             {t.connectors.submit}
           </Button>
         </div>
       }
     >
       <p className={styles.subtitle}>{t.connectors.subtitle(chosen.length, catalogue.length)}</p>
+      {blockedByFiles && (
+        <p role="status" className={styles.blockedNotice}>
+          {t.connectors.blockedByFiles}
+        </p>
+      )}
 
       <div className={styles.selectedBox}>
         <div className={styles.selectedHeader}>
@@ -341,7 +365,7 @@ const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ sessionId, open, onCl
                   data-state={state}
                   shape="circle"
                   size="small"
-                  disabled={state === 'unavailable'}
+                  disabled={state === 'unavailable' || blockedByFiles}
                   aria-label={isSelected ? `Disconnect ${connector.name}` : `Connect ${connector.name}`}
                   icon={meta.icon}
                   onClick={() => toggle(connector)}

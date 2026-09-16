@@ -263,6 +263,8 @@ export const zhTW = {
      *  untouched Submit leaves it alone — and the reader may drop it, but not pick it
      *  again once dropped. */
     statusSelectedUnavailable: '已選擇，目前不可用',
+    /** 面板從反問卡的連結也開得到,所以規則在這裡也要說一次。 */
+    blockedByFiles: '這段對話已附加檔案。一段對話只用一種資料來源——移除附加的檔案後，才能連接資料來源。',
   },
 
   fileModal: {
@@ -282,6 +284,9 @@ export const zhTW = {
     cpTestStatus: 'CP Test 狀態',
     attachFiles: '附加檔案',
     connectors: 'Connectors',
+    /** 一場對話只用一種資料來源。這兩句寫在反灰的選單項目底下,規則在按到的那一刻說明。 */
+    attachBlockedByConnectors: '這段對話已連接資料來源，清除後才能附加檔案',
+    connectorsBlockedByFiles: '這段對話已附加檔案，移除後才能連接資料來源',
     placeholder: '問 eRD AI，或附加 .csv / .xlsx…',
   },
 
