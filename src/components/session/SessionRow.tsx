@@ -84,12 +84,13 @@ const SessionRow: React.FC<SessionRowProps> = ({ session, isSelected, isDraft, o
       label: isPinned ? t.session.unpin : t.session.pin,
       icon: isPinned ? <PushpinFilled aria-hidden /> : <PushpinOutlined aria-hidden />,
     },
-    { type: 'divider' as const },
     {
       key: 'rename',
       label: t.session.rename,
       icon: <EditOutlined aria-hidden />,
     },
+    // One rule, the same as the Artifact card's menu: the only line is the one that
+    // sets Delete apart from the actions above it.
     { type: 'divider' as const },
     {
       key: 'delete',
