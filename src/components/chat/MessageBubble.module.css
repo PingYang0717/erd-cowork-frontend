@@ -204,15 +204,14 @@
   white-space: pre-wrap;
 }
 
-/* What a message says about itself, under the bubble: one caption (how long, and on
-   hover when), then one cluster of controls. Two things, not three — a button between
-   two readings read as three unrelated items. The user's row is mirrored so the caption
-   keeps the bubble's edge and the controls sit inboard of it. */
+/* What a message says about itself, under the bubble, in Claude's order from the
+   bubble's edge: the controls, how long it took, when it was sent — three items at one
+   gap. The user's row is mirrored so the controls keep its right edge. */
 .meta {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-top: 5px;
+  gap: 6px;
+  margin-top: 4px;
   height: 22px;
 }
 
@@ -220,8 +219,23 @@
   flex-direction: row-reverse;
 }
 
-/* The caption: small tertiary type on one line, at the icon buttons' centre. */
-.metaCaption {
+/* How long the turn took: on show for the newest turn (it is the reply the reader is
+   waiting on), a hover away on older ones. */
+.metaDuration {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+
+.metaDurationAlways {
+  opacity: 1;
+}
+
+/* When it was sent is something a reader goes looking for, never something they opened
+   the thread to read — so it waits to be asked for, even on the newest turn. */
+.metaTime {
   display: inline-flex;
   align-items: center;
   height: 22px;
@@ -229,20 +243,8 @@
   font-size: 11px;
   color: var(--erd-color-text-tertiary, #8c8c8c);
   white-space: nowrap;
-}
-
-/* When it was sent is something a reader goes looking for, never something they opened
-   the thread to read — so it waits to be asked for, even on the newest turn. It follows
-   the duration after a dot, so the line reads as one sentence when it appears. */
-.metaTime {
-  display: inline-flex;
-  align-items: center;
   opacity: 0;
   transition: opacity 0.12s ease;
-}
-
-.metaDot {
-  margin: 0 5px;
 }
 
 /* The controls: a tight cluster of icon buttons. Hidden on an older turn, kept on the
@@ -269,6 +271,10 @@
 .userRow:focus-within .metaTime,
 .aiRow:hover .metaTime,
 .aiRow:focus-within .metaTime,
+.userRow:hover .metaDuration,
+.userRow:focus-within .metaDuration,
+.aiRow:hover .metaDuration,
+.aiRow:focus-within .metaDuration,
 .userRow:hover .metaActions,
 .userRow:focus-within .metaActions,
 .aiRow:hover .metaActions,

@@ -156,7 +156,9 @@ describe('MessageBubble', () => {
       const liveRow = live.closest('[class*="meta"]');
       expect(liveRow).not.toBeNull();
 
-      rerender(<MessageBubble sender="AI" text="Done." durationMs={2000} />);
+      // The turn that just finished is the newest one, which is what keeps its duration on
+      // show — the hand-over the reader sees is live → newest settled.
+      rerender(<MessageBubble sender="AI" text="Done." durationMs={2000} isLatest />);
       const settled = screen.getByText('2s');
       expect(settled.closest('[class*="aiBubble"]')).toBeNull();
       expect(settled.closest('[class*="meta"]')?.className).toBe(liveRow?.className);
