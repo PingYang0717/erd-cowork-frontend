@@ -185,7 +185,9 @@ const ChatComposer: React.FC<ChatComposerProps> = ({ sessionId, onSend, disabled
                     <span className={styles.menuItemLabel}>
                       <span className={styles.menuItemText}>
                         {t.composer.attachFiles}
-                        {attachBlocked && <span className={styles.menuItemHint}>{t.composer.attachBlockedByConnectors}</span>}
+                        {attachBlocked && (
+                          <span className={styles.menuItemHint}>{t.composer.attachBlockedByConnectors}</span>
+                        )}
                       </span>
                     </span>
                   ),

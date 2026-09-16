@@ -43,7 +43,9 @@ describe('QuestionFormCard: how a field is offered', () => {
 
   it('switches to a dropdown once there are more than five options', async () => {
     renderCard(
-      formOf(field({ key: 'part', label: 'Part ID', options: options('PT-01', 'PT-02', 'PT-03', 'PT-04', 'PT-05', 'PT-06') }))
+      formOf(
+        field({ key: 'part', label: 'Part ID', options: options('PT-01', 'PT-02', 'PT-03', 'PT-04', 'PT-05', 'PT-06') })
+      )
     );
 
     expect(screen.getByRole('combobox', { name: 'Part ID' })).toBeInTheDocument();

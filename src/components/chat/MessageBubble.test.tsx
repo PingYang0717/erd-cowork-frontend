@@ -73,7 +73,13 @@ describe('MessageBubble', () => {
             formKey: 'lot-scope',
             title: 'Which lots?',
             fields: [
-              { key: 'lot', label: 'Lot', kind: 'single', required: true, options: [{ value: 'PT-01', label: 'PT-01' }] },
+              {
+                key: 'lot',
+                label: 'Lot',
+                kind: 'single',
+                required: true,
+                options: [{ value: 'PT-01', label: 'PT-01' }],
+              },
             ],
             submitLabel: 'Submit',
             disabledHint: 'Answered',
