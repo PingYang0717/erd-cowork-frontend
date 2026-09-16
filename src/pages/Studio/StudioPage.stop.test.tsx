@@ -32,7 +32,7 @@ const message = (over: { id: string; sender: 'USER' | 'AI'; text: string }) => (
 
 /** What the real backend leaves behind after the SSE client goes away mid-run: the
  *  question, and its own record of the interruption. The half-written reply is NOT
- *  persisted — see the backend feedback list, kept outside this repo. */
+ *  persisted — see docs/api/backend-feedback.md. */
 const historyAfterInterruption = (sessionId: string) => {
   server.use(
     http.get(`/api/sessions/${sessionId}`, () =>

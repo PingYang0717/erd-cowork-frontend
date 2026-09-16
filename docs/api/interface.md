@@ -87,7 +87,7 @@ scenario 與 kind，而非重新從文字推斷。
 **回覆反問**就是下一則訊息：正在等待反問的 session 收到的任何 `question` 都視為答案。
 表單答案由前端組成一段自然語言（`utils/composeAnswerText.ts`，值以選項 label 呈現）當
 新訊息送出；結構化的 `{ answers, inReplyTo }` 已不在線路上，列入
-後端回饋清單（已移出 repo，見團隊內部筆記）。
+[後端回饋清單](./backend-feedback.md)。
 
 ### 回應：Agent event 串流
 
@@ -215,7 +215,7 @@ QUESTION 的線路承載是後端的扁平 `Question[]`（純字串選項、`mul
 `utils/liftQuestions.ts` 把它抬升成一排 chip 的表單——**單向且失真**。
 
 **要驅動完整的分析條件表單，後端必須改送 `QuestionForm` 本身**；連同結構化
-答案 `{ answers, inReplyTo }`，這兩項都在後端回饋清單（已移出 repo，見團隊內部筆記）。
+答案 `{ answers, inReplyTo }`，這兩項都在[後端回饋清單](./backend-feedback.md)。
 
 ## Artifact
 

@@ -119,7 +119,7 @@ Session（含改名、釘選、刪除）、對話串流、檔案上傳、Artifac
 透過 `createPersistedResource` 存在 `localStorage`，讓測試能驗跨重整的行為。
 
 仍需後端配合的能力（分析條件表單、結構化答案、Connector 端點等）集中在
-後端回饋清單（已移出 repo，見團隊內部筆記）。
+[`docs/api/backend-feedback.md`](./docs/api/backend-feedback.md)。
 
 ---
 

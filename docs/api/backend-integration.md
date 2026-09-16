@@ -2,7 +2,7 @@
 
 線路型別即應用型別([ADR-0003](../adr/0003-verbatim-backend-wire-contract.md)),
 **接真後端不需要改任何程式碼**。仍需後端配合的項目集中在
-後端回饋清單（已移出 repo，見團隊內部筆記）。
+[backend-feedback.md](./backend-feedback.md)。
 
 ## 1. 沒有開關
 
@@ -77,6 +77,6 @@ live bubble 永遠看不到逐步進度。Vite 的 http-proxy 預設不 buffer;�
 
 ## 5. 驗收後的下一步
 
-- 把第 4 節的降級逐項拿去和後端對後端回饋清單（已移出 repo，見團隊內部筆記）,
+- 把第 4 節的降級逐項拿去和後端對 [backend-feedback.md](./backend-feedback.md),
   依它的優先序排(QuestionForm 是分析條件表單能否活下來的唯一關鍵)。
 - 正式部署時,反向代理照第 2 節設定 SSE 不 buffer,並確認 `/api` 前綴的轉發規則。
