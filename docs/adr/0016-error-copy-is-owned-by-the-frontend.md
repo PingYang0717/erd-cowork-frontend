@@ -41,7 +41,7 @@
 
 **為什麼對照表進字典而不是獨立模組。** ADR-0012 排除的是「前端不擁有的字串」;`code → 文案`是我們自己寫的句子,前端百分之百擁有,不牴觸原意。進字典白拿三件事:中英雙語、型別對齊、漏翻是編譯錯誤。獨立模組要自己蓋一套語言機制,或者還是回頭引用字典——那只是多一層間接。
 
-**為什麼 404 的文案在呼叫端。** 一個 404 本身只支持「它不在了」。是哪個東西不在了,只有發出請求的地方知道。`backend-feedback.md` 曾要求後端讓 404 一律帶 code(如 `SESSION_NOT_FOUND`);那件事若落地,這些 code 會進 `byCode`,呼叫端的參數就可以退場。
+**為什麼 404 的文案在呼叫端。** 一個 404 本身只支持「它不在了」。是哪個東西不在了,只有發出請求的地方知道。後端回饋清單曾要求後端讓 404 一律帶 code(如 `SESSION_NOT_FOUND`);那件事若落地,這些 code 會進 `byCode`,呼叫端的參數就可以退場。
 
 ## 代價
 
@@ -50,7 +50,7 @@
 - **`SameShape` 改成遞迴。** `errors.byCode` 是字典的第三層,而原本的 `SameShape` 在第二層就把非函式的東西壓成 `string`,任何查表都會是型別錯誤。這是整份字典型別的改動,不只影響這一個群組。
 - **對照表會落後於後端。** dev 的 `console.warn` 與 `errorCodeCoverage.test.ts` 各接一半:前者接「後端新增了 code」,後者接「前端漏寫」。兩者都不會擋住使用者——未知 code 仍然默默拿到泛用文案。
 - **`BROWSER_REPAIR_UNSUPPORTED` 這次不做**(2026-09-07 決定延後),所以它目前落在未知 code 的泛用文案:使用者會看到「操作失敗,請稍後再試」,而不知道這個環境永遠不支援瀏覽器錯誤修復。
-- **上傳限制的漂移沒有修。** `uploadValidation.ts` 仍然寫死 5 個檔 / 5 GB / `.csv,.xlsx,.xls`,而 `GET /config` 早已發布 `maxFiles` / `maxSessionBytes` / `singleFileLimits`。`UPLOAD_LIMIT` 與 `UNSUPPORTED_TYPE` 正是這份漂移的產物,這次只給它們文案兜底,見 `backend-feedback.md`。
+- **上傳限制的漂移沒有修。** `uploadValidation.ts` 仍然寫死 5 個檔 / 5 GB / `.csv,.xlsx,.xls`,而 `GET /config` 早已發布 `maxFiles` / `maxSessionBytes` / `singleFileLimits`。`UPLOAD_LIMIT` 與 `UNSUPPORTED_TYPE` 正是這份漂移的產物,這次只給它們文案兜底(理由記在團隊內部筆記)。
 
   **2026-09-07 追記:已修。** `53f3f89` 讓 `planFileAdditions` 收 `GET /config` 的上限,可接受的副檔名就是 `singleFileLimits` 的 key,並補上前端從來沒做過的逐檔上限檢查;`DEFAULT_UPLOAD_LIMITS` 只在 config 形狀不可用時當保底。上面那句在寫下的當時成立,依慣例保留原文。
 

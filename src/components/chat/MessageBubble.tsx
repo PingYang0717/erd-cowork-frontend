@@ -119,7 +119,7 @@ const MessageMeta: React.FC<MessageMetaProps> = ({ createdAt, copyText, duration
           </Tooltip>
         )}
         {/* It APPENDS a turn — the backend has no messages endpoint, so the run that
-            stopped cannot be replaced (docs/api/backend-feedback.md). */}
+            stopped cannot be replaced (backend gap, tracked in the team's internal notes). */}
         {onRetry && (
           <Tooltip content={t.chat.retryRun}>
             <button type="button" className={styles.metaButton} aria-label="Retry" onClick={onRetry}>

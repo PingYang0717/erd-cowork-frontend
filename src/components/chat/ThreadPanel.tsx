@@ -235,8 +235,8 @@ const ThreadView: React.FC<ThreadViewProps> = ({ sessionId }) => {
   // history holds — otherwise the screen says one thing now and another after a reload.
   // So the bubble holds the half-written reply only until the refetch lands, and then the
   // thread IS the history. (The half-written reply is not persisted, so it goes with it —
-  // that is the backend gap, made visible rather than papered over. See
-  // docs/api/backend-feedback.md.)
+  // that is the backend gap, made visible rather than papered over — tracked in the
+  // team's internal notes.)
   const runEndedVisibly =
     (state.stopped && runProducedSomething && !interruptionRecorded) || state.error !== null || state.question !== null;
   // `AgentStreamState` is structurally a `LiveRun` superset, so the reducer's state
