@@ -8,6 +8,21 @@ const SHOW_DELAY_MS = 350;
  *  trigger, the tip would be clipped by whatever pane it sits in. */
 const SPACE_NEEDED_ABOVE = 34;
 
+/** The top edge the tip must stay under: the nearest ancestor that clips its overflow,
+ *  or the viewport when nothing does. Every pane in the Studio clips (`overflow: hidden`
+ *  on the columns), and the Artifact toolbar's pane starts right under the 56px header —
+ *  so measured from the viewport there was "room" above the buttons, and the tip opened
+ *  upward into a strip the pane sliced off. It looked like the header covering it. */
+const clippingTop = (element: HTMLElement): number => {
+  for (let node = element.parentElement; node !== null && node !== document.body; node = node.parentElement) {
+    const { overflow, overflowX, overflowY } = getComputedStyle(node);
+    if ([overflow, overflowX, overflowY].some((value) => value !== '' && value !== 'visible')) {
+      return node.getBoundingClientRect().top;
+    }
+  }
+  return 0;
+};
+
 interface TooltipProps {
   content: string;
   children: ReactNode;
@@ -40,8 +55,9 @@ const Tooltip: React.FC<TooltipProps> = ({ content, children, wrapperClassName }
     // Flip below when there is no room above. Every toolbar in this app sits at the
     // top edge of a pane with `overflow: hidden`, so a tip that always opened upward
     // would be sliced off by the pane rather than shown.
-    const top = wrapperRef.current?.getBoundingClientRect().top ?? SPACE_NEEDED_ABOVE;
-    setBelow(top < SPACE_NEEDED_ABOVE);
+    const wrapper = wrapperRef.current;
+    const room = wrapper ? wrapper.getBoundingClientRect().top - clippingTop(wrapper) : SPACE_NEEDED_ABOVE;
+    setBelow(room < SPACE_NEEDED_ABOVE);
     setOpen(true);
   };
   const showDelayed = () => {

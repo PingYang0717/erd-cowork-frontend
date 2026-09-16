@@ -54,6 +54,33 @@ describe('Tooltip', () => {
     expect((await screen.findByRole('tooltip')).className).toContain(styles.tipBelow);
   });
 
+  /** The Artifact toolbar: 60-odd px from the viewport top, but its pane clips and
+   *  starts a few px above the buttons. Room is measured to the pane, not the viewport —
+   *  otherwise the tip opens upward into the strip the pane slices off, and reads as the
+   *  header covering it. */
+  it('flips below when the trigger sits against the top of a clipping pane, wherever that pane is', async () => {
+    const user = userEvent.setup();
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+      const top = Number(this.dataset.top ?? 0);
+      return { top, bottom: top + 32, left: 0, right: 32, width: 32, height: 32, x: 0, y: top, toJSON: () => ({}) };
+    });
+    render(
+      <div data-top="56" style={{ overflow: 'hidden' }}>
+        <div data-top="67">
+          <Tooltip content="重新生成">
+            <button type="button">R</button>
+          </Tooltip>
+        </div>
+      </div>
+    );
+    // The wrapper span itself is what is measured; place it with the toolbar row.
+    (screen.getByRole('button', { name: 'R' }).parentElement as HTMLElement).dataset.top = '67';
+
+    await user.hover(screen.getByRole('button', { name: 'R' }));
+
+    expect((await screen.findByRole('tooltip')).className).toContain(styles.tipBelow);
+  });
+
   it('goes away again when the pointer leaves', async () => {
     const user = userEvent.setup();
     placeTriggerAt(400);
