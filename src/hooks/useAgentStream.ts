@@ -43,6 +43,7 @@ export interface AgentStreamState {
 
 type Action =
   | { type: 'START'; startedAt: number }
+  | { type: 'RESET' }
   | { type: 'EVENT'; event: AgentEvent }
   | { type: 'STOPPED' }
   | { type: 'FAILED'; error: { code: string; message: string } }
@@ -104,6 +105,9 @@ const reducer = (state: AgentStreamState, action: Action): AgentStreamState => {
   switch (action.type) {
     case 'START':
       return { ...initialState, isStreaming: true, startedAt: action.startedAt };
+
+    case 'RESET':
+      return initialState;
 
     case 'EVENT': {
       const agentEvent = action.event;
