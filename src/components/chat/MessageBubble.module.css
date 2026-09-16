@@ -254,11 +254,16 @@
   display: inline-flex;
   align-items: center;
   gap: 2px;
-  /* A pixel down: the icons' visual centre sits above the caption's x-height centre
-     when the two boxes are merely centred on each other. */
-  transform: translateY(1px);
+  /* Pulled in by the button's own inner margin (a 12px icon in a 22px box leaves 5px),
+     so the eye sees the same gap from icon to duration as from duration to time. */
+  margin-inline-end: -4px;
   opacity: 0;
   transition: opacity 0.12s ease;
+}
+
+.userRow .metaActions {
+  margin-inline-end: 0;
+  margin-inline-start: -4px;
 }
 
 .metaActionsAlways {

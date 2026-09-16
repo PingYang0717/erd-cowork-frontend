@@ -45,6 +45,47 @@ const renderList = (live: LiveRun | null = null, optimisticUserText: string | nu
   );
 };
 
+/** A turn's cost is read off the history's own timestamps, so it shows for a turn this
+ *  tab never watched — after a reload, or in an older conversation. */
+describe('duration from the history', () => {
+  it('shows the reply stamp less the question stamp when the hook has nothing newer', () => {
+    render(
+      <MessageList
+        messages={[
+          { ...message('m1', 'USER', 'Run SPC'), createdAt: '2026-08-27T00:00:00.000Z' },
+          { ...message('m2', 'AI', 'Done.'), createdAt: '2026-08-27T00:00:12.400Z' },
+        ]}
+        live={null}
+        optimisticUserText={null}
+        pendingAnswerText={null}
+        lastRunDurationMs={null}
+        onAnswer={() => {}}
+        onRetry={() => {}}
+      />
+    );
+    expect(screen.getByText('12s')).toBeInTheDocument();
+  });
+
+  it('prefers the hook’s own timing for the run this tab just watched', () => {
+    render(
+      <MessageList
+        messages={[
+          { ...message('m1', 'USER', 'Run SPC'), createdAt: '2026-08-27T00:00:00.000Z' },
+          { ...message('m2', 'AI', 'Done.'), createdAt: '2026-08-27T00:00:12.400Z' },
+        ]}
+        live={null}
+        optimisticUserText={null}
+        pendingAnswerText={null}
+        lastRunDurationMs={9800}
+        onAnswer={() => {}}
+        onRetry={() => {}}
+      />
+    );
+    expect(screen.getByText('9.8s')).toBeInTheDocument();
+    expect(screen.queryByText('12s')).not.toBeInTheDocument();
+  });
+});
+
 /** jsdom reports zero for every scroll metric, so the box is given a real geometry:
  *  1000px of content in a 200px viewport. */
 const giveGeometry = (log: HTMLElement) => {

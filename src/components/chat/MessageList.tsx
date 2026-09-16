@@ -5,6 +5,7 @@ import { useActiveRunStore } from '@/stores/useActiveRunStore';
 import type { Message, QuestionForm, StepItem } from '@/types/api';
 import { parseAnswerText } from '@/utils/composeAnswerText';
 import { liftQuestions } from '@/utils/liftQuestions';
+import { turnDurationMs } from '@/utils/turnDuration';
 import MessageBubble, { type LiveRun } from './MessageBubble';
 
 export type { LiveRun } from './MessageBubble';
@@ -116,6 +117,9 @@ const MessageList: React.FC<MessageListProps> = ({
             : null;
       return {
         steps: message.sender === 'AI' ? parseSteps(message.stepsJson) : [],
+        /** Read off the two timestamps, so an older turn — or the newest after a reload —
+         *  can still say what it cost. */
+        durationMs: turnDurationMs(messages, index),
         question,
         questionAnswers: question !== null && replyText !== null ? parseAnswerText(question, replyText) : null,
         artifact: message.artifactId
@@ -240,9 +244,13 @@ const MessageList: React.FC<MessageListProps> = ({
             onPickArtifact={pickArtifact}
             questionDisabled={!isPendingReask}
             onAnswer={isPendingReask ? onAnswer : undefined}
-            // The turn that just finished is the tail of the history once the live bubble
-            // has handed over; nothing older has a duration to show.
-            durationMs={live === null && index === lastIndex && message.sender === 'AI' ? lastRunDurationMs : null}
+            // The run this tab just watched is timed to the millisecond by the hook; every
+            // other turn reads its cost off the history's timestamps.
+            durationMs={
+              live === null && index === lastIndex && lastRunDurationMs != null
+                ? lastRunDurationMs
+                : parsedHistory[index].durationMs
+            }
             // Only the trailing interruption is still open; anything above it has already
             // been answered by whatever came after.
             onRetry={index === lastIndex && isInterruptionRecord(message.text) ? onRetry : undefined}
