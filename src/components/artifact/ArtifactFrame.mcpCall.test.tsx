@@ -37,7 +37,7 @@ const aCall = (overrides: Record<string, unknown> = {}) => ({
   ...overrides,
 });
 
-const results = (posted: ReturnType<typeof vi.spyOn>): McpResultMessage[] =>
+const results = (posted: { mock: { calls: unknown[][] } }): McpResultMessage[] =>
   posted.mock.calls.map(([message]) => message as McpResultMessage);
 
 /** The backend answers 200 with this whatever the tool did; a request that fails is a
@@ -53,7 +53,10 @@ const answerWith = (result: McpResult) => {
   return seen;
 };
 
-const failWith = (status: number, body: unknown = { code: 'SOMETHING', message: `status ${status}` }) => {
+const failWith = (
+  status: number,
+  body: Record<string, unknown> = { code: 'SOMETHING', message: `status ${status}` }
+) => {
   server.use(http.post(`/api/artifacts/${ARTIFACT_ID}/mcp-call`, () => HttpResponse.json(body, { status })));
 };
 
