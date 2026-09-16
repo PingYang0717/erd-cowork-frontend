@@ -266,7 +266,7 @@ const ArtifactPanelContent: React.FC<ArtifactPanelContentProps> = ({
             switcher down with it — that would leave the user looking at nothing with no
             way back to the versions that do still exist. */}
         {data !== undefined ? (
-          <ArtifactFrame key={`${artifactId}-${reloadNonce}`} html={data} artifactId={artifactId} />
+          <ArtifactFrame key={`${artifactId}-${reloadNonce}`} html={data} artifactId={artifactId} offersMcpRepair />
         ) : isError ? (
           <p role="status" className={styles.frameNotice}>
             {/* Same rule as the full-page view: gone is a 404, everything else is a

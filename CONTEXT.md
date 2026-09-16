@@ -49,7 +49,7 @@ Agent 在給出回覆前的推理過程，以 THINKING 事件串流呈現在可�
 _Avoid_: Reasoning, Chain of thought
 
 **修復（Repair）**:
-Artifact 的 HTML 在 iframe 中執行時拋出 JS 錯誤後，由系統偵測、向使用者提議、經使用者確認才交由 Agent 重新產生一版可執行 HTML 的流程。
+Artifact 的 HTML 在 iframe 中執行時拋出 JS 錯誤後，由系統偵測、向使用者提議、經使用者確認才交由 Agent 重新產生一版可執行 HTML 的流程。MCP call 失敗中有兩種也算進來：`TOOL_ERROR`（Tool 有跑但失敗）與 `INVALID_CALL`（Tool 名稱或參數寫錯），因為兩者都是 HTML 自己寫錯了呼叫，重產才修得好；其他 MCP call 的失敗（來源不可用、身分被拒、暫時性錯誤）不是 HTML 的錯，由 Artifact 自己在畫面上處理。提議只在 Studio 的對話串出現；全頁檢視沒有對話串，MCP call 的失敗在那裡不會變成提議。
 _Avoid_: Fix, Retry, Regenerate（Regenerate 是使用者主動要新版本，Repair 是錯誤驅動）
 
 **重新整理（Reload）**:
@@ -93,6 +93,14 @@ _Avoid_: Data source, Integration
 
 **一場 Session 只用一種資料來源**：Connector 或上傳的檔案，兩者擇一。掛了其中一種，另一種的入口就關上——選單項目反灰並說明原因，Connectors 面板若仍被開到（反問卡有連結）就只說明、不可操作。規則上線前兩種都有的 Session 照舊顯示、照樣能送，只是不能再加；它的 Connectors 面板仍可編輯，清掉來源就回到一種。
 _Avoid_: 已連線的 Connector（把 Session 的事實說成 Connector 的屬性，正是這一版拆開的東西）
+
+**MCP call**:
+Artifact 在 iframe 內對某個 Connector 發出的一次 Tool 呼叫。iframe 自己發不出網路請求，所以它把呼叫交給父頁（Cowork 本身）代打後端，父頁再把結果原樣送回 iframe。呼叫的主體是 Artifact：後端從 Artifact 反查它所屬的 Session 與已選來源來決定能不能打，父頁不做這個判斷。一次呼叫的結果要嘛是資料，要嘛是一個帶錯誤代碼的失敗，兩者擇一。
+_Avoid_: Proxy、Bridge（那是實作手法，不是這個概念）、Agent 的 tool use（Agent 讀 Connector 是在後端執行 Scenario 時發生的，跟 Artifact 上畫面後自己去查是兩件事）
+
+**Tool**:
+一個 Connector 提供的可呼叫操作，有名稱與參數。名稱與參數由後端定義並交給產生 Artifact 的 Agent，前端從不認識任何一個 Tool，只把名稱與參數原樣轉交。
+_Avoid_: Function、API、Endpoint（Tool 是 Connector 的操作，不是 Cowork 後端的路徑）
 
 **保留期（Retention）**:
 上傳檔案與 workspace 依 Session 最後活動時間保留的期限（後端 `GET /config` 的 `retentionDays`）。逾期後後端清除檔案**內容**但保留那筆紀錄，這種檔案在畫面上標示「已過期」——它擋住送出，也讓修復（Repair）不可行，因為要重跑的資料已經不存在（FILES_EXPIRED）。

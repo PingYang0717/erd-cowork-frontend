@@ -148,8 +148,15 @@ const ArtifactFullPageView: React.FC<ArtifactFullPageViewProps> = ({ artifactId 
         {isError && (
           <div className={styles.empty}>{isNotFound(error) ? t.studio.artifactNotFound : t.artifact.loadFailed}</div>
         )}
+        {/* offersMcpRepair is off: no thread on this page, so a repair offer raised
+            here would go unseen. */}
         {data && displayedArtifactId && (
-          <ArtifactFrame key={`${displayedArtifactId}-${reloadNonce}`} html={data} artifactId={displayedArtifactId} />
+          <ArtifactFrame
+            key={`${displayedArtifactId}-${reloadNonce}`}
+            html={data}
+            artifactId={displayedArtifactId}
+            offersMcpRepair={false}
+          />
         )}
       </div>
       {displayedArtifact && (

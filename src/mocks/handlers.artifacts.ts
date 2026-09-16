@@ -270,4 +270,15 @@ export const artifactHandlers = [
     }
     return HttpResponse.json({ repaired: true });
   }),
+
+  // The bridge's default answer: echoes the call back as `data` so a test can see what
+  // was asked. Suites that need a tool failure or an HTTP failure override this.
+  http.post('/api/artifacts/:id/mcp-call', async ({ params, request }) => {
+    const artifact = artifacts.read().find((a) => a.id === params.id);
+    if (!artifact) {
+      return HttpResponse.json({ code: 'NOT_FOUND', message: 'artifact not found' }, { status: 404 });
+    }
+    const body = await request.json();
+    return HttpResponse.json({ data: { echo: body } });
+  }),
 ];

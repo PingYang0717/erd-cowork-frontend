@@ -1,4 +1,4 @@
-import type { Artifact, ArtifactShareUpdate, DirectoryEntry } from '@/types/api';
+import type { Artifact, ArtifactShareUpdate, DirectoryEntry, McpCallBody, McpResult } from '@/types/api';
 import { apiClient } from './apiClient';
 
 export const listArtifacts = () => apiClient.get<Artifact[]>('/artifacts');
@@ -119,3 +119,12 @@ export const repairArtifact = (id: string, errors: BrowserJsError[]) =>
   apiClient.post<{ repaired: boolean }>(`/artifacts/${encodeURIComponent(id)}/repair`, {
     errors,
   });
+
+/** One Tool call an Artifact asked for from inside its iframe, made on its behalf
+ *  (ADR-0017). Answers 200 with an `McpResult` either way — a tool that failed is
+ *  reported inside the body, not as an HTTP failure. The statuses that do fail are the
+ *  request never reaching a tool: 400 (body validation), 404 (no such Artifact, or not
+ *  this user's to call from). `signal` is how the bridge enforces its timeout and drops
+ *  calls whose iframe has gone. */
+export const mcpCall = (artifactId: string, body: McpCallBody, signal?: AbortSignal) =>
+  apiClient.post<McpResult>(`/artifacts/${encodeURIComponent(artifactId)}/mcp-call`, body, { signal });

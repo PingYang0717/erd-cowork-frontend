@@ -1,20 +1,29 @@
 import React, { useEffect, useMemo, useRef } from 'react';
 
+import { useMcpCallBridge } from '@/hooks/useMcpCallBridge';
 import { type BrowserJsError, useRepairOfferStore } from '@/stores/useRepairOfferStore';
 import { injectCspMeta } from '@/utils/artifactCsp';
 
 interface ArtifactFrameProps {
   html: string;
   artifactId: string;
+  /** Whether a repair offer raised from here would be seen: the Studio thread shows
+   *  them, the full-page view has no thread. Only the MCP bridge asks — the error
+   *  collector's reports are unconditional, as they were before the bridge existed. */
+  offersMcpRepair: boolean;
 }
 
 /** Keying the iframe on the artifact and the reload nonce is what makes a Reload a
  *  Reload: React drops the element and mounts a new one, so the document restarts from
  *  scratch (ADR-0001). */
-const ArtifactFrame: React.FC<ArtifactFrameProps> = ({ html, artifactId }) => {
+const ArtifactFrame: React.FC<ArtifactFrameProps> = ({ html, artifactId, offersMcpRepair }) => {
   const report = useRepairOfferStore((store) => store.report);
 
   const iframeRef = useRef<HTMLIFrameElement>(null);
+
+  // The artifact's way to a Connector: it cannot fetch (the CSP below), so it asks this
+  // window to (ADR-0017). Bound to this iframe, so a remount starts a fresh bridge.
+  useMcpCallBridge({ artifactId, iframeRef, offersRepair: offersMcpRepair });
 
   // The sandbox keeps the artifact out of this app; the policy keeps it off the network.
   // Injected here rather than served with the document — a srcdoc never sees a header.

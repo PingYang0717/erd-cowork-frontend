@@ -50,5 +50,7 @@ invalidate 是不夠的——那個卡住的文件還掛在畫面上,連同讓�
   亮色色票;改色時兩邊要一起改。
 - 深色模式下,右側面板是亮的。這是已知且接受的:要讓它變深色,得由產生 HTML 的一方
   出深色版本,那是 agent 端的工作,不是前端能後製的。
-- Artifact 內的 script 無法發出任何網路請求。若未來需要它取資料,得改的是 CSP,而且
-  要重新評估這個決策的前提。
+- Artifact 內的 script 無法發出任何網路請求。**2026-09-16 修訂**:它取資料的路已經有了,
+  而且不動 CSP——呼叫以 postMessage 交給 Cowork 代打,見
+  [ADR-0017](0017-artifact-reaches-connectors-through-a-postmessage-bridge.md)。這條
+  原本寫「得改的是 CSP」,那正是 0017 決定不做的事。

@@ -219,19 +219,20 @@ QUESTION 的線路承載是後端的扁平 `Question[]`（純字串選項、`mul
 
 ## Artifact
 
-| Method | Path                     | Request                                                      | Response                              | 後端狀態 |
-| ------ | ------------------------ | ------------------------------------------------------------ | ------------------------------------- | -------- |
-| GET    | `/artifacts`             | —                                                            | `Artifact[]`                          | 已實作   |
-| GET    | `/artifacts/:id`         | （選）`?r={nonce}`（Reload 的 cache-buster，nonce > 0 才送） | `text/html`（HTML 字串）              | 已實作   |
-| GET    | `/artifacts/:id/raw`     | —                                                            | `text/plain`                          | 已實作   |
-| POST   | `/artifacts/:id/repair`  | —                                                            | `Artifact`                            | 已實作   |
-| POST   | `/artifacts/:id/pin`     | —                                                            | `Artifact`                            | 已實作   |
-| POST   | `/artifacts/:id/publish` | —                                                            | `Artifact`                            | 已實作   |
-| DELETE | `/artifacts/:id/publish` | —                                                            | `Artifact`                            | 已實作   |
-| DELETE | `/artifacts/:id`         | —                                                            | 200                                   | 已實作   |
-| POST   | `/artifacts/:id/share`   | `{ targetIds: string[] }`                                    | `{ url: string; artifact: Artifact }` | 已實作   |
-| GET    | `/hr/employeesAndOrgs`   | `?keyword=`                                                  | `{ content: DirectoryEntry[] }`       | ✅ 已接  |
-| GET    | `/hr/userInfo`           | —                                                            | `DirectoryEntry`（裸物件，無信封）    | ✅ 已接  |
+| Method | Path                      | Request                                                      | Response                              | 後端狀態 |
+| ------ | ------------------------- | ------------------------------------------------------------ | ------------------------------------- | -------- |
+| GET    | `/artifacts`              | —                                                            | `Artifact[]`                          | 已實作   |
+| GET    | `/artifacts/:id`          | （選）`?r={nonce}`（Reload 的 cache-buster，nonce > 0 才送） | `text/html`（HTML 字串）              | 已實作   |
+| GET    | `/artifacts/:id/raw`      | —                                                            | `text/plain`                          | 已實作   |
+| POST   | `/artifacts/:id/repair`   | —                                                            | `Artifact`                            | 已實作   |
+| POST   | `/artifacts/:id/mcp-call` | `{ connector, tool, args }`                                  | `McpResult`（見下方「MCP call」）     | 待後端   |
+| POST   | `/artifacts/:id/pin`      | —                                                            | `Artifact`                            | 已實作   |
+| POST   | `/artifacts/:id/publish`  | —                                                            | `Artifact`                            | 已實作   |
+| DELETE | `/artifacts/:id/publish`  | —                                                            | `Artifact`                            | 已實作   |
+| DELETE | `/artifacts/:id`          | —                                                            | 200                                   | 已實作   |
+| POST   | `/artifacts/:id/share`    | `{ targetIds: string[] }`                                    | `{ url: string; artifact: Artifact }` | 已實作   |
+| GET    | `/hr/employeesAndOrgs`    | `?keyword=`                                                  | `{ content: DirectoryEntry[] }`       | ✅ 已接  |
+| GET    | `/hr/userInfo`            | —                                                            | `DirectoryEntry`（裸物件，無信封）    | ✅ 已接  |
 
 **`Artifact` 定版（2026-08-27）**：
 
@@ -318,6 +319,82 @@ photo URL is keyed on, and is a different field from `employeeNt`, which is the 
 the share payload addresses a person by. `sortName` is the short name both kinds are
 called by once chosen; the option list still shows an organisation's code beside its name,
 because that is where two units with the same name are told apart.
+
+### MCP call（2026-09-16，[ADR-0017](../adr/0017-artifact-reaches-connectors-through-a-postmessage-bridge.md)）
+
+Artifact 的 HTML 在 iframe 裡發不出網路請求（CSP `connect-src 'none'`）。它要查 Connector
+時，把呼叫 postMessage 給 Cowork，Cowork 打這支端點，再把結果 postMessage 回去。這一節是
+**兩邊唯一的共同依據**：iframe 內的 runtime 由後端在組裝 HTML 時注入（跟錯誤收集器同一個
+位置），Cowork 這側是 `hooks/useMcpCallBridge.ts`。
+
+**postMessage 訊息（iframe ⇄ Cowork）**
+
+| 方向            | 形狀                                                                                  |
+| --------------- | ------------------------------------------------------------------------------------- |
+| iframe → Cowork | `{ type: 'erd-mcp-call', id: string, connector: string, tool: string, args: object }` |
+| Cowork → iframe | `{ type: 'erd-mcp-result', id: string, result: McpResult }`                           |
+
+- `id` 由 iframe 內的 runtime 配發、每頁唯一，Cowork 原樣送回，用來把回應對回等待中的
+  Promise。Cowork 從不自己產 id。
+- `connector` 是 `Connector.id`（Mongo UUID），不是名稱。
+- Cowork 只接受 `event.source === iframe.contentWindow` 的訊息；回覆時 `targetOrigin`
+  是 `'*'`，因為 sandboxed 文件的 origin 是 opaque。
+- 訊息缺 `connector`、`tool` 或 `args` 不是物件：有 `id` 就直接回
+  `{ error: { code: 'INVALID_CALL' } }`，不打後端；沒 `id` 就丟掉，因為沒有人可以回。
+
+**HTTP 端點（Cowork → 後端）**
+
+`POST /artifacts/:id/mcp-call`，body `{ connector: string, tool: string, args: object }`，
+不帶 `id`——那是 iframe 與 Cowork 之間的配對，後端用不到。Artifact 在路徑上：後端從它
+反查 Session 與已選來源，決定這個人能不能從這份 Artifact 打這個 Connector。**授權全在
+後端**，Cowork 不查 `SessionDetail.connectors`。擁有者、被分享者、個人副本都可以打；
+Studio、全頁檢視、Gallery 分享出去的 Artifact 一律代打。
+
+回應：
+
+| 狀態                    | body                | 意思                                           | Cowork 送回 iframe 的 code |
+| ----------------------- | ------------------- | ---------------------------------------------- | -------------------------- |
+| 200                     | `McpResult`         | 呼叫到了 Tool 那層。成功或失敗都在 body 裡     | 原封轉交                   |
+| 400                     | `{ code, message }` | body 驗證失敗                                  | `INVALID_CALL`             |
+| 404                     | `{ code, message }` | Artifact 不存在，或不是這個人能從它發呼叫的    | `CONNECTOR_NOT_ALLOWED`    |
+| 401 / 403               | `{ code, message }` | 身分。403 同時照 ADR-0016 觸發整頁存取遭拒畫面 | `AUTH`                     |
+| 其他 / 斷線 / 30 秒逾時 | —                   | 請求沒到、或回的不是 JSON                      | `RETRYABLE`                |
+
+若 4xx 的 body 帶的 `code` 本身就是下表七個之一，Cowork 信 code 不信狀態碼。
+
+```ts
+type McpResult = { data: unknown } | { error: { code: McpErrorCode; message: string } };
+```
+
+`data` 是後端已經拆好的 JSON，不是 MCP 原生的 `content[]`；Cowork 和 dashboard 都不需要
+懂 MCP 的內容格式。`message` 是後端或 Tool 的原話，Cowork 原樣轉交、不上畫面。
+
+**錯誤碼（都在 200 的 `{ error }` 裡）**
+
+| code                    | 誰出的 | 情況                                            | dashboard 該怎麼反應     | 進 Repair？ |
+| ----------------------- | ------ | ----------------------------------------------- | ------------------------ | ----------- |
+| `AUTH`                  | Agent  | Connector 那端拒絕這個人的身分                  | 顯示需要重新授權，不重試 | 否          |
+| `RETRYABLE`             | Agent  | 暫時性失敗（timeout、rate limit）               | 顯示重試按鈕             | 否          |
+| `TOOL_ERROR`            | Agent  | Tool 有跑但失敗（查詢語法錯、資料不存在）       | 顯示 `message`，不重試   | **是**      |
+| `CONNECTOR_UNREACHABLE` | Agent  | Connector 開著但 MCP server 連不上              | 可提示稍後重試           | 否          |
+| `CONNECTOR_UNAVAILABLE` | 後端   | Connector `enabled: false`                      | 顯示來源不可用，不重試   | 否          |
+| `CONNECTOR_NOT_ALLOWED` | 後端   | 這份 Artifact 的 Session 沒選它，或這個人不能用 | 顯示無法存取，不重試     | 否          |
+| `INVALID_CALL`          | Agent  | Tool 不存在、`args` 不符 schema                 | 這是 HTML 自己寫錯       | **是**      |
+
+清單是開放的：後端加碼不需要前端跟著改，Cowork 只轉交；未知的 code dashboard 當一般錯誤
+顯示。
+
+**Cowork 這側的行為**
+
+- 所有結果**立刻**送回 iframe。Cowork 不畫 banner、不畫卡片、不掛住 Promise、不重試——
+  UI 全由 dashboard 自己畫，它才知道自己問了什麼。
+- `TOOL_ERROR` 與 `INVALID_CALL`（含 Cowork 自己判定的格式錯誤與 400）另外報進 repair
+  store，走現有的對話串修復提議。訊息寫成
+  `MCP call TOOL_ERROR: tool "x" on connector "y": <原話>`，`line`/`col` 為 0。
+  只在 Studio 報：全頁檢視沒有對話串，`ArtifactFrame` 的 `offersMcpRepair` 傳 `false`。
+- 同一 iframe 同時最多 8 個在飛，第 9 個起排隊；單一呼叫 30 秒逾時。常數在
+  `useMcpCallBridge.ts`。
+- iframe 重掛或卸載時，在飛的請求取消、排隊的清空，都不回。
 
 ## Connector
 
