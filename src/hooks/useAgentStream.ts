@@ -156,9 +156,6 @@ const reducer = (state: AgentStreamState, action: Action): AgentStreamState => {
           return { ...state, codeText: state.codeText + agentEvent.delta };
 
         default:
-          // Reachable at runtime, not in the types: the wire can carry an event kind this
-          // build does not know (TABLE was one, until it was retired), and an unknown
-          // kind must pass through rather than end the run.
           return state;
       }
     }
@@ -183,6 +180,9 @@ const reducer = (state: AgentStreamState, action: Action): AgentStreamState => {
 
     case 'DONE':
       return { ...state, isStreaming: false, durationMs: action.durationMs };
+
+    default:
+      return state;
   }
 };
 

@@ -377,7 +377,7 @@ describe('useAgentStream', () => {
     await waitFor(() => expect(result.current.state.isStreaming).toBe(false));
   });
 
-  it('after an aborted run, keeps re-fetching history until the interruption record lands', async () => {
+  it('after an aborted run, re-fetches history in two delayed stages to catch async persistence', async () => {
     vi.useFakeTimers();
     try {
       const { result, queryClient } = renderAgentStream('sess-stop');
