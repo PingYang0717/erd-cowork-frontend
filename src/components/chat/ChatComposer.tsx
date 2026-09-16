@@ -126,6 +126,17 @@ const ChatComposer: React.FC<ChatComposerProps> = ({ sessionId, onSend, disabled
 
   const connectedConnectorCount = attachedConnectors(connectors).length;
 
+  // One kind of data source per conversation: Connectors or uploaded files, never both
+  // (CONTEXT.md, 已選來源). Enforced at the entry rather than at send, so the reader
+  // learns the rule when they reach for the second kind, not after typing a question.
+  // A conversation that had both before the rule keeps what it has and can still send;
+  // only taking on the other kind is blocked — and its connectors entry stays open, so
+  // the sources can be cleared from the panel (the files clear from their chips).
+  const usesFiles = attachments.length > 0;
+  const usesConnectors = connectors.attachedIds.length > 0;
+  const attachBlocked = usesConnectors;
+  const connectorsBlocked = usesFiles && !usesConnectors;
+
   return (
     <div>
       {hasExpiredFiles && (
@@ -169,14 +180,28 @@ const ChatComposer: React.FC<ChatComposerProps> = ({ sessionId, onSend, disabled
               items: [
                 {
                   key: 'attach',
-                  label: t.composer.attachFiles,
+                  disabled: attachBlocked,
+                  label: (
+                    <span className={styles.menuItemLabel}>
+                      <span className={styles.menuItemText}>
+                        {t.composer.attachFiles}
+                        {attachBlocked && <span className={styles.menuItemHint}>{t.composer.attachBlockedByConnectors}</span>}
+                      </span>
+                    </span>
+                  ),
                   icon: <FileAddOutlined aria-hidden />,
                 },
                 {
                   key: 'connectors',
+                  disabled: connectorsBlocked,
                   label: (
                     <span className={styles.menuItemLabel}>
-                      {t.composer.connectors}
+                      <span className={styles.menuItemText}>
+                        {t.composer.connectors}
+                        {connectorsBlocked && (
+                          <span className={styles.menuItemHint}>{t.composer.connectorsBlockedByFiles}</span>
+                        )}
+                      </span>
                       {connectedConnectorCount > 0 && (
                         <span className={styles.menuItemBadge} aria-hidden="true">
                           {connectedConnectorCount}

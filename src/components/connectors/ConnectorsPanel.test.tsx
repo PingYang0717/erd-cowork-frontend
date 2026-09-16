@@ -164,6 +164,35 @@ describe('ConnectorsPanel', () => {
     expect(screen.getByRole('button', { name: 'Connect Recipe' })).toBeDisabled();
   });
 
+  /** A conversation draws on one kind of data source (CONTEXT.md, 已選來源). One that has
+   *  files and no sources yet still opens the panel — the question card links here — but
+   *  the panel only says why, and nothing on it writes: no remembered default, no live
+   *  toggles, no Submit. */
+  it('opens read-only, with the reason, when the conversation has files and no sources', async () => {
+    localStorage.setItem(CONNECTOR_PREFS_STORAGE_KEY, JSON.stringify({ lastSelected: ['lot'] }));
+    const queryClient = new QueryClient();
+    queryClient.setQueryData(['sessions', 'session-with-files'], {
+      id: 'session-with-files',
+      title: 'New analysis',
+      createdAt: '2026-08-31T00:00:00.000Z',
+      messages: [],
+      files: [{ id: 'f1', name: 'lots.csv', alias: 'lots', sizeBytes: 512, type: 'text/csv', rowCount: null, expired: false }],
+      connectors: [],
+    });
+    render(
+      <Suspense fallback={null}>
+        <ConnectorsPanel sessionId="session-with-files" open onClose={() => {}} />
+      </Suspense>,
+      { wrapper: appWrapper({ queryClient }) }
+    );
+
+    expect(await screen.findByRole('status')).toHaveTextContent(/files attached/);
+    expect(screen.getByRole('button', { name: 'Connect Lot Info' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Submit' })).toBeDisabled();
+    // The remembered combination is not offered: nothing here may be written.
+    expect(within(selectedSources()).queryByText('Lot Info')).not.toBeInTheDocument();
+  });
+
   /** The remembered combination is a default for the dialog and nothing more: it is
    *  offered on a conversation that has chosen nothing, and never written to a session on
    *  the user's behalf. A conversation with its own selection outranks it. */

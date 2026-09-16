@@ -5,6 +5,19 @@
   color: var(--erd-color-text-secondary, #595959);
 }
 
+/* Why nothing here can be pressed: the conversation already draws on files. */
+.blockedNotice {
+  flex: none;
+  margin: 0 0 12px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--erd-color-warning-border, #ffe58f);
+  background: var(--erd-color-warning-bg, #fffbe6);
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--erd-color-text, rgba(0, 0, 0, 0.88));
+}
+
 .selectedBox {
   flex: none;
   border: 1px solid var(--erd-color-border-secondary, #f0f0f0);
