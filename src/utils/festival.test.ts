@@ -5,7 +5,9 @@ import {
   activeFestival,
   currentFestival,
   festivalDate,
+  LAST_LUNAR_NEW_YEAR_YEAR,
   LAST_MID_AUTUMN_YEAR,
+  LUNAR_NEW_YEAR_DATES,
   MID_AUTUMN_DATES,
   readFestivalPreview,
 } from './festival';
@@ -25,6 +27,8 @@ describe('activeFestival', () => {
     ['the run-up to Halloween', '2026-10-17', 'halloween'],
     ['Mid-Autumn from the table', '2026-09-25', 'midAutumn'],
     ['a Mid-Autumn run-up in a later year', '2028-09-19', 'midAutumn'],
+    ['Lunar New Year from the table', '2026-02-17', 'lunarNewYear'],
+    ['a Lunar New Year run-up that starts in the old year', '2028-01-13', 'lunarNewYear'],
   ])('is on for %s', (_when, day, festival) => {
     expect(activeFestival(at(day))).toBe(festival);
   });
@@ -34,6 +38,8 @@ describe('activeFestival', () => {
     ['two days after', '2026-12-27'],
     ['an ordinary day', '2026-03-03'],
     ['the day before the Halloween run-up', '2026-10-16'],
+    ['the day before the Lunar New Year run-up', '2026-02-02'],
+    ['two days after Lunar New Year', '2026-02-19'],
   ])('is off on %s', (_when, day) => {
     expect(activeFestival(at(day))).toBeNull();
   });
@@ -57,6 +63,14 @@ describe('festivalDate', () => {
   it('has Mid-Autumn dates for next year', () => {
     expect(Object.keys(MID_AUTUMN_DATES).length).toBeGreaterThan(0);
     expect(LAST_MID_AUTUMN_YEAR).toBeGreaterThan(new Date().getFullYear());
+  });
+
+  it('reads Lunar New Year from its table, and has dates for next year', () => {
+    expect(festivalDate('lunarNewYear', 2028)?.getMonth()).toBe(0);
+    expect(festivalDate('lunarNewYear', 2028)?.getDate()).toBe(26);
+    expect(festivalDate('lunarNewYear', LAST_LUNAR_NEW_YEAR_YEAR + 1)).toBeNull();
+    expect(Object.keys(LUNAR_NEW_YEAR_DATES).length).toBeGreaterThan(0);
+    expect(LAST_LUNAR_NEW_YEAR_YEAR).toBeGreaterThan(new Date().getFullYear());
   });
 });
 

@@ -101,6 +101,19 @@
   pointer-events: none;
 }
 
+/* The New Year cap sits squarely on top of the disc — a round cap on a round head,
+   worn straight; its knob and tassel are what tip it into a festival. Same anchor as
+   the hat: the button is always 32px, so the cap lands the same over any photo. */
+.cap {
+  position: absolute;
+  top: -13px;
+  left: 2px;
+  z-index: 2;
+  width: 28px;
+  height: auto;
+  pointer-events: none;
+}
+
 /* The pumpkin's mouth is where the face is: its body behind the disc, its teeth in front
    along the rim. Both layers share one 56×56 box whose mouth centre (28,36) is put on the
    disc's centre (16,16) — so the pumpkin reaches out past the disc all round, and the

@@ -9,7 +9,7 @@ import { useFestiveStore } from '@/stores/useFestiveStore';
 import { useLanguageStore } from '@/stores/useLanguageStore';
 import { useThemeStore } from '@/stores/useThemeStore';
 import { currentFestival } from '@/utils/festival';
-import FestiveDecoration, { PumpkinBehind, PumpkinTeeth, SantaHat } from './FestiveDecoration';
+import FestiveDecoration, { LuckyCap, PumpkinBehind, PumpkinTeeth, SantaHat } from './FestiveDecoration';
 
 import styles from './AppHeader.module.css';
 
@@ -126,7 +126,7 @@ const AppHeader: React.FC = () => {
             type="button"
             className={styles.avatar}
             // Only when the avatar itself is dressed: Mid-Autumn leaves it alone.
-            data-festival={festival === 'halloween' || festival === 'christmas' ? festival : undefined}
+            data-festival={festival !== null && festival !== 'midAutumn' ? festival : undefined}
             aria-label="Preferences"
             title="Preferences"
             aria-haspopup="dialog"
@@ -139,6 +139,7 @@ const AppHeader: React.FC = () => {
             </span>
             {festival === 'halloween' && <PumpkinTeeth className={styles.pumpkinTeeth} />}
             {festival === 'christmas' && <SantaHat className={styles.hat} />}
+            {festival === 'lunarNewYear' && <LuckyCap className={styles.cap} />}
           </button>
         </Popover>
       </div>

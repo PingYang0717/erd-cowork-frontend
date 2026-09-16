@@ -118,6 +118,17 @@ describe('AppHeader festive decoration', () => {
     expect(localStorage.getItem('erd-cowork:festive')).toContain('"enabled":false');
   });
 
+  it('puts the New Year cap on the avatar at Lunar New Year', async () => {
+    localStorage.setItem(FESTIVAL_PREVIEW_STORAGE_KEY, 'lunarNewYear');
+    renderHeader();
+
+    expect(stage()).toHaveAttribute('data-festival', 'lunarNewYear');
+    expect(avatarButton()).toHaveAttribute('data-festival', 'lunarNewYear');
+    expect(avatarButton().querySelector('svg')).not.toBeNull();
+    await waitFor(() => expect(avatarButton().querySelector('img')).not.toBeNull());
+    expect(avatarButton()).toHaveAccessibleName('Preferences');
+  });
+
   it('leaves the avatar alone at Mid-Autumn', () => {
     localStorage.setItem(FESTIVAL_PREVIEW_STORAGE_KEY, 'midAutumn');
     renderHeader();

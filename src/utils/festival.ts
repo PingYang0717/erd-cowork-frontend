@@ -3,7 +3,7 @@ import { FESTIVAL_PREVIEW_STORAGE_KEY } from '@/constants/storage';
 /** The festivals the header dresses up for. Listed in the order they are checked: the
  *  windows do not overlap today, but if two ever did, the first one here wins rather
  *  than leaving the answer to chance. */
-export const FESTIVALS = ['midAutumn', 'halloween', 'christmas'] as const;
+export const FESTIVALS = ['lunarNewYear', 'midAutumn', 'halloween', 'christmas'] as const;
 
 export type Festival = (typeof FESTIVALS)[number];
 
@@ -24,19 +24,37 @@ export const MID_AUTUMN_DATES: Readonly<Record<number, string>> = {
 
 export const LAST_MID_AUTUMN_YEAR = Math.max(...Object.keys(MID_AUTUMN_DATES).map(Number));
 
+/** Lunar New Year — the first day of the first lunar month — the same way: a table,
+ *  keyed by the Gregorian year it falls in, and a test that fails in its last year. */
+export const LUNAR_NEW_YEAR_DATES: Readonly<Record<number, string>> = {
+  2026: '2026-02-17',
+  2027: '2027-02-06',
+  2028: '2028-01-26',
+  2029: '2029-02-13',
+  2030: '2030-02-03',
+};
+
+export const LAST_LUNAR_NEW_YEAR_YEAR = Math.max(...Object.keys(LUNAR_NEW_YEAR_DATES).map(Number));
+
 const localDate = (year: number, month: number, day: number): Date => new Date(year, month - 1, day);
+
+/** A tabled festival's day in `year`, or null when the table does not reach it. */
+const fromTable = (table: Readonly<Record<number, string>>, year: number): Date | null => {
+  const iso = table[year];
+  if (iso === undefined) {
+    return null;
+  }
+  const [y, m, d] = iso.split('-').map(Number);
+  return localDate(y, m, d);
+};
 
 /** The festival's day in a given year, in local time, or null when it is not known. */
 export const festivalDate = (festival: Festival, year: number): Date | null => {
   switch (festival) {
-    case 'midAutumn': {
-      const iso = MID_AUTUMN_DATES[year];
-      if (iso === undefined) {
-        return null;
-      }
-      const [y, m, d] = iso.split('-').map(Number);
-      return localDate(y, m, d);
-    }
+    case 'lunarNewYear':
+      return fromTable(LUNAR_NEW_YEAR_DATES, year);
+    case 'midAutumn':
+      return fromTable(MID_AUTUMN_DATES, year);
     case 'halloween':
       return localDate(year, 10, 31);
     case 'christmas':
