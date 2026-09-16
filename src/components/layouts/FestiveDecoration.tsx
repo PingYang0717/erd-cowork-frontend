@@ -1124,8 +1124,9 @@ const LunarNewYear: React.FC = () => (
         <path d="M90 14v-6M90 14v6M90 14h-6M90 14h6M90 14l-4-4M90 14l4 4M90 14l-4 4M90 14l4-4" />
         <path d="M270 10v-5M270 10v5M270 10h-5M270 10h5M270 10l-3.5-3.5M270 10l3.5 3.5M270 10l-3.5 3.5M270 10l3.5-3.5" />
       </g>
-      {/* the town: tiled roofs, eaves turned up at the ends */}
-      <g fill={INK} opacity="0.26">
+      {/* the town: tiled roofs, eaves turned up at the ends — kept faint, so it reads as
+          a skyline behind the lanterns rather than a row of dark blocks */}
+      <g fill={INK} opacity="0.13">
         <path d="M0 56V40l2-3 12 1 12-1 2 3v16z" />
         <path d="M0 40l3-4 11-2 11 2 3 4-2-1-12-1-12 1z" />
         <path d="M34 56V38l3-5 14 2 14-2 3 5v18z" />
@@ -1169,11 +1170,8 @@ const LunarNewYear: React.FC = () => (
     {/* the traveller: the dragon dancing down the street — head, a body rising and
         dipping over the dancers' poles, the flaring tail — in silhouette, an eye of red */}
     <Traveller top={56 - 26} width={160} height={26} viewBox="0 0 200 32" duration={56} delay={-12}>
+      {/* the dancers and their poles, in silhouette like every other figure */}
       <g fill={INK} opacity="0.62">
-        <path d="M14 20c10-14 20-14 30 0s20 14 30 0 20-14 30 0 20 14 30 0 20-14 30 0l-2 4c-10-11-18-11-28 0s-20 11-30 0-20-11-30 0-20 11-30 0-20-11-30 0z" />
-        <path d="M164 20l6-8 10-2 8 2 6 6-4 2-2 4-6-2-8 3-6-1zM176 10l-2-6 3 1 2 5zM184 10l3-6 1 4-2 3z" />
-        <path d="M190 18l8 2-1 1.4-7-2zM190 20.5l7 4-.8 1.2-6.6-3.8z" />
-        <path d="M14 20l-8-6 2 7-6-2 5 5-7 1 8 2z" />
         <path d="M44 20v12M74 20v12M104 20v12M134 20v12M164 20v12" stroke={INK} strokeWidth="1.2" />
         <path d="M40 32v-5l2-3h4l2 3v5zM70 32v-5l2-3h4l2 3v5zM100 32v-5l2-3h4l2 3v5zM130 32v-5l2-3h4l2 3v5zM160 32v-5l2-3h4l2 3v5z" />
         <circle cx="44" cy="22" r="2" />
@@ -1182,7 +1180,26 @@ const LunarNewYear: React.FC = () => (
         <circle cx="134" cy="22" r="2" />
         <circle cx="164" cy="22" r="2" />
       </g>
-      <circle cx="186" cy="15" r="1.2" fill="#d8232a" />
+      {/* the dragon itself in its own colours — red body, gold belly and horns — the one
+          near piece that is the festival, and would be lost as a grey ribbon */}
+      <path
+        d="M14 20c10-14 20-14 30 0s20 14 30 0 20-14 30 0 20 14 30 0 20-14 30 0l-2 4c-10-11-18-11-28 0s-20 11-30 0-20-11-30 0-20 11-30 0-20-11-30 0z"
+        fill="#d8232a"
+      />
+      <path
+        d="M16 21c10-12 18-12 28 0s18 12 28 0 18-12 28 0 18 12 28 0 18-12 28 0"
+        fill="none"
+        stroke="#f2c14e"
+        strokeWidth="1"
+        strokeDasharray="2 3"
+        opacity="0.9"
+      />
+      <path d="M164 20l6-8 10-2 8 2 6 6-4 2-2 4-6-2-8 3-6-1z" fill="#d8232a" />
+      <path d="M176 10l-2-6 3 1 2 5zM184 10l3-6 1 4-2 3z" fill="#f2c14e" />
+      <path d="M190 18l8 2-1 1.4-7-2zM190 20.5l7 4-.8 1.2-6.6-3.8z" fill="#f2c14e" />
+      <path d="M14 20l-8-6 2 7-6-2 5 5-7 1 8 2z" fill="#f2c14e" />
+      <circle cx="184" cy="15" r="1.3" fill="#fff" />
+      <circle cx="184.4" cy="15" r="0.7" fill="#2b2b33" />
     </Traveller>
 
     {/* petals: plum blossom drifting down, the same way the snow falls */}
