@@ -93,8 +93,9 @@ export const zhTW = {
   /** The session rail's own words. */
   session: {
     newChat: '開新對話',
-    schedule: '排程',
     artifacts: 'Artifacts',
+    /** Brand-like, as the mockup writes it, and like Artifacts beside it. */
+    skills: 'Skills',
     pinned: '釘選',
     recents: '最近',
     noRecents: '沒有最近的對話。',
@@ -309,6 +310,11 @@ export const zhTW = {
     home: '首頁',
     sharedToMe: '分享給我',
     artifactNotFound: '找不到 Artifact。',
+  },
+
+  skills: {
+    comingSoonTitle: '即將推出',
+    comingSoonDetail: '自訂 Skill 讓 Agent 照你的指示做分析。這個功能正在準備中。',
   },
 
   galleryHeader: {

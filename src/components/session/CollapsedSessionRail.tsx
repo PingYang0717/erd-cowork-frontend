@@ -3,10 +3,10 @@ import { createPortal } from 'react-dom';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
   AppstoreOutlined,
-  ClockCircleOutlined,
   HistoryOutlined,
   MenuUnfoldOutlined,
   PlusOutlined,
+  ThunderboltOutlined,
 } from '@ant-design/icons';
 
 import { useSessionGroups } from '@/hooks/useSessionGroups';
@@ -115,22 +115,22 @@ const CollapsedSessionRail: React.FC<CollapsedSessionRailProps> = ({ onExpand })
       <button
         type="button"
         className={styles.iconTile}
-        data-active={location.pathname === '/cowork/schedule'}
-        onClick={() => navigate('/cowork/schedule')}
-        title="Schedule"
-        aria-label="Schedule"
-      >
-        <ClockCircleOutlined aria-hidden />
-      </button>
-      <button
-        type="button"
-        className={styles.iconTile}
         data-active={location.pathname === '/cowork/artifacts'}
         onClick={() => navigate('/cowork/artifacts')}
         title="Artifacts"
         aria-label="Artifacts"
       >
         <AppstoreOutlined aria-hidden />
+      </button>
+      <button
+        type="button"
+        className={styles.iconTile}
+        data-active={location.pathname === '/cowork/skills'}
+        onClick={() => navigate('/cowork/skills')}
+        title="Skills"
+        aria-label="Skills"
+      >
+        <ThunderboltOutlined aria-hidden />
       </button>
       <div className={styles.historyWrap}>
         <button

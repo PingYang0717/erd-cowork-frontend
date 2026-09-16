@@ -84,7 +84,7 @@ export const useSessionGroups = () => {
   // Selecting (or creating) a session should always bring the Studio thread
   // into view — matching the mockup's cwSelectSession, which resets cwView
   // to "studio" (line 11050). Without this, selecting a session while on
-  // /cowork/artifacts or /cowork/schedule silently updates the store with
+  // /cowork/artifacts or /cowork/skills silently updates the store with
   // nothing visibly changing, since the Outlet there isn't showing the
   // thread at all.
   const selectAndNavigate = useCallback(
@@ -114,7 +114,7 @@ export const useSessionGroups = () => {
     draftSessionId: draftSession?.id ?? null,
     /** Which row the rail should mark as current — the selection, but only while the
      *  thread is what the user is looking at. The selection itself survives a trip to the
-     *  Gallery or the Schedule (coming back reopens it); the highlight does not, because
+     *  Gallery or Skills (coming back reopens it); the highlight does not, because
      *  a marked row on another page claims to be where you are. */
     selectedSessionId: location.pathname === '/cowork' ? selectedSessionId : null,
     selectAndNavigate,

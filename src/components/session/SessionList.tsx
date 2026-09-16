@@ -5,9 +5,9 @@ import {
   AppstoreOutlined,
   CaretDownOutlined,
   CaretRightOutlined,
-  ClockCircleOutlined,
   MenuFoldOutlined,
   PlusOutlined,
+  ThunderboltOutlined,
 } from '@ant-design/icons';
 
 import { useSessionGroups } from '@/hooks/useSessionGroups';
@@ -155,15 +155,6 @@ const SessionList: React.FC<SessionListProps> = ({ onCollapse, artifactsCount })
         )}
       </div>
       <nav className={styles.navShortcuts} aria-label="Shortcuts">
-        <button
-          type="button"
-          className={styles.navShortcut}
-          aria-current={location.pathname === '/cowork/schedule' ? 'page' : undefined}
-          onClick={() => navigate('/cowork/schedule')}
-        >
-          <ClockCircleOutlined aria-hidden />
-          <span className={styles.navShortcutLabel}>{t.session.schedule}</span>
-        </button>
         {/* The flyout is a sibling, not a child: a button cannot contain buttons, and the
             entry's accessible name must stay "Artifacts" for the coach to be found by. */}
         <div className={styles.navShortcutAnchor}>
@@ -180,6 +171,17 @@ const SessionList: React.FC<SessionListProps> = ({ onCollapse, artifactsCount })
           </button>
           {isCoaching && <PublishedFlyout />}
         </div>
+        {/* Skills, as the mockup lists it under Artifacts. The page behind it is a
+            placeholder for now; the entry is here so the rail already has its shape. */}
+        <button
+          type="button"
+          className={styles.navShortcut}
+          aria-current={location.pathname === '/cowork/skills' ? 'page' : undefined}
+          onClick={() => navigate('/cowork/skills')}
+        >
+          <ThunderboltOutlined aria-hidden />
+          <span className={styles.navShortcutLabel}>{t.session.skills}</span>
+        </button>
       </nav>
       <div className={styles.scrollRegion} data-testid="session-scroll">
         <SessionGroup

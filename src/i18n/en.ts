@@ -61,8 +61,8 @@ export const en: Translations = {
 
   session: {
     newChat: 'New chat',
-    schedule: 'Schedule',
     artifacts: 'Artifacts',
+    skills: 'Skills',
     pinned: 'Pinned',
     recents: 'Recents',
     noRecents: 'No recent chats.',
@@ -225,6 +225,11 @@ export const en: Translations = {
     home: 'Home',
     sharedToMe: 'Shared to me',
     artifactNotFound: 'Artifact not found.',
+  },
+
+  skills: {
+    comingSoonTitle: 'Coming soon',
+    comingSoonDetail: 'Custom Skills let the Agent analyse the way you tell it to. This one is on its way.',
   },
 
   galleryHeader: {

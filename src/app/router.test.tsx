@@ -67,13 +67,13 @@ describe('Routing shell', () => {
   );
 
   it(
-    'renders the Schedule page at /cowork/schedule, with the session rail still visible',
+    'renders the Skills page at /cowork/skills, with the session rail still visible',
     async () => {
-      await renderAppAt('/cowork/schedule');
+      await renderAppAt('/cowork/skills');
 
-      expect(await screen.findByRole('heading', { name: 'Schedule' })).toBeInTheDocument();
+      expect(await screen.findByRole('heading', { name: 'Coming soon' })).toBeInTheDocument();
       expect(await screen.findByRole('button', { name: 'New chat' })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /^Schedule/ })).toHaveAttribute('aria-current', 'page');
+      expect(screen.getByRole('button', { name: /^Skills/ })).toHaveAttribute('aria-current', 'page');
     },
     RESET_MODULES_TIMEOUT
   );

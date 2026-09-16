@@ -87,7 +87,7 @@
   color: var(--erd-color-text-tertiary, #8c8c8c);
 }
 
-/* The Schedule/Artifacts group closes with the mockup's divider line. */
+/* The Artifacts/Skills group closes with the mockup's divider line. */
 .navShortcuts {
   display: flex;
   flex-direction: column;

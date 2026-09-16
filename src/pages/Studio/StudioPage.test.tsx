@@ -90,7 +90,7 @@ describe('StudioPage three-pane layout', () => {
 
     const rail = screen.getByRole('navigation', { name: 'Session list' });
     expect(await screen.findByRole('button', { name: 'New chat' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Schedule' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Skills' })).toBeInTheDocument();
     // Expanded rail shows an Artifact count badge in the button, so its
     // accessible name is "Artifacts <n>" rather than the bare label.
     expect(screen.getByRole('button', { name: /^Artifacts/ })).toBeInTheDocument();
@@ -98,11 +98,11 @@ describe('StudioPage three-pane layout', () => {
     await user.click(screen.getByRole('button', { name: 'Collapse session list' }));
 
     // Collapsing swaps the full session list for an icon-only rail: "New
-    // chat" and the Schedule/Artifacts shortcuts survive as icon tiles
+    // chat" and the Artifacts/Skills shortcuts survive as icon tiles
     // (present in both rail states, per the mockup), but the session groups
     // disappear.
     expect(await screen.findByRole('button', { name: 'New chat' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Schedule' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Skills' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Artifacts' })).toBeInTheDocument();
     expect(screen.queryByRole('region', { name: 'Pinned sessions' })).not.toBeInTheDocument();
     expect(rail.style.width).toBe('52px');
@@ -111,7 +111,7 @@ describe('StudioPage three-pane layout', () => {
     await user.click(screen.getByRole('button', { name: 'Expand session list' }));
 
     expect(await screen.findByRole('button', { name: 'New chat' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Schedule' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Skills' })).toBeInTheDocument();
     expect(rail.style.width).toBe('270px');
   });
 
@@ -223,7 +223,7 @@ describe('Session rail', () => {
     expect(within(scroll).getByRole('region', { name: 'Recents sessions' })).toBeInTheDocument();
     // The fixed rows stay outside the scrolling region.
     expect(within(scroll).queryByRole('button', { name: 'New chat' })).not.toBeInTheDocument();
-    expect(within(scroll).queryByRole('button', { name: /^Schedule/ })).not.toBeInTheDocument();
+    expect(within(scroll).queryByRole('button', { name: /^Skills/ })).not.toBeInTheDocument();
   });
 
   it('keeps the Recents header visible when there are no recent sessions, with an empty-state line', async () => {

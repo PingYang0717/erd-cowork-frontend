@@ -17,7 +17,7 @@ import ResizeHandle from './ResizeHandle';
 import styles from './StudioShell.module.css';
 
 // The Studio shell, under the header (AppShell): the session rail persists across
-// Studio, Artifacts, and Schedule (only the single-Artifact full-page view, routed
+// Studio, Artifacts, and Skills (only the single-Artifact full-page view, routed
 // separately in router.tsx, hides it) — matching the rail's role in the design, where
 // switching cwView never unmounted it.
 // Split out so the shell itself never suspends: the rail is what needs data, and it

@@ -4,7 +4,7 @@ import AppShell from '@/components/layouts/AppShell';
 import StudioShell from '@/components/layouts/StudioShell';
 import ArtifactPage from '@/pages/Artifact/ArtifactPage';
 import ArtifactsGalleryPage from '@/pages/ArtifactsGallery/ArtifactsGalleryPage';
-import SchedulePage from '@/pages/Schedule/SchedulePage';
+import SkillsPage from '@/pages/Skills/SkillsPage';
 import StudioPage from '@/pages/Studio/StudioPage';
 
 export const router = createHashRouter([
@@ -19,7 +19,7 @@ export const router = createHashRouter([
       },
       {
         // The session rail (StudioShell) persists across Studio, Artifacts, and
-        // Schedule — only the single-Artifact full-page view below opts out of
+        // Skills — only the single-Artifact full-page view below opts out of
         // it, matching the mockup's cwView-driven layout. The mockup itself is a
         // state-flag SPA; real routes are a deliberate departure, so a reload keeps
         // the current view and an Artifact can be opened by link.
@@ -28,7 +28,7 @@ export const router = createHashRouter([
         children: [
           { index: true, element: <StudioPage /> },
           { path: 'artifacts', element: <ArtifactsGalleryPage /> },
-          { path: 'schedule', element: <SchedulePage /> },
+          { path: 'skills', element: <SkillsPage /> },
         ],
       },
       {
