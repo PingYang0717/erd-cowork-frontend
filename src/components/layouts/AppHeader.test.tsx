@@ -1,14 +1,12 @@
-// @vitest-environment-options {"url":"http://localhost:5199/"}
-// The header only dresses up on a listed host (utils/festival.ts). This file runs at the
-// dev server's host so the calendar-driven cases below are about the calendar; the host
-// gate itself has its own file.
 import { http, HttpResponse } from 'msw';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import { FESTIVAL_PREVIEW_STORAGE_KEY } from '@/constants/storage';
 import { CURRENT_EMPLOYEE } from '@/mocks/handlers.directory';
 import { server } from '@/mocks/server';
+import { useFestiveStore } from '@/stores/useFestiveStore';
 import { appWrapper } from '@/test/appHarness';
 import AppHeader from './AppHeader';
 
@@ -66,7 +64,10 @@ describe('AppHeader avatar', () => {
 describe('AppHeader festive decoration', () => {
   const stage = () => document.querySelector('[data-festival]:not(button)');
 
-  afterEach(() => vi.useRealTimers());
+  afterEach(() => {
+    vi.useRealTimers();
+    useFestiveStore.setState({ enabled: true });
+  });
 
   /** Pinned to a date, not left to the clock: the suite would otherwise fail for two
    *  weeks every autumn, which is the decoration working. */
@@ -98,6 +99,23 @@ describe('AppHeader festive decoration', () => {
     expect(avatarButton().querySelectorAll(':scope > svg')).toHaveLength(2);
     await waitFor(() => expect(avatarButton().querySelector('img')).not.toBeNull());
     expect(avatarButton()).toHaveAccessibleName('Preferences');
+  });
+
+  /** The switch lives with the other preferences, behind the avatar. Off means off —
+   *  the calendar and the preview key are not consulted — and it is kept like the theme. */
+  it('switches off from the avatar menu, and stays off', async () => {
+    const user = userEvent.setup();
+    localStorage.setItem(FESTIVAL_PREVIEW_STORAGE_KEY, 'christmas');
+    renderHeader();
+    expect(stage()).toHaveAttribute('data-festival', 'christmas');
+
+    await user.click(avatarButton());
+    await user.click(await screen.findByRole('button', { name: /^Festive/ }));
+
+    expect(stage()).toBeNull();
+    expect(screen.getByRole('button', { name: /^Festive/ })).toHaveTextContent('Off');
+    expect(useFestiveStore.getState().enabled).toBe(false);
+    expect(localStorage.getItem('erd-cowork:festive')).toContain('"enabled":false');
   });
 
   it('leaves the avatar alone at Mid-Autumn', () => {

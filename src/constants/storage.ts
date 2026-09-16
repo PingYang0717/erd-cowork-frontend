@@ -27,3 +27,7 @@ export const STUDIO_LAYOUT_STORAGE_KEY = 'erd-cowork:studio-layout';
 /** Forces a festival's decoration on, for previewing it outside its dates. Set by hand
  *  in this browser only — a preview must not travel in a shared link. */
 export const FESTIVAL_PREVIEW_STORAGE_KEY = 'erd-cowork:festival-preview';
+
+/** Whether the header dresses up for festivals. A preference of this browser's user,
+ *  like the theme beside it; on until they turn it off. */
+export const FESTIVE_STORAGE_KEY = 'erd-cowork:festive';
