@@ -7,6 +7,7 @@ import userEvent from '@testing-library/user-event';
 import { en } from '@/i18n/en';
 import { server } from '@/mocks/server';
 import ArtifactPage from '@/pages/Artifact/ArtifactPage';
+import { usePublishCoachStore } from '@/stores/usePublishCoachStore';
 import { appWrapper } from '@/test/appHarness';
 import type { Artifact } from '@/types/api';
 import ArtifactsGalleryPage from './ArtifactsGalleryPage';
@@ -155,7 +156,10 @@ describe('Artifacts gallery', () => {
    *
    *  Pinned-first is a rule, not one sort among several: it applies under every sort, so
    *  it is no longer offered as one. */
-  it('keeps pinned first and orders both groups newest first', async () => {
+  /** "Newest" is by `publishedAt`, not `createdAt`: the shelf holds published work, and
+   *  an Artifact made weeks ago and published today is the new one here. a-4 is made
+   *  before a-3 and still comes first. */
+  it('keeps pinned first and orders both groups newest first, by when they were published', async () => {
     server.use(
       http.get('/api/artifacts', () => {
         return HttpResponse.json([
@@ -164,16 +168,26 @@ describe('Artifacts gallery', () => {
             id: 'a-1',
             title: 'Pinned but old',
             pinnedAt: '2026-09-05T00:00:00.000Z',
-            createdAt: '2026-08-01T00:00:00.000Z',
+            publishedAt: '2026-08-01T00:00:00.000Z',
           }),
           artifactDto({
             id: 'a-2',
             title: 'Pinned and new',
             pinnedAt: '2026-09-01T00:00:00.000Z',
-            createdAt: '2026-08-20T00:00:00.000Z',
+            publishedAt: '2026-08-20T00:00:00.000Z',
           }),
-          artifactDto({ id: 'a-3', title: 'Plain and old', createdAt: '2026-07-01T00:00:00.000Z' }),
-          artifactDto({ id: 'a-4', title: 'Plain and new', createdAt: '2026-08-25T00:00:00.000Z' }),
+          artifactDto({
+            id: 'a-3',
+            title: 'Plain and old',
+            createdAt: '2026-08-10T00:00:00.000Z',
+            publishedAt: '2026-07-01T00:00:00.000Z',
+          }),
+          artifactDto({
+            id: 'a-4',
+            title: 'Plain and new',
+            createdAt: '2026-06-01T00:00:00.000Z',
+            publishedAt: '2026-08-25T00:00:00.000Z',
+          }),
         ]);
       })
     );
@@ -194,6 +208,33 @@ describe('Artifacts gallery', () => {
       );
 
     expect(order).toEqual(['Pinned and new', 'Pinned but old', 'Plain and new', 'Plain and old']);
+  });
+
+  /** Arriving from the publish notice: the Artifact just published is the one framed,
+   *  and brought on screen. Nothing else on the shelf wears the frame. */
+  it('frames the Artifact that was just published, and scrolls to it', async () => {
+    const scrollIntoView = vi.fn();
+    Element.prototype.scrollIntoView = scrollIntoView;
+    usePublishCoachStore.setState({ ...usePublishCoachStore.getInitialState(), publishedArtifactId: 'a-2' });
+    server.use(
+      http.get('/api/artifacts', () => {
+        return HttpResponse.json([
+          artifactDto({ id: 'a-1', title: 'Older' }),
+          artifactDto({ id: 'a-2', title: 'Just published', publishedAt: '2026-09-16T10:00:00.000Z' }),
+        ]);
+      })
+    );
+
+    renderGalleryPage();
+    await screen.findByRole('button', { name: 'Just published' });
+
+    const items = within(screen.getByRole('list', { name: 'Artifacts' })).getAllByRole('listitem');
+    const fresh = items.filter((item) => item.getAttribute('data-fresh') === 'true');
+    expect(fresh).toHaveLength(1);
+    expect(within(fresh[0]).getByRole('button', { name: 'Just published' })).toBeInTheDocument();
+    expect(scrollIntoView).toHaveBeenCalledTimes(1);
+
+    usePublishCoachStore.setState(usePublishCoachStore.getInitialState());
   });
 
   /** Pinning always wins, so it is not something to choose — the menu offers only the
@@ -226,8 +267,8 @@ describe('Artifacts gallery', () => {
     server.use(
       http.get('/api/artifacts', () => {
         return HttpResponse.json([
-          artifactDto({ id: 'a-1', title: 'Alpha', createdAt: '2026-07-01T00:00:00.000Z' }),
-          artifactDto({ id: 'a-2', title: 'Beta', createdAt: '2026-08-25T00:00:00.000Z' }),
+          artifactDto({ id: 'a-1', title: 'Alpha', publishedAt: '2026-07-01T00:00:00.000Z' }),
+          artifactDto({ id: 'a-2', title: 'Beta', publishedAt: '2026-08-25T00:00:00.000Z' }),
         ]);
       })
     );

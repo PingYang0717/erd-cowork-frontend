@@ -290,7 +290,7 @@ const ArtifactPanelContent: React.FC<ArtifactPanelContentProps> = ({
             {
               onSuccess: () => {
                 setPublishTarget(null);
-                startCoach();
+                startCoach(publishTarget.artifactId);
               },
             }
           );

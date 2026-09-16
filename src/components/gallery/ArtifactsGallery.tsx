@@ -12,7 +12,7 @@ import {
 
 import { useArtifacts } from '@/hooks/useArtifacts';
 import { useTranslations } from '@/i18n/useTranslations';
-import { usePublishCoachStore } from '@/stores/usePublishCoachStore';
+import { FRESH_HIGHLIGHT_MS, usePublishCoachStore } from '@/stores/usePublishCoachStore';
 import type { Artifact } from '@/types/api';
 import { artifactRoute } from '@/utils/artifactUrl';
 import ArtifactCard from './ArtifactCard';
@@ -74,8 +74,12 @@ const filterArtifacts = (artifacts: Artifact[], category: FilterCategory) => {
 
 /** The four orders on offer, each comparing two Artifacts within the same pinned group. */
 const COMPARATORS: Record<SortKey, (a: Artifact, b: Artifact) => number> = {
-  recent: (a, b) => b.createdAt.localeCompare(a.createdAt),
-  oldest: (a, b) => a.createdAt.localeCompare(b.createdAt),
+  // By when it went on the shelf, not when it was made: the Gallery lists published
+  // work, and an Artifact made days ago and published just now is new *here*. Nothing
+  // reaches these comparators unpublished (filtered above), so `publishedAt` is never
+  // null in practice; the fallback only keeps the type honest.
+  recent: (a, b) => (b.publishedAt ?? '').localeCompare(a.publishedAt ?? ''),
+  oldest: (a, b) => (a.publishedAt ?? '').localeCompare(b.publishedAt ?? ''),
   nameAsc: (a, b) => a.title.localeCompare(b.title),
   nameDesc: (a, b) => b.title.localeCompare(a.title),
 };
@@ -96,6 +100,8 @@ const ArtifactsGallery: React.FC = () => {
   const navigate = useNavigate();
   const { data } = useArtifacts();
   const dismissCoach = usePublishCoachStore((store) => store.dismiss);
+  const publishedArtifactId = usePublishCoachStore((store) => store.publishedArtifactId);
+  const settleFresh = usePublishCoachStore((store) => store.settle);
 
   const [sort, setSort] = useState<SortKey>('recent');
   const [category, setCategory] = useState<FilterCategory>('all');
@@ -121,6 +127,18 @@ const ArtifactsGallery: React.FC = () => {
   // was asking for, so this is where it ends — whichever way they got here, the toast's
   // shortcut or the rail entry itself.
   useEffect(dismissCoach, [dismissCoach]);
+
+  // The Artifact just published is framed for a moment and scrolled to (the card does
+  // the scrolling), then the frame goes away on its own. The timer is cleared and not
+  // settled on unmount: leaving before it fired means the frame was not seen, so the
+  // next visit gets to show it.
+  useEffect(() => {
+    if (publishedArtifactId === null) {
+      return undefined;
+    }
+    const timer = setTimeout(settleFresh, FRESH_HIGHLIGHT_MS);
+    return () => clearTimeout(timer);
+  }, [publishedArtifactId, settleFresh]);
 
   const activeSortOption = SORT_OPTIONS.find((option) => option.key === sort) ?? SORT_OPTIONS[0];
 
@@ -193,6 +211,7 @@ const ArtifactsGallery: React.FC = () => {
             <ArtifactCard
               key={artifact.id}
               artifact={artifact}
+              isFresh={artifact.id === publishedArtifactId}
               onOpen={(a) => navigate(artifactRoute(a.id), { state: { from: 'gallery' } })}
             />
           ))}

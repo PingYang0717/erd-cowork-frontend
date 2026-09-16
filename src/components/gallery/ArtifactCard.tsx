@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { App, Dropdown } from 'antd';
 import {
   CopyOutlined,
@@ -25,16 +25,30 @@ import styles from './ArtifactCard.module.css';
 
 interface ArtifactCardProps {
   artifact: Artifact;
+  /** This is the Artifact the user just published: framed, and scrolled into view, so
+   *  that arriving from the publish notice answers "where did it go" without a search. */
+  isFresh?: boolean;
   onOpen: (artifact: Artifact) => void;
 }
 
-const ArtifactCard: React.FC<ArtifactCardProps> = ({ artifact, onOpen }) => {
+const ArtifactCard: React.FC<ArtifactCardProps> = ({ artifact, isFresh = false, onOpen }) => {
   const t = useTranslations();
   const { message } = App.useApp();
   const confirmDestructive = useConfirmDestructive();
   const toggleArtifactPin = useToggleArtifactPin();
   const unpublishArtifact = useUnpublishArtifact();
+
+  const cardRef = useRef<HTMLDivElement>(null);
+
   const [isShareOpen, setIsShareOpen] = useState(false);
+
+  // Bringing the framed card on screen is the other half of framing it — a ring on a
+  // card below the fold points at nothing. Optional call: jsdom has no scrollIntoView.
+  useEffect(() => {
+    if (isFresh) {
+      cardRef.current?.scrollIntoView?.({ block: 'center', behavior: 'smooth' });
+    }
+  }, [isFresh]);
 
   /** The menu closes the moment it is clicked, so a toast is the only place this
    *  action can speak from — and it used to say nothing either way: an awaited-nowhere
@@ -106,7 +120,7 @@ const ArtifactCard: React.FC<ArtifactCardProps> = ({ artifact, onOpen }) => {
   ];
 
   return (
-    <div className={styles.card} role="listitem">
+    <div ref={cardRef} className={styles.card} role="listitem" data-fresh={isFresh ? 'true' : undefined}>
       <button type="button" className={styles.open} onClick={() => onOpen(artifact)}>
         {/* One thumbnail for every Artifact: the contract dropped `kind`, and it
             returns as `type` once the backend adds it (types/api/artifact.ts). */}
@@ -129,7 +143,9 @@ const ArtifactCard: React.FC<ArtifactCardProps> = ({ artifact, onOpen }) => {
             </span>
           )}
           <span className={styles.metaRow} aria-hidden="true">
-            <span className={styles.time}>{formatRelativeTime(artifact.createdAt)}</span>
+            {/* When it went on the shelf, which is what a shelf's date means; the Gallery
+                only lists published work, so the fallback is for the type alone. */}
+            <span className={styles.time}>{formatRelativeTime(artifact.publishedAt ?? artifact.createdAt)}</span>
             {artifact.isShared && <span className={styles.sharedBadge}>{t.galleryHeader.sharedBadge}</span>}
             {isSharedToMe && (
               <span className={styles.sharedByBadge}>
