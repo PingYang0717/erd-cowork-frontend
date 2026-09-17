@@ -81,6 +81,17 @@
   -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 55%, #000 100%);
 }
 
+/* The pane's own colour under the ground, faded in from the strip's top: the rail and
+   the thread pane are white, the Artifact pane grey, and without this the same snow was
+   bright on one and invisible on the next. */
+.base {
+  position: absolute;
+  inset: 0;
+  background: var(--erd-color-bg-container, #fff);
+  mask-image: linear-gradient(180deg, transparent 0%, #000 65%);
+  -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 65%);
+}
+
 /* The festival's tint, rising off the floor and gone by the strip's top — the header's
    sky gradient turned over, because here the colour belongs to the ground. */
 .wash {
@@ -88,14 +99,17 @@
   inset: 0;
 }
 
-/* The band itself, drawn over a fixed box and stretched to the surface's width. It is a
-   silhouette with no detail small enough for the stretch to show. */
+/* The band itself: one drawing stretched across the whole window, fixed to the window's
+   foot and clipped to this surface by the strip's `clip-path` — so where two surfaces
+   meet, the wave carries straight on. It is a silhouette with no detail small enough for
+   the stretch to show. */
 .band {
-  position: absolute;
-  inset: 0;
+  position: fixed;
+  left: 0;
+  bottom: 0;
   display: block;
-  width: 100%;
-  height: 100%;
+  width: 100vw;
+  height: 40px;
 }
 
 .piece {

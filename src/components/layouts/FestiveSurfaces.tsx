@@ -118,21 +118,24 @@ export const FestiveWeather: React.FC<SurfaceProps> = ({ festival, surface }) =>
 
 /* ---------- the floor ---------- */
 
-/** The ground under the strip: the tint and the band, behind the pieces and out of the
- *  pointer's way. Not faded at the sides — the strip runs on into the next surface. */
+/** The ground under the strip: the base, the tint and the band, behind the pieces and
+ *  out of the pointer's way. The band is one drawing across the whole window, fixed to
+ *  it and clipped to this surface like the walker is — drawn per surface it was three
+ *  stretches of the same wave at three different scales, and they met at the borders as
+ *  three grounds. The base under it is the pane colour, faded in from the strip's top,
+ *  so the ground is the same brightness on a white pane and a grey one. */
 const FloorBackdrop: React.FC<SurfaceProps> = ({ festival, surface }) => {
   const backdrop = GROUND_BACKDROPS[festival];
-  const compact = surface === 'compact';
   return (
-    <div className={compact ? styles.backdropCompact : styles.backdrop} aria-hidden data-festive-ground="backdrop">
+    <div
+      className={surface === 'compact' ? styles.backdropCompact : styles.backdrop}
+      aria-hidden
+      data-festive-ground="backdrop"
+    >
+      <div className={styles.base} />
       <div className={styles.wash} style={{ background: backdrop.wash }} />
-      <svg
-        className={styles.band}
-        viewBox={compact ? '0 0 40 40' : '0 0 240 40'}
-        preserveAspectRatio="none"
-        aria-hidden
-      >
-        {compact ? backdrop.compactBand : backdrop.band}
+      <svg className={styles.band} viewBox="0 0 240 40" preserveAspectRatio="none" aria-hidden>
+        {backdrop.band}
       </svg>
     </div>
   );

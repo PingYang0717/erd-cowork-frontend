@@ -533,19 +533,7 @@ export interface GroundBackdrop {
   /** The band the pieces stand on, drawn over 240×40 and stretched to whatever width
    *  the caller gives it. */
   band: React.ReactNode;
-  /** For a strip too narrow for the band's drawing: the same colours, flat. */
-  compactBand: React.ReactNode;
 }
-
-/** A flat crust for the narrow rail, in the band's colours. */
-const compactCrust = (fill: string, opacity: number, edge?: string): React.ReactNode => (
-  <>
-    <path d="M0 40V30c8-3 16-3 24 0l16 2v8z" fill={fill} opacity={opacity} />
-    {edge !== undefined && (
-      <path d="M0 30c8-3 16-3 24 0l16 2" fill="none" stroke={edge} strokeWidth="1" opacity="0.7" />
-    )}
-  </>
-);
 
 /** What a festival's floor is made of, for a surface that wants to stand something on it.
  *  Drawn here beside the pieces themselves rather than in the rail that uses it, so the
@@ -576,7 +564,6 @@ export const GROUND_BACKDROPS: Record<Festival, GroundBackdrop> = {
         <path d="M176 40v-5c9-3 18-3 26 1v4z" fill="#fff" opacity="0.5" />
       </>
     ),
-    compactBand: compactCrust('#fff', 0.92, '#cdd6e6'),
   },
   halloween: {
     wash: 'linear-gradient(180deg, rgba(96, 52, 140, 0) 0%, rgba(96, 52, 140, 0.05) 55%, rgba(96, 52, 140, 0.13) 100%)',
@@ -595,7 +582,6 @@ export const GROUND_BACKDROPS: Record<Festival, GroundBackdrop> = {
         </g>
       </>
     ),
-    compactBand: compactCrust(INK, 0.28),
   },
   midAutumn: {
     wash: 'linear-gradient(180deg, rgba(44, 52, 128, 0) 0%, rgba(44, 52, 128, 0.05) 55%, rgba(44, 52, 128, 0.12) 100%)',
@@ -618,7 +604,6 @@ export const GROUND_BACKDROPS: Record<Festival, GroundBackdrop> = {
         </g>
       </>
     ),
-    compactBand: compactCrust(INK, 0.18),
   },
   lunarNewYear: {
     wash: 'linear-gradient(180deg, rgba(200, 40, 50, 0) 0%, rgba(200, 40, 50, 0.04) 55%, rgba(200, 40, 50, 0.11) 100%)',
@@ -645,7 +630,6 @@ export const GROUND_BACKDROPS: Record<Festival, GroundBackdrop> = {
         </g>
       </>
     ),
-    compactBand: compactCrust('#d9a83f', 0.3, '#c8282f'),
   },
 };
 
