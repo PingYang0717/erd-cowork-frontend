@@ -10,12 +10,13 @@ import {
   ThunderboltOutlined,
 } from '@ant-design/icons';
 
+import { FestiveFloor, FestiveWeather } from '@/components/layouts/FestiveSurfaces';
 import { useFestival } from '@/hooks/useFestival';
 import { useSessionGroups } from '@/hooks/useSessionGroups';
 import { useTranslations } from '@/i18n/useTranslations';
 import { usePublishCoachStore } from '@/stores/usePublishCoachStore';
 import type { Session } from '@/types/api/session';
-import { FestiveGround, FestiveString, FestiveWeather } from './SessionRailFestive';
+import { FestiveString } from './SessionRailFestive';
 import SessionRow from './SessionRow';
 
 import styles from './SessionList.module.css';
@@ -132,15 +133,17 @@ const SessionList: React.FC<SessionListProps> = ({ onCollapse, artifactsCount })
   const navigate = useNavigate();
   const location = useLocation();
   const isCoaching = usePublishCoachStore((s) => s.isActive);
-  // Around a festival the rail echoes the header's scene in the three places the mockup
-  // leaves empty (SessionRailFestive); the same switch and calendar as the header.
+  // Around a festival the rail joins the header's scene in the three places the mockup
+  // leaves empty: its own hung string (SessionRailFestive), and its stretch of the
+  // weather and the floor every empty surface shares (FestiveSurfaces). Same switch and
+  // calendar as the header.
   const festival = useFestival();
   const { pinned, recent, draftSessionId, selectedSessionId, selectAndNavigate, createAndNavigate } =
     useSessionGroups();
 
   return (
     <div className={styles.sessionList}>
-      {festival !== null && <FestiveWeather festival={festival} />}
+      {festival !== null && <FestiveWeather festival={festival} surface="rail" />}
       <div className={styles.topRow}>
         <Button
           type="primary"
@@ -207,7 +210,7 @@ const SessionList: React.FC<SessionListProps> = ({ onCollapse, artifactsCount })
           emptyFallback={t.session.noRecents}
         />
       </div>
-      {festival !== null && <FestiveGround festival={festival} />}
+      {festival !== null && <FestiveFloor festival={festival} surface="rail" />}
     </div>
   );
 };

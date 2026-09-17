@@ -260,6 +260,191 @@ export const RedEnvelopesMotif: React.FC<MotifProps> = (props) => (
   </g>
 );
 
+/** Christmas's lamppost with its warm light: 14 × 34. The light takes `lightClassName`
+ *  so it can breathe, brighten and flicker. */
+export const LampPostMotif: React.FC<MotifProps & { lightClassName?: string }> = ({ lightClassName, ...props }) => (
+  <g {...props}>
+    <path d="M7 34V9" stroke="#2b2b33" strokeWidth="1.6" />
+    <path d="M3 34h8" stroke="#2b2b33" strokeWidth="2" strokeLinecap="round" />
+    <path d="M3 9h8l-1-6H4z" fill="#2b2b33" />
+    <g className={lightClassName}>
+      <rect x="4.5" y="4" width="5" height="4.5" fill="#ffcf5c" />
+      <circle cx="7" cy="7" r="6" fill="#ffcf5c" opacity="0.18" />
+    </g>
+    <path d="M2 3h10" stroke="#2b2b33" strokeWidth="1.2" strokeLinecap="round" />
+    <path d="M2 3q5-2 10 0" fill="#fff" />
+  </g>
+);
+
+/** Christmas's gingerbread man: 14 × 18. */
+export const GingerbreadMotif: React.FC<MotifProps> = (props) => (
+  <g {...props}>
+    <circle cx="7" cy="4" r="3.5" fill="#b9702f" />
+    <path d="M5 7h4l3 3-1 2-2-1v7H5v-7l-2 1-1-2z" fill="#b9702f" />
+    <circle cx="5.8" cy="3.5" r="0.6" fill="#2b2b33" />
+    <circle cx="8.2" cy="3.5" r="0.6" fill="#2b2b33" />
+    <path d="M5.5 5.5q1.5 1.2 3 0" fill="none" stroke="#2b2b33" strokeWidth="0.6" />
+    <circle cx="7" cy="9.5" r="0.7" fill="#fff" />
+    <circle cx="7" cy="12" r="0.7" fill="#fff" />
+    <path d="M4 7.5q-1 .8-1.6 1.6M10 7.5q1 .8 1.6 1.6" stroke="#fff" strokeWidth="0.6" />
+  </g>
+);
+
+/** Christmas's sled with a gift on it: 26 × 14. */
+export const SledMotif: React.FC<MotifProps> = (props) => (
+  <g {...props}>
+    <path d="M2 12q1 2 3 2h18q2 0 3-2" fill="none" stroke="#7a4e2a" strokeWidth="1.4" strokeLinecap="round" />
+    <rect x="5" y="8" width="17" height="3" rx="1" fill="#a86b3a" />
+    <path d="M6 8V6M21 8V6" stroke="#a86b3a" strokeWidth="1.2" />
+    <rect x="9" y="1" width="8" height="7" rx="1" fill="#3f9a63" />
+    <rect x="12.5" y="1" width="1.6" height="7" fill="#f5d777" />
+    <rect x="9" y="3.8" width="8" height="1.6" fill="#f5d777" />
+  </g>
+);
+
+/** Christmas's two candy canes stuck in the snow: 20 × 20. */
+export const CandyCanesMotif: React.FC<MotifProps> = (props) => (
+  <g {...props} fill="none" strokeLinecap="round">
+    <path d="M4 20V8a3.5 3.5 0 0 1 7 0" stroke="#e5e5ec" strokeWidth="3.4" />
+    <path d="M4 20V8a3.5 3.5 0 0 1 7 0" stroke="#fff" strokeWidth="2.8" />
+    <path d="M4 20V8a3.5 3.5 0 0 1 7 0" stroke="#e5484d" strokeWidth="2.8" strokeDasharray="2.2 2.2" />
+    <path d="M12 20v-8a3 3 0 0 1 6 0" stroke="#e5e5ec" strokeWidth="3" />
+    <path d="M12 20v-8a3 3 0 0 1 6 0" stroke="#fff" strokeWidth="2.4" />
+    <path d="M12 20v-8a3 3 0 0 1 6 0" stroke="#e5484d" strokeWidth="2.4" strokeDasharray="2 2" />
+  </g>
+);
+
+/** Christmas's cabin, window lit and chimney going: 36 × 26 (the smoke rises 4 above).
+ *  The window takes `windowClassName` to breathe; each puff of smoke takes
+ *  `smokeClassName` with its own delay. */
+export const CabinMotif: React.FC<MotifProps & { windowClassName?: string; smokeClassName?: string }> = ({
+  windowClassName,
+  smokeClassName,
+  ...props
+}) => (
+  <g {...props}>
+    <rect x="5" y="10" width="26" height="16" fill="#7a4e2a" />
+    <path d="M2 11l16-9 16 9z" fill="#fff" stroke="#d6dbe6" strokeWidth="0.8" />
+    <rect x="24" y="1" width="4" height="7" fill="#5a3a20" />
+    {[0, 1.2, 2.4].map((delay) => (
+      <circle
+        key={delay}
+        className={smokeClassName}
+        style={{ animationDelay: `${delay}s` }}
+        cx="26"
+        cy="0"
+        r="2"
+        fill="#c9c9d2"
+      />
+    ))}
+    <rect x="8" y="14" width="7" height="12" fill="#5a3a20" />
+    <g className={windowClassName}>
+      <rect x="19" y="14" width="8" height="7" fill="#ffcf5c" />
+      <rect x="19" y="14" width="8" height="7" fill="none" stroke="#5a3a20" strokeWidth="0.8" />
+      <path d="M23 14v7M19 17.5h8" stroke="#5a3a20" strokeWidth="0.8" />
+    </g>
+    <rect x="4" y="9" width="28" height="2" fill="#fff" />
+    <circle cx="11.5" cy="17" r="2.6" fill="none" stroke="#3f9a63" strokeWidth="1.6" />
+    <circle cx="11.5" cy="14.6" r="0.7" fill="#e5484d" />
+    <circle cx="9.3" cy="18.5" r="0.6" fill="#e5484d" />
+    <circle cx="13.7" cy="18.5" r="0.6" fill="#e5484d" />
+  </g>
+);
+
+/** Halloween's scarecrow: 24 × 30. */
+export const ScarecrowMotif: React.FC<MotifProps> = (props) => (
+  <g {...props}>
+    <path d="M12 30V8M4 12h16" stroke="#7a4e2a" strokeWidth="1.6" strokeLinecap="round" />
+    <path d="M6 12l-1 9h14l-1-9z" fill="#8a6b3f" />
+    <path d="M5 14h14" stroke="#e5484d" strokeWidth="1.2" />
+    <circle cx="12" cy="7" r="4.5" fill="#e8c27a" />
+    <path d="M6 4l6-3 6 3-1 1H7z" fill="#5a3a20" />
+    <circle cx="10.5" cy="7" r="0.7" fill="#2b2b33" />
+    <circle cx="13.5" cy="7" r="0.7" fill="#2b2b33" />
+    <path d="M3 19l-2 4M21 19l2 4" stroke="#c9a04a" strokeWidth="1" strokeLinecap="round" />
+  </g>
+);
+
+/** Halloween's two tombstones with a leaning cross: 28 × 16, with a small ghost behind
+ *  the taller stone that takes `ghostClassName` — it sits hidden below the stone's top
+ *  until something makes it look up. */
+export const TombstonesMotif: React.FC<MotifProps & { ghostClassName?: string }> = ({ ghostClassName, ...props }) => (
+  <g {...props}>
+    <g className={ghostClassName}>
+      <path
+        d="M3.5 9V4.5a3.5 3.5 0 0 1 7 0V9c-.6-.7-1.2-.7-1.75 0-.6-.7-1.2-.7-1.75 0-.6-.7-1.2-.7-1.75 0-.6-.7-1.2-.7-1.75 0z"
+        fill="#f2f2f7"
+        opacity="0.9"
+      />
+      <circle cx="5.7" cy="4.5" r="0.6" fill="#3b3b46" />
+      <circle cx="8.3" cy="4.5" r="0.6" fill="#3b3b46" />
+    </g>
+    <path d="M2 16v-8a5 5 0 0 1 10 0v8z" fill={INK} opacity="0.55" />
+    <path d="M5 9h4M7 7v6" stroke="#f2f2f7" strokeWidth="0.8" opacity="0.7" />
+    <path d="M16 16v-6a4 4 0 0 1 8 0v6z" fill={INK} opacity="0.5" />
+    <path d="M26 16l-1.5-11M22 8l6-1" stroke={INK} strokeWidth="1.4" strokeLinecap="round" opacity="0.55" />
+  </g>
+);
+
+/** Halloween's cauldron: 24 × 24. The bubbles over it take `bubblesClassName`. */
+export const CauldronMotif: React.FC<MotifProps & { bubblesClassName?: string }> = ({ bubblesClassName, ...props }) => (
+  <g {...props}>
+    <g className={bubblesClassName} fill="#7ed957">
+      <circle cx="8" cy="6" r="1.6" opacity="0.8" />
+      <circle cx="14" cy="3" r="1.1" opacity="0.6" />
+      <circle cx="17" cy="7" r="1.3" opacity="0.7" />
+    </g>
+    <ellipse cx="12" cy="10" rx="9" ry="2.4" fill="#5fb84a" />
+    <path d="M3 10q9 4 18 0v4a9 8 0 0 1-18 0z" fill="#2b2b33" />
+    <path d="M3 10q9 4 18 0" fill="none" stroke="#3d3d48" strokeWidth="1" />
+    <path d="M6 22h3M15 22h3" stroke="#2b2b33" strokeWidth="2" strokeLinecap="round" />
+  </g>
+);
+
+/** Mid-Autumn's tea for the moon-watching, a pot and two cups: 30 × 14. The steam over
+ *  the pot takes `steamClassName`; it is invisible until something warms it. */
+export const TeaSetMotif: React.FC<MotifProps & { steamClassName?: string }> = ({ steamClassName, ...props }) => (
+  <g {...props}>
+    <g className={steamClassName} fill="none" stroke="#c9c9d2" strokeWidth="0.8" strokeLinecap="round" opacity="0">
+      <path d="M8 2q1-1.5 0-3M11 2.5q1-1.5 0-3" />
+    </g>
+    <path d="M4 13a6 6 0 0 1 12 0z" fill="#8c6b4a" />
+    <ellipse cx="10" cy="7.5" rx="6" ry="1.6" fill="#a58462" />
+    <rect x="9" y="4" width="2" height="3" fill="#8c6b4a" />
+    <path d="M16 8q4-2 3 3" fill="none" stroke="#8c6b4a" strokeWidth="1.2" strokeLinecap="round" />
+    <path d="M4 9q-3-1-1 3" fill="none" stroke="#8c6b4a" strokeWidth="1.2" strokeLinecap="round" />
+    <path d="M21 13a2.5 2.5 0 0 1 5 0zM19.5 10h8" fill="#c9c9d2" stroke="#c9c9d2" strokeWidth="0.8" />
+    <path d="M21 10.5a2.5 2.5 0 0 1 5 0z" fill="#d6d6dc" />
+  </g>
+);
+
+/** Mid-Autumn's pomelo: 16 × 14. */
+export const PomeloMotif: React.FC<MotifProps> = (props) => (
+  <g {...props}>
+    <ellipse cx="8" cy="8.5" rx="6.5" ry="5.5" fill="#cddc6a" />
+    <ellipse cx="6" cy="6.5" rx="2" ry="1.4" fill="#e3ec9a" opacity="0.7" />
+    <path d="M8 3q3-3 6-1-3 1-6 1z" fill="#3f9a63" />
+  </g>
+);
+
+/** Lunar New Year's drum, red with gold studs, and its sticks: 24 × 18. The sticks take
+ *  `sticksClassName` so they can beat. */
+export const DrumMotif: React.FC<MotifProps & { sticksClassName?: string }> = ({ sticksClassName, ...props }) => (
+  <g {...props}>
+    <path d="M3 6h18v8q-9 3-18 0z" fill="#d8232a" />
+    <ellipse cx="12" cy="6" rx="9" ry="3" fill="#f5e6c8" stroke="#d9a83f" strokeWidth="0.8" />
+    <g fill="#f2c14e">
+      <circle cx="5" cy="9" r="0.7" />
+      <circle cx="8" cy="10" r="0.7" />
+      <circle cx="12" cy="10.5" r="0.7" />
+      <circle cx="16" cy="10" r="0.7" />
+      <circle cx="19" cy="9" r="0.7" />
+    </g>
+    <path className={sticksClassName} d="M6 5l-4-4M18 5l4-4" stroke="#7a4e2a" strokeWidth="1.2" strokeLinecap="round" />
+    <path d="M4 18v-3M20 18v-3" stroke="#7a4e2a" strokeWidth="1.4" />
+  </g>
+);
+
 /* ---------- what walks the floor ---------- */
 
 /** The floor's walkers, one a festival, drawn side-on and facing right: the legs are in

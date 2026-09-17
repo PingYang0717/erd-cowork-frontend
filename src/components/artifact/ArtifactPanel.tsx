@@ -3,7 +3,7 @@ import { AppstoreOutlined, CheckOutlined, ExportOutlined, ReloadOutlined, ShareA
 
 import { isNotFound } from '@/api/apiError';
 import Tooltip from '@/components/common/Tooltip';
-import { EmptyPorthole } from '@/components/layouts/EmptyStateFestive';
+import { FestiveFloor, FestiveWeather } from '@/components/layouts/FestiveSurfaces';
 import { useArtifactContent } from '@/hooks/useArtifactContent';
 import { usePublishArtifact } from '@/hooks/useArtifactMutations';
 import { useArtifacts } from '@/hooks/useArtifacts';
@@ -24,23 +24,22 @@ import VersionSwitcher from './VersionSwitcher';
 
 import styles from './ArtifactPanel.module.css';
 
+/** The pane with nothing to show, and around a festival the scene's weather over its
+ *  top and its stretch of the floor along its foot (FestiveSurfaces) — the same floor
+ *  the rail and the empty thread stand on. */
 const EmptyPanel: React.FC = () => {
   const t = useTranslations();
   const festival = useFestival();
 
   return (
     <div className={styles.empty}>
-      {/* The tile steps aside for the porthole during a festival — same move as the
-          thread's empty state, and the pair of windows is what the koi crosses between. */}
-      {festival !== null ? (
-        <EmptyPorthole festival={festival} panel="right" />
-      ) : (
-        <div className={styles.emptyIcon}>
-          <AppstoreOutlined aria-hidden />
-        </div>
-      )}
+      {festival !== null && <FestiveWeather festival={festival} surface="artifact" />}
+      <div className={styles.emptyIcon}>
+        <AppstoreOutlined aria-hidden />
+      </div>
       <p className={styles.emptyHeading}>{t.studio.artifactEmptyHeading}</p>
       <p className={styles.emptyText}>{t.studio.artifactEmptySubtitle}</p>
+      {festival !== null && <FestiveFloor festival={festival} surface="artifact" />}
     </div>
   );
 };

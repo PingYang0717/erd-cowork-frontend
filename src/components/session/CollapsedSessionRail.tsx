@@ -9,11 +9,12 @@ import {
   ThunderboltOutlined,
 } from '@ant-design/icons';
 
+import { FestiveFloor } from '@/components/layouts/FestiveSurfaces';
 import { useFestival } from '@/hooks/useFestival';
 import { useSessionGroups } from '@/hooks/useSessionGroups';
 import { useTranslations } from '@/i18n/useTranslations';
 import { SessionGroup } from './SessionList';
-import { FestiveGround, FestiveString } from './SessionRailFestive';
+import { FestiveString } from './SessionRailFestive';
 
 import styles from './CollapsedSessionRail.module.css';
 
@@ -199,7 +200,7 @@ const CollapsedSessionRail: React.FC<CollapsedSessionRailProps> = ({ onExpand })
             document.body
           )}
       </div>
-      {festival !== null && <FestiveGround festival={festival} compact />}
+      {festival !== null && <FestiveFloor festival={festival} surface="compact" />}
     </div>
   );
 };
