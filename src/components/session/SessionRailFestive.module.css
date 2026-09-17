@@ -1,0 +1,68 @@
+/* The rail's festive echoes (SessionRailFestive). Animation classes come from the
+   header's stylesheet (FestiveDecoration.module.css) so the swing, breath and twinkle
+   here are the same ones, at the same pace. */
+
+/* The hung line in place of the rule under the nav rows. Not stretched: the drawing
+   keeps its proportions and sits centred in the rail's width. */
+.railString {
+  display: block;
+  width: 100%;
+  height: 26px;
+  margin: 2px 0 0;
+  overflow: visible;
+  pointer-events: none;
+}
+
+/* The collapsed rail's short version, in the divider's place. */
+.railStringCompact {
+  flex: none;
+  display: block;
+  width: 36px;
+  height: 16px;
+  margin: 2px 0;
+  overflow: visible;
+  pointer-events: none;
+}
+
+/* The header's weather continued down the rail: over everything at the top, transparent
+   to the pointer, thinning to nothing by its foot so it never reaches the list. */
+.railWeather {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 112px;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 2;
+  opacity: 0.7;
+  mask-image: linear-gradient(180deg, #000 0%, #000 25%, transparent 100%);
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 25%, transparent 100%);
+}
+
+/* The floor: a reserved strip at the rail's foot. */
+.railGround {
+  position: relative;
+  flex: none;
+  height: 40px;
+  margin: 0 6px;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* The collapsed rail's floor: one piece, pushed to the bottom of the column. */
+.railGroundCompact {
+  position: relative;
+  flex: none;
+  width: 36px;
+  height: 32px;
+  margin-top: auto;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.railPiece {
+  position: absolute;
+  bottom: 0;
+  display: block;
+}

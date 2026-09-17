@@ -10,10 +10,12 @@ import {
   ThunderboltOutlined,
 } from '@ant-design/icons';
 
+import { useFestival } from '@/hooks/useFestival';
 import { useSessionGroups } from '@/hooks/useSessionGroups';
 import { useTranslations } from '@/i18n/useTranslations';
 import { usePublishCoachStore } from '@/stores/usePublishCoachStore';
 import type { Session } from '@/types/api/session';
+import { FestiveGround, FestiveString, FestiveWeather } from './SessionRailFestive';
 import SessionRow from './SessionRow';
 
 import styles from './SessionList.module.css';
@@ -130,11 +132,15 @@ const SessionList: React.FC<SessionListProps> = ({ onCollapse, artifactsCount })
   const navigate = useNavigate();
   const location = useLocation();
   const isCoaching = usePublishCoachStore((s) => s.isActive);
+  // Around a festival the rail echoes the header's scene in the three places the mockup
+  // leaves empty (SessionRailFestive); the same switch and calendar as the header.
+  const festival = useFestival();
   const { pinned, recent, draftSessionId, selectedSessionId, selectAndNavigate, createAndNavigate } =
     useSessionGroups();
 
   return (
     <div className={styles.sessionList}>
+      {festival !== null && <FestiveWeather festival={festival} />}
       <div className={styles.topRow}>
         <Button
           type="primary"
@@ -155,7 +161,7 @@ const SessionList: React.FC<SessionListProps> = ({ onCollapse, artifactsCount })
           />
         )}
       </div>
-      <nav className={styles.navShortcuts} aria-label="Shortcuts">
+      <nav className={styles.navShortcuts} aria-label="Shortcuts" data-festive={festival !== null ? 'true' : undefined}>
         {/* The flyout is a sibling, not a child: a button cannot contain buttons, and the
             entry's accessible name must stay "Artifacts" for the coach to be found by. */}
         <div className={styles.navShortcutAnchor}>
@@ -183,6 +189,7 @@ const SessionList: React.FC<SessionListProps> = ({ onCollapse, artifactsCount })
           <ThunderboltOutlined aria-hidden />
           <span className={styles.navShortcutLabel}>{t.session.skills}</span>
         </button>
+        {festival !== null && <FestiveString festival={festival} />}
       </nav>
       <div className={styles.scrollRegion} data-testid="session-scroll">
         <SessionGroup
@@ -200,6 +207,7 @@ const SessionList: React.FC<SessionListProps> = ({ onCollapse, artifactsCount })
           emptyFallback={t.session.noRecents}
         />
       </div>
+      {festival !== null && <FestiveGround festival={festival} />}
     </div>
   );
 };

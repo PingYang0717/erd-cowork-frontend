@@ -115,3 +115,12 @@ bar、旁邊的 Artifact 用瀏覽器原生的粗 bar。現在把同一組規則
 `<head>` 末尾(`injectScrollbarStyle`,跟 CSP 的 `injectCspMeta` 同一條路)。thumb 用中灰
 低透明度而不是主題 token:iframe 讀不到父頁的主題,頁面底色是 agent 自己決定的,而切主題就
 重灌 iframe 會把 dashboard 打掉重來。
+
+**2026-09-17 追記:Session 列表呼應 header 的節慶裝飾。** 同一段日期、同一個開關,列表在三個
+設計稿留白的位置接上 header 的畫(`SessionRailFestive`):Artifacts／Skills 下面那條分隔線換成
+header 頂端的掛串(同一組燈籠、三角旗、小燈泡、紅燈籠,縮小,擺動相位跟上面同步);header 天上落
+的東西(雪、梅花瓣;中秋的天燈是往上升)從列表頂端接著落,112px 內淡到沒有;列表最底下保留 40px
+放幾件 header 近景的靜物。萬聖節 header 沒有東西在落,列表也就沒有。地面那一塊是唯一佔空間的:
+刻意保留而不是畫在列後面,列滾過雪人看起來像壞掉。收合的窄欄只有短掛串和一件靜物。圖案是
+`festiveMotifs` 裡的同一組路徑,header 自己的場景仍保留手擺的內嵌版本。原則不變:只用空著的
+地方、不移動設計稿元件、落地的東西不動。

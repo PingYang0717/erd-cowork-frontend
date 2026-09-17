@@ -9,9 +9,11 @@ import {
   ThunderboltOutlined,
 } from '@ant-design/icons';
 
+import { useFestival } from '@/hooks/useFestival';
 import { useSessionGroups } from '@/hooks/useSessionGroups';
 import { useTranslations } from '@/i18n/useTranslations';
 import { SessionGroup } from './SessionList';
+import { FestiveGround, FestiveString } from './SessionRailFestive';
 
 import styles from './CollapsedSessionRail.module.css';
 
@@ -23,6 +25,9 @@ const CollapsedSessionRail: React.FC<CollapsedSessionRailProps> = ({ onExpand })
   const t = useTranslations();
   const navigate = useNavigate();
   const location = useLocation();
+  // The narrow rail's share of the festive echoes: the line in the divider's place and
+  // one piece on the floor. No weather — there is no room for it to thin out in.
+  const festival = useFestival();
   const { pinned, recent, draftSessionId, selectedSessionId, selectAndNavigate, createAndNavigate } =
     useSessionGroups();
 
@@ -102,7 +107,7 @@ const CollapsedSessionRail: React.FC<CollapsedSessionRailProps> = ({ onExpand })
       >
         <MenuUnfoldOutlined aria-hidden />
       </button>
-      <div className={styles.divider} />
+      {festival !== null ? <FestiveString festival={festival} compact /> : <div className={styles.divider} />}
       <button
         type="button"
         className={styles.primaryTile}
@@ -194,6 +199,7 @@ const CollapsedSessionRail: React.FC<CollapsedSessionRailProps> = ({ onExpand })
             document.body
           )}
       </div>
+      {festival !== null && <FestiveGround festival={festival} compact />}
     </div>
   );
 };

@@ -1,4 +1,6 @@
 .sessionList {
+  /* For the festive weather layer, which is placed against this box's top. */
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -114,6 +116,13 @@
   margin: 4px 0 0;
   padding: 2px 0 10px;
   border-bottom: 1px solid var(--erd-color-border-secondary, #f0f0f0);
+}
+
+/* Around a festival the rule becomes the hung line (SessionRailFestive), which brings
+   its own height. */
+.navShortcuts[data-festive='true'] {
+  padding-bottom: 0;
+  border-bottom: none;
 }
 
 /* The mockup's nav rows: quieter secondary text with tertiary fs16 icons

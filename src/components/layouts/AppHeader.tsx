@@ -4,11 +4,11 @@ import { MoonOutlined, SunOutlined, UserOutlined } from '@ant-design/icons';
 
 import EmployeeAvatar from '@/components/common/EmployeeAvatar';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
+import { useFestival } from '@/hooks/useFestival';
 import { useTranslations } from '@/i18n/useTranslations';
 import { useFestiveStore } from '@/stores/useFestiveStore';
 import { useLanguageStore } from '@/stores/useLanguageStore';
 import { useThemeStore } from '@/stores/useThemeStore';
-import { currentFestival } from '@/utils/festival';
 import FestiveDecoration, { LuckyCap, PumpkinBehind, PumpkinTeeth, SantaHat } from './FestiveDecoration';
 
 import styles from './AppHeader.module.css';
@@ -33,10 +33,11 @@ import styles from './AppHeader.module.css';
  *  initial would be a value invented at runtime (ADR-0006).
  *
  *  Around a festival the bar dresses up (CONTEXT.md, 節慶裝飾): a small scene in the
- *  empty middle, and the avatar in a hat or, at Halloween, a pumpkin. The one thing on
- *  screen the design does not draw — recorded as a deliberate exception in ADR-0002 —
- *  and the one preference here that is not about the interface's language or colour:
- *  the third row switches it off for whoever would rather not. */
+ *  empty middle, and the avatar in a hat or, at Halloween, a pumpkin; the session rail
+ *  echoes it (SessionRailFestive). The one thing on screen the design does not draw —
+ *  recorded as a deliberate exception in ADR-0002 — and the one preference here that is
+ *  not about the interface's language or colour: the third row switches it off for
+ *  whoever would rather not. */
 const AppHeader: React.FC = () => {
   const user = useCurrentUser();
   const t = useTranslations();
@@ -49,6 +50,9 @@ const AppHeader: React.FC = () => {
 
   const festiveEnabled = useFestiveStore((state) => state.enabled);
   const setFestiveEnabled = useFestiveStore((state) => state.setEnabled);
+
+  // The same answer the session rail gets, so the two dress up and undress together.
+  const festival = useFestival();
 
   const triggerRef = useRef<HTMLButtonElement>(null);
 
@@ -68,11 +72,6 @@ const AppHeader: React.FC = () => {
       triggerRef.current?.focus();
     }
   }, []);
-
-  // Read per render rather than memoised: a preview key set in devtools should show on
-  // the next paint, and the calendar check is a handful of date arithmetic. The switch
-  // comes first: off means off, whatever the calendar or a preview key says.
-  const festival = festiveEnabled ? currentFestival() : null;
 
   const panel = (
     <div className={styles.panel} onKeyDown={handleKeyDown}>
