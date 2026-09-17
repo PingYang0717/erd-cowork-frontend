@@ -28,6 +28,19 @@
   top: calc(100% + 6px);
 }
 
+/* Hung from an edge of the trigger instead of centred on it, when centred would run out
+   of the pane (the toolbar's last button, the rail's first). */
+.tipAlignRight {
+  left: auto;
+  right: 0;
+  transform: none;
+}
+
+.tipAlignLeft {
+  left: 0;
+  transform: none;
+}
+
 @keyframes tip-fade-in {
   from {
     opacity: 0;

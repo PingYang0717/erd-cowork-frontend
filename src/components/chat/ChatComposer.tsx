@@ -13,6 +13,7 @@ import {
   PlusOutlined,
 } from '@ant-design/icons';
 
+import Tooltip from '@/components/common/Tooltip';
 import ConnectorsPanel from '@/components/connectors/ConnectorsPanel';
 import AttachmentChip from '@/components/files/AttachmentChip';
 import FileAttachmentModal from '@/components/files/FileAttachmentModal';
@@ -186,14 +187,18 @@ const ChatComposer: React.FC<ChatComposerProps> = ({ sessionId, onSend, disabled
                 {
                   key: 'attach',
                   disabled: attachBlocked,
-                  label: (
+                  // Why it is off rides a tooltip on the row rather than a line under
+                  // the name: the rule is still learned here, at the moment it applies,
+                  // and the row keeps the mockup's one-line shape. The hover lands on
+                  // the label span — antd's disabled row still passes pointer events to
+                  // its children, only its own `<a>` is inert.
+                  label: attachBlocked ? (
+                    <Tooltip content={t.composer.attachBlockedByConnectors} wrapperClassName={styles.menuItemLabel}>
+                      <span className={styles.menuItemText}>{t.composer.attachFiles}</span>
+                    </Tooltip>
+                  ) : (
                     <span className={styles.menuItemLabel}>
-                      <span className={styles.menuItemText}>
-                        {t.composer.attachFiles}
-                        {attachBlocked && (
-                          <span className={styles.menuItemHint}>{t.composer.attachBlockedByConnectors}</span>
-                        )}
-                      </span>
+                      <span className={styles.menuItemText}>{t.composer.attachFiles}</span>
                     </span>
                   ),
                   icon: <FileAddOutlined aria-hidden />,
@@ -201,14 +206,13 @@ const ChatComposer: React.FC<ChatComposerProps> = ({ sessionId, onSend, disabled
                 {
                   key: 'connectors',
                   disabled: connectorsBlocked,
-                  label: (
+                  label: connectorsBlocked ? (
+                    <Tooltip content={t.composer.connectorsBlockedByFiles} wrapperClassName={styles.menuItemLabel}>
+                      <span className={styles.menuItemText}>{t.composer.connectors}</span>
+                    </Tooltip>
+                  ) : (
                     <span className={styles.menuItemLabel}>
-                      <span className={styles.menuItemText}>
-                        {t.composer.connectors}
-                        {connectorsBlocked && (
-                          <span className={styles.menuItemHint}>{t.composer.connectorsBlockedByFiles}</span>
-                        )}
-                      </span>
+                      <span className={styles.menuItemText}>{t.composer.connectors}</span>
                       {connectedConnectorCount > 0 && (
                         <span className={styles.menuItemBadge} aria-hidden="true">
                           {connectedConnectorCount}

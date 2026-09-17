@@ -81,6 +81,45 @@ describe('Tooltip', () => {
     expect((await screen.findByRole('tooltip')).className).toContain(styles.tipBelow);
   });
 
+  /** The toolbar's last button sits against the pane's right edge. Centred there, the
+   *  tip ran off the pane — and off the screen with it — so it hangs from the trigger's
+   *  right edge instead. Rects are stated per element: the pane and the trigger by a
+   *  data attribute, the tip by its role, since it exists only once open. */
+  it('hangs from the right edge when centring would run out of the pane', async () => {
+    const user = userEvent.setup();
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+      const rect = this.getAttribute('role') === 'tooltip' ? '0,120,0' : (this.dataset.rect ?? '0,0,400');
+      const [left, width, top] = rect.split(',').map(Number);
+      return {
+        top,
+        bottom: top + 32,
+        left,
+        right: left + width,
+        width,
+        height: 32,
+        x: left,
+        y: top,
+        toJSON: () => ({}),
+      };
+    });
+    render(
+      <div data-rect="0,300,0" style={{ overflow: 'hidden' }}>
+        <Tooltip content="在新分頁開啟預覽">
+          <button type="button">O</button>
+        </Tooltip>
+      </div>
+    );
+    const trigger = screen.getByRole('button', { name: 'O' });
+    // The wrapper span is what is measured: 32px wide, ending 8px short of the pane's edge.
+    (trigger.parentElement as HTMLElement).dataset.rect = '260,32,400';
+
+    await user.hover(trigger);
+
+    const tip = await screen.findByRole('tooltip');
+    await waitFor(() => expect(tip.className).toContain(styles.tipAlignRight));
+    expect(tip.className).not.toContain(styles.tipBelow);
+  });
+
   it('goes away again when the pointer leaves', async () => {
     const user = userEvent.setup();
     placeTriggerAt(400);

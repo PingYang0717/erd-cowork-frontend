@@ -13,7 +13,8 @@ const openPlusMenu = async (user: ReturnType<typeof userEvent.setup>) => {
 
 /** A conversation draws on one kind of data source — Connectors or uploaded files,
  *  never both (CONTEXT.md, 已選來源). The rule is met at the entry: the item for the
- *  other kind greys out and says why, rather than a send failing later. */
+ *  other kind greys out, and says why in a tooltip on the row, rather than a send
+ *  failing later. */
 describe('One kind of data source per conversation', () => {
   beforeEach(() => {
     useStudioLayoutStore.setState(useStudioLayoutStore.getInitialState());
@@ -31,7 +32,10 @@ describe('One kind of data source per conversation', () => {
 
     const attach = screen.getByRole('menuitem', { name: /^Attach files/ });
     expect(attach).toHaveAttribute('aria-disabled', 'true');
-    expect(within(attach).getByText(en.composer.attachBlockedByConnectors)).toBeInTheDocument();
+    // The reason is not on the row; it comes up when the row is hovered.
+    expect(screen.queryByText(en.composer.attachBlockedByConnectors)).not.toBeInTheDocument();
+    await user.hover(within(attach).getByText(en.composer.attachFiles));
+    expect(await screen.findByRole('tooltip')).toHaveTextContent(en.composer.attachBlockedByConnectors);
     // The other kind stays open.
     expect(screen.getByRole('menuitem', { name: /^Connectors/ })).not.toHaveAttribute('aria-disabled', 'true');
   });
@@ -48,14 +52,18 @@ describe('One kind of data source per conversation', () => {
     fireEvent.change(screen.getByLabelText('Choose files'), {
       target: { files: [new File([new Uint8Array(512)], 'lots.csv', { type: 'text/csv' })] },
     });
-    await waitFor(() => expect(within(screen.getByRole('list', { name: 'Attached files' })).getByText('lots.csv')).toBeInTheDocument());
+    await waitFor(() =>
+      expect(within(screen.getByRole('list', { name: 'Attached files' })).getByText('lots.csv')).toBeInTheDocument()
+    );
     await user.click(screen.getByRole('button', { name: 'Done' }));
 
     await openPlusMenu(user);
 
     const connectors = screen.getByRole('menuitem', { name: /^Connectors/ });
     expect(connectors).toHaveAttribute('aria-disabled', 'true');
-    expect(within(connectors).getByText(en.composer.connectorsBlockedByFiles)).toBeInTheDocument();
+    expect(screen.queryByText(en.composer.connectorsBlockedByFiles)).not.toBeInTheDocument();
+    await user.hover(within(connectors).getByText(en.composer.connectors));
+    expect(await screen.findByRole('tooltip')).toHaveTextContent(en.composer.connectorsBlockedByFiles);
     expect(screen.getByRole('menuitem', { name: /^Attach files/ })).not.toHaveAttribute('aria-disabled', 'true');
   });
 });

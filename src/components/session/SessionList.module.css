@@ -39,6 +39,24 @@
   box-shadow: none;
 }
 
+/* The mockup's collapse button beside it: the same 38px height, br9, a plain border in
+   the border colour, secondary text, a 16px icon. antd's default button is 32px with
+   br6 — the two sat in one row at different heights. Doubled specificity as above. */
+.topRow .collapseButton {
+  flex: none;
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  border-radius: 9px;
+  border-color: var(--erd-color-border, #d9d9d9);
+  color: var(--erd-color-text-secondary, rgba(0, 0, 0, 0.65));
+  box-shadow: none;
+}
+
+.topRow .collapseButton :global(.anticon) {
+  font-size: 16px;
+}
+
 /* The mockup's group header block reads pad 12 16 6 overall; the clickable
    variant carries margin 0 6 + br6, so the horizontal padding drops to 10px
    to keep the total inset at 16px. */

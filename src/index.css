@@ -152,3 +152,16 @@ body {
 .erd-composer-menu .ant-dropdown-menu .ant-dropdown-menu-item:not(.ant-dropdown-menu-item-disabled):hover {
   background: var(--erd-color-fill-tertiary, rgba(0, 0, 0, 0.04));
 }
+
+/* Off means visibly off: antd only greys the text a shade. The whole row — words, icon,
+   badge — drops to half strength, and the pointer says no. The reason is a tooltip on
+   the row (ChatComposer). */
+.erd-composer-menu .ant-dropdown-menu .ant-dropdown-menu-item.ant-dropdown-menu-item-disabled,
+.erd-composer-menu
+  .ant-dropdown-menu
+  .ant-dropdown-menu-item.ant-dropdown-menu-item-disabled
+  .ant-dropdown-menu-item-icon {
+  color: var(--erd-color-text-tertiary, rgba(0, 0, 0, 0.45));
+  opacity: 0.55;
+  cursor: not-allowed;
+}

@@ -81,7 +81,7 @@
   align-items: center;
   gap: 6px;
   height: 32px;
-  padding: 0 13px;
+  padding: 0 12px;
   border-radius: 8px;
   border: none;
   cursor: pointer;
@@ -89,6 +89,10 @@
   font-weight: 500;
   background: var(--erd-color-primary, #1677ff);
   color: #fff;
+}
+
+.generateButtonIcon {
+  font-size: 14px;
 }
 
 .generateButton:disabled {

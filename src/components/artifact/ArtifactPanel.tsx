@@ -222,6 +222,9 @@ const ArtifactPanelContent: React.FC<ArtifactPanelContentProps> = ({
             disabled={publishArtifact.isPending}
             onClick={() => setPublishTarget({ artifactId, suggestedTitle: activeEnriched.title })}
           >
+            {/* The mockup leads with the Artifacts icon — the same one the rail's entry
+                wears, which is where publishing puts it. */}
+            <AppstoreOutlined aria-hidden className={styles.generateButtonIcon} />
             {t.artifact.publish}
           </button>
         )}

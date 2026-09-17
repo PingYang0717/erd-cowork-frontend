@@ -147,6 +147,7 @@ const SessionList: React.FC<SessionListProps> = ({ onCollapse, artifactsCount })
         </Button>
         {onCollapse && (
           <Button
+            className={styles.collapseButton}
             icon={<MenuFoldOutlined aria-hidden />}
             onClick={onCollapse}
             title="Collapse session list"

@@ -1,4 +1,4 @@
-import React, { type ReactNode, useEffect, useId, useRef, useState } from 'react';
+import React, { type ReactNode, useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 
 import styles from './Tooltip.module.css';
 
@@ -13,15 +13,24 @@ const SPACE_NEEDED_ABOVE = 34;
  *  on the columns), and the Artifact toolbar's pane starts right under the 56px header —
  *  so measured from the viewport there was "room" above the buttons, and the tip opened
  *  upward into a strip the pane sliced off. It looked like the header covering it. */
-const clippingTop = (element: HTMLElement): number => {
+const clippingBox = (element: HTMLElement): { top: number; left: number; right: number } => {
   for (let node = element.parentElement; node !== null && node !== document.body; node = node.parentElement) {
     const { overflow, overflowX, overflowY } = getComputedStyle(node);
     if ([overflow, overflowX, overflowY].some((value) => value !== '' && value !== 'visible')) {
-      return node.getBoundingClientRect().top;
+      const { top, left, right } = node.getBoundingClientRect();
+      return { top, left, right };
     }
   }
-  return 0;
+  return { top: 0, left: 0, right: window.innerWidth };
 };
+
+const clippingTop = (element: HTMLElement): number => clippingBox(element).top;
+
+/* Sideways, the tip is centred on the trigger unless that would push it out of the
+   clipping box — the toolbar's last button sits against the pane's right edge, and a
+   centred tip there ran off the pane and off the screen with it. */
+/** A little air between the tip and the edge it is kept off. */
+const EDGE_MARGIN = 8;
 
 interface TooltipProps {
   content: string;
@@ -46,10 +55,34 @@ const Tooltip: React.FC<TooltipProps> = ({ content, children, wrapperClassName }
   const wrapperRef = useRef<HTMLSpanElement>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
+  const tipRef = useRef<HTMLSpanElement>(null);
+
   const [open, setOpen] = useState(false);
   const [below, setBelow] = useState(false);
 
   useEffect(() => () => clearTimeout(timerRef.current), []);
+
+  // The tip's width is only known once it is in the DOM, so the sideways check runs
+  // after it opens, before paint: centred by its stylesheet, then hung from an edge if
+  // centred would cross the clipping box. Written straight onto the element — the tip
+  // is unmounted on close, so there is nothing to undo — and as a layout effect so the
+  // centred frame is never seen.
+  useLayoutEffect(() => {
+    const wrapper = wrapperRef.current;
+    const tip = tipRef.current;
+    if (!open || !wrapper || !tip) {
+      return;
+    }
+    const box = clippingBox(wrapper);
+    const anchor = wrapper.getBoundingClientRect();
+    const half = tip.getBoundingClientRect().width / 2;
+    const centre = anchor.left + anchor.width / 2;
+    if (centre + half > box.right - EDGE_MARGIN) {
+      tip.classList.add(styles.tipAlignRight);
+    } else if (centre - half < box.left + EDGE_MARGIN) {
+      tip.classList.add(styles.tipAlignLeft);
+    }
+  }, [open]);
 
   const reveal = () => {
     // Flip below when there is no room above. Every toolbar in this app sits at the
@@ -93,7 +126,12 @@ const Tooltip: React.FC<TooltipProps> = ({ content, children, wrapperClassName }
     >
       {describedChild}
       {open && (
-        <span role="tooltip" id={tipId} className={below ? `${styles.tip} ${styles.tipBelow}` : styles.tip}>
+        <span
+          ref={tipRef}
+          role="tooltip"
+          id={tipId}
+          className={below ? `${styles.tip} ${styles.tipBelow}` : styles.tip}
+        >
           {content}
         </span>
       )}
