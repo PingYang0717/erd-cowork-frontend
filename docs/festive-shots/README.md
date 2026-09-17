@@ -18,7 +18,7 @@
 | 聖誕 | ![](10-floor-behind-composer-christmas.png) |
 | 新年 | ![](11-floor-behind-composer-lunarNewYear.png) |
 
-## 圓窗（第五版）：聖誕老公公、羊年的羊、小幽靈、嫦娥
+## 圓窗（第六版，重畫得細一點）：聖誕老公公、羊年的羊、小幽靈、嫦娥
 
 | | |
 |---|---|
