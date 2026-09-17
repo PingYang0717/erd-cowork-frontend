@@ -3,11 +3,13 @@
    here are the same ones, at the same pace. */
 
 /* The hung line in place of the rule under the nav rows. Not stretched: the drawing
-   keeps its proportions and sits centred in the rail's width. */
+   keeps its proportions and sits centred in the rail's width. Kept shallow — it stands
+   in for a 1px rule, so it may not cost the list much of its height. */
 .railString {
   display: block;
   width: 100%;
-  height: 26px;
+  /* Height comes from the drawing (`depth` in the component): it differs by festival,
+     and the box has to match the viewBox for the line to sit at its own scale. */
   margin: 2px 0 0;
   overflow: visible;
   pointer-events: none;
@@ -60,9 +62,51 @@
   overflow: hidden;
 }
 
+/* What the pieces stand on. Behind everything else on the strip and transparent to the
+   pointer, so a hover and a click still reach the pieces in front of it. Faded out at
+   both ends the way the header's band is, so the floor reads as ground the rail happens
+   to end on rather than a panel drawn under the list. */
+.railBackdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  mask-image: linear-gradient(90deg, transparent 0%, #000 12%, #000 88%, transparent 100%);
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 12%, #000 88%, transparent 100%);
+}
+
+/* The collapsed rail is 36px wide: too narrow to fade at the sides without losing the
+   floor altogether, so it fades upward instead. */
+.railBackdropCompact {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  mask-image: linear-gradient(180deg, transparent 0%, #000 55%, #000 100%);
+  -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 55%, #000 100%);
+}
+
+/* The festival's tint, rising off the floor and gone by the strip's top — the header's
+   sky gradient turned over, because here the colour belongs to the ground. */
+.railWash {
+  position: absolute;
+  inset: 0;
+}
+
+/* The band itself, drawn over a fixed box and stretched to the rail's width. It is a
+   silhouette with no detail small enough for the stretch to show. */
+.railFloor {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
 .railPiece {
   position: absolute;
   bottom: 0;
+  z-index: 1;
   display: block;
   overflow: visible;
   cursor: pointer;

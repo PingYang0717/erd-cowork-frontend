@@ -37,7 +37,9 @@ import fd from '@/components/layouts/FestiveDecoration.module.css';
  *    weather  what falls in the header's sky (snow, plum petals; Mid-Autumn's sky
  *             lanterns rise instead) spills over the rail's top and thins out by 112px,
  *             so the bar and the rail read as one picture rather than two dressed boxes
- *    ground   a 40px strip at the rail's foot with a few of the header's standing pieces
+ *    ground   a 40px strip at the rail's foot: a band of the festival's ground — snow,
+ *             grass, a bank of cloud, swept red-and-gold — with a few of the header's
+ *             standing pieces on it
  *
  *  The ground is the one that costs space: it is reserved, not painted behind the list,
  *  because rows scrolling over a snowman looked like a bug. Halloween has no weather —
@@ -75,6 +77,10 @@ interface Hung {
 interface StringSpec {
   stroke: string;
   strokeOpacity: number;
+  /** How tall the full line's box is: the line's own sag plus the longest thing on it,
+   *  and no more. It stands in for a 1px rule, so every pixel it keeps is a pixel the
+   *  session list does not get — bells and bulbs need less room than lanterns. */
+  depth: number;
   full: Hung[];
   compact: Hung[];
 }
@@ -85,14 +91,15 @@ const STRINGS: Record<Festival, StringSpec> = {
   midAutumn: {
     stroke: 'var(--erd-color-text, rgba(0, 0, 0, 0.88))',
     strokeOpacity: 0.35,
+    depth: 20,
     full: [
-      { at: 0.1, node: <StrungLanternMotif transform="scale(0.62)" /> },
-      { at: 0.25, node: <KnotMotif transform="scale(0.8)" /> },
-      { at: 0.38, node: <StrungLanternMotif transform="scale(0.68)" /> },
-      { at: 0.5, node: <KnotMotif transform="scale(0.8)" /> },
-      { at: 0.62, node: <StrungLanternMotif transform="scale(0.68)" /> },
-      { at: 0.75, node: <KnotMotif transform="scale(0.8)" /> },
-      { at: 0.9, node: <StrungLanternMotif transform="scale(0.62)" /> },
+      { at: 0.1, node: <StrungLanternMotif transform="scale(0.5)" /> },
+      { at: 0.25, node: <KnotMotif transform="scale(0.68)" /> },
+      { at: 0.38, node: <StrungLanternMotif transform="scale(0.54)" /> },
+      { at: 0.5, node: <KnotMotif transform="scale(0.68)" /> },
+      { at: 0.62, node: <StrungLanternMotif transform="scale(0.54)" /> },
+      { at: 0.75, node: <KnotMotif transform="scale(0.68)" /> },
+      { at: 0.9, node: <StrungLanternMotif transform="scale(0.5)" /> },
     ],
     compact: [
       { at: 0.3, node: <StrungLanternMotif transform="scale(0.45)" /> },
@@ -102,13 +109,14 @@ const STRINGS: Record<Festival, StringSpec> = {
   halloween: {
     stroke: 'var(--erd-color-text, rgba(0, 0, 0, 0.88))',
     strokeOpacity: 0.35,
+    depth: 16,
     full: [
       ...[0.06, 0.17, 0.39, 0.5, 0.61, 0.83, 0.94].map((at, i) => ({
         at,
-        node: <FlagMotif color={i % 2 === 0 ? '#ef8a2c' : '#7a5cc6'} transform="scale(0.9)" />,
+        node: <FlagMotif color={i % 2 === 0 ? '#ef8a2c' : '#7a5cc6'} transform="scale(0.8)" />,
       })),
-      { at: 0.28, node: <HangingBatMotif transform="scale(0.8)" /> },
-      { at: 0.72, node: <HangingBatMotif transform="scale(0.8)" /> },
+      { at: 0.28, node: <HangingBatMotif transform="scale(0.7)" /> },
+      { at: 0.72, node: <HangingBatMotif transform="scale(0.7)" /> },
     ],
     compact: [
       { at: 0.3, node: <FlagMotif color="#ef8a2c" transform="scale(0.6)" /> },
@@ -118,15 +126,16 @@ const STRINGS: Record<Festival, StringSpec> = {
   christmas: {
     stroke: '#8a8a96',
     strokeOpacity: 0.5,
+    depth: 17,
     full: [
       ...[0.06, 0.18, 0.3, 0.42, 0.58, 0.7, 0.82, 0.94].map((at, i) => ({
         at,
-        node: <BulbMotif color={LIGHT_COLORS[i % LIGHT_COLORS.length]} transform="scale(0.9)" />,
+        node: <BulbMotif color={LIGHT_COLORS[i % LIGHT_COLORS.length]} transform="scale(0.8)" />,
         twinkle: i % 2 === 0 ? ('early' as const) : ('late' as const),
       })),
-      { at: 0.24, node: <BellMotif transform="scale(0.8)" /> },
-      { at: 0.5, node: <BellMotif transform="scale(0.8)" /> },
-      { at: 0.76, node: <BellMotif transform="scale(0.8)" /> },
+      { at: 0.24, node: <BellMotif transform="scale(0.7)" /> },
+      { at: 0.5, node: <BellMotif transform="scale(0.7)" /> },
+      { at: 0.76, node: <BellMotif transform="scale(0.7)" /> },
     ],
     compact: [
       { at: 0.3, node: <BulbMotif color={LIGHT_COLORS[0]} transform="scale(0.6)" />, twinkle: 'early' },
@@ -136,14 +145,15 @@ const STRINGS: Record<Festival, StringSpec> = {
   lunarNewYear: {
     stroke: '#d9a83f',
     strokeOpacity: 0.6,
+    depth: 20,
     full: [
-      { at: 0.1, node: <RedLanternMotif transform="scale(0.62)" /> },
-      { at: 0.25, node: <TasselMotif transform="scale(0.8)" /> },
-      { at: 0.38, node: <RedLanternMotif transform="scale(0.68)" /> },
-      { at: 0.5, node: <TasselMotif transform="scale(0.8)" /> },
-      { at: 0.62, node: <RedLanternMotif transform="scale(0.68)" /> },
-      { at: 0.75, node: <TasselMotif transform="scale(0.8)" /> },
-      { at: 0.9, node: <RedLanternMotif transform="scale(0.62)" /> },
+      { at: 0.1, node: <RedLanternMotif transform="scale(0.5)" /> },
+      { at: 0.25, node: <TasselMotif transform="scale(0.68)" /> },
+      { at: 0.38, node: <RedLanternMotif transform="scale(0.54)" /> },
+      { at: 0.5, node: <TasselMotif transform="scale(0.68)" /> },
+      { at: 0.62, node: <RedLanternMotif transform="scale(0.54)" /> },
+      { at: 0.75, node: <TasselMotif transform="scale(0.68)" /> },
+      { at: 0.9, node: <RedLanternMotif transform="scale(0.5)" /> },
     ],
     compact: [
       { at: 0.3, node: <RedLanternMotif transform="scale(0.45)" /> },
@@ -160,8 +170,8 @@ const twinkleClass = (phase: Hung['twinkle']): string | undefined =>
 export const FestiveString: React.FC<RailFestiveProps> = ({ festival, compact = false }) => {
   const spec = STRINGS[festival];
   const width = compact ? 36 : 240;
-  const height = compact ? 16 : 26;
-  const sag = compact ? 5 : 10;
+  const height = compact ? 16 : spec.depth;
+  const sag = 5;
   const items = compact ? spec.compact : spec.full;
   return (
     <svg
@@ -221,6 +231,149 @@ export const FestiveWeather: React.FC<{ festival: Festival }> = ({ festival }) =
           </pattern>
         </defs>
         <rect width="100%" height={WEATHER_REACH * 2} fill={`url(#${id})`} opacity="0.85" />
+      </svg>
+    </div>
+  );
+};
+
+const INK = 'var(--erd-color-text, rgba(0, 0, 0, 0.88))';
+
+interface Backdrop {
+  /** The tint rising off the floor: the header's sky gradient for this festival, turned
+   *  over, because down here the colour belongs to the ground rather than the sky. */
+  wash: string;
+  /** The band the pieces stand on, drawn over 240×40 and stretched to the rail's width. */
+  band: React.ReactNode;
+  /** The collapsed rail's 36px version: the same band with nothing standing on it. */
+  compactBand: React.ReactNode;
+}
+
+/** A flat crust for the narrow rail, in the band's colours. */
+const compactCrust = (fill: string, opacity: number, edge?: string): React.ReactNode => (
+  <>
+    <path d="M0 40V30c8-3 16-3 24 0l16 2v8z" fill={fill} opacity={opacity} />
+    {edge !== undefined && (
+      <path d="M0 30c8-3 16-3 24 0l16 2" fill="none" stroke={edge} strokeWidth="1" opacity="0.7" />
+    )}
+  </>
+);
+
+/** What the floor is made of, per festival. Each is the near end of the header's scene:
+ *  Christmas's snow, Halloween's grave grass, Mid-Autumn's bank of cloud at the water's
+ *  edge, New Year's swept red-and-gold ground. */
+const BACKDROPS: Record<Festival, Backdrop> = {
+  christmas: {
+    wash: 'linear-gradient(180deg, rgba(60, 100, 170, 0) 0%, rgba(60, 100, 170, 0.05) 55%, rgba(60, 100, 170, 0.12) 100%)',
+    band: (
+      <>
+        <path
+          d="M0 40V28c18-5 34-4 52 1 16 4 30 3 46-2 20-6 40-5 60 2 16 5 32 4 48-2 12-4 24-5 34-3V40z"
+          fill="#fff"
+          opacity="0.92"
+        />
+        <path
+          d="M0 28c18-5 34-4 52 1 16 4 30 3 46-2 20-6 40-5 60 2 16 5 32 4 48-2 12-4 24-5 34-3"
+          fill="none"
+          stroke="#cdd6e6"
+          strokeWidth="0.9"
+          opacity="0.8"
+        />
+        {/* two drifts banked a little higher than the rest */}
+        <path d="M66 40v-6c10-4 20-4 30 1v5z" fill="#fff" opacity="0.5" />
+        <path d="M176 40v-5c9-3 18-3 26 1v4z" fill="#fff" opacity="0.5" />
+      </>
+    ),
+    compactBand: compactCrust('#fff', 0.92, '#cdd6e6'),
+  },
+  halloween: {
+    wash: 'linear-gradient(180deg, rgba(96, 52, 140, 0) 0%, rgba(96, 52, 140, 0.05) 55%, rgba(96, 52, 140, 0.13) 100%)',
+    band: (
+      <>
+        <path
+          d="M0 40V30c20-4 38-3 56 2 18 5 34 4 52-2 20-6 40-4 58 3 16 6 30 5 44-1l30-2V40z"
+          fill={INK}
+          opacity="0.28"
+        />
+        {/* grass gone over, the way it is around the header's headstones */}
+        <g fill="none" stroke={INK} strokeWidth="1" strokeLinecap="round" opacity="0.3">
+          <path d="M28 40c1-4 0-6-2-8M33 40c0-4 2-6 5-7M38 40c-1-3-1-5 1-7" />
+          <path d="M128 40c1-4 0-6-2-8M133 40c0-4 2-6 5-7M138 40c-1-3-1-5 1-7" />
+          <path d="M206 40c1-4 0-6-2-8M211 40c0-4 2-6 5-7" />
+        </g>
+      </>
+    ),
+    compactBand: compactCrust(INK, 0.28),
+  },
+  midAutumn: {
+    wash: 'linear-gradient(180deg, rgba(44, 52, 128, 0) 0%, rgba(44, 52, 128, 0.05) 55%, rgba(44, 52, 128, 0.12) 100%)',
+    band: (
+      <>
+        <path
+          d="M0 40V31a10 10 0 0 1 18-4 12 12 0 0 1 22-2 9 9 0 0 1 16 3 13 13 0 0 1 24-1 8 8 0 0 1 14 2 11 11 0 0 1 20-3 10 10 0 0 1 18 3 12 12 0 0 1 22-1 9 9 0 0 1 16 2 10 10 0 0 1 18 2 8 8 0 0 1 12 1V40z"
+          fill={INK}
+          opacity="0.18"
+        />
+        {/* reeds at the water's edge, the same ones the header's mid layer carries */}
+        <g fill="none" stroke={INK} strokeWidth="0.9" strokeLinecap="round" opacity="0.28">
+          <path d="M60 40c1-5 0-8-2-11M64 40c0-5 2-7 5-9M68 40c-1-4-1-7 1-10" />
+          <path d="M168 40c1-5 0-8-2-11M172 40c0-5 2-7 5-9" />
+        </g>
+        <g fill={INK} opacity="0.28">
+          <ellipse cx="58" cy="29" rx="1" ry="2.4" />
+          <ellipse cx="69" cy="30.5" rx="1" ry="2.4" />
+          <ellipse cx="166" cy="29" rx="1" ry="2.4" />
+        </g>
+      </>
+    ),
+    compactBand: compactCrust(INK, 0.18),
+  },
+  lunarNewYear: {
+    wash: 'linear-gradient(180deg, rgba(200, 40, 50, 0) 0%, rgba(200, 40, 50, 0.04) 55%, rgba(200, 40, 50, 0.11) 100%)',
+    band: (
+      <>
+        <path
+          d="M0 40V30c22-4 42-3 62 2 18 5 34 4 52-2 22-6 42-3 60 4 16 6 32 5 46-1l20-2V40z"
+          fill="#d9a83f"
+          opacity="0.3"
+        />
+        <path
+          d="M0 30c22-4 42-3 62 2 18 5 34 4 52-2 22-6 42-3 60 4 16 6 32 5 46-1l20-2"
+          fill="none"
+          stroke="#c8282f"
+          strokeWidth="0.9"
+          opacity="0.35"
+        />
+        {/* spent firecracker paper and a few plum petals come to rest on the ground */}
+        <g fill="#c8282f" opacity="0.4">
+          <ellipse cx="44" cy="36" rx="2.4" ry="1.2" transform="rotate(-12 44 36)" />
+          <ellipse cx="96" cy="37" rx="2" ry="1" transform="rotate(8 96 37)" />
+          <ellipse cx="150" cy="35" rx="2.6" ry="1.2" transform="rotate(-6 150 35)" />
+          <ellipse cx="204" cy="37" rx="2" ry="1" transform="rotate(14 204 37)" />
+        </g>
+      </>
+    ),
+    compactBand: compactCrust('#d9a83f', 0.3, '#c8282f'),
+  },
+};
+
+/** The ground under the strip: the tint and the band, behind the pieces and out of the
+ *  pointer's way. Without it the pieces stood on nothing — the rail's own background. */
+const FestiveGroundBackdrop: React.FC<RailFestiveProps> = ({ festival, compact = false }) => {
+  const backdrop = BACKDROPS[festival];
+  return (
+    <div
+      className={compact ? styles.railBackdropCompact : styles.railBackdrop}
+      aria-hidden
+      data-festive-ground="backdrop"
+    >
+      <div className={styles.railWash} style={{ background: backdrop.wash }} />
+      <svg
+        className={styles.railFloor}
+        viewBox={compact ? '0 0 40 40' : '0 0 240 40'}
+        preserveAspectRatio="none"
+        aria-hidden
+      >
+        {compact ? backdrop.compactBand : backdrop.band}
       </svg>
     </div>
   );
@@ -416,6 +569,7 @@ export const FestiveGround: React.FC<RailFestiveProps> = ({ festival, compact = 
 
   return (
     <div className={compact ? styles.railGroundCompact : styles.railGround} aria-hidden data-festive-rail="ground">
+      <FestiveGroundBackdrop festival={festival} compact={compact} />
       {!compact && (
         <div
           className={fd.crossTrack}

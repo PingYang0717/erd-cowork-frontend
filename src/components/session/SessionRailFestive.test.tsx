@@ -53,6 +53,24 @@ describe('Session rail festive echoes', () => {
     expect(screen.getByRole('button', { name: 'Skills' })).toBeInTheDocument();
   });
 
+  it('gives the floor its ground, behind the pieces and out of the pointer’s way', async () => {
+    localStorage.setItem(FESTIVAL_PREVIEW_STORAGE_KEY, 'christmas');
+    const user = userEvent.setup();
+    renderStudio();
+    await screen.findByRole('button', { name: 'New chat' });
+
+    const ground = document.querySelector('[data-festive-rail="ground"]')!;
+    const backdrop = ground.querySelector('[data-festive-ground="backdrop"]')!;
+    expect(backdrop).toBeInTheDocument();
+    // It is drawn first, so every piece stands in front of it.
+    expect(ground.firstElementChild).toBe(backdrop);
+    expect(backdrop).toHaveAttribute('aria-hidden', 'true');
+
+    await user.click(screen.getByRole('button', { name: 'Collapse session list' }));
+    await screen.findByRole('button', { name: 'Expand session list' });
+    expect(document.querySelector('[data-festive-ground="backdrop"]')).toBeInTheDocument();
+  });
+
   it('has no weather for Halloween, whose sky drops nothing either', async () => {
     localStorage.setItem(FESTIVAL_PREVIEW_STORAGE_KEY, 'halloween');
     renderStudio();
