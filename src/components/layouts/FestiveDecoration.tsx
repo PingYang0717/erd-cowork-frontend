@@ -1096,6 +1096,21 @@ const Firework: React.FC<{ left: string; top: number; size: number; color: strin
   </svg>
 );
 
+/** The dragon's body: seven hoops, each overlapping its neighbour by about half, on four
+ *  poles. Long and slim rather than short and thick — at this size four fat hoops read as
+ *  a prawn, and what makes a dragon legible here is the length of the ribbon and the wave
+ *  running down it, not a face 20px tall. One lift period (1.6s) is split nine ways (tail,
+ *  seven hoops, head), so the wave reaches each hoop a ninth later than the one behind it.
+ */
+const DRAGON_HOOPS = [18, 28, 38, 48, 58, 68, 78].map((x, i) => ({
+  x,
+  delay: -((i + 1) * 0.178),
+  pole: i % 2 === 0,
+}));
+
+/** The dancers under the poles, on the same phase as the hoop each one carries. */
+const DRAGON_POLES = DRAGON_HOOPS.filter((hoop) => hoop.pole);
+
 const LunarNewYear: React.FC = () => (
   <>
     <div
@@ -1167,60 +1182,83 @@ const LunarNewYear: React.FC = () => (
       </g>
     </PatternLayer>
 
-    {/* the traveller: the troupe down the street — the lion leading, the dragon behind it
-        rising and dipping over the dancers' poles.
+    {/* the traveller: the troupe down the street — the lion leading, the dragon behind it.
 
-        The dragon used to make the whole crossing on its own, five humps of it, and at
-        this size that is not a dragon: it is 150px of red squiggle with a head somewhere
-        at the end. Cut to three humps it reads as a body being carried, and the room that
-        frees goes to the lion — which survives being small far better, having a face. The
-        pair is also what a New Year street actually has in it. */}
-    <Traveller top={56 - 26} width={160} height={26} viewBox="0 0 200 32" duration={56} delay={-12}>
-      {/* the dancers and their poles, in silhouette like every other figure */}
-      <g fill={INK} opacity="0.62">
-        <path d="M44 20v12M74 20v12M104 20v12" stroke={INK} strokeWidth="1.2" />
-        <path d="M40 32v-5l2-3h4l2 3v5zM70 32v-5l2-3h4l2 3v5zM100 32v-5l2-3h4l2 3v5z" />
-        <circle cx="44" cy="22" r="2" />
-        <circle cx="74" cy="22" r="2" />
-        <circle cx="104" cy="22" r="2" />
-      </g>
-      {/* the dragon itself in its own colours — red body, gold belly and horns — the one
-          near piece that is the festival, and would be lost as a grey ribbon */}
-      <path
-        d="M14 20c10-14 20-14 30 0s20 14 30 0 20-14 30 0l-2 4c-10-11-18-11-28 0s-20 11-30 0-20-11-30 0z"
-        fill="#d8232a"
-      />
-      <path
-        d="M16 21c10-12 18-12 28 0s18 12 28 0 18-12 28 0"
-        fill="none"
-        stroke="#f2c14e"
-        strokeWidth="1"
-        strokeDasharray="2 3"
-        opacity="0.9"
-      />
-      <path d="M104 20l6-8 10-2 8 2 6 6-4 2-2 4-6-2-8 3-6-1z" fill="#d8232a" />
-      <path d="M116 10l-2-6 3 1 2 5zM124 10l3-6 1 4-2 3z" fill="#f2c14e" />
-      <path d="M130 18l8 2-1 1.4-7-2zM130 20.5l7 4-.8 1.2-6.6-3.8z" fill="#f2c14e" />
-      <path d="M14 20l-8-6 2 7-6-2 5 5-7 1 8 2z" fill="#f2c14e" />
-      <circle cx="124" cy="15" r="1.3" fill="#fff" />
-      <circle cx="124.4" cy="15" r="0.7" fill="#2b2b33" />
-      {/* the lion out in front, the same drawing the rail's floor walks (`LionWalker`):
-          two dancers under a cloth body, the head with its mane and gold trim. Its legs
-          do not swing here — the header's travellers cross without walking, and the
-          dragon's own dancers beside it stand still too. */}
-      <g transform="translate(146 2) scale(1.15)">
-        <g fill={INK}>
-          <path d="M8 18l-1 8h2.5l1-8zM24 18l-1 8h2.5l1-8z" />
-          <path d="M13 18l-1 8h2.5l1-8zM29 18l-1 8h2.5l1-8z" />
+        The body is a row of hoops that overlap by about half, not a chain of separate
+        pieces: at this size separate pieces read as four lanterns on sticks, which is
+        exactly what the string above the band already is. Overlapped, they hold one
+        silhouette however far apart the wave has pushed them, and the gold ridge along
+        the top is what makes that silhouette a dragon rather than a caterpillar. Each
+        hoop enters the same lift a phase later than the one behind it, so the wave runs
+        forwards; the amplitude has to be worth seeing at 29px tall, so it is most of a
+        hoop's height. */}
+    <Traveller top={56 - 29} width={170} height={29} viewBox="0 0 200 36" duration={56} delay={-12}>
+      {/* the dancers, in silhouette like every other figure, bouncing on the same beat as
+          the hoop they carry — a fraction of its height, their feet being on the street */}
+      {DRAGON_POLES.map(({ x, delay }) => (
+        <g key={`d${x}`} className={styles.dragonStep} style={{ animationDelay: `${delay}s` }}>
+          <g fill={INK} stroke={INK} opacity="0.5">
+            <path d={`M${x - 1.7} 36v-5.5M${x + 1.7} 36v-5.5`} strokeWidth="1.5" strokeLinecap="round" />
+            <path d={`M${x - 2.6} 31v-5q0-2.2 2.6-2.2t2.6 2.2v5z`} stroke="none" />
+            <circle cx={x} cy="21.6" r="2" stroke="none" />
+          </g>
         </g>
-        <path d="M4 20q8-8 16-6 6 2 10 0v6z" fill="#d8232a" />
-        <path d="M6 18q7-6 14-4" fill="none" stroke="#f2c14e" strokeWidth="1" strokeDasharray="2 2" />
-        <path d="M22 16q-2-10 7-11 8 0 7 9l-2 3H24z" fill="#d8232a" />
-        <path d="M23 8l-3-4 5 1zM28 4l1-4 2 4zM33 5l3-3-1 5z" fill="#f2c14e" />
-        <path d="M24 16h12l-1 3H25z" fill="#f2c14e" />
-        <circle cx="31" cy="10" r="1.8" fill="#fff" />
-        <circle cx="31.4" cy="10" r="0.9" fill="#2b2b33" />
-        <circle cx="36" cy="12" r="1.2" fill="#f2c14e" />
+      ))}
+
+      {/* the tail, the hoops and the head — the one near piece that is the festival, in
+          its own red and gold, and would be lost as a grey ribbon */}
+      <g className={styles.dragonLift} style={{ animationDelay: '0s' }}>
+        <path d="M12 13l-8-6 1.3 6-6-1.7 4.4 4.4-5.3 1.7 7 1.8 6.6.8z" fill="#f2c14e" />
+      </g>
+      {DRAGON_HOOPS.map(({ x, delay, pole }) => (
+        <g key={x} className={styles.dragonLift} style={{ animationDelay: `${delay}s` }}>
+          {pole && <path d={`M${x} 13V28`} stroke={INK} strokeWidth="0.9" opacity="0.45" />}
+          <ellipse cx={x} cy="13" rx="8" ry="6.8" fill="#d8232a" />
+          <ellipse cx={x} cy="13" rx="8" ry="2.6" fill="#f04a4f" opacity="0.55" />
+          <path d={`M${x - 3} 6.6l3-3 3 3z`} fill="#f2c14e" />
+        </g>
+      ))}
+      <g className={styles.dragonLift} style={{ animationDelay: '-1.602s' }}>
+        <g transform="translate(76 3) scale(0.82)">
+          {/* the mane the head sits in front of, a gold sawtooth over the body's joint */}
+          <path d="M2 6l5 4-4 3 5 3-4 3 5 3-4 3V6z" fill="#f2c14e" />
+          {/* the skull: blunt at the front, because a muzzle that tapers to a point is a
+              beak, and one eye over a taper is a bird */}
+          <path d="M6 13q0-11 13-11 14 0 17 8v5h-2v4q-4 6-15 6-13 0-13-12z" fill="#d8232a" />
+          {/* the open jaw, and the gold fringe along it */}
+          <path d="M22 19h14q-2 6-9 6-5 0-5-4z" fill="#a01319" />
+          <path d="M22 19h14l-1 2H22z" fill="#f2c14e" />
+          <path d="M30 22q3 1 4 3-3 1-4-3z" fill="#e0454f" />
+          {/* antlers, swept back over the mane */}
+          <path d="M14 2.5l-6-7 1 5-4-2 4 5zM21 1.5l-2-7 4 4 1-3 1 6z" fill="#f2c14e" />
+          {/* the eye, set high and large, with a gold brow over it */}
+          <path d="M22 6q4-2 8 1" fill="none" stroke="#f2c14e" strokeWidth="1.6" strokeLinecap="round" />
+          <circle cx="26" cy="11" r="3.2" fill="#fff" />
+          <circle cx="27" cy="11" r="1.6" fill="#2b2b33" />
+          {/* whiskers, low and thin so they read as whiskers and not as a bill */}
+          <path d="M36 15l7 2.5M36 17l6 5" stroke="#f2c14e" strokeWidth="1.1" strokeLinecap="round" opacity="0.9" />
+        </g>
+      </g>
+
+      {/* the lion out in front, the same drawing the rail's floor walks (`LionWalker`),
+          bigger here because it leads: the body hops, the head swings, the legs step */}
+      <g transform="translate(112 3.5) scale(1.25)">
+        <g fill={INK}>
+          <path className={styles.lionLegA} d="M8 19l-1 7h3l1-7zM24 19l-1 7h3l1-7z" />
+          <path className={styles.lionLegB} d="M13 19l-1 7h3l1-7zM29 19l-1 7h3l1-7z" />
+        </g>
+        <g className={styles.lionHop}>
+          <path d="M4 20q8-8 16-6 6 2 10 0v6z" fill="#d8232a" />
+          <path d="M6 18q7-6 14-4" fill="none" stroke="#f2c14e" strokeWidth="1" strokeDasharray="2 2" />
+          <g className={styles.lionNod}>
+            <path d="M22 16q-2-10 7-11 8 0 7 9l-2 3H24z" fill="#d8232a" />
+            <path d="M23 8l-3-4 5 1zM28 4l1-4 2 4zM33 5l3-3-1 5z" fill="#f2c14e" />
+            <path d="M24 16h12l-1 3H25z" fill="#f2c14e" />
+            <circle cx="31" cy="10" r="1.8" fill="#fff" />
+            <circle cx="31.4" cy="10" r="0.9" fill="#2b2b33" />
+            <circle cx="36" cy="12" r="1.2" fill="#f2c14e" />
+          </g>
+        </g>
       </g>
     </Traveller>
 

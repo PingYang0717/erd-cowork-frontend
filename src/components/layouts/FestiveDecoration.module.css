@@ -250,6 +250,93 @@
   }
 }
 
+/* The New Year troupe. A dragon dance is the body rippling on its poles — a long shape
+   sliding past is a parade float, not a dance — so each pole unit plays the same lift at a
+   later phase and the wave travels from the tail up to the head. The dancers under them
+   bounce on the same beat at a fraction of the height (their feet are on the street), and
+   the lion out in front hops, nods and steps. All of it runs on the drum's tempo, which
+   has nothing to do with how long the crossing takes. */
+.dragonLift {
+  transform-box: fill-box;
+  animation: dragon-lift 1.6s ease-in-out infinite;
+}
+
+.dragonStep {
+  transform-box: fill-box;
+  animation: dragon-step 1.6s ease-in-out infinite;
+}
+
+.lionHop {
+  transform-box: fill-box;
+  animation: lion-hop 1.1s ease-in-out infinite;
+}
+
+.lionNod {
+  transform-box: fill-box;
+  transform-origin: 15% 100%;
+  animation: lion-nod 1.1s ease-in-out infinite;
+}
+
+.lionLegA,
+.lionLegB {
+  transform-box: fill-box;
+  transform-origin: 50% 0;
+  animation: lion-step 0.55s ease-in-out infinite alternate;
+}
+
+.lionLegB {
+  animation-direction: alternate-reverse;
+}
+
+@keyframes dragon-lift {
+  0%,
+  100% {
+    transform: translateY(3.5px);
+  }
+  50% {
+    transform: translateY(-4.5px);
+  }
+}
+
+@keyframes dragon-step {
+  0%,
+  100% {
+    transform: translateY(1.2px);
+  }
+  50% {
+    transform: translateY(-1.2px);
+  }
+}
+
+@keyframes lion-hop {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-1.8px);
+  }
+}
+
+@keyframes lion-nod {
+  0%,
+  100% {
+    transform: rotate(-5deg);
+  }
+  50% {
+    transform: rotate(6deg);
+  }
+}
+
+@keyframes lion-step {
+  from {
+    transform: rotate(-15deg);
+  }
+  to {
+    transform: rotate(15deg);
+  }
+}
+
 /* No `prefers-reduced-motion` rule, on purpose (2026-09-15). The decoration used to go
    still under it, and on the machine it was built on the browser reported `reduce`
    with the system setting off and no source anyone could find — so the rule read as
