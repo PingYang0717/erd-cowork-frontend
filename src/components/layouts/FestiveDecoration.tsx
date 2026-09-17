@@ -1036,7 +1036,7 @@ const Christmas: React.FC = () => (
   </>
 );
 
-/* ---------- Lunar New Year: red lanterns over tiled roofs, a dragon through the town, plum petals ---------- */
+/* ---------- Lunar New Year: red lanterns over tiled roofs, a lion and dragon through the town, plum petals ---------- */
 
 /** A red lantern on the string, the New Year kind: round, red, a gold cap and foot, a
  *  tassel; hung off the same sagging curve as the other festivals' strings. */
@@ -1167,39 +1167,61 @@ const LunarNewYear: React.FC = () => (
       </g>
     </PatternLayer>
 
-    {/* the traveller: the dragon dancing down the street — head, a body rising and
-        dipping over the dancers' poles, the flaring tail — in silhouette, an eye of red */}
+    {/* the traveller: the troupe down the street — the lion leading, the dragon behind it
+        rising and dipping over the dancers' poles.
+
+        The dragon used to make the whole crossing on its own, five humps of it, and at
+        this size that is not a dragon: it is 150px of red squiggle with a head somewhere
+        at the end. Cut to three humps it reads as a body being carried, and the room that
+        frees goes to the lion — which survives being small far better, having a face. The
+        pair is also what a New Year street actually has in it. */}
     <Traveller top={56 - 26} width={160} height={26} viewBox="0 0 200 32" duration={56} delay={-12}>
       {/* the dancers and their poles, in silhouette like every other figure */}
       <g fill={INK} opacity="0.62">
-        <path d="M44 20v12M74 20v12M104 20v12M134 20v12M164 20v12" stroke={INK} strokeWidth="1.2" />
-        <path d="M40 32v-5l2-3h4l2 3v5zM70 32v-5l2-3h4l2 3v5zM100 32v-5l2-3h4l2 3v5zM130 32v-5l2-3h4l2 3v5zM160 32v-5l2-3h4l2 3v5z" />
+        <path d="M44 20v12M74 20v12M104 20v12" stroke={INK} strokeWidth="1.2" />
+        <path d="M40 32v-5l2-3h4l2 3v5zM70 32v-5l2-3h4l2 3v5zM100 32v-5l2-3h4l2 3v5z" />
         <circle cx="44" cy="22" r="2" />
         <circle cx="74" cy="22" r="2" />
         <circle cx="104" cy="22" r="2" />
-        <circle cx="134" cy="22" r="2" />
-        <circle cx="164" cy="22" r="2" />
       </g>
       {/* the dragon itself in its own colours — red body, gold belly and horns — the one
           near piece that is the festival, and would be lost as a grey ribbon */}
       <path
-        d="M14 20c10-14 20-14 30 0s20 14 30 0 20-14 30 0 20 14 30 0 20-14 30 0l-2 4c-10-11-18-11-28 0s-20 11-30 0-20-11-30 0-20 11-30 0-20-11-30 0z"
+        d="M14 20c10-14 20-14 30 0s20 14 30 0 20-14 30 0l-2 4c-10-11-18-11-28 0s-20 11-30 0-20-11-30 0z"
         fill="#d8232a"
       />
       <path
-        d="M16 21c10-12 18-12 28 0s18 12 28 0 18-12 28 0 18 12 28 0 18-12 28 0"
+        d="M16 21c10-12 18-12 28 0s18 12 28 0 18-12 28 0"
         fill="none"
         stroke="#f2c14e"
         strokeWidth="1"
         strokeDasharray="2 3"
         opacity="0.9"
       />
-      <path d="M164 20l6-8 10-2 8 2 6 6-4 2-2 4-6-2-8 3-6-1z" fill="#d8232a" />
-      <path d="M176 10l-2-6 3 1 2 5zM184 10l3-6 1 4-2 3z" fill="#f2c14e" />
-      <path d="M190 18l8 2-1 1.4-7-2zM190 20.5l7 4-.8 1.2-6.6-3.8z" fill="#f2c14e" />
+      <path d="M104 20l6-8 10-2 8 2 6 6-4 2-2 4-6-2-8 3-6-1z" fill="#d8232a" />
+      <path d="M116 10l-2-6 3 1 2 5zM124 10l3-6 1 4-2 3z" fill="#f2c14e" />
+      <path d="M130 18l8 2-1 1.4-7-2zM130 20.5l7 4-.8 1.2-6.6-3.8z" fill="#f2c14e" />
       <path d="M14 20l-8-6 2 7-6-2 5 5-7 1 8 2z" fill="#f2c14e" />
-      <circle cx="184" cy="15" r="1.3" fill="#fff" />
-      <circle cx="184.4" cy="15" r="0.7" fill="#2b2b33" />
+      <circle cx="124" cy="15" r="1.3" fill="#fff" />
+      <circle cx="124.4" cy="15" r="0.7" fill="#2b2b33" />
+      {/* the lion out in front, the same drawing the rail's floor walks (`LionWalker`):
+          two dancers under a cloth body, the head with its mane and gold trim. Its legs
+          do not swing here — the header's travellers cross without walking, and the
+          dragon's own dancers beside it stand still too. */}
+      <g transform="translate(146 2) scale(1.15)">
+        <g fill={INK}>
+          <path d="M8 18l-1 8h2.5l1-8zM24 18l-1 8h2.5l1-8z" />
+          <path d="M13 18l-1 8h2.5l1-8zM29 18l-1 8h2.5l1-8z" />
+        </g>
+        <path d="M4 20q8-8 16-6 6 2 10 0v6z" fill="#d8232a" />
+        <path d="M6 18q7-6 14-4" fill="none" stroke="#f2c14e" strokeWidth="1" strokeDasharray="2 2" />
+        <path d="M22 16q-2-10 7-11 8 0 7 9l-2 3H24z" fill="#d8232a" />
+        <path d="M23 8l-3-4 5 1zM28 4l1-4 2 4zM33 5l3-3-1 5z" fill="#f2c14e" />
+        <path d="M24 16h12l-1 3H25z" fill="#f2c14e" />
+        <circle cx="31" cy="10" r="1.8" fill="#fff" />
+        <circle cx="31.4" cy="10" r="0.9" fill="#2b2b33" />
+        <circle cx="36" cy="12" r="1.2" fill="#f2c14e" />
+      </g>
     </Traveller>
 
     {/* petals: plum blossom drifting down, the same way the snow falls */}
