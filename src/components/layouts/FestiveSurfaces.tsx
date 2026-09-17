@@ -11,6 +11,7 @@ import {
   DrumMotif,
   GingerbreadMotif,
   GROUND_BACKDROPS,
+  GROUND_TILE,
   IngotsMotif,
   LampPostMotif,
   LionWalker,
@@ -118,24 +119,40 @@ export const FestiveWeather: React.FC<SurfaceProps> = ({ festival, surface }) =>
 
 /* ---------- the floor ---------- */
 
-/** The ground under the strip: the base, the tint and the band, behind the pieces and
- *  out of the pointer's way. The band is one drawing across the whole window, fixed to
- *  it and clipped to this surface like the walker is — drawn per surface it was three
- *  stretches of the same wave at three different scales, and they met at the borders as
- *  three grounds. The base under it is the pane colour, faded in from the strip's top,
- *  so the ground is the same brightness on a white pane and a grey one. */
+/** How wide one tile of the band is on screen: the drawing at twice its width, which is
+ *  about the scale the rail's own stretch of it had before the floor ran on. */
+const BAND_TILE_PX = GROUND_TILE * 2;
+
+/** The ground under the strip: the tint and the band, behind the pieces and out of the
+ *  pointer's way. The band is one drawing across the whole window, fixed to it and
+ *  clipped to this surface like the walker is — drawn per surface it was three stretches
+ *  of the same wave at three different scales, and they met at the borders as three
+ *  grounds. Tiled rather than stretched, so the drifts keep their size whatever the
+ *  window's width. */
 const FloorBackdrop: React.FC<SurfaceProps> = ({ festival, surface }) => {
   const backdrop = GROUND_BACKDROPS[festival];
+  const id = `fs-ground-${surface}-${festival}`;
   return (
     <div
       className={surface === 'compact' ? styles.backdropCompact : styles.backdrop}
       aria-hidden
       data-festive-ground="backdrop"
     >
-      <div className={styles.base} />
       <div className={styles.wash} style={{ background: backdrop.wash }} />
-      <svg className={styles.band} viewBox="0 0 240 40" preserveAspectRatio="none" aria-hidden>
-        {backdrop.band}
+      <svg className={styles.band} aria-hidden>
+        <defs>
+          <pattern
+            id={id}
+            viewBox={`0 0 ${GROUND_TILE} 40`}
+            preserveAspectRatio="none"
+            width={BAND_TILE_PX}
+            height="40"
+            patternUnits="userSpaceOnUse"
+          >
+            {backdrop.band}
+          </pattern>
+        </defs>
+        <rect width="100%" height="40" fill={`url(#${id})`} />
       </svg>
     </div>
   );
@@ -247,8 +264,9 @@ const PIECES: Record<PieceKind, Drawing> = {
 
 interface Placement {
   kind: PieceKind;
-  /** Left edge as a fraction of the strip's width. */
-  at: number;
+  /** Left edge as a fraction of the strip's width — or, for the thread pane, which
+   *  margin beside the composer card the piece stands in. */
+  at: number | 'left' | 'right';
   /** Drawn smaller than its natural size, for a piece further off. */
   scale?: number;
 }
@@ -256,8 +274,9 @@ interface Placement {
 /** What stands where. Deliberately uneven spacing, and nothing repeated across two
  *  surfaces that sit side by side, so the floor reads as one street with things left
  *  along it rather than a pattern. The collapsed rail keeps the first rail piece. The
- *  thread pane's floor runs behind its composer card, so nothing stands on it: the card
- *  does. */
+ *  thread pane's floor runs behind its composer card, which leaves a 20px margin either
+ *  side: one small thing stands in each, so the card sits among things rather than on a
+ *  bare strip. */
 const LAYOUTS: Record<Festival, Record<'rail' | 'chat' | 'artifact', Placement[]>> = {
   christmas: {
     rail: [
@@ -265,7 +284,10 @@ const LAYOUTS: Record<Festival, Record<'rail' | 'chat' | 'artifact', Placement[]
       { kind: 'tree', at: 0.48 },
       { kind: 'tree', at: 0.8, scale: 0.75 },
     ],
-    chat: [],
+    chat: [
+      { kind: 'candyCanes', at: 'left' },
+      { kind: 'lampPost', at: 'right' },
+    ],
     artifact: [
       { kind: 'cabin', at: 0.06 },
       { kind: 'gingerbread', at: 0.36 },
@@ -279,7 +301,10 @@ const LAYOUTS: Record<Festival, Record<'rail' | 'chat' | 'artifact', Placement[]
       { kind: 'cat', at: 0.46 },
       { kind: 'pumpkin', at: 0.74, scale: 0.7 },
     ],
-    chat: [],
+    chat: [
+      { kind: 'pumpkin', at: 'left', scale: 0.7 },
+      { kind: 'cat', at: 'right' },
+    ],
     artifact: [
       { kind: 'scarecrow', at: 0.06 },
       { kind: 'cauldron', at: 0.38 },
@@ -292,7 +317,10 @@ const LAYOUTS: Record<Festival, Record<'rail' | 'chat' | 'artifact', Placement[]
       { kind: 'rabbitLantern', at: 0.1 },
       { kind: 'rabbitsCake', at: 0.5 },
     ],
-    chat: [],
+    chat: [
+      { kind: 'rabbitLantern', at: 'left', scale: 0.65 },
+      { kind: 'pomelo', at: 'right' },
+    ],
     artifact: [
       { kind: 'rabbitLantern', at: 0.06 },
       { kind: 'teaSet', at: 0.4 },
@@ -306,7 +334,10 @@ const LAYOUTS: Record<Festival, Record<'rail' | 'chat' | 'artifact', Placement[]
       { kind: 'ingots', at: 0.4 },
       { kind: 'mandarins', at: 0.72 },
     ],
-    chat: [],
+    chat: [
+      { kind: 'envelopes', at: 'left', scale: 0.85 },
+      { kind: 'drum', at: 'right', scale: 0.85 },
+    ],
     artifact: [
       { kind: 'envelopes', at: 0.06 },
       { kind: 'drum', at: 0.34 },
@@ -476,7 +507,15 @@ export const FestiveFloor: React.FC<SurfaceProps> = ({ festival, surface }) => {
             className={`${styles.piece} ${styles[kind]}`}
             data-piece={kind}
             data-poked={poked === i ? 'true' : undefined}
-            style={compact ? { left: `calc(50% - ${width / 2}px)` } : { left: `${at * 100}%` }}
+            style={
+              compact
+                ? { left: `calc(50% - ${width / 2}px)` }
+                : at === 'left'
+                  ? { left: 3 }
+                  : at === 'right'
+                    ? { right: 3 }
+                    : { left: `${at * 100}%` }
+            }
             viewBox={piece.viewBox}
             width={width}
             height={height}

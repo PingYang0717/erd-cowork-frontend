@@ -530,38 +530,53 @@ export interface GroundBackdrop {
   /** The tint rising off the floor: the header's sky gradient for this festival, turned
    *  over, because down here the colour belongs to the ground rather than the sky. */
   wash: string;
-  /** The band the pieces stand on, drawn over 240×40 and stretched to whatever width
-   *  the caller gives it. */
+  /** The band the pieces stand on, drawn over a 240 × 40 tile that repeats seamlessly
+   *  side by side: the two rolling layers meet their own ends at the same height and
+   *  slope, and nothing else is drawn across the edge. Two layers, a far and a near, is
+   *  what makes it ground rather than a line. */
   band: React.ReactNode;
 }
 
+/** The width of the tile every band is drawn on. */
+export const GROUND_TILE = 240;
+
+/** A rolling line across the tile, closed to the bottom: `halves` half-waves of `amp`
+ *  from a baseline `y`. An even count so the tile ends the way it starts, sloping the
+ *  same way, and the seam between two tiles is invisible. */
+const rolling = (y: number, amp: number, halves: number): string => {
+  const w = GROUND_TILE / halves;
+  let d = `M0 40V${y}`;
+  for (let i = 0; i < halves; i += 1) {
+    const dy = i % 2 === 0 ? -amp : amp;
+    d += i === 0 ? `c${w / 3} ${dy} ${(2 * w) / 3} ${dy} ${w} 0` : `s${(2 * w) / 3} ${dy} ${w} 0`;
+  }
+  return `${d}V40z`;
+};
+
+/** The same line open, for a stroke along the crest. */
+const crest = (y: number, amp: number, halves: number): string =>
+  rolling(y, amp, halves).replace('M0 40V', 'M0 ').replace(/V40z$/, '');
+
 /** What a festival's floor is made of, for a surface that wants to stand something on it.
- *  Drawn here beside the pieces themselves rather than in the rail that uses it, so the
- *  ground and what stands on it stay one set of drawings.
+ *  Drawn here beside the pieces themselves rather than in the surface that uses it, so
+ *  the ground and what stands on it stay one set of drawings.
  *
- *  Each is the near end of the header's scene.
- *  Christmas's snow, Halloween's grave grass, Mid-Autumn's bank of cloud at the water's
- *  edge, New Year's swept red-and-gold ground. */
+ *  Each is the near end of the header's scene: Christmas's snow, Halloween's grave
+ *  grass, Mid-Autumn's bank of cloud at the water's edge, New Year's swept red-and-gold
+ *  ground. The fills are chosen to read the same on a white pane and on a grey one —
+ *  pure white snow was bright on the Artifact pane and invisible on the rail. */
 export const GROUND_BACKDROPS: Record<Festival, GroundBackdrop> = {
   christmas: {
     wash: 'linear-gradient(180deg, rgba(60, 100, 170, 0) 0%, rgba(60, 100, 170, 0.05) 55%, rgba(60, 100, 170, 0.12) 100%)',
     band: (
       <>
-        <path
-          d="M0 40V28c18-5 34-4 52 1 16 4 30 3 46-2 20-6 40-5 60 2 16 5 32 4 48-2 12-4 24-5 34-3V40z"
-          fill="#fff"
-          opacity="0.92"
-        />
-        <path
-          d="M0 28c18-5 34-4 52 1 16 4 30 3 46-2 20-6 40-5 60 2 16 5 32 4 48-2 12-4 24-5 34-3"
-          fill="none"
-          stroke="#cdd6e6"
-          strokeWidth="0.9"
-          opacity="0.8"
-        />
-        {/* two drifts banked a little higher than the rest */}
-        <path d="M66 40v-6c10-4 20-4 30 1v5z" fill="#fff" opacity="0.5" />
-        <path d="M176 40v-5c9-3 18-3 26 1v4z" fill="#fff" opacity="0.5" />
+        {/* far drifts, then the near ones with their shadowed crest */}
+        <path d={rolling(24, 7, 4)} fill="#e3e9f3" opacity="0.75" />
+        <path d={rolling(30, 4, 6)} fill="#f1f4f9" />
+        <path d={crest(30, 4, 6)} fill="none" stroke="#cdd6e6" strokeWidth="0.9" opacity="0.8" />
+        {/* a little settled snow, brighter, on two of the drifts */}
+        <path d="M52 40v-5c8-3 16-3 24 1v4z" fill="#fff" opacity="0.8" />
+        <path d="M168 40v-4c7-3 14-3 20 1v3z" fill="#fff" opacity="0.8" />
       </>
     ),
   },
@@ -569,11 +584,8 @@ export const GROUND_BACKDROPS: Record<Festival, GroundBackdrop> = {
     wash: 'linear-gradient(180deg, rgba(96, 52, 140, 0) 0%, rgba(96, 52, 140, 0.05) 55%, rgba(96, 52, 140, 0.13) 100%)',
     band: (
       <>
-        <path
-          d="M0 40V30c20-4 38-3 56 2 18 5 34 4 52-2 20-6 40-4 58 3 16 6 30 5 44-1l30-2V40z"
-          fill={INK}
-          opacity="0.28"
-        />
+        <path d={rolling(25, 6, 4)} fill={INK} opacity="0.12" />
+        <path d={rolling(31, 4, 6)} fill={INK} opacity="0.26" />
         {/* grass gone over, the way it is around the header's headstones */}
         <g fill="none" stroke={INK} strokeWidth="1" strokeLinecap="round" opacity="0.3">
           <path d="M28 40c1-4 0-6-2-8M33 40c0-4 2-6 5-7M38 40c-1-3-1-5 1-7" />
@@ -587,10 +599,16 @@ export const GROUND_BACKDROPS: Record<Festival, GroundBackdrop> = {
     wash: 'linear-gradient(180deg, rgba(44, 52, 128, 0) 0%, rgba(44, 52, 128, 0.05) 55%, rgba(44, 52, 128, 0.12) 100%)',
     band: (
       <>
+        {/* a bank of cloud: round-topped, in two rows, the far one fainter */}
         <path
-          d="M0 40V31a10 10 0 0 1 18-4 12 12 0 0 1 22-2 9 9 0 0 1 16 3 13 13 0 0 1 24-1 8 8 0 0 1 14 2 11 11 0 0 1 20-3 10 10 0 0 1 18 3 12 12 0 0 1 22-1 9 9 0 0 1 16 2 10 10 0 0 1 18 2 8 8 0 0 1 12 1V40z"
+          d="M0 40V29a9 9 0 0 1 17-3 10 10 0 0 1 19-1 8 8 0 0 1 14 2 11 11 0 0 1 20-1 9 9 0 0 1 16 2 10 10 0 0 1 18-2 9 9 0 0 1 16 3 11 11 0 0 1 20-1 8 8 0 0 1 14 2 10 10 0 0 1 18-2 9 9 0 0 1 16 3 11 11 0 0 1 20-1 8 8 0 0 1 12 1V40z"
           fill={INK}
-          opacity="0.18"
+          opacity="0.09"
+        />
+        <path
+          d="M0 40V33a8 8 0 0 1 15-2 9 9 0 0 1 17-1 7 7 0 0 1 12 2 10 10 0 0 1 18-1 8 8 0 0 1 14 2 9 9 0 0 1 16-2 8 8 0 0 1 14 3 10 10 0 0 1 18-1 7 7 0 0 1 12 2 9 9 0 0 1 16-2 8 8 0 0 1 14 3 10 10 0 0 1 18-1 8 8 0 0 1 14 2 7 7 0 0 1 12-1 10 10 0 0 1 12 0V40z"
+          fill={INK}
+          opacity="0.16"
         />
         {/* reeds at the water's edge, the same ones the header's mid layer carries */}
         <g fill="none" stroke={INK} strokeWidth="0.9" strokeLinecap="round" opacity="0.28">
@@ -609,18 +627,9 @@ export const GROUND_BACKDROPS: Record<Festival, GroundBackdrop> = {
     wash: 'linear-gradient(180deg, rgba(200, 40, 50, 0) 0%, rgba(200, 40, 50, 0.04) 55%, rgba(200, 40, 50, 0.11) 100%)',
     band: (
       <>
-        <path
-          d="M0 40V30c22-4 42-3 62 2 18 5 34 4 52-2 22-6 42-3 60 4 16 6 32 5 46-1l20-2V40z"
-          fill="#d9a83f"
-          opacity="0.3"
-        />
-        <path
-          d="M0 30c22-4 42-3 62 2 18 5 34 4 52-2 22-6 42-3 60 4 16 6 32 5 46-1l20-2"
-          fill="none"
-          stroke="#c8282f"
-          strokeWidth="0.9"
-          opacity="0.35"
-        />
+        <path d={rolling(25, 6, 4)} fill="#d9a83f" opacity="0.16" />
+        <path d={rolling(31, 4, 6)} fill="#d9a83f" opacity="0.32" />
+        <path d={crest(31, 4, 6)} fill="none" stroke="#c8282f" strokeWidth="0.9" opacity="0.35" />
         {/* spent firecracker paper and a few plum petals come to rest on the ground */}
         <g fill="#c8282f" opacity="0.4">
           <ellipse cx="44" cy="36" rx="2.4" ry="1.2" transform="rotate(-12 44 36)" />
