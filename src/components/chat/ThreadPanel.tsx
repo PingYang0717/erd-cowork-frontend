@@ -225,10 +225,18 @@ const ThreadView: React.FC<ThreadViewProps> = ({ sessionId }) => {
   const lastMessage = messages[messages.length - 1];
   const interruptionRecorded = lastMessage !== undefined && isInterruptionRecord(lastMessage.text);
 
+  // Whether the refetch has carried this run's reply home. Asked of the history the same
+  // way `interruptionRecorded` is, and for the same reason: what ends the bubble's life
+  // is the history catching up, not anything the run knows about itself. Lengths, not
+  // text — `atLength` is the history at the moment of Send, so growth past it plus an AI
+  // message at the tail is this turn, home. (Text would false-positive on a repeat —
+  // ADR-0015 §optimistic-bubble, and this one is §failed-run-hands-over.)
+  const replyRecorded = pending !== null && messages.length > pending.atLength && lastMessage?.sender === 'AI';
+
   // A run that ended cleanly hands over to the refetched history — the bubble it left
   // behind and the one history renders are now the same component, so the swap is
-  // invisible. A run that failed or is waiting on a reask has something the history does
-  // not carry, so it stays.
+  // invisible. A run waiting on a reask has something the history does not carry, so it
+  // stays.
   //
   // A stopped run hands over too, and that is the whole point: the backend writes its own
   // record of the interruption, and what the reader is looking at has to be what the
@@ -237,8 +245,18 @@ const ThreadView: React.FC<ThreadViewProps> = ({ sessionId }) => {
   // thread IS the history. (The half-written reply is not persisted, so it goes with it —
   // that is the backend gap, made visible rather than papered over — tracked in the
   // team's internal notes.)
+  //
+  // A failed run is the same story once more. The failure the reader needs is already on
+  // the history's row, twice over: the agent's own words about it, and the steps recap's
+  // red mark (`stepsJson` is persisted, so that one survives a reload — the live bubble's
+  // red line does not). Holding the bubble open beside it said the same thing a second
+  // time, in a second row, in the backend's vocabulary. So it holds only until the reply
+  // lands; a failure the backend recorded nothing for has no row to hand over to, and
+  // there the bubble stays — it is the only account of the run the reader will get.
   const runEndedVisibly =
-    (state.stopped && runProducedSomething && !interruptionRecorded) || state.error !== null || state.question !== null;
+    (state.stopped && runProducedSomething && !interruptionRecorded) ||
+    (state.error !== null && !replyRecorded) ||
+    state.question !== null;
   // `AgentStreamState` is structurally a `LiveRun` superset, so the reducer's state
   // passes as-is — the twelve-field hand-copy this used to be meant every new live
   // field touched four files.
