@@ -25,9 +25,9 @@ import styles from './EmptyStateFestive.module.css';
  *  through a round hole: the festival's sky tint over its ground band (the very band the
  *  floor along the window's foot is made of), the same weather falling through it, and
  *  silhouettes in the text colour at low opacity. Only the creature carries colour — the
- *  header's rule for its near piece. One creature a festival, none of them used on the
- *  header or the floor: the koi in the New Year pond, a robin on the Christmas snow, a
- *  crow on the Halloween ground, the toad in the Mid-Autumn moon. */
+ *  header's rule for its near piece. One a festival, none of them used on the header or
+ *  the floor: Santa on the Christmas snow, the coming year's sheep in the New Year
+ *  street, a ghost under the Halloween tree, and Chang'e flying in the Mid-Autumn moon. */
 
 const INK = 'var(--erd-color-text, rgba(0, 0, 0, 0.88))';
 
@@ -44,69 +44,88 @@ const WEATHER_S = 14;
 
 /* ---------- the residents ---------- */
 
-/** Lunar New Year's koi, nose to the right, 40 × 20. The tail and the fins carry their own
- *  beats over the body's roll: a fish that moves in one piece is a fish-shaped card. */
-const Koi: React.FC = () => (
-  <g className={styles.koiBody}>
-    <path className={styles.koiFinTop} d="M20 6.4q3-5 7.4-4.6-1.4 3.8-4.2 5.8z" fill="#f5a03c" opacity="0.85" />
-    <path className={styles.koiTail} d="M12 10q-6-6-11.4-6.8 3.2 6.8 0 13.6Q6 16 12 10z" fill="#f5a03c" />
-    <path d="M10 10q9-7.6 19-2.6 5 2.4 9 1-3 6.6-9 5.4Q19 18.6 10 10z" fill="#f28c28" />
-    <path d="M17 5.6q6-1.6 10 1.4-5 2.8-10-1.4z" fill="#fff" opacity="0.8" />
-    <path d="M19 14.6q6 2 10-.6-5-2.8-10 .6z" fill="#fff" opacity="0.55" />
-    <path className={styles.koiFinLow} d="M21 13.4q1.6 4 5.2 4.6-.8-3.4-2.8-5.2z" fill="#f5a03c" opacity="0.8" />
-    <circle cx="33.4" cy="8.6" r="1" fill="#2b2b33" />
-    <path d="M35.6 10.6q2.8.6 3.8 2.6" fill="none" stroke="#f5a03c" strokeWidth="0.8" strokeLinecap="round" />
-  </g>
-);
-
-/** Christmas's robin, facing right, 26 × 20: a round grey-brown body with the red breast,
- *  a wing that beats, a stub of tail. */
-const Robin: React.FC = () => (
+/** Christmas's Santa, facing right, 34 × 30: hat with its tip over, beard, red coat with
+ *  the belt, boots, the sack on his back, and a mitten up in a wave. */
+const Santa: React.FC = () => (
   <g className={styles.bob}>
-    <path d="M2 9l6-1-4 5z" fill="#6b5a4e" />
-    <ellipse cx="14" cy="12" rx="9" ry="7" fill="#7d6b5d" />
-    <path d="M9 12q5 8 12 4-1-8-12-4z" fill="#e8583c" />
-    <circle cx="19" cy="7.5" r="4.5" fill="#7d6b5d" />
-    <path d="M16.5 6.5q3-2.5 6 0-3 2.5-6 0z" fill="#e8583c" />
-    <path className={styles.wing} d="M8 10q6-4 11 0-4 5-11 0z" fill="#5f4f43" />
-    <circle cx="21" cy="6.5" r="0.9" fill="#2b2b33" />
-    <path d="M23.4 7.6l3 .6-3 1z" fill="#2b2b33" />
-    <path d="M12 19v1.5M15 19v1.5" stroke="#2b2b33" strokeWidth="0.9" strokeLinecap="round" />
+    <circle cx="8" cy="13" r="6" fill="#8a5a2b" />
+    <path d="M9 27V17q0-6 7-6h4q7 0 7 6v10z" fill="#d8232a" />
+    <rect x="9" y="24.5" width="18" height="2.5" fill="#fff" />
+    <rect x="9" y="20" width="18" height="2.4" fill="#2b2b33" />
+    <rect x="16" y="19.6" width="3.4" height="3.2" rx="0.5" fill="#f2c14e" />
+    <path d="M11 27h5v3h-6zM20 27h5v3h-5z" fill="#2b2b33" />
+    <path className={styles.wave} d="M26 18l4-6" stroke="#d8232a" strokeWidth="3" strokeLinecap="round" />
+    <circle className={styles.wave} cx="30.5" cy="11.5" r="1.9" fill="#2b2b33" />
+    <circle cx="18" cy="9.5" r="5" fill="#f5c9a3" />
+    <path d="M13 10q5 9 10 0 1 6-5 8-6-2-5-8z" fill="#fff" />
+    <path d="M12 6.5q6-8 13-.5z" fill="#d8232a" />
+    <rect x="11.5" y="5.5" width="13.5" height="2.6" rx="1.3" fill="#fff" />
+    <circle cx="25.5" cy="3.5" r="1.7" fill="#fff" />
+    <circle cx="16.8" cy="9" r="0.7" fill="#2b2b33" />
+    <circle cx="19.8" cy="9" r="0.7" fill="#2b2b33" />
+    <circle cx="18.6" cy="10.8" r="1" fill="#e59a8a" />
   </g>
 );
 
-/** Halloween's crow, facing right, 30 × 20: the one silhouette that flies. */
-const Crow: React.FC = () => (
+/** New Year's sheep — the coming year's animal — facing right, 38 × 26: a cloud of wool,
+ *  small curled horn, a red bow at the neck with a gold bell on it. */
+const Sheep: React.FC = () => (
   <g className={styles.bob}>
-    <path d="M2 8l7 1-5 5z" fill="#1f1f26" />
-    <ellipse cx="15" cy="12" rx="9.5" ry="6" fill="#1f1f26" />
-    <circle cx="22" cy="7" r="4" fill="#1f1f26" />
-    <path d="M25.5 6.5l4.5 1.2-4.5 1.6z" fill="#3b3b46" />
-    <path className={styles.wing} d="M9 10q7-6 14-1-6 6-14 1z" fill="#2b2b33" />
-    <circle cx="23.2" cy="6.2" r="0.8" fill="#f2f2f7" />
-    <path d="M13 18v2M17 18v2" stroke="#1f1f26" strokeWidth="1" strokeLinecap="round" />
+    <path d="M10 20v5M15 20v5M24 20v5M29 20v5" stroke="#5a4a3a" strokeWidth="2" strokeLinecap="round" />
+    <circle cx="6" cy="13" r="2.2" fill="#fbf6ec" stroke="#d9cfc0" strokeWidth="0.8" />
+    <path
+      d="M6 16a5 5 0 0 1 6-6 5 5 0 0 1 9-2 5 5 0 0 1 9 2 5 5 0 0 1 4 8 5 5 0 0 1-4 4H10a5 5 0 0 1-4-6z"
+      fill="#fbf6ec"
+      stroke="#d9cfc0"
+      strokeWidth="0.8"
+    />
+    <ellipse cx="26.5" cy="10.5" rx="2.6" ry="1.3" fill="#e8d8c8" />
+    <ellipse cx="31" cy="12" rx="5.2" ry="4.4" fill="#e8d8c8" />
+    <path d="M29.5 8.5q-3.5-3.5.5-5.5" stroke="#c9a04a" strokeWidth="1.4" fill="none" strokeLinecap="round" />
+    <circle cx="30" cy="8" r="3" fill="#fbf6ec" stroke="#d9cfc0" strokeWidth="0.8" />
+    <circle cx="32.8" cy="11.6" r="0.8" fill="#2b2b33" />
+    <circle cx="35.6" cy="13.2" r="0.9" fill="#c48a8a" />
+    <path d="M25 16.5l-3.2-2.2v4.4zM25 16.5l3.2-2.2v4.4z" fill="#d8232a" />
+    <circle cx="25" cy="16.5" r="1" fill="#f2c14e" />
+    <circle cx="27.5" cy="19.5" r="1.5" fill="#f2c14e" stroke="#d9a83f" strokeWidth="0.5" />
   </g>
 );
 
-/** Mid-Autumn's toad, facing right, 28 × 18: the one that lives in the moon. */
-const Toad: React.FC = () => (
-  <g className={styles.hop}>
-    <ellipse cx="14" cy="12" rx="11" ry="6" fill="#6f8f3e" />
-    <path d="M6 9q4-6 10-4 5-2 8 2-1 4-5 4h-8q-4 0-5-2z" fill="#7fa04a" />
-    <circle cx="10" cy="7" r="2.4" fill="#7fa04a" />
-    <circle cx="19" cy="6.5" r="2.4" fill="#7fa04a" />
-    <circle cx="10.4" cy="6.8" r="1.1" fill="#2b2b33" />
-    <circle cx="19.4" cy="6.3" r="1.1" fill="#2b2b33" />
-    <path d="M12 11.5q4 2.5 8 0" fill="none" stroke="#3f5a26" strokeWidth="0.8" strokeLinecap="round" />
-    <g fill="#5f8f3e">
-      <path d="M3 15q-2 3 2 3h4z" />
-      <path d="M23 15q3 3-1 3h-4z" />
+/** Mid-Autumn's Chang'e, flying to the right, 44 × 20: the gown streaming behind her,
+ *  two ribbons trailing, an arm reaching for the moon, hair up with its pin. */
+const ChangE: React.FC = () => (
+  <g className={styles.bob}>
+    <g className={styles.flutter} fill="none" strokeLinecap="round">
+      <path d="M14 9q-8-6-14-2" stroke="#e8a0b0" strokeWidth="1.6" />
+      <path d="M14 13q-8 6-14 3" stroke="#f2c14e" strokeWidth="1.4" />
     </g>
-    <g fill="#9db85a" opacity="0.8">
-      <circle cx="9" cy="12" r="0.9" />
-      <circle cx="15" cy="14" r="0.9" />
-      <circle cx="21" cy="12.5" r="0.8" />
-    </g>
+    <path d="M6 13q8-9 24-6l2 6q-14 6-26 2z" fill="#f9eef2" stroke="#e8a0b0" strokeWidth="0.6" />
+    <path d="M9 12q6 4 14 2" stroke="#e8a0b0" strokeWidth="0.7" fill="none" />
+    <path d="M28 8q3-4 6-1l-2 4z" fill="#f9eef2" />
+    <path d="M31 8l7-4" stroke="#f5c9a3" strokeWidth="1.8" strokeLinecap="round" />
+    <circle cx="36" cy="10.5" r="4" fill="#f5c9a3" />
+    <path d="M32 10a4 4 0 0 1 8-1.5q-2-1.5-4-.5-2-1-4 2z" fill="#2b2b33" />
+    <circle cx="34" cy="6.5" r="2.1" fill="#2b2b33" />
+    <circle cx="34.6" cy="5.2" r="0.9" fill="#f2c14e" />
+    <circle cx="37.6" cy="10.8" r="0.6" fill="#2b2b33" />
+    <circle cx="38.6" cy="12.4" r="0.55" fill="#e0454f" />
+  </g>
+);
+
+/** Halloween's ghost, 24 × 26: the sheet with its wavy hem, two eyes and an O of a mouth,
+ *  and two little arms out. */
+const Ghost: React.FC = () => (
+  <g className={styles.bob}>
+    <path d="M3 15q-3 2-2 5M21 15q3 2 2 5" stroke="#f2f2f7" strokeWidth="2.4" strokeLinecap="round" />
+    <path
+      d="M3 24V11a9 9 0 0 1 18 0v13c-1.5-1.8-3-1.8-4.5 0-1.5-1.8-3-1.8-4.5 0-1.5-1.8-3-1.8-4.5 0-1.5-1.8-3-1.8-4.5 0z"
+      fill="#f2f2f7"
+      stroke="#d6d6de"
+      strokeWidth="0.6"
+    />
+    <circle cx="9" cy="11" r="1.4" fill="#3b3b46" />
+    <circle cx="15" cy="11" r="1.4" fill="#3b3b46" />
+    <ellipse cx="12" cy="15.5" rx="1.4" ry="2" fill="#3b3b46" />
   </g>
 );
 
@@ -125,20 +144,28 @@ const SCENES: Record<Festival, Scene> = {
     ground: 'rgba(200, 40, 50, 0.14)',
     far: (
       <>
-        {/* the pond floor and what grows out of it */}
-        <path d="M0 74q30-10 60 0t60 0v50H0z" fill={INK} opacity="0.08" />
-        <g fill={INK} opacity="0.12">
-          <ellipse cx="26" cy="92" rx="15" ry="4.4" />
-          <path d="M26 92l-4-7" stroke={INK} strokeWidth="1.2" fill="none" />
-          <ellipse cx="92" cy="84" rx="11" ry="3.4" />
-          <ellipse cx="74" cy="100" rx="13" ry="4" />
+        {/* lantern posts down the street and a firework left hanging, the header's far layer */}
+        <circle
+          cx="66"
+          cy="34"
+          r="10"
+          fill="none"
+          stroke={INK}
+          strokeWidth="1"
+          strokeDasharray="1.5 2.2"
+          opacity="0.12"
+        />
+        <g stroke={INK} strokeWidth="1.2" strokeLinecap="round" opacity="0.14">
+          <path d="M28 82V56M96 82V52" />
         </g>
-        <g className={styles.ripples} fill="none" stroke={INK} strokeWidth="1" strokeLinecap="round" opacity="0.14">
-          <path d="M16 84h16M46 90h20M80 78h14M34 104h18" />
+        <g fill={INK} opacity="0.14">
+          <ellipse cx="28" cy="53" rx="3.5" ry="4.5" />
+          <ellipse cx="96" cy="49" rx="3.5" ry="4.5" />
         </g>
+        <g transform="translate(0 80) scale(0.5 1)">{GROUND_BACKDROPS.lunarNewYear.band}</g>
       </>
     ),
-    creature: { node: <Koi />, width: 40, height: 20 },
+    creature: { node: <Sheep />, width: 38, height: 26 },
   },
   christmas: {
     sky: 'rgba(60, 100, 170, 0.06)',
@@ -154,7 +181,7 @@ const SCENES: Record<Festival, Scene> = {
         <g transform="translate(0 80) scale(0.5 1)">{GROUND_BACKDROPS.christmas.band}</g>
       </>
     ),
-    creature: { node: <Robin />, width: 26, height: 20 },
+    creature: { node: <Santa />, width: 34, height: 30 },
   },
   halloween: {
     sky: 'rgba(96, 52, 140, 0.06)',
@@ -169,24 +196,31 @@ const SCENES: Record<Festival, Scene> = {
         <g transform="translate(0 80) scale(0.5 1)">{GROUND_BACKDROPS.halloween.band}</g>
       </>
     ),
-    creature: { node: <Crow />, width: 30, height: 20 },
+    creature: { node: <Ghost />, width: 24, height: 26 },
   },
   midAutumn: {
     sky: 'rgba(44, 52, 128, 0.05)',
     ground: 'rgba(44, 52, 128, 0.12)',
     far: (
       <>
-        {/* the moon fills the glass: a pale disc with its seas, the cloud bank low across it */}
+        {/* the moon fills the glass: a pale disc with its seas, an osmanthus branch leaning
+            in, the cloud bank low across it */}
         <circle cx="60" cy="58" r="40" fill="#f6dc8a" opacity="0.35" />
         <g fill={INK} opacity="0.06">
           <ellipse cx="48" cy="46" rx="9" ry="6" />
           <ellipse cx="70" cy="56" rx="6" ry="4" />
           <ellipse cx="56" cy="68" rx="5" ry="3" />
         </g>
+        <path d="M120 74q-18-12-36-4" fill="none" stroke={INK} strokeWidth="1.2" strokeLinecap="round" opacity="0.14" />
+        <g fill="#f2c14e" opacity="0.5">
+          <circle cx="92" cy="68" r="1.3" />
+          <circle cx="98" cy="70.5" r="1.1" />
+          <circle cx="104" cy="70" r="1.2" />
+        </g>
         <g transform="translate(0 80) scale(0.5 1)">{GROUND_BACKDROPS.midAutumn.band}</g>
       </>
     ),
-    creature: { node: <Toad />, width: 28, height: 18 },
+    creature: { node: <ChangE />, width: 44, height: 20 },
   },
 };
 

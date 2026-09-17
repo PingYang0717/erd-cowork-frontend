@@ -34,14 +34,6 @@
   animation: weather-up 14s linear infinite;
 }
 
-/* The water's surface marks, breathing rather than travelling: ripples that slide would
-   turn the glass into a treadmill. */
-.ripples {
-  transform-box: fill-box;
-  transform-origin: 50% 50%;
-  animation: ripple-breathe 9s ease-in-out infinite;
-}
-
 /* The inhabitant's own circuit, and its exit. It moves in a slow figure behind the glass,
    turns for the rim, and is gone for the whole crossing — hidden, not shrunk, because the
    creature out in the pane is the same one and two of it would give the trick away. */
@@ -97,56 +89,28 @@
 
 /* ---------- the creatures' own parts ---------- */
 
-.koiBody,
-.koiTail,
-.koiFinTop,
-.koiFinLow,
-.wing,
 .bob,
-.hop {
+.wave,
+.flutter {
   transform-box: fill-box;
 }
 
-/* The koi's body rolls; it does not bend. A bend would need the path redrawn per frame,
-   and the roll reads as swimming at this size. */
-.koiBody {
-  transform-origin: 50% 50%;
-  animation: koi-roll 2.4s ease-in-out infinite;
-}
-
-/* The tail is hinged where it meets the body, and beats twice as fast as the roll — the
-   two rates together are what stop it looking like a rocking toy. */
-.koiTail {
-  transform-origin: 100% 50%;
-  animation: koi-tail 1.2s ease-in-out infinite alternate;
-}
-
-.koiFinTop,
-.koiFinLow {
-  transform-origin: 50% 100%;
-  animation: koi-fin 1.6s ease-in-out infinite alternate;
-}
-
-.koiFinLow {
-  transform-origin: 50% 0;
-  animation-duration: 1.9s;
-  animation-direction: alternate-reverse;
-}
-
-/* A bird's wing, hinged at the shoulder; the body rides a little on each beat. */
-.wing {
-  transform-origin: 30% 20%;
-  animation: wing-beat 0.5s ease-in-out infinite alternate;
-}
-
+/* Every resident rides a little up and down: Santa's stride, the sheep's trot, the
+   ghost's float, Chang'e on the air. */
 .bob {
   animation: body-bob 1s ease-in-out infinite;
 }
 
-/* The toad: a crouch and a spring, over and over, which is how a toad crosses anything. */
-.hop {
-  transform-origin: 50% 100%;
-  animation: toad-hop 0.9s ease-in-out infinite;
+/* Santa's arm, waving from the shoulder. */
+.wave {
+  transform-origin: 0% 100%;
+  animation: arm-wave 0.9s ease-in-out infinite alternate;
+}
+
+/* Chang'e's ribbons, streaming from where they meet the gown. */
+.flutter {
+  transform-origin: 100% 50%;
+  animation: ribbon-flutter 0.8s ease-in-out infinite alternate;
 }
 
 /* ---------- keyframes ---------- */
@@ -169,52 +133,21 @@
   }
 }
 
-@keyframes ripple-breathe {
-  0%,
-  100% {
-    opacity: 0.5;
-    transform: scaleX(1);
-  }
-  50% {
-    opacity: 1;
-    transform: scaleX(1.06);
-  }
-}
-
-@keyframes koi-roll {
-  0%,
-  100% {
-    transform: rotate(-4deg);
-  }
-  50% {
-    transform: rotate(4deg);
-  }
-}
-
-@keyframes koi-tail {
+@keyframes arm-wave {
   from {
-    transform: rotate(-16deg);
+    transform: rotate(-14deg);
   }
   to {
-    transform: rotate(16deg);
+    transform: rotate(12deg);
   }
 }
 
-@keyframes koi-fin {
+@keyframes ribbon-flutter {
   from {
-    transform: rotate(-8deg);
+    transform: rotate(-9deg);
   }
   to {
-    transform: rotate(10deg);
-  }
-}
-
-@keyframes wing-beat {
-  from {
-    transform: rotate(-22deg);
-  }
-  to {
-    transform: rotate(18deg);
+    transform: rotate(9deg);
   }
 }
 
@@ -225,19 +158,6 @@
   }
   50% {
     transform: translateY(-1.5px);
-  }
-}
-
-@keyframes toad-hop {
-  0%,
-  100% {
-    transform: translateY(0) scale(1, 1);
-  }
-  25% {
-    transform: translateY(0) scale(1.08, 0.86);
-  }
-  60% {
-    transform: translateY(-7px) scale(0.95, 1.08);
   }
 }
 

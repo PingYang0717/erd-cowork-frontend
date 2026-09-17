@@ -365,19 +365,14 @@ export const ScarecrowMotif: React.FC<MotifProps> = (props) => (
   </g>
 );
 
-/** Halloween's two tombstones with a leaning cross: 28 × 16, with a small ghost behind
- *  the taller stone that takes `ghostClassName` — it sits hidden below the stone's top
- *  until something makes it look up. */
-export const TombstonesMotif: React.FC<MotifProps & { ghostClassName?: string }> = ({ ghostClassName, ...props }) => (
+/** Halloween's two tombstones with a leaning cross: 28 × 16, with a hand behind the
+ *  taller stone that takes `handClassName` — it waits below the stone's top until
+ *  something disturbs the ground. */
+export const TombstonesMotif: React.FC<MotifProps & { handClassName?: string }> = ({ handClassName, ...props }) => (
   <g {...props}>
-    <g className={ghostClassName}>
-      <path
-        d="M3.5 9V4.5a3.5 3.5 0 0 1 7 0V9c-.6-.7-1.2-.7-1.75 0-.6-.7-1.2-.7-1.75 0-.6-.7-1.2-.7-1.75 0-.6-.7-1.2-.7-1.75 0z"
-        fill="#f2f2f7"
-        opacity="0.9"
-      />
-      <circle cx="5.7" cy="4.5" r="0.6" fill="#3b3b46" />
-      <circle cx="8.3" cy="4.5" r="0.6" fill="#3b3b46" />
+    <g className={handClassName}>
+      <path d="M5 9V3.5M7.2 8.5V1.5M9.4 8.5V2M11.4 9V4.5" stroke="#7fa04a" strokeWidth="1.7" strokeLinecap="round" />
+      <path d="M4 8.5h8.5v4H4z" fill="#7fa04a" />
     </g>
     <path d="M2 16v-8a5 5 0 0 1 10 0v8z" fill={INK} opacity="0.55" />
     <path d="M5 9h4M7 7v6" stroke="#f2f2f7" strokeWidth="0.8" opacity="0.7" />

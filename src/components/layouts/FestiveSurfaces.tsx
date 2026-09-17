@@ -59,7 +59,7 @@ import styles from './FestiveSurfaces.module.css';
  *  The floor is the one part that answers the pointer. The header's rule is that what
  *  stands on the ground does not move; here it is "does not move until touched": the
  *  pointer over the strip makes each piece stir once (a hat tips, a tail flicks, a
- *  ghost looks up), and a click plays a piece its bigger one-shot turn (a jump, a run
+ *  hand comes up behind a stone), and a click plays a piece its bigger one-shot turn (a jump, a run
  *  off and back, a burst of coins, a beat on the drum), after which it stands still
  *  again. Decoration still: `aria-hidden`, out of the tab order, nothing the app does
  *  depends on it. The drawings are `festiveMotifs`, the same paths as the header's. */
@@ -233,7 +233,7 @@ const PIECES: Record<PieceKind, Drawing> = {
     viewBox: '0 -8 28 24',
     width: 24,
     height: 21,
-    node: <TombstonesMotif ghostClassName={styles.ghost} />,
+    node: <TombstonesMotif handClassName={styles.hand} />,
   },
   scarecrow: { viewBox: '0 0 24 30', width: 22, height: 28, node: <ScarecrowMotif /> },
   cauldron: {

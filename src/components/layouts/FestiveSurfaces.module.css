@@ -119,7 +119,7 @@
 .eyes,
 .ears,
 .cake,
-.ghost,
+.hand,
 .sticks,
 .steam {
   transform-box: fill-box;
@@ -145,8 +145,8 @@
   transform-origin: 50% 50%;
 }
 
-/* The ghost waits behind the taller stone, out of sight, until something makes it look. */
-.ghost {
+/* The hand waits behind the taller stone, out of sight, until something disturbs it. */
+.hand {
   transform-origin: 50% 100%;
   opacity: 0;
   transform: translateY(6px);
@@ -204,7 +204,7 @@
   animation: nudge 0.6s ease-in-out 1;
 }
 
-.floor:hover .ghost {
+.floor:hover .hand {
   animation: peek 1s ease-in-out 1;
 }
 
@@ -227,7 +227,7 @@
 /* ---------- B. a click's turn ----------
    On the piece itself, so its `animationend` is the one that clears `data-poked`. The
    click's rule outranks the hover's on the same element (attribute + class). Pieces whose
-   turn is all in one part (the ghost, the lamp's light) hold still for exactly as long,
+   turn is all in one part (the hand, the lamp's light) hold still for exactly as long,
    so their own animation still ends and clears the state. */
 .piece[data-poked].snowman,
 .piece[data-poked].pumpkin,
@@ -287,8 +287,8 @@
   animation-duration: 0.3s;
 }
 
-.piece[data-poked] .ghost {
-  animation: ghost-up 1.4s ease-out 1;
+.piece[data-poked] .hand {
+  animation: hand-up 1.4s ease-in-out 1;
 }
 
 .piece[data-poked].lampPost .light {
@@ -478,7 +478,7 @@
   }
 }
 
-/* The ghost looks over the stone and ducks back. */
+/* The fingers come up over the stone and sink back. */
 @keyframes peek {
   0%,
   100% {
@@ -621,19 +621,22 @@
   }
 }
 
-/* The ghost leaves the stone, drifts up and fades, and is back behind it at the end. */
-@keyframes ghost-up {
+/* The whole hand comes up out of the ground, grasps at nothing, and sinks back. */
+@keyframes hand-up {
   0% {
     opacity: 0;
     transform: translateY(6px);
   }
-  20% {
+  25% {
     opacity: 1;
-    transform: translateY(-4px);
+    transform: translateY(-7px) rotate(-6deg);
   }
-  80% {
-    opacity: 0;
-    transform: translateY(-20px) translateX(3px);
+  45% {
+    transform: translateY(-7px) rotate(8deg);
+  }
+  65% {
+    opacity: 1;
+    transform: translateY(-7px) rotate(-4deg);
   }
   100% {
     opacity: 0;
