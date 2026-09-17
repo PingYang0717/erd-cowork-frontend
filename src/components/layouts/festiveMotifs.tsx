@@ -99,14 +99,15 @@ export const TasselMotif: React.FC<MotifProps> = (props) => (
 /* ---------- standing on the floor ---------- */
 
 /** Mid-Autumn's rabbit out with its lantern: 26 × 22. The lantern's glow takes
- *  `glowClassName` so it can breathe. */
-export const RabbitWithLanternMotif: React.FC<MotifProps & { glowClassName?: string }> = ({
+ *  `glowClassName` so it can breathe; the ears `earsClassName` so they can perk. */
+export const RabbitWithLanternMotif: React.FC<MotifProps & { glowClassName?: string; earsClassName?: string }> = ({
   glowClassName,
+  earsClassName,
   ...props
 }) => (
   <g {...props}>
     <g fill={INK} opacity="0.62">
-      <path d="M9 10C7 6 7 2 9 0c1.5 0 2.5 4 2.5 9zM18 10c2-4 2-8 0-10-1.5 0-2.5 4-2.5 9z" />
+      <path className={earsClassName} d="M9 10C7 6 7 2 9 0c1.5 0 2.5 4 2.5 9zM18 10c2-4 2-8 0-10-1.5 0-2.5 4-2.5 9z" />
       <ellipse cx="13.5" cy="15" rx="7.5" ry="6.5" />
       <path d="M20 12l4-4" stroke={INK} strokeWidth="1" strokeLinecap="round" />
     </g>
@@ -118,23 +119,33 @@ export const RabbitWithLanternMotif: React.FC<MotifProps & { glowClassName?: str
   </g>
 );
 
-/** Mid-Autumn's two rabbits with the mooncake between them: 48 × 22. */
-export const RabbitsAndMooncakeMotif: React.FC<MotifProps> = (props) => (
+/** Mid-Autumn's two rabbits with the mooncake between them: 48 × 22. Both pairs of ears
+ *  take `earsClassName`, the cake `cakeClassName`. */
+export const RabbitsAndMooncakeMotif: React.FC<MotifProps & { earsClassName?: string; cakeClassName?: string }> = ({
+  earsClassName,
+  cakeClassName,
+  ...props
+}) => (
   <g {...props}>
     <g fill={INK} opacity="0.62">
-      <path d="M6 10C4 6 4 2 6 0c1.5 0 2.5 4 2.5 9zM15 10c2-4 2-8 0-10-1.5 0-2.5 4-2.5 9z" />
+      <path className={earsClassName} d="M6 10C4 6 4 2 6 0c1.5 0 2.5 4 2.5 9zM15 10c2-4 2-8 0-10-1.5 0-2.5 4-2.5 9z" />
       <ellipse cx="10.5" cy="15" rx="8" ry="6.5" />
-      <path d="M36 12c-1.6-3-1.6-6 0-8 1.2 0 2 3.2 2 7.2zM43 12c1.6-3 1.6-6 0-8-1.2 0-2 3.2-2 7.2z" />
+      <path
+        className={earsClassName}
+        d="M36 12c-1.6-3-1.6-6 0-8 1.2 0 2 3.2 2 7.2zM43 12c1.6-3 1.6-6 0-8-1.2 0-2 3.2-2 7.2z"
+      />
       <ellipse cx="39.5" cy="16.5" rx="6.5" ry="5" />
     </g>
     <circle cx="8" cy="14" r="0.9" fill="#fff" />
     <circle cx="13" cy="14" r="0.9" fill="#fff" />
     <circle cx="37.5" cy="16" r="0.8" fill="#fff" />
     <circle cx="41.5" cy="16" r="0.8" fill="#fff" />
-    <ellipse cx="25" cy="18" rx="6" ry="3.6" fill="#c98a3c" />
-    <ellipse cx="25" cy="16.6" rx="6" ry="3.4" fill="#e0a752" />
-    <ellipse cx="25" cy="16.6" rx="3.6" ry="2" fill="none" stroke="#b8752e" strokeWidth="0.7" />
-    <path d="M25 14.8v3.6M23 16.6h4" stroke="#b8752e" strokeWidth="0.6" />
+    <g className={cakeClassName}>
+      <ellipse cx="25" cy="18" rx="6" ry="3.6" fill="#c98a3c" />
+      <ellipse cx="25" cy="16.6" rx="6" ry="3.4" fill="#e0a752" />
+      <ellipse cx="25" cy="16.6" rx="3.6" ry="2" fill="none" stroke="#b8752e" strokeWidth="0.7" />
+      <path d="M25 14.8v3.6M23 16.6h4" stroke="#b8752e" strokeWidth="0.6" />
+    </g>
   </g>
 );
 
@@ -155,23 +166,40 @@ export const PumpkinMotif: React.FC<MotifProps & { faceClassName?: string }> = (
   </g>
 );
 
-/** Halloween's black cat, sitting: 20 × 20. */
-export const CatMotif: React.FC<MotifProps> = (props) => (
+/** Halloween's black cat, sitting: 20 × 20. The tail takes `tailClassName` so it can
+ *  flick, the eyes `eyesClassName` so they can blink. */
+export const CatMotif: React.FC<MotifProps & { tailClassName?: string; eyesClassName?: string }> = ({
+  tailClassName,
+  eyesClassName,
+  ...props
+}) => (
   <g {...props}>
     <path d="M4 20v-8a5 5 0 0 1 4-5V4l2 2 2-2v3a5 5 0 0 1 4 5v8z" fill="#1f1f26" />
-    <path d="M16 18q4-2 2-8" fill="none" stroke="#1f1f26" strokeWidth="2" strokeLinecap="round" />
-    <circle cx="8.3" cy="9.5" r="0.9" fill="#8fe388" />
-    <circle cx="11.7" cy="9.5" r="0.9" fill="#8fe388" />
+    <path
+      className={tailClassName}
+      d="M16 18q4-2 2-8"
+      fill="none"
+      stroke="#1f1f26"
+      strokeWidth="2"
+      strokeLinecap="round"
+    />
+    <g className={eyesClassName}>
+      <circle cx="8.3" cy="9.5" r="0.9" fill="#8fe388" />
+      <circle cx="11.7" cy="9.5" r="0.9" fill="#8fe388" />
+    </g>
   </g>
 );
 
-/** Christmas's snowman: 22 × 28 (the hat pokes 2 above the top). */
-export const SnowmanMotif: React.FC<MotifProps> = (props) => (
+/** Christmas's snowman: 22 × 28 (the hat pokes 2 above the top). The hat takes
+ *  `hatClassName` so it can tip. */
+export const SnowmanMotif: React.FC<MotifProps & { hatClassName?: string }> = ({ hatClassName, ...props }) => (
   <g {...props}>
     <circle cx="11" cy="20" r="7.5" fill="#fff" stroke="#d6dbe6" strokeWidth="0.8" />
     <circle cx="11" cy="9" r="5.5" fill="#fff" stroke="#d6dbe6" strokeWidth="0.8" />
-    <rect x="6" y="1" width="10" height="2" rx="0.6" fill="#2b2b33" />
-    <rect x="7.5" y="-2" width="7" height="4" fill="#2b2b33" />
+    <g className={hatClassName}>
+      <rect x="6" y="1" width="10" height="2" rx="0.6" fill="#2b2b33" />
+      <rect x="7.5" y="-2" width="7" height="4" fill="#2b2b33" />
+    </g>
     <circle cx="9" cy="8" r="0.8" fill="#2b2b33" />
     <circle cx="13" cy="8" r="0.8" fill="#2b2b33" />
     <path d="M11 9.5l4 1-4 1z" fill="#f28c28" />
@@ -227,6 +255,85 @@ export const RedEnvelopesMotif: React.FC<MotifProps> = (props) => (
     <rect x="9" y="1" width="9" height="4" rx="1" fill="#f04a4f" />
     <circle cx="13.5" cy="9.5" r="2" fill="none" stroke="#f2c14e" strokeWidth="0.8" />
     <circle cx="13.5" cy="9.5" r="0.7" fill="#f2c14e" />
+  </g>
+);
+
+/* ---------- what walks the floor ---------- */
+
+/** The floor's walkers, one a festival, drawn side-on and facing right: the legs are in
+ *  two groups (`legA`, `legB`) that the caller swings against each other, and what nods
+ *  or bobs takes `bob`. Sizes: reindeer 30 × 24, cat 26 × 16, rabbit 22 × 16, lion 36 × 26. */
+interface WalkerProps {
+  legA?: string;
+  legB?: string;
+  bob?: string;
+}
+
+/** Christmas's reindeer, the header's on the ridge but walking: the same antlers and
+ *  red nose. */
+export const ReindeerWalker: React.FC<WalkerProps> = ({ legA, legB, bob }) => (
+  <g>
+    <g fill="#6b4a2e">
+      <path className={legA} d="M8 14l-1 10h2l1-10zM19 14l-1 10h2l1-10z" />
+      <path className={legB} d="M12 14l-1 10h2l1-10zM23 14l-1 10h2l1-10z" />
+    </g>
+    <g className={bob}>
+      <path d="M6 15q0-6 6-6h10q4 0 5-3l2 1-1 4q0 5-4 5H10q-4 0-4-1z" fill="#8a6240" />
+      <path d="M25 6l-2-5 1.5-.5 2 4.5zM27.5 6l1.5-5 1.5.5-1.5 4.5z" fill="#6b4a2e" />
+      <circle cx="29.5" cy="8.5" r="1.3" fill="#ff5c5c" />
+      <circle cx="25.5" cy="7.5" r="0.6" fill="#2b2b33" />
+    </g>
+  </g>
+);
+
+/** Halloween's black cat walking, tail up. */
+export const CatWalker: React.FC<WalkerProps> = ({ legA, legB, bob }) => (
+  <g>
+    <g fill="#1f1f26">
+      <path className={legA} d="M7 10l-1 6h2l1-6zM17 10l-1 6h2l1-6z" />
+      <path className={legB} d="M11 10l-1 6h2l1-6zM21 10l-1 6h2l1-6z" />
+    </g>
+    <g className={bob}>
+      <ellipse cx="14" cy="9" rx="9" ry="4" fill="#1f1f26" />
+      <path d="M5 8q-5-2-3-8" fill="none" stroke="#1f1f26" strokeWidth="2" strokeLinecap="round" />
+      <path d="M19 9a4 4 0 0 1 4-4V2l2 2 2-2v3a3 3 0 0 1 0 4z" fill="#1f1f26" />
+      <circle cx="23" cy="6" r="0.8" fill="#8fe388" />
+      <circle cx="25.5" cy="6" r="0.8" fill="#8fe388" />
+    </g>
+  </g>
+);
+
+/** Mid-Autumn's rabbit, hopping along in silhouette like the ones on the floor. */
+export const RabbitWalker: React.FC<WalkerProps> = ({ bob }) => (
+  <g className={bob}>
+    <g fill={INK} opacity="0.62">
+      <ellipse cx="10" cy="11" rx="8" ry="5" />
+      <circle cx="17" cy="8" r="4" />
+      <path d="M15 5c-1-4 0-6 1.5-6 1 0 1.5 3 .5 6zM18.5 5c0-4 1.5-6 3-5.5 1 .5.5 3-1.5 6z" />
+      <circle cx="2.5" cy="10" r="1.6" />
+    </g>
+    <circle cx="18.5" cy="7.5" r="0.7" fill="#fff" />
+  </g>
+);
+
+/** Lunar New Year's lion dance: the head with its mane and the cloth body, two dancers'
+ *  legs under it. */
+export const LionWalker: React.FC<WalkerProps> = ({ legA, legB, bob }) => (
+  <g>
+    <g fill="#2b2b33">
+      <path className={legA} d="M8 18l-1 8h2.5l1-8zM24 18l-1 8h2.5l1-8z" />
+      <path className={legB} d="M13 18l-1 8h2.5l1-8zM29 18l-1 8h2.5l1-8z" />
+    </g>
+    <path d="M4 20q8-8 16-6 6 2 10 0v6z" fill="#d8232a" />
+    <path d="M6 18q7-6 14-4" fill="none" stroke="#f2c14e" strokeWidth="1" strokeDasharray="2 2" />
+    <g className={bob}>
+      <path d="M22 16q-2-10 7-11 8 0 7 9l-2 3H24z" fill="#d8232a" />
+      <path d="M23 8l-3-4 5 1zM28 4l1-4 2 4zM33 5l3-3-1 5z" fill="#f2c14e" />
+      <path d="M24 16h12l-1 3H25z" fill="#f2c14e" />
+      <circle cx="31" cy="10" r="1.8" fill="#fff" />
+      <circle cx="31.4" cy="10" r="0.9" fill="#2b2b33" />
+      <circle cx="36" cy="12" r="1.2" fill="#f2c14e" />
+    </g>
   </g>
 );
 

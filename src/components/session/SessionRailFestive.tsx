@@ -1,19 +1,23 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 import {
   BellMotif,
   BulbMotif,
   CatMotif,
+  CatWalker,
   FlagMotif,
   HangingBatMotif,
   IngotsMotif,
   KnotMotif,
+  LionWalker,
   MandarinsMotif,
   PumpkinMotif,
   RabbitsAndMooncakeMotif,
+  RabbitWalker,
   RabbitWithLanternMotif,
   RedEnvelopesMotif,
   RedLanternMotif,
+  ReindeerWalker,
   SmallTreeMotif,
   SnowmanMotif,
   StrungLanternMotif,
@@ -37,9 +41,16 @@ import fd from '@/components/layouts/FestiveDecoration.module.css';
  *
  *  The ground is the one that costs space: it is reserved, not painted behind the list,
  *  because rows scrolling over a snowman looked like a bug. Halloween has no weather —
- *  nothing falls in its header either. All three are decoration and nothing else:
- *  `aria-hidden`, no pointer events, gone the moment the festival or the switch is. The
- *  drawings come from `festiveMotifs`, the same paths as the header's own. */
+ *  nothing falls in its header either.
+ *
+ *  The ground is also the one that answers the pointer. The header's rule is that what
+ *  stands on the floor does not move; here it is "does not move until touched": the
+ *  pointer over the strip makes each piece stir once (a hat tips, a tail flicks, ears
+ *  perk), and a click on a piece plays it a bigger one-shot turn (a jump, a run off and
+ *  back, a burst of coins) after which it stands still again. Between times one walker a
+ *  festival crosses the floor and waits out of sight, the way the header's traveller
+ *  does. Decoration still: `aria-hidden`, not in the tab order, nothing the app does
+ *  depends on it. The drawings come from `festiveMotifs`, the same paths as the header's. */
 
 interface RailFestiveProps {
   festival: Festival;
@@ -215,7 +226,11 @@ export const FestiveWeather: React.FC<{ festival: Festival }> = ({ festival }) =
   );
 };
 
+type PieceKind =
+  'snowman' | 'tree' | 'pumpkin' | 'cat' | 'rabbitLantern' | 'rabbitsCake' | 'envelopes' | 'ingots' | 'mandarins';
+
 interface Standing {
+  kind: PieceKind;
   /** Left edge as a fraction of the strip's width. */
   at: number;
   viewBox: string;
@@ -224,75 +239,222 @@ interface Standing {
   node: React.ReactNode;
 }
 
-/** What stands on the rail's floor. The first entry is the one the collapsed rail keeps. */
+/** What stands on the rail's floor. The first entry is the one the collapsed rail keeps.
+ *  The parts that stir on hover carry a class from this stylesheet. */
 const GROUNDS: Record<Festival, Standing[]> = {
   midAutumn: [
     {
+      kind: 'rabbitLantern',
       at: 0.1,
       viewBox: '0 0 26 22',
       width: 26,
       height: 22,
-      node: <RabbitWithLanternMotif glowClassName={fd.breathe} />,
+      node: <RabbitWithLanternMotif glowClassName={`${fd.breathe} ${styles.glow}`} earsClassName={styles.ears} />,
     },
-    { at: 0.5, viewBox: '0 0 48 22', width: 44, height: 20, node: <RabbitsAndMooncakeMotif /> },
+    {
+      kind: 'rabbitsCake',
+      at: 0.5,
+      viewBox: '0 0 48 22',
+      width: 44,
+      height: 20,
+      node: <RabbitsAndMooncakeMotif earsClassName={styles.ears} cakeClassName={styles.cake} />,
+    },
   ],
   halloween: [
     {
+      kind: 'pumpkin',
       at: 0.12,
       viewBox: '0 0 44 44',
       width: 28,
       height: 28,
-      node: <PumpkinMotif faceClassName={fd.breathe} />,
+      node: <PumpkinMotif faceClassName={`${fd.breathe} ${styles.face}`} />,
     },
-    { at: 0.45, viewBox: '0 0 20 20', width: 17, height: 17, node: <CatMotif /> },
     {
+      kind: 'cat',
+      at: 0.45,
+      viewBox: '0 0 20 20',
+      width: 17,
+      height: 17,
+      node: <CatMotif tailClassName={styles.tail} eyesClassName={styles.eyes} />,
+    },
+    {
+      kind: 'pumpkin',
       at: 0.72,
       viewBox: '0 0 44 44',
       width: 20,
       height: 20,
-      node: <PumpkinMotif faceClassName={fd.breathe} />,
+      node: <PumpkinMotif faceClassName={`${fd.breathe} ${styles.face}`} />,
     },
   ],
   christmas: [
-    { at: 0.12, viewBox: '0 -2 22 30', width: 22, height: 30, node: <SnowmanMotif /> },
     {
+      kind: 'snowman',
+      at: 0.12,
+      viewBox: '0 -2 22 30',
+      width: 22,
+      height: 30,
+      node: <SnowmanMotif hatClassName={styles.hat} />,
+    },
+    {
+      kind: 'tree',
       at: 0.5,
       viewBox: '0 0 20 24',
       width: 20,
       height: 24,
-      node: <SmallTreeMotif twinkle={fd.twinkle} twinkleLate={fd.twinkleLate} />,
+      node: (
+        <SmallTreeMotif twinkle={`${fd.twinkle} ${styles.light}`} twinkleLate={`${fd.twinkleLate} ${styles.light}`} />
+      ),
     },
     {
+      kind: 'tree',
       at: 0.78,
       viewBox: '0 0 20 24',
       width: 15,
       height: 18,
-      node: <SmallTreeMotif twinkle={fd.twinkleLate} twinkleLate={fd.twinkle} />,
+      node: (
+        <SmallTreeMotif twinkle={`${fd.twinkleLate} ${styles.light}`} twinkleLate={`${fd.twinkle} ${styles.light}`} />
+      ),
     },
   ],
   lunarNewYear: [
-    { at: 0.08, viewBox: '0 0 20 16', width: 20, height: 16, node: <RedEnvelopesMotif /> },
-    { at: 0.38, viewBox: '0 0 30 12', width: 30, height: 12, node: <IngotsMotif /> },
-    { at: 0.7, viewBox: '0 0 24 12', width: 24, height: 12, node: <MandarinsMotif /> },
+    { kind: 'envelopes', at: 0.08, viewBox: '0 0 20 16', width: 20, height: 16, node: <RedEnvelopesMotif /> },
+    { kind: 'ingots', at: 0.38, viewBox: '0 0 30 12', width: 30, height: 12, node: <IngotsMotif /> },
+    { kind: 'mandarins', at: 0.7, viewBox: '0 0 24 12', width: 24, height: 12, node: <MandarinsMotif /> },
   ],
 };
 
-/** The floor at the rail's foot. Still, like the header's near pieces: only a light
- *  breathes or a bauble twinkles. */
+/** What a click throws off a piece, drawn over it while its turn plays: snow off the
+ *  snowman and the trees, coins off the ingots, the character for luck off the red
+ *  envelopes. Positioned in the piece's own viewBox; the strip clips whatever flies
+ *  past its edge. */
+const burstFor = (piece: Standing): React.ReactNode => {
+  switch (piece.kind) {
+    case 'snowman':
+    case 'tree':
+      return (
+        <g className={styles.snowfall} fill="#fff" stroke="#d6dbe6" strokeWidth="0.4">
+          <circle cx="4" cy="-3" r="1.2" />
+          <circle cx="11" cy="-5" r="1.5" />
+          <circle cx="17" cy="-2" r="1" />
+        </g>
+      );
+    case 'ingots':
+      return (
+        <g className={styles.coins} fill="#f2c14e" stroke="#d9a83f" strokeWidth="0.5">
+          <circle cx="8" cy="4" r="1.8" style={{ ['--coin-x' as string]: '-8px' }} />
+          <circle cx="15" cy="3" r="2" style={{ ['--coin-x' as string]: '0px' }} />
+          <circle cx="22" cy="4" r="1.8" style={{ ['--coin-x' as string]: '8px' }} />
+        </g>
+      );
+    case 'envelopes':
+      return (
+        <text className={styles.luck} x="13.5" y="-2" textAnchor="middle" fontSize="8" fontWeight="700" fill="#d8232a">
+          福
+        </text>
+      );
+    default:
+      return null;
+  }
+};
+
+interface Walker {
+  width: number;
+  height: number;
+  viewBox: string;
+  node: React.ReactNode;
+  /** How long one loop takes, crossing and wait together. */
+  duration: number;
+  /** Negative: how far into the loop the first run starts. */
+  delay: number;
+}
+
+const WALKERS: Record<Festival, Walker> = {
+  christmas: {
+    width: 30,
+    height: 24,
+    viewBox: '0 0 34 24',
+    duration: 70,
+    delay: -30,
+    node: <ReindeerWalker legA={styles.legA} legB={styles.legB} bob={styles.walkBob} />,
+  },
+  halloween: {
+    width: 28,
+    height: 16,
+    viewBox: '0 0 28 16',
+    duration: 64,
+    delay: -26,
+    node: <CatWalker legA={styles.legA} legB={styles.legB} bob={styles.walkBob} />,
+  },
+  midAutumn: {
+    width: 22,
+    height: 16,
+    viewBox: '0 0 22 16',
+    duration: 76,
+    delay: -34,
+    node: <RabbitWalker bob={styles.hopBob} />,
+  },
+  lunarNewYear: {
+    width: 40,
+    height: 26,
+    viewBox: '0 0 40 26',
+    duration: 80,
+    delay: -36,
+    node: <LionWalker legA={styles.legA} legB={styles.legB} bob={styles.nod} />,
+  },
+};
+
+/** The floor at the rail's foot. Still until touched: the pointer over the strip stirs
+ *  the pieces once (their parts' hover rules), a click on one plays its turn — set by
+ *  `data-poked`, cleared when the piece's own animation ends. Only the piece's own
+ *  `animationend` counts: the lights and glows inside it never end, and the burst
+ *  overlay ends on its own schedule. The collapsed rail keeps one piece and no walker. */
 export const FestiveGround: React.FC<RailFestiveProps> = ({ festival, compact = false }) => {
+  const [poked, setPoked] = useState<number | null>(null);
+
   const pieces = compact ? GROUNDS[festival].slice(0, 1) : GROUNDS[festival];
+  const walker = WALKERS[festival];
+
   return (
     <div className={compact ? styles.railGroundCompact : styles.railGround} aria-hidden data-festive-rail="ground">
-      {pieces.map((piece) => (
+      {!compact && (
+        <div
+          className={fd.crossTrack}
+          data-festive-walker={festival}
+          style={{
+            ['--fd-cross-w' as string]: `${walker.width}px`,
+            animationDuration: `${walker.duration}s`,
+            animationDelay: `${walker.delay}s`,
+          }}
+        >
+          <svg
+            className={`${fd.crossing} ${styles.walker}`}
+            viewBox={walker.viewBox}
+            width={walker.width}
+            height={walker.height}
+          >
+            {walker.node}
+          </svg>
+        </div>
+      )}
+      {pieces.map((piece, i) => (
         <svg
-          key={piece.at}
-          className={styles.railPiece}
-          style={compact ? { left: '50%', transform: 'translateX(-50%)' } : { left: `${piece.at * 100}%` }}
+          key={`${piece.kind}-${piece.at}`}
+          className={`${styles.railPiece} ${styles[piece.kind]}`}
+          data-piece={piece.kind}
+          data-poked={poked === i ? 'true' : undefined}
+          style={compact ? { left: `calc(50% - ${piece.width / 2}px)` } : { left: `${piece.at * 100}%` }}
           viewBox={piece.viewBox}
           width={piece.width}
           height={piece.height}
+          onClick={() => setPoked(i)}
+          onAnimationEnd={(event) => {
+            if (event.target === event.currentTarget) {
+              setPoked(null);
+            }
+          }}
         >
           {piece.node}
+          {poked === i && burstFor(piece)}
         </svg>
       ))}
     </div>

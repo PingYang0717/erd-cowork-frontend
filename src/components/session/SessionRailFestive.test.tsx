@@ -1,11 +1,20 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { screen } from '@testing-library/react';
+import { fireEvent, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { FESTIVAL_PREVIEW_STORAGE_KEY } from '@/constants/storage';
 import { useFestiveStore } from '@/stores/useFestiveStore';
 import { useStudioLayoutStore } from '@/stores/useStudioLayoutStore';
 import { renderStudio } from '@/test/renderStudio';
+
+/** React listens for the vendor-prefixed name here: jsdom has no `AnimationEvent`
+ *  but does have `WebkitAnimation` on a style, which is React's cue to bind
+ *  `webkitAnimationEnd` instead of `animationend`. Firing both keeps the test honest
+ *  about which element ended, whichever name is bound. */
+const endAnimation = (element: Element) => {
+  fireEvent.animationEnd(element);
+  fireEvent(element, new Event('webkitAnimationEnd', { bubbles: true }));
+};
 
 const echoes = () =>
   Array.from(document.querySelectorAll('[data-festive-rail]')).map((el) => el.getAttribute('data-festive-rail'));
@@ -59,6 +68,37 @@ describe('Session rail festive echoes', () => {
     await screen.findByRole('button', { name: 'New chat' });
 
     expect(echoes()).toEqual([]);
+  });
+
+  it('plays a piece its turn on a click, and stands it still again when the turn ends', async () => {
+    localStorage.setItem(FESTIVAL_PREVIEW_STORAGE_KEY, 'lunarNewYear');
+    renderStudio();
+    await screen.findByRole('button', { name: 'New chat' });
+    const ingots = document.querySelector('[data-piece="ingots"]')!;
+
+    fireEvent.click(ingots);
+    expect(ingots).toHaveAttribute('data-poked', 'true');
+    // Coins fly off while the turn plays.
+    expect(ingots.querySelectorAll('circle').length).toBeGreaterThan(0);
+
+    // The lights inside a piece never end; only the piece's own animation clears it.
+    endAnimation(ingots.firstElementChild!);
+    expect(ingots).toHaveAttribute('data-poked', 'true');
+    endAnimation(ingots);
+    expect(ingots).not.toHaveAttribute('data-poked');
+    expect(ingots.querySelectorAll('circle').length).toBe(0);
+  });
+
+  it('has one walker crossing the floor, and none on the collapsed rail', async () => {
+    localStorage.setItem(FESTIVAL_PREVIEW_STORAGE_KEY, 'christmas');
+    const user = userEvent.setup();
+    renderStudio();
+    await screen.findByRole('button', { name: 'New chat' });
+    expect(document.querySelectorAll('[data-festive-walker]').length).toBe(1);
+
+    await user.click(screen.getByRole('button', { name: 'Collapse session list' }));
+    await screen.findByRole('button', { name: 'Expand session list' });
+    expect(document.querySelectorAll('[data-festive-walker]').length).toBe(0);
   });
 
   it('keeps a short string and one piece on the floor when the rail is collapsed', async () => {
