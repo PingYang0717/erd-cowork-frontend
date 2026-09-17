@@ -1,6 +1,6 @@
 # 節慶裝飾截圖（2026-09-18 第二版，臨時 branch，看完即刪）
 
-對應 commit 60c9c12。這一版改了兩件事：對話欄的地面從 composer 後面穿過（不再斷層）；圓窗留下，畫法改成同一個世界的，四個節日各一隻生物。
+對應 commit 5188418。第三版：地帶改成一整條，三個面的邊界接得上、一樣亮（40 到 45）。這一版改了兩件事：對話欄的地面從 composer 後面穿過（不再斷層）；圓窗留下，畫法改成同一個世界的，四個節日各一隻生物。
 
 ## 整頁
 
@@ -35,3 +35,14 @@
 | 知更鳥飛過 Artifact 面板 | ![](31-robin-crossing.png) |
 | 錦鯉橫越 | ![](32-koi-crossing.png) |
 | 蟾蜍橫越 | ![](33-toad-crossing.png) |
+
+## 第三版：地帶在三個面的邊界接起來
+
+| | |
+|---|---|
+| 聖誕 | ![](40-foot-joined-christmas.png) |
+| 新年 | ![](41-foot-joined-lunarNewYear.png) |
+| 萬聖節 | ![](42-foot-joined-halloween.png) |
+| 中秋 | ![](43-foot-joined-midAutumn.png) |
+| 聖誕深色 | ![](44-foot-joined-christmas-dark.png) |
+| 收合欄 | ![](45-foot-joined-collapsed.png) |
