@@ -1,5 +1,7 @@
 import React from 'react';
 
+import type { Festival } from '@/utils/festival';
+
 /** The festive drawings the session rail borrows from the header's scenes, as bare SVG
  *  groups: the same paths as in `FestiveDecoration`, so what hangs on the rail's line
  *  and stands on its floor is recognisably the same lantern, flag, snowman or rabbit —
@@ -336,6 +338,131 @@ export const LionWalker: React.FC<WalkerProps> = ({ legA, legB, bob }) => (
     </g>
   </g>
 );
+
+/* ---------- the ground they stand on ---------- */
+
+export interface GroundBackdrop {
+  /** The tint rising off the floor: the header's sky gradient for this festival, turned
+   *  over, because down here the colour belongs to the ground rather than the sky. */
+  wash: string;
+  /** The band the pieces stand on, drawn over 240×40 and stretched to whatever width
+   *  the caller gives it. */
+  band: React.ReactNode;
+  /** For a strip too narrow for the band's drawing: the same colours, flat. */
+  compactBand: React.ReactNode;
+}
+
+/** A flat crust for the narrow rail, in the band's colours. */
+const compactCrust = (fill: string, opacity: number, edge?: string): React.ReactNode => (
+  <>
+    <path d="M0 40V30c8-3 16-3 24 0l16 2v8z" fill={fill} opacity={opacity} />
+    {edge !== undefined && (
+      <path d="M0 30c8-3 16-3 24 0l16 2" fill="none" stroke={edge} strokeWidth="1" opacity="0.7" />
+    )}
+  </>
+);
+
+/** What a festival's floor is made of, for any surface that wants to stand something on
+ *  it — the rail's foot, the empty thread. Drawn here with the pieces themselves so the
+ *  ground and what stands on it stay one set of drawings.
+ *
+ *  Each is the near end of the header's scene.
+ *  Christmas's snow, Halloween's grave grass, Mid-Autumn's bank of cloud at the water's
+ *  edge, New Year's swept red-and-gold ground. */
+export const GROUND_BACKDROPS: Record<Festival, GroundBackdrop> = {
+  christmas: {
+    wash: 'linear-gradient(180deg, rgba(60, 100, 170, 0) 0%, rgba(60, 100, 170, 0.05) 55%, rgba(60, 100, 170, 0.12) 100%)',
+    band: (
+      <>
+        <path
+          d="M0 40V28c18-5 34-4 52 1 16 4 30 3 46-2 20-6 40-5 60 2 16 5 32 4 48-2 12-4 24-5 34-3V40z"
+          fill="#fff"
+          opacity="0.92"
+        />
+        <path
+          d="M0 28c18-5 34-4 52 1 16 4 30 3 46-2 20-6 40-5 60 2 16 5 32 4 48-2 12-4 24-5 34-3"
+          fill="none"
+          stroke="#cdd6e6"
+          strokeWidth="0.9"
+          opacity="0.8"
+        />
+        {/* two drifts banked a little higher than the rest */}
+        <path d="M66 40v-6c10-4 20-4 30 1v5z" fill="#fff" opacity="0.5" />
+        <path d="M176 40v-5c9-3 18-3 26 1v4z" fill="#fff" opacity="0.5" />
+      </>
+    ),
+    compactBand: compactCrust('#fff', 0.92, '#cdd6e6'),
+  },
+  halloween: {
+    wash: 'linear-gradient(180deg, rgba(96, 52, 140, 0) 0%, rgba(96, 52, 140, 0.05) 55%, rgba(96, 52, 140, 0.13) 100%)',
+    band: (
+      <>
+        <path
+          d="M0 40V30c20-4 38-3 56 2 18 5 34 4 52-2 20-6 40-4 58 3 16 6 30 5 44-1l30-2V40z"
+          fill={INK}
+          opacity="0.28"
+        />
+        {/* grass gone over, the way it is around the header's headstones */}
+        <g fill="none" stroke={INK} strokeWidth="1" strokeLinecap="round" opacity="0.3">
+          <path d="M28 40c1-4 0-6-2-8M33 40c0-4 2-6 5-7M38 40c-1-3-1-5 1-7" />
+          <path d="M128 40c1-4 0-6-2-8M133 40c0-4 2-6 5-7M138 40c-1-3-1-5 1-7" />
+          <path d="M206 40c1-4 0-6-2-8M211 40c0-4 2-6 5-7" />
+        </g>
+      </>
+    ),
+    compactBand: compactCrust(INK, 0.28),
+  },
+  midAutumn: {
+    wash: 'linear-gradient(180deg, rgba(44, 52, 128, 0) 0%, rgba(44, 52, 128, 0.05) 55%, rgba(44, 52, 128, 0.12) 100%)',
+    band: (
+      <>
+        <path
+          d="M0 40V31a10 10 0 0 1 18-4 12 12 0 0 1 22-2 9 9 0 0 1 16 3 13 13 0 0 1 24-1 8 8 0 0 1 14 2 11 11 0 0 1 20-3 10 10 0 0 1 18 3 12 12 0 0 1 22-1 9 9 0 0 1 16 2 10 10 0 0 1 18 2 8 8 0 0 1 12 1V40z"
+          fill={INK}
+          opacity="0.18"
+        />
+        {/* reeds at the water's edge, the same ones the header's mid layer carries */}
+        <g fill="none" stroke={INK} strokeWidth="0.9" strokeLinecap="round" opacity="0.28">
+          <path d="M60 40c1-5 0-8-2-11M64 40c0-5 2-7 5-9M68 40c-1-4-1-7 1-10" />
+          <path d="M168 40c1-5 0-8-2-11M172 40c0-5 2-7 5-9" />
+        </g>
+        <g fill={INK} opacity="0.28">
+          <ellipse cx="58" cy="29" rx="1" ry="2.4" />
+          <ellipse cx="69" cy="30.5" rx="1" ry="2.4" />
+          <ellipse cx="166" cy="29" rx="1" ry="2.4" />
+        </g>
+      </>
+    ),
+    compactBand: compactCrust(INK, 0.18),
+  },
+  lunarNewYear: {
+    wash: 'linear-gradient(180deg, rgba(200, 40, 50, 0) 0%, rgba(200, 40, 50, 0.04) 55%, rgba(200, 40, 50, 0.11) 100%)',
+    band: (
+      <>
+        <path
+          d="M0 40V30c22-4 42-3 62 2 18 5 34 4 52-2 22-6 42-3 60 4 16 6 32 5 46-1l20-2V40z"
+          fill="#d9a83f"
+          opacity="0.3"
+        />
+        <path
+          d="M0 30c22-4 42-3 62 2 18 5 34 4 52-2 22-6 42-3 60 4 16 6 32 5 46-1l20-2"
+          fill="none"
+          stroke="#c8282f"
+          strokeWidth="0.9"
+          opacity="0.35"
+        />
+        {/* spent firecracker paper and a few plum petals come to rest on the ground */}
+        <g fill="#c8282f" opacity="0.4">
+          <ellipse cx="44" cy="36" rx="2.4" ry="1.2" transform="rotate(-12 44 36)" />
+          <ellipse cx="96" cy="37" rx="2" ry="1" transform="rotate(8 96 37)" />
+          <ellipse cx="150" cy="35" rx="2.6" ry="1.2" transform="rotate(-6 150 35)" />
+          <ellipse cx="204" cy="37" rx="2" ry="1" transform="rotate(14 204 37)" />
+        </g>
+      </>
+    ),
+    compactBand: compactCrust('#d9a83f', 0.3, '#c8282f'),
+  },
+};
 
 /* ---------- what falls or rises ---------- */
 

@@ -17,6 +17,7 @@ import ChatComposer from './ChatComposer';
 import MessageList, { type LiveRun } from './MessageList';
 import type { Answers } from './QuestionFormCard';
 import RepairOfferCard from './RepairOfferCard';
+import ThreadEmptyFestive from './ThreadEmptyFestive';
 
 import styles from './ThreadPanel.module.css';
 
@@ -48,6 +49,10 @@ const EmptyState: React.FC<EmptyStateProps> = ({ heading, subtitle }) => {
       </div>
       <p className={styles.emptyStateHeading}>{heading}</p>
       <p className={styles.emptyStateSubtitle}>{subtitle}</p>
+      {/* Under the words, not around them: the empty state's job is to say what to do
+          next, and a decoration that came first would be answering a question nobody
+          asked. Renders nothing outside a festival, or with the switch off. */}
+      <ThreadEmptyFestive />
     </div>
   );
 };

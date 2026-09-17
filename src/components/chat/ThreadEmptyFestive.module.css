@@ -1,0 +1,43 @@
+/* The strip of ground under the empty thread's heading. Wider and shallower than the
+   rail's floor — it has the width of a reading column to fill, and only a few pieces to
+   put on it. Transparent to the pointer everywhere: nothing here is interactive. */
+.scene {
+  position: relative;
+  width: 100%;
+  max-width: 280px;
+  height: 44px;
+  margin-top: 18px;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* Behind the pieces, faded out at both ends so the ground reads as a place the text
+   happens to sit above rather than a panel drawn under it. */
+.backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  mask-image: linear-gradient(90deg, transparent 0%, #000 18%, #000 82%, transparent 100%);
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 18%, #000 82%, transparent 100%);
+}
+
+.wash {
+  position: absolute;
+  inset: 0;
+}
+
+.floor {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.piece {
+  position: absolute;
+  bottom: 0;
+  z-index: 1;
+  display: block;
+  overflow: visible;
+}
