@@ -3,6 +3,7 @@ import { AppstoreOutlined, CheckOutlined, ExportOutlined, ReloadOutlined, ShareA
 
 import { isNotFound } from '@/api/apiError';
 import Tooltip from '@/components/common/Tooltip';
+import { EmptyPorthole } from '@/components/layouts/EmptyStateFestive';
 import { FestiveFloor, FestiveWeather } from '@/components/layouts/FestiveSurfaces';
 import { useArtifactContent } from '@/hooks/useArtifactContent';
 import { usePublishArtifact } from '@/hooks/useArtifactMutations';
@@ -24,9 +25,10 @@ import VersionSwitcher from './VersionSwitcher';
 
 import styles from './ArtifactPanel.module.css';
 
-/** The pane with nothing to show, and around a festival the scene's weather over its
- *  top and its stretch of the floor along its foot (FestiveSurfaces) — the same floor
- *  the rail and the empty thread stand on. */
+/** The pane with nothing to show. Around a festival it gets the scene's weather over its
+ *  top and its stretch of the floor along its foot (FestiveSurfaces), and the icon tile
+ *  steps aside for the porthole (EmptyStateFestive) — the pair of windows is what the
+ *  creature crosses between. */
 const EmptyPanel: React.FC = () => {
   const t = useTranslations();
   const festival = useFestival();
@@ -34,9 +36,13 @@ const EmptyPanel: React.FC = () => {
   return (
     <div className={styles.empty}>
       {festival !== null && <FestiveWeather festival={festival} surface="artifact" />}
-      <div className={styles.emptyIcon}>
-        <AppstoreOutlined aria-hidden />
-      </div>
+      {festival !== null ? (
+        <EmptyPorthole festival={festival} panel="right" />
+      ) : (
+        <div className={styles.emptyIcon}>
+          <AppstoreOutlined aria-hidden />
+        </div>
+      )}
       <p className={styles.emptyHeading}>{t.studio.artifactEmptyHeading}</p>
       <p className={styles.emptyText}>{t.studio.artifactEmptySubtitle}</p>
       {festival !== null && <FestiveFloor festival={festival} surface="artifact" />}

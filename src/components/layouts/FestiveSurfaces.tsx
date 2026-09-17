@@ -43,8 +43,9 @@ import styles from './FestiveSurfaces.module.css';
  *    weather  what falls in the header's sky (snow, plum petals; Mid-Autumn's sky
  *             lanterns rise) comes over the top of each surface and thins out by 112px
  *    floor    one strip of the festival's ground along the window's foot — snow, grass,
- *             a bank of cloud, swept red-and-gold — running through the rail and both
- *             empty panes at the same height, with the header's standing pieces on it
+ *             a bank of cloud, swept red-and-gold — running through the rail, behind the
+ *             thread pane's composer and across the empty Artifact pane at one height,
+ *             with the header's standing pieces on it
  *    walker   one figure a festival crosses the whole floor, rail to Artifact pane,
  *             and waits out of sight before coming round again
  *
@@ -251,7 +252,9 @@ interface Placement {
 
 /** What stands where. Deliberately uneven spacing, and nothing repeated across two
  *  surfaces that sit side by side, so the floor reads as one street with things left
- *  along it rather than a pattern. The collapsed rail keeps the first rail piece. */
+ *  along it rather than a pattern. The collapsed rail keeps the first rail piece. The
+ *  thread pane's floor runs behind its composer card, so nothing stands on it: the card
+ *  does. */
 const LAYOUTS: Record<Festival, Record<'rail' | 'chat' | 'artifact', Placement[]>> = {
   christmas: {
     rail: [
@@ -259,10 +262,7 @@ const LAYOUTS: Record<Festival, Record<'rail' | 'chat' | 'artifact', Placement[]
       { kind: 'tree', at: 0.48 },
       { kind: 'tree', at: 0.8, scale: 0.75 },
     ],
-    chat: [
-      { kind: 'candyCanes', at: 0.14 },
-      { kind: 'lampPost', at: 0.78 },
-    ],
+    chat: [],
     artifact: [
       { kind: 'cabin', at: 0.06 },
       { kind: 'gingerbread', at: 0.36 },
@@ -276,10 +276,7 @@ const LAYOUTS: Record<Festival, Record<'rail' | 'chat' | 'artifact', Placement[]
       { kind: 'cat', at: 0.46 },
       { kind: 'pumpkin', at: 0.74, scale: 0.7 },
     ],
-    chat: [
-      { kind: 'tombstones', at: 0.12 },
-      { kind: 'pumpkin', at: 0.76, scale: 0.75 },
-    ],
+    chat: [],
     artifact: [
       { kind: 'scarecrow', at: 0.06 },
       { kind: 'cauldron', at: 0.38 },
@@ -292,10 +289,7 @@ const LAYOUTS: Record<Festival, Record<'rail' | 'chat' | 'artifact', Placement[]
       { kind: 'rabbitLantern', at: 0.1 },
       { kind: 'rabbitsCake', at: 0.5 },
     ],
-    chat: [
-      { kind: 'teaSet', at: 0.18 },
-      { kind: 'pomelo', at: 0.74 },
-    ],
+    chat: [],
     artifact: [
       { kind: 'rabbitLantern', at: 0.06 },
       { kind: 'teaSet', at: 0.4 },
@@ -309,10 +303,7 @@ const LAYOUTS: Record<Festival, Record<'rail' | 'chat' | 'artifact', Placement[]
       { kind: 'ingots', at: 0.4 },
       { kind: 'mandarins', at: 0.72 },
     ],
-    chat: [
-      { kind: 'drum', at: 0.16 },
-      { kind: 'mandarins', at: 0.76 },
-    ],
+    chat: [],
     artifact: [
       { kind: 'envelopes', at: 0.06 },
       { kind: 'drum', at: 0.34 },

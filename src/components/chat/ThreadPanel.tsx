@@ -2,6 +2,7 @@ import React, { type ReactNode, useCallback, useEffect, useRef, useState } from 
 import { ThunderboltFilled } from '@ant-design/icons';
 
 import DataBoundary from '@/components/common/DataBoundary';
+import { EmptyPorthole } from '@/components/layouts/EmptyStateFestive';
 import { FestiveFloor, FestiveWeather } from '@/components/layouts/FestiveSurfaces';
 import { isInterruptionRecord } from '@/constants/wireStrings';
 import { type SendInput, useAgentStream } from '@/hooks/useAgentStream';
@@ -43,35 +44,23 @@ interface EmptyStateProps {
 }
 
 /** The empty state, before a conversation or before its first message. Around a
- *  festival the scene's weather comes over its top (FestiveSurfaces): the thread pane
- *  has no floor of its own — the composer sits at its foot — so this is the pane's whole
- *  share of the scene, and the walker passes behind it. */
+ *  festival the scene's weather comes over its top, and the icon tile steps aside for the
+ *  porthole (EmptyStateFestive): a 52px square with things hung off it was a tile with
+ *  trinkets on, and the point of the window is that it is a place, which needs the room. */
 const EmptyState: React.FC<EmptyStateProps> = ({ heading, subtitle }) => {
   const festival = useFestival();
   return (
     <div className={styles.emptyState}>
       {festival !== null && <FestiveWeather festival={festival} surface="chat" />}
-      <div className={styles.emptyStateIcon}>
-        <ThunderboltFilled aria-hidden />
-      </div>
+      {festival !== null ? (
+        <EmptyPorthole festival={festival} panel="left" />
+      ) : (
+        <div className={styles.emptyStateIcon}>
+          <ThunderboltFilled aria-hidden />
+        </div>
+      )}
       <p className={styles.emptyStateHeading}>{heading}</p>
       <p className={styles.emptyStateSubtitle}>{subtitle}</p>
-    </div>
-  );
-};
-
-/** The pane with no conversation open. Around a festival it gets its stretch of the
- *  floor along its foot as well (FestiveSurfaces): this empty state reaches the window's
- *  bottom edge, where the floor runs. The one inside an open conversation does not — the
- *  composer sits under it — and a floor that stopped short of the foot would be a shelf,
- *  not the ground. */
-const NoSession: React.FC = () => {
-  const t = useTranslations();
-  const festival = useFestival();
-  return (
-    <div className={styles.body}>
-      <EmptyState heading={t.studio.emptyNoSessionHeading} subtitle={t.studio.emptyNoSessionSubtitle} />
-      {festival !== null && <FestiveFloor festival={festival} surface="chat" />}
     </div>
   );
 };
@@ -81,7 +70,9 @@ const NoSession: React.FC = () => {
  *  conversation is open, and a header that blinks away every time a session loads is a
  *  worse answer than one that stays put. */
 const ThreadPanel: React.FC = () => {
+  const t = useTranslations();
   const selectedSessionId = useSessionSelectionStore((s) => s.selectedSessionId);
+  const festival = useFestival();
 
   return (
     <div className={styles.panel}>
@@ -94,8 +85,15 @@ const ThreadPanel: React.FC = () => {
           <ThreadView key={selectedSessionId} sessionId={selectedSessionId} />
         </DataBoundary>
       ) : (
-        <NoSession />
+        <div className={styles.body}>
+          <EmptyState heading={t.studio.emptyNoSessionHeading} subtitle={t.studio.emptyNoSessionSubtitle} />
+        </div>
       )}
+      {/* The pane's stretch of the floor that runs along the window's foot (FestiveSurfaces),
+          behind the composer: the composer card stands on the ground, and the walker passes
+          behind it with its feet showing under the card. Without this the floor stopped at
+          the rail's edge and started again at the Artifact pane, a gap where a pane was. */}
+      {festival !== null && <FestiveFloor festival={festival} surface="chat" />}
     </div>
   );
 };

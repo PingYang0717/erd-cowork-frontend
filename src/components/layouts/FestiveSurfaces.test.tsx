@@ -66,15 +66,14 @@ describe('The festive surfaces', () => {
     expect(weathers()).toEqual([]);
   });
 
-  /** With a draft open the thread pane shows its start state over the composer: it gets
-   *  the weather but no floor — the floor runs along the window's foot, through the rail
-   *  and the empty Artifact pane. */
-  it('lets the snow in over every empty surface and lays one floor through the rail and the Artifact pane', async () => {
+  /** With a draft open the thread pane shows its start state over the composer; its
+   *  stretch of the floor runs behind the composer, at the pane's foot. */
+  it('lets the snow in over every empty surface and lays one floor through all three', async () => {
     localStorage.setItem(FESTIVAL_PREVIEW_STORAGE_KEY, 'christmas');
     await renderStudioOnDraft();
 
     expect(weathers()).toEqual(['rail', 'chat', 'artifact']);
-    expect(floors()).toEqual(['rail', 'artifact']);
+    expect(floors()).toEqual(['rail', 'chat', 'artifact']);
     for (const piece of document.querySelectorAll('[data-festive-floor], [data-festive-weather]')) {
       expect(piece).toHaveAttribute('aria-hidden', 'true');
     }
@@ -90,10 +89,10 @@ describe('The festive surfaces', () => {
     await renderStudioOnDraft();
 
     const copies = walkers();
-    expect(copies).toHaveLength(2);
+    expect(copies).toHaveLength(3);
     for (const copy of copies) {
       expect(copy.getAttribute('data-festive-walker')).toBe('christmas');
-      expect(copy.style.animationDelay).toMatch(/^-\d+\.\d{3}s$/);
+      expect(copy.style.animationDelay).toMatch(/^-\d+(\.\d+)?s$/);
     }
     // Read moments apart, the two delays are moments apart — not a mount time apart.
     const delays = copies.map((copy) => parseFloat(copy.style.animationDelay));
@@ -116,7 +115,7 @@ describe('The festive surfaces', () => {
     await renderStudioOnDraft();
 
     expect(weathers()).toEqual([]);
-    expect(floors()).toEqual(['rail', 'artifact']);
+    expect(floors()).toEqual(['rail', 'chat', 'artifact']);
   });
 
   it('goes with the header when the switch is off', async () => {
@@ -153,15 +152,15 @@ describe('The festive surfaces', () => {
     await user.click(screen.getByRole('button', { name: 'Collapse session list' }));
     await screen.findByRole('button', { name: 'Expand session list' });
 
-    expect(floors()).toEqual(['compact', 'artifact']);
+    expect(floors()).toEqual(['compact', 'chat', 'artifact']);
     const compact = document.querySelector('[data-festive-floor="compact"]')!;
     expect(compact.querySelectorAll('[data-piece]')).toHaveLength(1);
     expect(compact.querySelector('[data-festive-walker]')).not.toBeNull();
   });
 
-  /** With no conversation open at all the thread pane reaches the window's foot, so it
-   *  carries its own stretch of the floor. */
-  it('lays the floor through the thread pane too when no conversation is open', () => {
+  /** The thread pane's floor is the pane's, not the conversation's: it is there with no
+   *  conversation open as well. */
+  it('lays the floor through the thread pane with no conversation open', () => {
     localStorage.setItem(FESTIVAL_PREVIEW_STORAGE_KEY, 'christmas');
     // Rendered alone there is nothing to open a draft, so the pane stays without one.
     render(

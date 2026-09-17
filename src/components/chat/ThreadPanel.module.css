@@ -1,4 +1,6 @@
 .panel {
+  /* The festive floor is laid against this box's foot, behind the composer. */
+  position: relative;
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -54,9 +56,6 @@
 /* Holds the empty state only: once there is a conversation, MessageList is the box
    that scrolls, because it is the box that grows. */
 .body {
-  /* The festive weather and floor are laid against this box's top and foot. */
-  position: relative;
-  overflow: hidden;
   flex: 1 1 auto;
   min-height: 0;
   display: flex;
@@ -66,9 +65,12 @@
 }
 
 .composer {
+  /* Above the festive floor, and transparent so the floor shows around the card. The
+     pane's own background is behind both. */
+  position: relative;
+  z-index: 1;
   flex: 0 0 auto;
   padding: 11px 20px 15px;
-  background: var(--erd-color-bg-container, #fff);
   border-top: 1px solid var(--erd-color-border-secondary, #f0f0f0);
 }
 
