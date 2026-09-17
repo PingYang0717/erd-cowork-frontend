@@ -1,6 +1,10 @@
 /* The mockup's empty preview state (cwPreviewRoot): a primary-tinted icon
    tile over a heading and one line of guidance. */
 .empty {
+  /* The walker's floor is measured against this box. */
+  position: relative;
+  /* Clips the koi as it leaves: the panel edge is where it goes out of sight. */
+  overflow: hidden;
   height: 100%;
   min-height: 360px;
   display: flex;
@@ -13,6 +17,8 @@
 }
 
 .emptyIcon {
+  /* The anchor its festive dress hangs from, and the box that clips what perches on it. */
+  position: relative;
   width: 56px;
   height: 56px;
   border-radius: 14px;

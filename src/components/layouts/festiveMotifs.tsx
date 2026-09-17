@@ -362,8 +362,8 @@ const compactCrust = (fill: string, opacity: number, edge?: string): React.React
   </>
 );
 
-/** What a festival's floor is made of, for any surface that wants to stand something on
- *  it — the rail's foot, the empty thread. Drawn here with the pieces themselves so the
+/** What a festival's floor is made of, for a surface that wants to stand something on it.
+ *  Drawn here beside the pieces themselves rather than in the rail that uses it, so the
  *  ground and what stands on it stay one set of drawings.
  *
  *  Each is the near end of the header's scene.

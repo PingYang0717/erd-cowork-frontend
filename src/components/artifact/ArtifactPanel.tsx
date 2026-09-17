@@ -3,9 +3,11 @@ import { AppstoreOutlined, CheckOutlined, ExportOutlined, ReloadOutlined, ShareA
 
 import { isNotFound } from '@/api/apiError';
 import Tooltip from '@/components/common/Tooltip';
+import { EmptyPorthole } from '@/components/layouts/EmptyStateFestive';
 import { useArtifactContent } from '@/hooks/useArtifactContent';
 import { usePublishArtifact } from '@/hooks/useArtifactMutations';
 import { useArtifacts } from '@/hooks/useArtifacts';
+import { useFestival } from '@/hooks/useFestival';
 import { useSessionDetail } from '@/hooks/useSessionDetail';
 import { useTranslations } from '@/i18n/useTranslations';
 import { useActiveRunStore } from '@/stores/useActiveRunStore';
@@ -24,11 +26,19 @@ import styles from './ArtifactPanel.module.css';
 
 const EmptyPanel: React.FC = () => {
   const t = useTranslations();
+  const festival = useFestival();
+
   return (
     <div className={styles.empty}>
-      <div className={styles.emptyIcon}>
-        <AppstoreOutlined aria-hidden />
-      </div>
+      {/* The tile steps aside for the porthole during a festival — same move as the
+          thread's empty state, and the pair of windows is what the koi crosses between. */}
+      {festival !== null ? (
+        <EmptyPorthole festival={festival} panel="right" />
+      ) : (
+        <div className={styles.emptyIcon}>
+          <AppstoreOutlined aria-hidden />
+        </div>
+      )}
       <p className={styles.emptyHeading}>{t.studio.artifactEmptyHeading}</p>
       <p className={styles.emptyText}>{t.studio.artifactEmptySubtitle}</p>
     </div>

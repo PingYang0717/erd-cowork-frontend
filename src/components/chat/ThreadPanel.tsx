@@ -2,9 +2,11 @@ import React, { type ReactNode, useCallback, useEffect, useRef, useState } from 
 import { ThunderboltFilled } from '@ant-design/icons';
 
 import DataBoundary from '@/components/common/DataBoundary';
+import { EmptyPorthole } from '@/components/layouts/EmptyStateFestive';
 import { isInterruptionRecord } from '@/constants/wireStrings';
 import { type SendInput, useAgentStream } from '@/hooks/useAgentStream';
 import { useArtifactRepair } from '@/hooks/useArtifactRepair';
+import { useFestival } from '@/hooks/useFestival';
 import { useSessionDetail } from '@/hooks/useSessionDetail';
 import { useTranslations } from '@/i18n/useTranslations';
 import { useActiveRunStore } from '@/stores/useActiveRunStore';
@@ -17,7 +19,6 @@ import ChatComposer from './ChatComposer';
 import MessageList, { type LiveRun } from './MessageList';
 import type { Answers } from './QuestionFormCard';
 import RepairOfferCard from './RepairOfferCard';
-import ThreadEmptyFestive from './ThreadEmptyFestive';
 
 import styles from './ThreadPanel.module.css';
 
@@ -42,17 +43,21 @@ interface EmptyStateProps {
 }
 
 const EmptyState: React.FC<EmptyStateProps> = ({ heading, subtitle }) => {
+  const festival = useFestival();
+  const porthole = festival !== null ? <EmptyPorthole festival={festival} panel="left" /> : null;
+
   return (
     <div className={styles.emptyState}>
-      <div className={styles.emptyStateIcon}>
-        <ThunderboltFilled aria-hidden />
-      </div>
+      {/* During a festival the tile steps aside for the porthole rather than wearing it:
+          a 52px square with things hung off it was a tile with trinkets on, and the point
+          of the window is that it is a place, which needs the room. */}
+      {porthole ?? (
+        <div className={styles.emptyStateIcon}>
+          <ThunderboltFilled aria-hidden />
+        </div>
+      )}
       <p className={styles.emptyStateHeading}>{heading}</p>
       <p className={styles.emptyStateSubtitle}>{subtitle}</p>
-      {/* Under the words, not around them: the empty state's job is to say what to do
-          next, and a decoration that came first would be answering a question nobody
-          asked. Renders nothing outside a festival, or with the switch off. */}
-      <ThreadEmptyFestive />
     </div>
   );
 };

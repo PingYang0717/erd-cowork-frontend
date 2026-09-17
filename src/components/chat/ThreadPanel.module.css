@@ -72,6 +72,9 @@
 /* The mockup's empty state: a 52px primary-tinted (blue, not gray) icon
    tile over a fs14.5 heading and a fs12.5 line capped at 280px. */
 .emptyState {
+  position: relative;
+  /* Clips the koi as it leaves: the panel edge is where it goes out of sight. */
+  overflow: hidden;
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -83,6 +86,8 @@
 }
 
 .emptyStateIcon {
+  /* The anchor its festive dress hangs from, and the box that clips what perches on it. */
+  position: relative;
   width: 52px;
   height: 52px;
   display: flex;
