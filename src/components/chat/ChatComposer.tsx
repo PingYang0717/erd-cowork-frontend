@@ -13,7 +13,6 @@ import {
   PlusOutlined,
 } from '@ant-design/icons';
 
-import Tooltip from '@/components/common/Tooltip';
 import ConnectorsPanel from '@/components/connectors/ConnectorsPanel';
 import AttachmentChip from '@/components/files/AttachmentChip';
 import FileAttachmentModal from '@/components/files/FileAttachmentModal';
@@ -137,6 +136,12 @@ const ChatComposer: React.FC<ChatComposerProps> = ({ sessionId, onSend, disabled
   const usesConnectors = connectors.attachedIds.length > 0;
   const attachBlocked = usesConnectors;
   const connectorsBlocked = usesFiles && !usesConnectors;
+  // At most one is ever off, so at most one reason.
+  const blockedReason = attachBlocked
+    ? t.composer.attachBlockedByConnectors
+    : connectorsBlocked
+      ? t.composer.connectorsBlockedByFiles
+      : null;
 
   return (
     <div>
@@ -182,21 +187,27 @@ const ChatComposer: React.FC<ChatComposerProps> = ({ sessionId, onSend, disabled
             // root class in index.css. No slide, like the others: it just appears.
             classNames={{ root: 'erd-composer-menu' }}
             transitionName=""
+            // Why an item is off is a line at the foot of the menu, under a rule, not a
+            // tooltip on the row: it is read the moment the menu opens, with no hover to
+            // find and no delay — a tooltip inside a 210px popup landed on the other row
+            // and never showed to the keyboard. The card is the wrapper, so the foot
+            // sits inside the same surface as the items.
+            popupRender={(menu) => (
+              <div className="erd-composer-menu-card">
+                {menu}
+                {blockedReason !== null && (
+                  <p className="erd-composer-menu-foot" role="note">
+                    {blockedReason}
+                  </p>
+                )}
+              </div>
+            )}
             menu={{
               items: [
                 {
                   key: 'attach',
                   disabled: attachBlocked,
-                  // Why it is off rides a tooltip on the row rather than a line under
-                  // the name: the rule is still learned here, at the moment it applies,
-                  // and the row keeps the mockup's one-line shape. The hover lands on
-                  // the label span — antd's disabled row still passes pointer events to
-                  // its children, only its own `<a>` is inert.
-                  label: attachBlocked ? (
-                    <Tooltip content={t.composer.attachBlockedByConnectors} wrapperClassName={styles.menuItemLabel}>
-                      <span className={styles.menuItemText}>{t.composer.attachFiles}</span>
-                    </Tooltip>
-                  ) : (
+                  label: (
                     <span className={styles.menuItemLabel}>
                       <span className={styles.menuItemText}>{t.composer.attachFiles}</span>
                     </span>
@@ -206,11 +217,7 @@ const ChatComposer: React.FC<ChatComposerProps> = ({ sessionId, onSend, disabled
                 {
                   key: 'connectors',
                   disabled: connectorsBlocked,
-                  label: connectorsBlocked ? (
-                    <Tooltip content={t.composer.connectorsBlockedByFiles} wrapperClassName={styles.menuItemLabel}>
-                      <span className={styles.menuItemText}>{t.composer.connectors}</span>
-                    </Tooltip>
-                  ) : (
+                  label: (
                     <span className={styles.menuItemLabel}>
                       <span className={styles.menuItemText}>{t.composer.connectors}</span>
                       {connectedConnectorCount > 0 && (

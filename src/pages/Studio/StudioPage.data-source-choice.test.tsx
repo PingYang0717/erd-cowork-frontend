@@ -13,8 +13,8 @@ const openPlusMenu = async (user: ReturnType<typeof userEvent.setup>) => {
 
 /** A conversation draws on one kind of data source — Connectors or uploaded files,
  *  never both (CONTEXT.md, 已選來源). The rule is met at the entry: the item for the
- *  other kind greys out, and says why in a tooltip on the row, rather than a send
- *  failing later. */
+ *  other kind greys out, and the menu says why in a note at its foot, rather than a
+ *  send failing later. */
 describe('One kind of data source per conversation', () => {
   beforeEach(() => {
     useStudioLayoutStore.setState(useStudioLayoutStore.getInitialState());
@@ -30,12 +30,9 @@ describe('One kind of data source per conversation', () => {
 
     await openPlusMenu(user);
 
-    const attach = screen.getByRole('menuitem', { name: /^Attach files/ });
-    expect(attach).toHaveAttribute('aria-disabled', 'true');
-    // The reason is not on the row; it comes up when the row is hovered.
-    expect(screen.queryByText(en.composer.attachBlockedByConnectors)).not.toBeInTheDocument();
-    await user.hover(within(attach).getByText(en.composer.attachFiles));
-    expect(await screen.findByRole('tooltip')).toHaveTextContent(en.composer.attachBlockedByConnectors);
+    expect(screen.getByRole('menuitem', { name: /^Attach files/ })).toHaveAttribute('aria-disabled', 'true');
+    // The reason is read as soon as the menu is open: a note at its foot, not on the row.
+    expect(screen.getByRole('note')).toHaveTextContent(en.composer.attachBlockedByConnectors);
     // The other kind stays open.
     expect(screen.getByRole('menuitem', { name: /^Connectors/ })).not.toHaveAttribute('aria-disabled', 'true');
   });
@@ -47,6 +44,8 @@ describe('One kind of data source per conversation', () => {
     await user.click(await screen.findByRole('button', { name: 'New chat' }));
     await waitForComposer();
     await openPlusMenu(user);
+    // Nothing is off yet, so nothing to explain.
+    expect(screen.queryByRole('note')).not.toBeInTheDocument();
     await user.click(screen.getByRole('menuitem', { name: /^Attach files/ }));
     await screen.findByRole('dialog', { name: 'Attach files' });
     fireEvent.change(screen.getByLabelText('Choose files'), {
@@ -59,11 +58,8 @@ describe('One kind of data source per conversation', () => {
 
     await openPlusMenu(user);
 
-    const connectors = screen.getByRole('menuitem', { name: /^Connectors/ });
-    expect(connectors).toHaveAttribute('aria-disabled', 'true');
-    expect(screen.queryByText(en.composer.connectorsBlockedByFiles)).not.toBeInTheDocument();
-    await user.hover(within(connectors).getByText(en.composer.connectors));
-    expect(await screen.findByRole('tooltip')).toHaveTextContent(en.composer.connectorsBlockedByFiles);
+    expect(screen.getByRole('menuitem', { name: /^Connectors/ })).toHaveAttribute('aria-disabled', 'true');
+    expect(screen.getByRole('note')).toHaveTextContent(en.composer.connectorsBlockedByFiles);
     expect(screen.getByRole('menuitem', { name: /^Attach files/ })).not.toHaveAttribute('aria-disabled', 'true');
   });
 });

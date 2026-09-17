@@ -127,13 +127,33 @@ body {
    of padding around rows that are 9/10 with an 8px radius, fs13 in the text colour,
    16px secondary icons a 10px gap from the words. Not `.erd-menu` — that is the row
    menus' 150px/12.5px shape, and the mockup gives this one more room. */
-.erd-composer-menu .ant-dropdown-menu {
+/* The card is the wrapper (ChatComposer's popupRender), so the foot note shares it; the
+   antd menu inside loses its own surface. */
+.erd-composer-menu .erd-composer-menu-card {
   width: 210px;
   padding: 4px;
   border-radius: 11px;
   background: var(--erd-color-bg-elevated, #fff);
   border: 1px solid var(--erd-color-border-secondary, #f0f0f0);
   box-shadow: var(--shadow-md, 0 6px 16px rgba(0, 0, 0, 0.08));
+}
+
+.erd-composer-menu .ant-dropdown-menu {
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+/* Why an item is off: one quiet line under a rule at the foot of the menu. */
+.erd-composer-menu .erd-composer-menu-foot {
+  margin: 4px 0 0;
+  padding: 8px 10px 4px;
+  border-top: 1px solid var(--erd-color-border-secondary, #f0f0f0);
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--erd-color-text-tertiary, rgba(0, 0, 0, 0.45));
 }
 
 .erd-composer-menu .ant-dropdown-menu .ant-dropdown-menu-item {
@@ -154,8 +174,8 @@ body {
 }
 
 /* Off means visibly off: antd only greys the text a shade. The whole row — words, icon,
-   badge — drops to half strength, and the pointer says no. The reason is a tooltip on
-   the row (ChatComposer). */
+   badge — drops to half strength, and the pointer says no. The reason is the foot note
+   above. */
 .erd-composer-menu .ant-dropdown-menu .ant-dropdown-menu-item.ant-dropdown-menu-item-disabled,
 .erd-composer-menu
   .ant-dropdown-menu

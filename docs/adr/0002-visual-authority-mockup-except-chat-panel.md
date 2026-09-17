@@ -108,3 +108,10 @@ cowork 上游為準的例外也不變。變的只是**取得方式**——要核
 檔案在本機開,不要指望 `git show` 或 git 歷史找得到。本文與 `architecture.md`、
 `tokens.ts`、各處註解裡原本寫著檔名與行號的地方一併改掉了:那些座標現在指不到東西,留著只會
 害人白找。
+
+**2026-09-17 追記:Artifact iframe 內的 scrollbar 也要對齊。** 全域的 9px scrollbar 到
+iframe 邊界就停了——iframe 是另一份文件,外面的樣式表過不去,結果 chat panel 用設計稿的細
+bar、旁邊的 Artifact 用瀏覽器原生的粗 bar。現在把同一組規則當 `<style>` 寫進 Artifact 的
+`<head>` 末尾(`injectScrollbarStyle`,跟 CSP 的 `injectCspMeta` 同一條路)。thumb 用中灰
+低透明度而不是主題 token:iframe 讀不到父頁的主題,頁面底色是 agent 自己決定的,而切主題就
+重灌 iframe 會把 dashboard 打掉重來。
