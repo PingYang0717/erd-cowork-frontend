@@ -1,33 +1,37 @@
-# 節慶裝飾截圖（2026-09-18，臨時 branch，看完即刪）
+# 節慶裝飾截圖（2026-09-18 第二版，臨時 branch，看完即刪）
 
-對應 commit 51eb0a7「節慶裝飾收成一個世界」。假資料是 repo 既有的虛構值。
+對應 commit 60c9c12。這一版改了兩件事：對話欄的地面從 composer 後面穿過（不再斷層）；圓窗留下，畫法改成同一個世界的，四個節日各一隻生物。
 
 ## 整頁
 
 | | |
 |---|---|
 | 聖誕 | ![](01-christmas-whole-page.png) |
-| 聖誕深色 | ![](02-christmas-dark-whole-page.png) |
-| 新年 | ![](03-lunarNewYear-whole-page.png) |
-| 萬聖節 | ![](04-halloween-whole-page.png) |
-| 中秋 | ![](05-midAutumn-whole-page.png) |
-| 收合欄 | ![](06-halloween-collapsed-rail.png) |
+| 新年 | ![](02-lunarNewYear-whole-page.png) |
+| 萬聖節 | ![](03-halloween-whole-page.png) |
+| 中秋 | ![](04-midAutumn-whole-page.png) |
 
-## 角色走過整條地面
+## 地面連過 composer 後面
 
 | | |
 |---|---|
-| 馴鹿在側邊欄 | ![](10-walker-in-rail.png) |
-| 馴鹿從對話欄後面走出來 | ![](11-walker-out-from-behind-thread-pane.png) |
-| 舞獅同一個位置 | ![](12-lion-out-from-behind-thread-pane.png) |
-| 馴鹿在 Artifact 地面 | ![](13-reindeer-on-artifact-floor.png) |
-| 黑貓在 Artifact 地面 | ![](14-cat-on-artifact-floor.png) |
+| 聖誕 | ![](10-floor-behind-composer-christmas.png) |
+| 新年 | ![](11-floor-behind-composer-lunarNewYear.png) |
 
-## 點擊的瞬間
+## 圓窗：同一片天氣、同一條地，各住一隻
 
 | | |
 |---|---|
-| 大鍋冒泡 | ![](20-click-cauldron-bubbles.png) |
-| 茶壺冒煙 | ![](21-click-teapot-steam.png) |
-| 鼓槌敲擊 | ![](22-click-drum-beat.png) |
-| 薑餅人跳 | ![](23-click-gingerbread-jump.png) |
+| 新年：錦鯉 | ![](20-window-koi.png) |
+| 聖誕：知更鳥 | ![](21-window-robin.png) |
+| 萬聖節：烏鴉 | ![](22-window-crow.png) |
+| 中秋：月裡的蟾蜍 | ![](23-window-toad.png) |
+
+## 出窗、橫越
+
+| | |
+|---|---|
+| 錦鯉剛出窗，玻璃留下一圈 | ![](30-koi-leaving.png) |
+| 知更鳥飛過 Artifact 面板 | ![](31-robin-crossing.png) |
+| 錦鯉橫越 | ![](32-koi-crossing.png) |
+| 蟾蜍橫越 | ![](33-toad-crossing.png) |
