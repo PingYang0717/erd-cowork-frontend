@@ -161,16 +161,16 @@ describe('Artifact version switcher', () => {
     await user.type(await screen.findByRole('textbox', { name: 'Message' }), 'Regenerate the dashboard.{Enter}');
     await screen.findByRole('button', { name: 'Publish Artifact' });
 
-    await publishArtifactAs(user, '8 月 PT-01 良率追蹤');
+    await publishArtifactAs(user, '8 月良率追蹤');
     await screen.findByText('Published');
 
     // The menu row has always had it; the trigger is the regression.
     await user.click(screen.getByRole('button', { name: 'Switch Artifact' }));
     const rows = within(await screen.findByRole('menu')).getAllByRole('menuitem');
-    expect(within(rows[0]).getByText('8 月 PT-01 良率追蹤')).toBeInTheDocument();
+    expect(within(rows[0]).getByText('8 月良率追蹤')).toBeInTheDocument();
     await user.keyboard('{Escape}');
 
-    expect(screen.getByRole('button', { name: 'Switch Artifact' })).toHaveTextContent('8 月 PT-01 良率追蹤');
+    expect(screen.getByRole('button', { name: 'Switch Artifact' })).toHaveTextContent('8 月良率追蹤');
   });
 
   /** The menu-button keyboard contract (ADR-0014 §menu-keyboard): opening focuses the current item,

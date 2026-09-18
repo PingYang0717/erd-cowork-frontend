@@ -9,7 +9,7 @@ import { useStudioLayoutStore } from '@/stores/useStudioLayoutStore';
 import { mockAgentStream } from '@/test/agentStream';
 import { renderStudio, waitForComposer } from '@/test/renderStudio';
 
-const PART_ID_REASK = JSON.stringify([{ text: 'Part ID', options: ['PT-01', 'PT-02'], multiSelect: false }]);
+const PART_ID_REASK = JSON.stringify([{ text: 'Part ID', options: ['ZX-01', 'PT-02'], multiSelect: false }]);
 
 const message = (over: { id: string; sender: 'USER' | 'AI'; text?: string; questionsJson?: string | null }) => ({
   text: '',
@@ -63,9 +63,9 @@ describe('A reask the run is waiting on', () => {
     await waitForComposer();
 
     const group = await screen.findByRole('group', { name: 'Part ID' });
-    await user.click(chipIn(group, 'PT-01'));
+    await user.click(chipIn(group, 'ZX-01'));
 
-    expect(chipIn(group, 'PT-01')).toHaveAttribute('aria-pressed', 'true');
+    expect(chipIn(group, 'ZX-01')).toHaveAttribute('aria-pressed', 'true');
   });
 
   /** The reported symptom. When the run ends on a question the live bubble stays on
@@ -97,8 +97,8 @@ describe('A reask the run is waiting on', () => {
     expect(screen.getAllByRole('group', { name: 'Part ID' })).toHaveLength(1);
 
     const group = screen.getByRole('group', { name: 'Part ID' });
-    await user.click(chipIn(group, 'PT-01'));
-    expect(chipIn(group, 'PT-01')).toHaveAttribute('aria-pressed', 'true');
+    await user.click(chipIn(group, 'ZX-01'));
+    expect(chipIn(group, 'ZX-01')).toHaveAttribute('aria-pressed', 'true');
   }, 20000);
 
   /** Selecting a chip is not answering. The submit path composes the answer from the
@@ -114,11 +114,11 @@ describe('A reask the run is waiting on', () => {
     await waitForComposer();
 
     const group = await screen.findByRole('group', { name: 'Part ID' });
-    await user.click(chipIn(group, 'PT-01'));
+    await user.click(chipIn(group, 'ZX-01'));
     await user.click(screen.getByRole('button', { name: 'Send' }));
 
     await waitFor(() => expect(stream.requests).toHaveLength(1));
-    expect(stream.requests[0]).toMatchObject({ question: 'Part ID：PT-01' });
+    expect(stream.requests[0]).toMatchObject({ question: 'Part ID：ZX-01' });
   }, 20000);
 
   /** Submitting must not look like the selection was thrown away.
@@ -140,14 +140,14 @@ describe('A reask the run is waiting on', () => {
     await waitForComposer();
 
     const group = await screen.findByRole('group', { name: 'Part ID' });
-    await user.click(chipIn(group, 'PT-01'));
+    await user.click(chipIn(group, 'ZX-01'));
     await user.click(screen.getByRole('button', { name: 'Send' }));
 
     // Still there, and now settled: the run it started is under way and the history has
     // not caught up, but the answer is not in doubt.
     await waitFor(() => expect(screen.queryByRole('button', { name: 'Send' })).not.toBeInTheDocument());
     const settled = screen.getByRole('group', { name: 'Part ID' });
-    expect(chipIn(settled, 'PT-01')).toHaveAttribute('aria-pressed', 'true');
+    expect(chipIn(settled, 'ZX-01')).toHaveAttribute('aria-pressed', 'true');
     expect(chipIn(settled, 'PT-02')).toHaveAttribute('aria-pressed', 'false');
   }, 20000);
 
@@ -157,7 +157,7 @@ describe('A reask the run is waiting on', () => {
     const user = userEvent.setup();
     historyOf(
       message({ id: 'm1', sender: 'AI', questionsJson: PART_ID_REASK }),
-      message({ id: 'm2', sender: 'USER', text: 'Part ID：PT-01' })
+      message({ id: 'm2', sender: 'USER', text: 'Part ID：ZX-01' })
     );
     renderStudio();
 
@@ -181,7 +181,7 @@ describe('A reask the run is waiting on', () => {
     const user = userEvent.setup();
     historyOf(
       message({ id: 'm1', sender: 'AI', questionsJson: PART_ID_REASK }),
-      message({ id: 'm2', sender: 'USER', text: 'Part ID：PT-01' })
+      message({ id: 'm2', sender: 'USER', text: 'Part ID：ZX-01' })
     );
     renderStudio();
 
@@ -189,7 +189,7 @@ describe('A reask the run is waiting on', () => {
     await waitForComposer();
 
     const group = await screen.findByRole('group', { name: 'Part ID' });
-    expect(chipIn(group, 'PT-01')).toHaveAttribute('aria-pressed', 'true');
+    expect(chipIn(group, 'ZX-01')).toHaveAttribute('aria-pressed', 'true');
     expect(chipIn(group, 'PT-02')).toHaveAttribute('aria-pressed', 'false');
   });
 
@@ -201,7 +201,7 @@ describe('A reask the run is waiting on', () => {
     const user = userEvent.setup();
     historyOf(
       message({ id: 'm1', sender: 'AI', questionsJson: PART_ID_REASK }),
-      message({ id: 'm2', sender: 'USER', text: 'Part ID：PT-01' })
+      message({ id: 'm2', sender: 'USER', text: 'Part ID：ZX-01' })
     );
     renderStudio();
 
@@ -210,8 +210,8 @@ describe('A reask the run is waiting on', () => {
 
     // The card has it, so the bubble does not.
     const group = await screen.findByRole('group', { name: 'Part ID' });
-    expect(chipIn(group, 'PT-01')).toHaveAttribute('aria-pressed', 'true');
-    expect(screen.queryByText('Part ID：PT-01')).not.toBeInTheDocument();
+    expect(chipIn(group, 'ZX-01')).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.queryByText('Part ID：ZX-01')).not.toBeInTheDocument();
   });
 
   /** The safety condition. Hiding is only right where the card recovered the answer — if
@@ -246,7 +246,7 @@ describe('A reask the run is waiting on', () => {
     await waitForComposer();
 
     const group = await screen.findByRole('group', { name: 'Part ID' });
-    expect(chipIn(group, 'PT-01')).toHaveAttribute('aria-pressed', 'false');
+    expect(chipIn(group, 'ZX-01')).toHaveAttribute('aria-pressed', 'false');
     expect(chipIn(group, 'PT-02')).toHaveAttribute('aria-pressed', 'false');
   });
 
@@ -264,7 +264,7 @@ describe('A reask the run is waiting on', () => {
     await waitForComposer();
 
     const group = await screen.findByRole('group', { name: 'Part ID' });
-    await user.click(chipIn(group, 'PT-01'));
+    await user.click(chipIn(group, 'ZX-01'));
     await user.click(screen.getByRole('button', { name: 'Send' }));
     await waitFor(() => expect(stream.requests).toHaveLength(1));
 
@@ -273,6 +273,6 @@ describe('A reask the run is waiting on', () => {
     // Answerable again: the question is still open, so the card has to be. And what was
     // picked is still picked — retrying should not mean choosing everything twice.
     expect(await screen.findByRole('button', { name: 'Send' })).toBeInTheDocument();
-    expect(chipIn(screen.getByRole('group', { name: 'Part ID' }), 'PT-01')).toHaveAttribute('aria-pressed', 'true');
+    expect(chipIn(screen.getByRole('group', { name: 'Part ID' }), 'ZX-01')).toHaveAttribute('aria-pressed', 'true');
   }, 20000);
 });

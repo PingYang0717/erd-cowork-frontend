@@ -88,7 +88,7 @@ export const artifacts = createPersistedResource<StoredArtifact>('erd-cowork:art
   {
     id: 'artifact-3',
     sessionId: 'session-2',
-    title: 'Daily monitor (PT-01)',
+    title: 'Daily monitor',
     kind: 'slides',
     scenario: 'daily',
     ownerId: ALICE_USER_ID,

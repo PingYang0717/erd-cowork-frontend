@@ -101,15 +101,15 @@ describe('AppHeader festive decoration', () => {
     expect(avatarButton()).toHaveAccessibleName('Preferences');
   });
 
-  /** The user's default sources (CONTEXT.md, 預設資料來源) live with the other
+  /** The user's default sources (CONTEXT.md, 預設 Connectors) live with the other
    *  preferences: the row says how many are set and opens the picker. */
   it('opens the default sources picker from the avatar menu', async () => {
     const user = userEvent.setup();
-    localStorage.setItem('erd-cowork:connector-prefs', JSON.stringify({ defaultSources: ['inline', 'wat'] }));
+    localStorage.setItem('erd-cowork:connector-prefs', JSON.stringify({ defaultConnectors: ['inline', 'wat'] }));
     renderHeader();
 
     await user.click(avatarButton());
-    const row = await screen.findByRole('button', { name: /^Default sources/ });
+    const row = await screen.findByRole('button', { name: /^Default Connectors/ });
     expect(row).toHaveTextContent('2 selected');
     await user.click(row);
 

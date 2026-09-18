@@ -10,7 +10,7 @@ const API_BASE = '/api';
  *  Mongo-leaked shape (sender, stepsJson, artifactTitle). */
 describe('GET /api/sessions/:sessionId (SessionDetail)', () => {
   it('returns the session with messages in the backend wire shape after a run', async () => {
-    const question = 'Generate the Daily Monitor dashboard for PT-01.';
+    const question = 'Generate the Daily Monitor dashboard.';
     const post = await fetch(`${API_BASE}/sessions/session-2/messages`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream' },
@@ -50,7 +50,7 @@ describe('GET /api/sessions/:sessionId (SessionDetail)', () => {
     expect(aiMessage).toMatchObject({
       sender: 'AI',
       text: SCENARIO_FIXTURES.daily.reply,
-      artifactTitle: 'Daily Monitor Dashboard — PT-01',
+      artifactTitle: 'Daily Monitor Dashboard',
     });
     expect(aiMessage.artifactId).not.toBeNull();
 

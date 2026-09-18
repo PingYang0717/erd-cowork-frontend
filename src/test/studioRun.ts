@@ -49,14 +49,14 @@ export const answerField = async (user: User, label: string, option: string | Re
 
 const answerOneForm = async (user: User, submit: HTMLElement): Promise<void> => {
   if (hasField('Part ID')) {
-    await answerField(user, 'Part ID', 'PT-01');
+    await answerField(user, 'Part ID', 'ZX-01');
     await answerField(user, 'Time range', 'Last 7 days');
     await answerField(user, 'Data type', 'Inline');
   } else if (hasField('你的角色')) {
     await answerField(user, '你的角色', 'INT Baseline');
     await answerField(user, '時間區間', '近 7 天');
   } else if (hasField('Lot')) {
-    await answerField(user, 'Lot', 'PT-01-0731');
+    await answerField(user, 'Lot', 'ZX-01-0731');
   }
 
   // The submit label carries a live count, so re-read it rather than reusing the node.

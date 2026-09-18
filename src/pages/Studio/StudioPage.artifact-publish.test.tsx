@@ -110,10 +110,10 @@ describe('Per-version Artifact publishing', () => {
     await user.clear(nameField);
     expect(screen.getByRole('button', { name: /^Publish$/ })).toBeDisabled();
 
-    await user.type(nameField, '8 月 PT-01 良率追蹤');
+    await user.type(nameField, '8 月良率追蹤');
     await user.click(screen.getByRole('button', { name: /^Publish$/ }));
 
-    await waitFor(() => expect(published).toEqual({ title: '8 月 PT-01 良率追蹤' }));
+    await waitFor(() => expect(published).toEqual({ title: '8 月良率追蹤' }));
   });
 
   /** Outputs in one conversation are independent Artifacts, not v1/v2/v3 of a single

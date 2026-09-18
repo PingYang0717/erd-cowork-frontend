@@ -14,7 +14,7 @@ const form: QuestionForm = {
       kind: 'multi',
       required: true,
       options: [
-        { value: 'PT-01', label: 'PT-01' },
+        { value: 'ZX-01', label: 'ZX-01' },
         { value: 'PT-07', label: 'PT-07' },
       ],
     },
@@ -49,8 +49,8 @@ const form: QuestionForm = {
 
 describe('composeAnswerText', () => {
   it('joins answered fields as label：value pairs, mapping values to option labels', () => {
-    expect(composeAnswerText(form, { partIds: ['PT-01', 'PT-07'], timeRange: 'cp7d' })).toBe(
-      'Part ID：PT-01、PT-07；Time range：近 7 天'
+    expect(composeAnswerText(form, { partIds: ['ZX-01', 'PT-07'], timeRange: 'cp7d' })).toBe(
+      'Part ID：ZX-01、PT-07；Time range：近 7 天'
     );
   });
 
@@ -76,7 +76,7 @@ describe('composeAnswerText', () => {
  *  is the only record, so a past reask can only show what was chosen by reading it back. */
 describe('parseAnswerText', () => {
   it('round-trips what composeAnswerText wrote', () => {
-    const answers = { partIds: ['PT-01', 'PT-07'], timeRange: 'cp7d' };
+    const answers = { partIds: ['ZX-01', 'PT-07'], timeRange: 'cp7d' };
 
     expect(parseAnswerText(form, composeAnswerText(form, answers))).toEqual(answers);
   });
@@ -97,7 +97,7 @@ describe('parseAnswerText', () => {
   /** A partial parse of a real answer beats an empty card, so one matched label is enough
    *  and labels this form does not know are passed over rather than failing the whole. */
   it('takes the fields it recognises and ignores the rest', () => {
-    expect(parseAnswerText(form, 'Part ID：PT-01；Something else：42')).toEqual({ partIds: ['PT-01'] });
+    expect(parseAnswerText(form, 'Part ID：ZX-01；Something else：42')).toEqual({ partIds: ['ZX-01'] });
   });
 });
 
@@ -109,10 +109,10 @@ describe('parseAnswerText', () => {
 describe('parseAnswerText against the shapes a real backend sends', () => {
   it('reads a field back whose question text carries a colon of its own', () => {
     const form = liftQuestions([
-      { text: 'Part ID', options: ['PT-01', 'PT-02'], multiSelect: false },
+      { text: 'Part ID', options: ['ZX-01', 'PT-02'], multiSelect: false },
       { text: '資料量偏大：要先看哪幾個 Lot', options: ['L1', 'L2', 'L3'], multiSelect: true },
     ]);
-    const answers = { q0: 'PT-01', q1: ['L1', 'L3'] };
+    const answers = { q0: 'ZX-01', q1: ['L1', 'L3'] };
 
     expect(parseAnswerText(form, composeAnswerText(form, answers))).toEqual(answers);
   });
@@ -146,8 +146,8 @@ describe('parseAnswerText against the shapes a real backend sends', () => {
   /** A misread must leave a field blank, never light up an option nobody picked: a value
    *  is either an option this form offers or text kept verbatim. */
   it('does not let an option claim an answer it is merely a prefix of', () => {
-    const form = liftQuestions([{ text: 'Part ID', options: ['PT-01'], multiSelect: false }]);
+    const form = liftQuestions([{ text: 'Part ID', options: ['ZX-01'], multiSelect: false }]);
 
-    expect(parseAnswerText(form, 'Part ID：PT-01X')).toEqual({ q0: 'PT-01X' });
+    expect(parseAnswerText(form, 'Part ID：ZX-01X')).toEqual({ q0: 'ZX-01X' });
   });
 });

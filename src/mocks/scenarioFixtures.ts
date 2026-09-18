@@ -67,7 +67,7 @@ export const SCENARIO_FIXTURES: Record<ScenarioKey, ScenarioFixture> = {
     reply: 'First version of the Inline dashboard is ready — review each item’s control chart and OOC wafers.',
   },
   daily: {
-    artifactName: 'Daily Monitor Dashboard — PT-01',
+    artifactName: 'Daily Monitor Dashboard',
     steps: [
       {
         stepKey: '1',
@@ -88,7 +88,7 @@ export const SCENARIO_FIXTURES: Record<ScenarioKey, ScenarioFixture> = {
         status: 'SUCCESS',
       },
     ],
-    reply: 'Daily Monitor Dashboard — PT-01 generated, merging Approval Center, EXP Health, and Inline SPC data.',
+    reply: 'Daily Monitor Dashboard generated, merging Approval Center, EXP Health, and Inline SPC data.',
   },
   cptest: {
     artifactName: 'CP Test status',

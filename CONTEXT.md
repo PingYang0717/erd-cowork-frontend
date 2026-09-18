@@ -33,7 +33,7 @@ _Avoid_: 未儲存的 Session, Pending session（草稿不是「等待儲存」�
 _Avoid_: Workflow, Flow, Intent, Prompt preset（Scenario 不只是一段預寫好的提問——它是可被執行的劇本）
 
 **分析條件（Analysis condition）**:
-一次 Scenario 執行前必須先確定的參數，由 Agent 以反問卡向使用者收集，例如 SPC 的 Part ID／Time range／Data type，或 CP Test 的角色／Flow／Loop／時間區間。條件送出後會被組成一句話（`部件：PT-01；時間區間：近 7 天`）當作使用者訊息留在對話串中。**答案本身不會被保存**（線路上沒有 `answersJson`），但那句話就是它們的紀錄：歷史裡的反問卡把緊接在後的那則使用者訊息讀回來（`parseAnswerText`），所以看得到當初選了什麼——只是不能再改。
+一次 Scenario 執行前必須先確定的參數，由 Agent 以反問卡向使用者收集，例如 SPC 的 Part ID／Time range／Data type，或 CP Test 的角色／Flow／Loop／時間區間。條件送出後會被組成一句話（`部件：ZX-01；時間區間：近 7 天`）當作使用者訊息留在對話串中。**答案本身不會被保存**（線路上沒有 `answersJson`），但那句話就是它們的紀錄：歷史裡的反問卡把緊接在後的那則使用者訊息讀回來（`parseAnswerText`），所以看得到當初選了什麼——只是不能再改。
 _Avoid_: Parameter, Setting, Filter
 
 **反問（Question form）**:
@@ -84,15 +84,15 @@ _Avoid_: 生成、Generate（畫面上的按鈕曾叫「生成 Artifact」，但
 一個 Agent 可以讀取的資料來源，例如 Inline、WAT、CP、Lot Info、Lot Abnormal、Process、Defect、TEM、Recipe、Offline Tool Log。目錄由後端提供（`GET /connectors`），跨 Session 共用。
 
 Connector 自己只有一個狀態：**可不可以被選**（`enabled`）。憑證過期、連線中斷、被管理員停用都是同一件事，因為使用者對這三者能做的事完全一樣。「這場對話正在用哪些來源」**不是 Connector 的事實**，是 Session 的（見下一條）。同一個來源可以掛在 A 對話而不掛在 B 對話，所以 Connector 上沒有任何欄位答得出這件事。
-_Avoid_: Data source, Integration
+_Avoid_: Data source、資料來源（介面上中英文都寫 Connectors，不翻譯）, Integration
 
 **已選來源（Selected sources）**:
 一場 Session 正在讓 Agent 讀取的 Connector 集合，存在該 Session 上。使用者在 Connectors 面板上編輯草稿、按下送出才整組寫回——一次請求描述的是結果而不是一個改動。Scenario 執行時會參照它取得資料，**也決定分析條件表單上 Data type 有哪些可選**。
 
-一場對話**還沒選過任何來源**時，面板以使用者的預設資料來源（見下條）當起點。那是一個提議，不是事實：它從不代替使用者寫進 Session，使用者按了送出才算選。
+一場對話**還沒選過任何來源**時，面板以使用者的預設 Connectors（見下條）當起點。那是一個提議，不是事實：它從不代替使用者寫進 Session，使用者按了送出才算選。
 _Avoid_: 已連線的 Connector（把 Session 的事實說成 Connector 的屬性，正是這一版拆開的東西）
 
-**預設資料來源（Default sources）**:
+**預設 Connectors（Default sources）**:
 一個使用者自己的 Connector 組合，跨 Session，只作為新對話第一次打開 Connectors 面板時的預選。屬於使用者，不屬於任何一場對話：調整某一場對話的已選來源不會改動它，它只在偏好設定裡改。目前暫存在瀏覽器本機，將來搬到後端成為使用者設定。
 _Avoid_: 上次用的、記住的組合（那是它的前身，會悄悄被每一場對話改掉）
 

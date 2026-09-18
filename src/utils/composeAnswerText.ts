@@ -130,7 +130,7 @@ const readValues = (field: QuestionField, display: string): string[] => {
   let rest = display;
 
   while (rest !== '') {
-    // A whole option, not a prefix of the answer: `PT-01` must not claim `PT-01X`.
+    // A whole option, not a prefix of the answer: `ZX-01` must not claim `ZX-01X`.
     const option = byLongestLabel.find(
       (candidate) => rest.startsWith(candidate.label) && endsAValue(rest.slice(candidate.label.length))
     );

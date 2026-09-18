@@ -8,9 +8,9 @@
  *
  *  The anonymous user id's key is the one exception, and lives in api/apiClient.ts for
  *  cowork file parity. */
-/** The user's default sources (CONTEXT.md, 預設資料來源): the combination a new
+/** The user's default sources (CONTEXT.md, 預設 Connectors): the combination a new
  *  conversation opens the Connectors panel on. A preference of this browser's user for
- *  now; it moves to the backend as a user setting, behind `useDefaultSources`. */
+ *  now; it moves to the backend as a user setting, behind `useDefaultConnectors`. */
 export const CONNECTOR_PREFS_STORAGE_KEY = 'erd-cowork:connector-prefs';
 
 /** Dark mode. A preference of this browser's user, like the language beside it. */

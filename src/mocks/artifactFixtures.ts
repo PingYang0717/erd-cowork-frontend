@@ -185,7 +185,7 @@ const SCENARIO_CONTENT: Record<ScenarioKey, ArtifactContent> = {
     ],
   },
   daily: {
-    title: 'Daily Monitor Dashboard — PT-01',
+    title: 'Daily Monitor Dashboard',
     subtitle: 'Approval Center · EXP Health · Inline SPC',
     description: 'Approval Center, EXP Health, and Inline SPC merged into one daily view.',
     tags: ['Merged view', 'Daily'],

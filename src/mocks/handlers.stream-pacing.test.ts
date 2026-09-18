@@ -10,7 +10,7 @@ const chunkCount = async (sessionId: string): Promise<number> => {
   const response = await fetch(`/api/sessions/${sessionId}/messages`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream' },
-    body: JSON.stringify({ question: 'Generate the Daily Monitor dashboard for PT-01.' }),
+    body: JSON.stringify({ question: 'Generate the Daily Monitor dashboard.' }),
   });
 
   const reader = response.body!.getReader();

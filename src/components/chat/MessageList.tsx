@@ -128,7 +128,7 @@ const MessageList: React.FC<MessageListProps> = ({
     });
 
     // Answering a reask is filling in a form, not saying something. The sentence that
-    // goes on the wire (`部件：PT-01；時間區間：近 7 天`) exists only because the backend has
+    // goes on the wire (`部件：ZX-01；時間區間：近 7 天`) exists only because the backend has
     // no structured answers channel, and reading it back as a chat message shows the
     // reader plumbing they never wrote. Hidden only where the card above recovered it:
     // if that parse failed, this message is the only record the answer has left.

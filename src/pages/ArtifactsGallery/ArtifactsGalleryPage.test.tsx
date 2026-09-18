@@ -50,7 +50,7 @@ describe('Artifacts gallery', () => {
 
     expect(await screen.findByRole('button', { name: 'SPC analysis — Vt (gate CD)' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Inline dashboard — W12' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Daily monitor (PT-01)' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Daily monitor' })).toBeInTheDocument();
 
     expect(screen.getByRole('button', { name: /^All/ })).toHaveTextContent('3');
     expect(screen.getByRole('button', { name: /^Yours/ })).toHaveTextContent('2');
@@ -97,19 +97,19 @@ describe('Artifacts gallery', () => {
     await user.click(screen.getByRole('button', { name: /^Yours/ }));
     expect(screen.getByRole('button', { name: 'SPC analysis — Vt (gate CD)' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Inline dashboard — W12' })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Daily monitor (PT-01)' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Daily monitor' })).not.toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: /^Shared to me/ }));
-    expect(screen.getByRole('button', { name: 'Daily monitor (PT-01)' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Daily monitor' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'SPC analysis — Vt (gate CD)' })).not.toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: /^Pinned/ }));
     expect(screen.getByRole('button', { name: 'Inline dashboard — W12' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'SPC analysis — Vt (gate CD)' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Daily monitor (PT-01)' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Daily monitor' })).not.toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: /^All/ }));
-    expect(screen.getByRole('button', { name: 'Daily monitor (PT-01)' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Daily monitor' })).toBeInTheDocument();
   });
 
   it('reorders the list via the sort control', async () => {
@@ -516,9 +516,9 @@ describe('Artifacts gallery', () => {
   it('offers only Pin on a "Shared to me" card', async () => {
     const user = userEvent.setup();
     renderGalleryPage();
-    await screen.findByRole('button', { name: 'Daily monitor (PT-01)' });
+    await screen.findByRole('button', { name: 'Daily monitor' });
 
-    await user.click(screen.getByRole('button', { name: 'More actions for Daily monitor (PT-01)' }));
+    await user.click(screen.getByRole('button', { name: 'More actions for Daily monitor' }));
 
     const items = screen.getAllByRole('menuitem').map((item) => item.textContent);
     expect(items).toEqual([expect.stringMatching(/^(Pin|Unpin)/)]);
@@ -530,10 +530,10 @@ describe('Artifacts gallery', () => {
   it('never disables pinning, on an owned card or a shared one', async () => {
     const user = userEvent.setup();
     renderGalleryPage();
-    await screen.findByRole('button', { name: 'Daily monitor (PT-01)' });
+    await screen.findByRole('button', { name: 'Daily monitor' });
 
     expect(screen.getByRole('button', { name: /^Pin Daily monitor/ })).toBeEnabled();
-    await user.click(screen.getByRole('button', { name: 'More actions for Daily monitor (PT-01)' }));
+    await user.click(screen.getByRole('button', { name: 'More actions for Daily monitor' }));
     expect(screen.getByRole('menuitem', { name: /^Pin/ })).not.toHaveAttribute('aria-disabled', 'true');
   });
 
@@ -559,9 +559,7 @@ describe('Artifacts gallery', () => {
 
     const spcOpen = await screen.findByRole('button', { name: 'SPC analysis — Vt (gate CD)' });
     const spcCard = spcOpen.closest('[role="listitem"]') as HTMLElement;
-    const dailyCard = screen
-      .getByRole('button', { name: 'Daily monitor (PT-01)' })
-      .closest('[role="listitem"]') as HTMLElement;
+    const dailyCard = screen.getByRole('button', { name: 'Daily monitor' }).closest('[role="listitem"]') as HTMLElement;
 
     // Every card gets the same thumbnail: the contract has no kind until the backend
     // adds `type` (types/api/artifact.ts).
@@ -616,8 +614,8 @@ describe('Artifacts gallery', () => {
       http.get('/api/artifacts', () =>
         HttpResponse.json([
           // The same artifact shared to the user twice: one row survives.
-          shared({ id: 'artifact-9', title: 'Daily monitor (PT-01)' }),
-          shared({ id: 'artifact-9', title: 'Daily monitor (PT-01)' }),
+          shared({ id: 'artifact-9', title: 'Daily monitor' }),
+          shared({ id: 'artifact-9', title: 'Daily monitor' }),
           // Two different artifacts that happen to share a name: both stay.
           shared({ id: 'artifact-10', title: 'Q3 report', ownerDisplay: 'Bob Lin' }),
           shared({ id: 'artifact-11', title: 'Q3 report', ownerDisplay: 'Carol Kao' }),
@@ -630,7 +628,7 @@ describe('Artifacts gallery', () => {
 
     await user.click(await screen.findByRole('button', { name: /^Shared to me/ }));
 
-    expect(screen.getAllByRole('button', { name: 'Daily monitor (PT-01)' })).toHaveLength(1);
+    expect(screen.getAllByRole('button', { name: 'Daily monitor' })).toHaveLength(1);
     expect(screen.getAllByRole('button', { name: 'Q3 report' })).toHaveLength(2);
     expect(screen.getByRole('button', { name: /^Shared to me/ })).toHaveTextContent('3');
   });

@@ -211,7 +211,7 @@ const streamRun = (
 };
 /** Lots the scan matched. Enough of them that narrowing is worth asking about — which is
  *  the only reason this reask exists. */
-const LOT_FIXTURES = ['PT-01-0731', 'PT-01-0802', 'PT-01-0815', 'PT-07-0726', 'PT-07-0808', 'PT-08-0819'];
+const LOT_FIXTURES = ['ZX-01-0731', 'ZX-01-0802', 'ZX-01-0815', 'PT-07-0726', 'PT-07-0808', 'PT-08-0819'];
 /** Rough per-lot row count, only used to make the reask's 「資料量偏大」 honest. */
 const ROWS_PER_LOT = 4200;
 

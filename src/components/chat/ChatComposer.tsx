@@ -55,7 +55,7 @@ const SUGGESTED_PROMPTS: {
   },
   {
     labelKey: 'dailyMonitor',
-    text: 'Generate the Daily Monitor dashboard for PT-01.',
+    text: 'Generate the Daily Monitor dashboard.',
     icon: <DashboardOutlined aria-hidden />,
   },
   {
@@ -239,8 +239,8 @@ const ChatComposer: React.FC<ChatComposerProps> = ({ sessionId, onSend, disabled
               type="button"
               className={styles.iconButton}
               disabled={disabled}
-              title="Attach files or connect a data source"
-              aria-label="Attach files or connect a data source"
+              title="Attach files or connect a Connector"
+              aria-label="Attach files or connect a Connector"
             >
               <PlusOutlined aria-hidden />
             </button>

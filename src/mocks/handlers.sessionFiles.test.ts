@@ -89,7 +89,7 @@ describe('session file endpoints', () => {
     const post = await fetch(`${API_BASE}/sessions/session-2/messages`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream' },
-      body: JSON.stringify({ question: 'Generate the Daily Monitor dashboard for PT-01.' }),
+      body: JSON.stringify({ question: 'Generate the Daily Monitor dashboard.' }),
     });
     expect(post.ok).toBe(true);
     const reader = post.body!.getReader();

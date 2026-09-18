@@ -21,7 +21,7 @@ const ALLOWED: Record<string, string[]> = {
     'Generate an Inline dashboard.',
     'Run an SPC analysis on Vt (gate CD).',
     'Generate slides from this analysis.',
-    'Generate the Daily Monitor dashboard for PT-01.',
+    'Generate the Daily Monitor dashboard.',
     'What is the CP Test status?',
   ],
   // Product name, not copy (same reasoning as the dictionary's own `eRD AI`).

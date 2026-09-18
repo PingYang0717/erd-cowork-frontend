@@ -273,14 +273,14 @@ describe('Streaming a run in the Studio', () => {
     await startAnalysis(user);
 
     // A list cut mid-syntax must not blow up the renderer.
-    act(() => stream.push({ type: 'TOKEN', delta: '**Findings**\n\n- Vt drift on PT-01\n- Ids' }));
+    act(() => stream.push({ type: 'TOKEN', delta: '**Findings**\n\n- Vt drift on ZX-01\n- Ids' }));
     expect(await screen.findByText('Findings')).toBeInTheDocument();
 
     act(() => stream.push({ type: 'TOKEN', delta: 'at stable\n' }));
 
     const thread = screen.getByRole('log', { name: 'Messages' });
     const findings = await within(thread).findByRole('list');
-    expect(within(findings).getByText('Vt drift on PT-01')).toBeInTheDocument();
+    expect(within(findings).getByText('Vt drift on ZX-01')).toBeInTheDocument();
     expect(within(findings).getByText('Idsat stable')).toBeInTheDocument();
     expect(screen.getByText('Findings').tagName).toBe('STRONG');
   });
@@ -306,7 +306,7 @@ describe('Streaming a run in the Studio', () => {
               kind: 'multi',
               required: true,
               options: [
-                { value: 'PT-01', label: 'PT-01' },
+                { value: 'ZX-01', label: 'ZX-01' },
                 { value: 'PT-07', label: 'PT-07' },
               ],
             },
@@ -323,7 +323,7 @@ describe('Streaming a run in the Studio', () => {
     expect(screen.getByRole('button', { name: '送出' })).toBeDisabled();
     expect(screen.getByText('請先選 part id')).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: 'PT-01' }));
+    await user.click(screen.getByRole('button', { name: 'ZX-01' }));
 
     expect(screen.getByRole('button', { name: '送出' })).toBeEnabled();
     expect(screen.queryByText('請先選 part id')).not.toBeInTheDocument();
@@ -420,7 +420,7 @@ describe('Streaming a run in the Studio', () => {
               kind: 'multi',
               required: true,
               options: [
-                { value: 'PT-01', label: 'PT-01' },
+                { value: 'ZX-01', label: 'ZX-01' },
                 { value: 'PT-07', label: 'PT-07' },
               ],
             },
@@ -443,14 +443,14 @@ describe('Streaming a run in the Studio', () => {
     act(() => stream.close());
     await screen.findByRole('button', { name: 'Send message' });
 
-    await user.click(await screen.findByRole('button', { name: 'PT-01' }));
+    await user.click(await screen.findByRole('button', { name: 'ZX-01' }));
     await user.click(screen.getByRole('button', { name: 'PT-07' }));
     await answerField(user, 'Time range', 'Last 7 days');
     await user.click(screen.getByRole('button', { name: '送出' }));
 
     await waitFor(() => expect(stream.requests).toHaveLength(2));
     expect(stream.requests[1]).toEqual({
-      question: 'Part ID：PT-01、PT-07；Time range：Last 7 days',
+      question: 'Part ID：ZX-01、PT-07；Time range：Last 7 days',
     });
   });
 
@@ -473,7 +473,7 @@ describe('Streaming a run in the Studio', () => {
       stream.push({
         type: 'QUESTION',
         questions: [
-          { text: 'Part ID', options: ['PT-01', 'PT-07'], multiSelect: true },
+          { text: 'Part ID', options: ['ZX-01', 'PT-07'], multiSelect: true },
           { text: 'Time range', options: ['Last 7 days', 'Last 30 days'], multiSelect: false },
         ],
       })
@@ -485,14 +485,14 @@ describe('Streaming a run in the Studio', () => {
     // the backend — the flat list carries no title, submit label or hint.
     expect(screen.getByText(en.chat.questionTitle)).toBeInTheDocument();
 
-    await user.click(await screen.findByRole('button', { name: 'PT-01' }));
+    await user.click(await screen.findByRole('button', { name: 'ZX-01' }));
     await user.click(screen.getByRole('button', { name: 'PT-07' }));
     await answerField(user, 'Time range', 'Last 7 days');
     await user.click(screen.getByRole('button', { name: en.chat.questionSubmit }));
 
     await waitFor(() => expect(stream.requests).toHaveLength(2));
     expect(stream.requests[1]).toEqual({
-      question: 'Part ID：PT-01、PT-07；Time range：Last 7 days',
+      question: 'Part ID：ZX-01、PT-07；Time range：Last 7 days',
     });
   });
 
@@ -541,7 +541,7 @@ describe('Streaming a run in the Studio', () => {
       ).toBeInTheDocument();
     });
 
-    /** The user's default sources (CONTEXT.md, 預設資料來源): set in the preferences,
+    /** The user's default sources (CONTEXT.md, 預設 Connectors): set in the preferences,
      *  offered when a conversation that has chosen nothing opens the panel.
      *
      *  A default in the dialog and nothing more. It used to be carried in on send —
@@ -550,13 +550,13 @@ describe('Streaming a run in the Studio', () => {
      *  somewhere else. Now they see it, and it reaches the backend when they submit it. */
     it('opens a new conversation on the user’s default sources', async () => {
       const user = userEvent.setup();
-      localStorage.setItem(CONNECTOR_PREFS_STORAGE_KEY, JSON.stringify({ defaultSources: ['defect'] }));
+      localStorage.setItem(CONNECTOR_PREFS_STORAGE_KEY, JSON.stringify({ defaultConnectors: ['defect'] }));
       renderStudio();
 
       // A fresh draft — nothing attached to it of its own.
       await selectASession(user);
 
-      await user.click(screen.getByRole('button', { name: 'Attach files or connect a data source' }));
+      await user.click(screen.getByRole('button', { name: 'Attach files or connect a Connector' }));
       await user.click(await screen.findByRole('menuitem', { name: /^Connectors/ }));
 
       // Offered, not applied: Submit is live because none of this has reached the new
@@ -576,7 +576,7 @@ describe('Streaming a run in the Studio', () => {
       renderStudio();
 
       await selectASession(user);
-      await user.click(screen.getByRole('button', { name: 'Attach files or connect a data source' }));
+      await user.click(screen.getByRole('button', { name: 'Attach files or connect a Connector' }));
       await user.click(await screen.findByRole('menuitem', { name: /^Connectors/ }));
       await user.click(await screen.findByRole('button', { name: 'Connect Defect' }));
       // Nothing is written until Submit: picking sources is one decision, not one per
@@ -618,7 +618,7 @@ describe('Streaming a run in the Studio', () => {
       const custom = screen.getByRole('textbox', { name: 'Time range' });
       await user.type(custom, '07/01–07/31');
 
-      await answerField(user, 'Part ID', 'PT-01');
+      await answerField(user, 'Part ID', 'ZX-01');
       await answerField(user, 'Data type', 'Inline');
       expect(screen.getByRole('button', { name: '送出' })).toBeEnabled();
 
@@ -732,7 +732,7 @@ describe('Streaming a run in the Studio', () => {
 
       // Answer only the opening conditions — the second reask is what this is about.
       await screen.findByText('分析條件');
-      await answerField(user, 'Part ID', 'PT-01');
+      await answerField(user, 'Part ID', 'ZX-01');
       await answerField(user, 'Time range', 'Last 7 days');
       await answerField(user, 'Data type', 'Inline');
       await user.click(screen.getByRole('button', { name: '送出' }));
@@ -746,7 +746,7 @@ describe('Streaming a run in the Studio', () => {
       expect(screen.getByText('至少選一個')).toBeInTheDocument();
 
       // Six lots, so the field is offered as a dropdown.
-      await answerField(user, 'Lot', 'PT-01-0731');
+      await answerField(user, 'Lot', 'ZX-01-0731');
       expect(screen.getByRole('button', { name: '先產生這 1 個' })).toBeEnabled();
       expect(screen.getByText('1 selected')).toBeInTheDocument();
 
@@ -770,7 +770,7 @@ describe('Streaming a run in the Studio', () => {
       // The form is gone; the answers went over the wire as one prose question and
       // come back from history as an ordinary user message.
       expect(screen.queryByRole('button', { name: '送出' })).not.toBeInTheDocument();
-      expect(screen.getByText('Part ID：PT-01；Time range：Last 7 days；Data type：Inline')).toBeInTheDocument();
+      expect(screen.getByText('Part ID：ZX-01；Time range：Last 7 days；Data type：Inline')).toBeInTheDocument();
     });
   });
 });

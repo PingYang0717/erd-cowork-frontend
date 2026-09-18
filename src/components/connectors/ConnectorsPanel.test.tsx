@@ -168,7 +168,7 @@ describe('ConnectorsPanel', () => {
    *  the panel only says why, and nothing on it writes: no default offered, no live
    *  toggles, no Submit. */
   it('opens read-only, with the reason, when the conversation has files and no sources', async () => {
-    localStorage.setItem(CONNECTOR_PREFS_STORAGE_KEY, JSON.stringify({ defaultSources: ['lot'] }));
+    localStorage.setItem(CONNECTOR_PREFS_STORAGE_KEY, JSON.stringify({ defaultConnectors: ['lot'] }));
     const queryClient = new QueryClient();
     queryClient.setQueryData(['sessions', 'session-with-files'], {
       id: 'session-with-files',
@@ -194,11 +194,11 @@ describe('ConnectorsPanel', () => {
     expect(within(selectedSources()).queryByText('Lot Info')).not.toBeInTheDocument();
   });
 
-  /** The user's default sources (CONTEXT.md, 預設資料來源) are a default for the dialog
+  /** The user's default sources (CONTEXT.md, 預設 Connectors) are a default for the dialog
    *  and nothing more: offered on a conversation that has chosen nothing, never written to
    *  a session on the user's behalf. A conversation with its own selection outranks it. */
   it('opens a fresh conversation on the user’s default sources, as a draft', async () => {
-    localStorage.setItem(CONNECTOR_PREFS_STORAGE_KEY, JSON.stringify({ defaultSources: ['defect'] }));
+    localStorage.setItem(CONNECTOR_PREFS_STORAGE_KEY, JSON.stringify({ defaultConnectors: ['defect'] }));
 
     renderPanel('draft-never-chosen', true);
     expect(await screen.findByRole('button', { name: 'Disconnect Defect' })).toBeInTheDocument();
@@ -212,13 +212,13 @@ describe('ConnectorsPanel', () => {
    *  starting point, so a one-off pick quietly rewrote the default. */
   it('leaves the user’s defaults alone when a conversation submits its own choice', async () => {
     const user = userEvent.setup();
-    localStorage.setItem(CONNECTOR_PREFS_STORAGE_KEY, JSON.stringify({ defaultSources: ['defect'] }));
+    localStorage.setItem(CONNECTOR_PREFS_STORAGE_KEY, JSON.stringify({ defaultConnectors: ['defect'] }));
     renderPanel('session-1');
 
     await user.click(await screen.findByRole('button', { name: 'Connect Lot Info' }));
     await submitSelection(user);
 
-    expect(JSON.parse(localStorage.getItem(CONNECTOR_PREFS_STORAGE_KEY)!)).toEqual({ defaultSources: ['defect'] });
+    expect(JSON.parse(localStorage.getItem(CONNECTOR_PREFS_STORAGE_KEY)!)).toEqual({ defaultConnectors: ['defect'] });
   });
 
   /** The earlier shape — the combination last submitted anywhere — is read once as the
@@ -266,7 +266,7 @@ describe('ConnectorsPanel: chosen here vs attached to this conversation', () => 
    *  given nothing must not open saying it is connected to anything. */
   it('opens a new conversation on the user’s defaults without calling them attached', async () => {
     const user = userEvent.setup();
-    localStorage.setItem(CONNECTOR_PREFS_STORAGE_KEY, JSON.stringify({ defaultSources: ['lot'] }));
+    localStorage.setItem(CONNECTOR_PREFS_STORAGE_KEY, JSON.stringify({ defaultConnectors: ['lot'] }));
 
     // A conversation with nothing of its own.
     renderPanel('session-blank', true);

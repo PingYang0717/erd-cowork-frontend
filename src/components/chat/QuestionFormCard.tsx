@@ -212,7 +212,7 @@ const QuestionFormCard: React.FC<QuestionFormCardProps> = ({ form, onSubmit, dis
    *
    *  Deriving the typed part from the answer — "the value no option accounts for" — reads
    *  the wrong thing the moment what is being typed passes through an option's own label:
-   *  typing `PT-01-9999` where `PT-01` is an option meant the third keystroke was absorbed as
+   *  typing `ZX-01-9999` where `ZX-01` is an option meant the third keystroke was absorbed as
    *  a pick and the box reset, leaving `-9999`. They are two inputs; they are stored as
    *  two, and `answers` below is what they add up to. */
   const [editedPicks, setEditedPicks] = useState<Answers>({});

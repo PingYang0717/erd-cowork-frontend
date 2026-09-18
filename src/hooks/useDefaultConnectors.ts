@@ -1,15 +1,15 @@
 import { useCallback, useSyncExternalStore } from 'react';
 
-import { readDefaultSources, writeDefaultSources } from '@/api/connectorApi';
+import { readDefaultConnectors, writeDefaultConnectors } from '@/api/connectorApi';
 import { CONNECTOR_PREFS_STORAGE_KEY } from '@/constants/storage';
 
-/** The user's default sources (CONTEXT.md, 預設資料來源), read and written.
+/** The user's default sources (CONTEXT.md, 預設 Connectors), read and written.
  *
  *  The one seam between "the user has a default combination" and where it is kept. It
  *  is this browser's localStorage today; it becomes a backend user setting later, and
  *  the shape here — a value that is what it is now, and one call that replaces it —
  *  is the same either way. Consumers do not learn which. */
-interface DefaultSources {
+interface DefaultConnectors {
   ids: string[];
   setIds: (ids: string[]) => void;
 }
@@ -24,7 +24,7 @@ let cached: { raw: string | null; ids: string[] } | null = null;
 const snapshot = (): string[] => {
   const raw = localStorage.getItem(CONNECTOR_PREFS_STORAGE_KEY);
   if (cached === null || cached.raw !== raw) {
-    cached = { raw, ids: readDefaultSources() };
+    cached = { raw, ids: readDefaultConnectors() };
   }
   return cached.ids;
 };
@@ -38,10 +38,10 @@ const subscribe = (listener: () => void) => {
   };
 };
 
-export const useDefaultSources = (): DefaultSources => {
+export const useDefaultConnectors = (): DefaultConnectors => {
   const ids = useSyncExternalStore(subscribe, snapshot, snapshot);
   const setIds = useCallback((next: string[]) => {
-    writeDefaultSources(next);
+    writeDefaultConnectors(next);
     listeners.forEach((listener) => listener());
   }, []);
   return { ids, setIds };

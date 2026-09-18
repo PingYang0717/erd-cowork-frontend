@@ -52,7 +52,7 @@ provider 每次請求都會被呼叫,NEVER 快取它的回傳值——見
 **沒有**獨立的 messages 端點。`SessionDetail.connectors` 是這場對話正在用的資料來源，
 以 `Connector.id` 表示。
 
-**待接:`SessionDetail.source`(2026-09-18,[ADR-0018](../adr/0018-source-kind-is-fixed-and-defaults-are-only-a-starting-point.md))。**
+**待接:`SessionDetail.source`(2026-09-18,[ADR-0018](../adr/0018-source-kind-is-fixed-and-default-connectors-are-only-a-starting-point.md))。**
 後端將加一個唯讀欄位承載來源種類:未定 / files / connectors,由後端從 files 與 connectors 推導,
 第一次掛上其中一種時定下、之後不變(清空也不變)。前端只讀不寫;欄位到之前由 `sourceKindOf`
 從 `files.length` / `connectors.length` 推,到了只改那一處。「未定」用 `null` 還是欄位不存在,

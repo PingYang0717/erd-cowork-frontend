@@ -2,11 +2,11 @@ import React, { useMemo } from 'react';
 
 import { useSetSessionDataSources } from '@/hooks/useConnectorMutations';
 import { useConnectors } from '@/hooks/useConnectors';
-import { useDefaultSources } from '@/hooks/useDefaultSources';
+import { useDefaultConnectors } from '@/hooks/useDefaultConnectors';
 import { useSessionDetail } from '@/hooks/useSessionDetail';
 import { useTranslations } from '@/i18n/useTranslations';
 import { sourceKindOf } from '@/utils/sourceKind';
-import SourcesEditor from './SourcesEditor';
+import ConnectorsEditor from './ConnectorsEditor';
 
 interface ConnectorsPanelProps {
   /** Data sources attach per conversation, so the panel edits this session's set. */
@@ -16,13 +16,13 @@ interface ConnectorsPanelProps {
 }
 
 /** What one conversation draws on (CONTEXT.md, 已選來源), edited as a draft and written
- *  as one set. The picker itself is SourcesEditor; this decides what it opens on and
+ *  as one set. The picker itself is ConnectorsEditor; this decides what it opens on and
  *  where Submit goes. */
 const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ sessionId, open, onClose }) => {
   const t = useTranslations();
   const { catalogue, attachedIds } = useConnectors(sessionId);
   const { data: detail } = useSessionDetail(sessionId);
-  const { ids: defaultIds } = useDefaultSources();
+  const { ids: defaultIds } = useDefaultConnectors();
   const setDataSources = useSetSessionDataSources(sessionId);
 
   // One kind of data source per conversation, fixed once either is attached (CONTEXT.md,
@@ -63,7 +63,7 @@ const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ sessionId, open, onCl
   }, [catalogue, attachedIds, blockedByFiles, defaultIds]);
 
   return (
-    <SourcesEditor
+    <ConnectorsEditor
       open={open}
       onClose={onClose}
       title={t.connectors.title}

@@ -6,7 +6,7 @@ import { liftQuestions } from './liftQuestions';
 describe('liftQuestions', () => {
   it('lifts the backend flat question list into a renderable form', () => {
     const form = liftQuestions([
-      { text: 'Which lots?', options: ['PT-01', 'PT-07'], multiSelect: true },
+      { text: 'Which lots?', options: ['ZX-01', 'PT-07'], multiSelect: true },
       { text: 'Time range?', options: ['Last 7 days'], multiSelect: false },
     ]);
 
@@ -17,7 +17,7 @@ describe('liftQuestions', () => {
         kind: 'multi',
         required: true,
         options: [
-          { value: 'PT-01', label: 'PT-01' },
+          { value: 'ZX-01', label: 'ZX-01' },
           { value: 'PT-07', label: 'PT-07' },
         ],
         allowCustom: true,
@@ -41,7 +41,7 @@ describe('liftQuestions', () => {
    *  inside the guess — and the wire has no way for the backend to say "these are the only
    *  acceptable answers", so assuming it did was the client inventing a restriction. */
   it('offers a box beside the options, since the list is a guess', () => {
-    const [field] = liftQuestions([{ text: 'Which lots?', options: ['PT-01'], multiSelect: false }]).fields;
+    const [field] = liftQuestions([{ text: 'Which lots?', options: ['ZX-01'], multiSelect: false }]).fields;
 
     expect(field.allowCustom).toBe(true);
     // The list's own wording. The box beside it has its own, fixed in the card.

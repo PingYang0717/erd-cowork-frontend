@@ -21,7 +21,7 @@ export const useSetSessionDataSources = (sessionId: string) => {
   return useMutation({
     mutationFn: (connectorIds: string[]) => setDataSources(sessionId, connectorIds),
     // This conversation's choice and nothing else: the user's default sources
-    // (CONTEXT.md, 預設資料來源) are set in the preferences, not by whatever a
+    // (CONTEXT.md, 預設 Connectors) are set in the preferences, not by whatever a
     // conversation last submitted. They used to be, and a one-off pick in one
     // conversation quietly became every later conversation's starting point.
     onSuccess: () => {

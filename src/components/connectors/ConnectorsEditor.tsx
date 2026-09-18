@@ -106,7 +106,7 @@ const ROW_META: Record<RowState, RowMeta> = {
   unavailable: { label: (t) => t.statusUnavailable, color: TERTIARY, icon: <LockOutlined aria-hidden /> },
 };
 
-interface SourcesEditorProps {
+interface ConnectorsEditorProps {
   open: boolean;
   onClose: () => void;
   title: string;
@@ -128,9 +128,9 @@ interface SourcesEditorProps {
 
 /** One picker over the catalogue for two kinds of selection: what a conversation draws
  *  on (ConnectorsPanel) and what the user wants new conversations to start from
- *  (DefaultSourcesPanel). Same rows, same search and filters, same draft-then-submit;
+ *  (DefaultConnectorsPanel). Same rows, same search and filters, same draft-then-submit;
  *  only what Submit writes differs, and that is the caller's. */
-const SourcesEditor: React.FC<SourcesEditorProps> = ({
+const ConnectorsEditor: React.FC<ConnectorsEditorProps> = ({
   open,
   onClose,
   title,
@@ -255,7 +255,7 @@ const SourcesEditor: React.FC<SourcesEditorProps> = ({
                 <button
                   type="button"
                   className={styles.selectedChipRemove}
-                  aria-label={`Remove ${connector.name} from selected sources`}
+                  aria-label={`Remove ${connector.name} from selected Connectors`}
                   onClick={() => toggle(connector)}
                 >
                   <CloseOutlined aria-hidden />
@@ -273,7 +273,7 @@ const SourcesEditor: React.FC<SourcesEditorProps> = ({
         <Input
           className={styles.searchInput}
           variant="borderless"
-          aria-label="Search data sources"
+          aria-label="Search Connectors"
           placeholder={t.connectors.searchPlaceholder}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -357,4 +357,4 @@ const SourcesEditor: React.FC<SourcesEditorProps> = ({
   );
 };
 
-export default SourcesEditor;
+export default ConnectorsEditor;

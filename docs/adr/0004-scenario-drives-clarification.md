@@ -5,7 +5,7 @@
 ## 背景
 
 Composer 上有五顆情境按鈕(Inline dashboard / SPC analysis / Generate slides /
-Daily monitor (PT-01) / CP Test status)。最直觀的做法是:按下去送出一段預寫好的文字,
+Daily monitor / CP Test status)。最直觀的做法是:按下去送出一段預寫好的文字,
 後端比對關鍵字決定跑哪套劇本,然後整段跑完——也就是把 Scenario 當成 prompt preset。
 
 但四套劇本各自對應真實的廠務分析需求,各自需要不同的參數,而這些參數的可選值來自

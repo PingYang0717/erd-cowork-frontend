@@ -7,7 +7,7 @@ import { useStudioLayoutStore } from '@/stores/useStudioLayoutStore';
 import { renderStudio, waitForComposer } from '@/test/renderStudio';
 
 const openConnectorsPanel = async (user: ReturnType<typeof userEvent.setup>) => {
-  await user.click(screen.getByRole('button', { name: 'Attach files or connect a data source' }));
+  await user.click(screen.getByRole('button', { name: 'Attach files or connect a Connector' }));
   await user.click(screen.getByRole('menuitem', { name: 'Connectors' }));
 };
 

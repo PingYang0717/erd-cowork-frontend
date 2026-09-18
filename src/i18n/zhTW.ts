@@ -85,7 +85,7 @@ export const zhTW = {
   publishDialog: {
     subtitle: '發布後會出現在 Artifacts 清單,並可分享給團隊檢視。',
     nameLabel: '名稱',
-    namePlaceholder: '例如:8 月 PT-01 良率追蹤',
+    namePlaceholder: '例如:8 月良率追蹤',
     nameHint: '清單上就是用這個名稱找到它。',
     publish: '發布',
   },
@@ -124,10 +124,10 @@ export const zhTW = {
     festive: '節慶裝飾',
     festiveOn: '開',
     festiveOff: '關',
-    /** 使用者的預設資料來源（CONTEXT.md 預設資料來源）：值是選了幾個。 */
-    defaultSources: '預設資料來源',
-    defaultSourcesCount: (count: number) => `${count} 個`,
-    defaultSourcesNone: '未設定',
+    /** 使用者的預設 Connectors（CONTEXT.md 預設 Connectors）：值是選了幾個。 */
+    defaultConnectors: '預設 Connectors',
+    defaultConnectorsCount: (count: number) => `${count} 個`,
+    defaultConnectorsNone: '未設定',
   },
 
   gallery: {
@@ -251,11 +251,11 @@ export const zhTW = {
     /** 數的是「這次選了幾個」,不是「這場對話目前連著幾個」——面板在編輯的是前者,
      *  後者由每一列自己的「已連結」標記說。 */
     subtitle: (selected: number, total: number) =>
-      `把 eRD AI 連上你的 RD 資料來源 · ${total} 個中已選擇 ${selected} 個。`,
-    selectedSources: '已選來源',
+      `把 eRD AI 連上你的 Connectors · ${total} 個中已選擇 ${selected} 個。`,
+    selectedSources: '已選 Connectors',
     clearAll: '全部清除',
-    noneSelected: '尚未選擇任何來源 — 從下方連一個。',
-    searchPlaceholder: '搜尋資料來源…',
+    noneSelected: '尚未選擇任何 Connector — 從下方連一個。',
+    searchPlaceholder: '搜尋 Connectors…',
     filterAll: '全部',
     filterSelected: '已選擇',
     filterNotSelected: '未選擇',
@@ -264,7 +264,7 @@ export const zhTW = {
     attached: '已連結',
     showing: (shown: number, total: number) => `顯示 ${shown} / ${total}`,
     submit: '送出',
-    noMatch: (keyword: string) => `沒有符合「${keyword}」的資料來源。`,
+    noMatch: (keyword: string) => `沒有符合「${keyword}」的 Connector。`,
     statusSelected: '已選擇',
     statusNotSelected: '未選擇',
     /** One state, not three. `enabled: false` covers an expired token, a connection that
@@ -279,12 +279,12 @@ export const zhTW = {
     /** 面板從反問卡的連結也開得到,所以規則在這裡也要說一次。種類在第一次附加時就定了
      *  （CONTEXT.md 來源種類）,所以不是「移除檔案就能連」,是開新對話。 */
     blockedByFiles:
-      '這段對話使用上傳的檔案。一段對話只用一種資料來源，種類在第一次附加時就定了——要用資料來源請開新對話。',
-    /** 同一個編輯器編的是使用者的預設（CONTEXT.md 預設資料來源）:只是新對話的起點,
+      '這段對話使用上傳的檔案。一段對話只用一種來源（Connectors 或檔案），種類在第一次附加時就定了——要用 Connectors 請開新對話。',
+    /** 同一個編輯器編的是使用者的預設（CONTEXT.md 預設 Connectors）:只是新對話的起點,
      *  不會自動掛到任何對話上——這句要在面板上說,不然它看起來跟對話的那個一模一樣。 */
-    defaultsTitle: '預設資料來源',
+    defaultsTitle: '預設 Connectors',
     defaultsSubtitle: (selected: number, total: number) =>
-      `新對話第一次打開資料來源時的預選 · ${total} 個中已選擇 ${selected} 個。不會自動掛到任何對話上。`,
+      `新對話第一次打開 Connectors 時的預選 · ${total} 個中已選擇 ${selected} 個。不會自動掛到任何對話上。`,
     save: '儲存',
   },
 
@@ -301,14 +301,14 @@ export const zhTW = {
     inlineDashboard: 'Inline dashboard',
     spcAnalysis: 'SPC 分析',
     generateSlides: '產生投影片',
-    dailyMonitor: 'Daily monitor（PT-01）',
+    dailyMonitor: 'Daily monitor',
     cpTestStatus: 'CP Test 狀態',
     attachFiles: '附加檔案',
     connectors: 'Connectors',
-    /** 一場對話只用一種資料來源,種類在第一次附加時就定了(CONTEXT.md 來源種類)。這兩句
+    /** 一場對話只用一種來源(Connectors 或檔案),種類在第一次附加時就定了(CONTEXT.md 來源種類)。這兩句
      *  寫在反灰的選單項目底下,規則在按到的那一刻說明;出路是開新對話,不是清掉另一種。 */
-    attachBlockedByConnectors: '這段對話使用資料來源，不能再附加檔案；要用檔案請開新對話',
-    connectorsBlockedByFiles: '這段對話使用上傳的檔案，不能再連接資料來源；要用資料來源請開新對話',
+    attachBlockedByConnectors: '這段對話使用 Connectors，不能再附加檔案；要用檔案請開新對話',
+    connectorsBlockedByFiles: '這段對話使用上傳的檔案，不能再連接 Connectors；要用 Connectors 請開新對話',
     placeholder: '問 eRD AI，或附加 .csv / .xlsx…',
   },
 
@@ -316,7 +316,7 @@ export const zhTW = {
     emptyNoSessionHeading: '選擇或開啟一段對話',
     emptyNoSessionSubtitle: '從左側開啟或選擇一段對話開始分析。',
     emptyStartHeading: '開始分析',
-    emptyStartSubtitle: '試試下方的「Daily monitor（PT-01）」，或請它對 Vt 做 SPC 分析。',
+    emptyStartSubtitle: '試試下方的「Daily monitor」，或請它對 Vt 做 SPC 分析。',
     artifactEmptyHeading: '尚無 Artifact',
     artifactEmptySubtitle: '請 eRD AI 執行一段分析 — Artifact 會在這裡呈現。',
     back: '返回',
@@ -393,7 +393,7 @@ export const zhTW = {
       session: '這段對話已不存在,可能已在其他地方刪除。',
       artifact: '這個 Artifact 已不存在,可能已被刪除。',
       file: '這個檔案已不存在,可能已被移除。',
-      connector: '這個資料來源已不存在。',
+      connector: '這個 Connector 已不存在。',
     },
     /** Shown when the account itself is refused. The backend's sentence carries the
      *  actual explanation — which entitlement, which resource — so this is only what to

@@ -33,7 +33,7 @@ const aCall = (overrides: Record<string, unknown> = {}) => ({
   id: 'req-1',
   connector: 'conn-inline',
   tool: 'query_spc',
-  args: { partId: 'PT-01' },
+  args: { partId: 'ZX-01' },
   ...overrides,
 });
 
@@ -78,7 +78,7 @@ describe('ArtifactFrame — MCP call bridge', () => {
     post(iframe, aCall({ id: 'abc-123' }));
 
     await waitFor(() => expect(posted).toHaveBeenCalledTimes(1));
-    expect(seen).toEqual([{ connector: 'conn-inline', tool: 'query_spc', args: { partId: 'PT-01' } }]);
+    expect(seen).toEqual([{ connector: 'conn-inline', tool: 'query_spc', args: { partId: 'ZX-01' } }]);
     expect(results(posted)[0]).toEqual({
       type: 'erd-mcp-result',
       id: 'abc-123',

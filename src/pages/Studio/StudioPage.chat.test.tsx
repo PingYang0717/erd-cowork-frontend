@@ -11,13 +11,7 @@ import { mockAgentStream } from '@/test/agentStream';
 import { renderStudio, waitForComposer } from '@/test/renderStudio';
 import { answerAnalysisConditions } from '@/test/studioRun';
 
-const SUGGESTED_PROMPTS = [
-  'Inline dashboard',
-  'SPC analysis',
-  'Generate slides',
-  'Daily monitor (PT-01)',
-  'CP Test status',
-];
+const SUGGESTED_PROMPTS = ['Inline dashboard', 'SPC analysis', 'Generate slides', 'Daily monitor', 'CP Test status'];
 
 const selectASession = async (user: ReturnType<typeof userEvent.setup>) => {
   await user.click(await screen.findByRole('button', { name: 'New chat' }));
@@ -182,9 +176,9 @@ describe('Scenario matching', () => {
       artifactName: 'Inline dashboard',
     },
     {
-      label: 'Daily monitor (PT-01)',
-      replyMatch: /Daily Monitor Dashboard — PT-01 generated/,
-      artifactName: 'Daily Monitor Dashboard — PT-01',
+      label: 'Daily monitor',
+      replyMatch: /Daily Monitor Dashboard generated/,
+      artifactName: 'Daily Monitor Dashboard',
     },
     {
       label: 'CP Test status',
@@ -268,9 +262,9 @@ describe('Scenario matching', () => {
       artifactName: 'Inline dashboard',
     },
     {
-      text: 'Give me the daily monitor for PT-01',
-      replyMatch: /Daily Monitor Dashboard — PT-01 generated/,
-      artifactName: 'Daily Monitor Dashboard — PT-01',
+      text: 'Give me the daily monitor',
+      replyMatch: /Daily Monitor Dashboard generated/,
+      artifactName: 'Daily Monitor Dashboard',
     },
     {
       text: "What's the CP Test status right now?",

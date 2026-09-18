@@ -78,7 +78,7 @@ describe('MessageBubble', () => {
                 label: 'Lot',
                 kind: 'single',
                 required: true,
-                options: [{ value: 'PT-01', label: 'PT-01' }],
+                options: [{ value: 'ZX-01', label: 'ZX-01' }],
               },
             ],
             submitLabel: 'Submit',
@@ -274,7 +274,7 @@ describe('message time and copy', () => {
   });
 
   it('says when a message was sent', () => {
-    render(<MessageBubble sender="USER" text="幫我看 PT-01 的 SPC" createdAt="2026-09-10T02:00:00.000Z" />);
+    render(<MessageBubble sender="USER" text="幫我看 ZX-01 的 SPC" createdAt="2026-09-10T02:00:00.000Z" />);
 
     // Relative wording, like the session rail and the version menu; the machine-readable
     // moment on `datetime`, and the exact one on `title` for a reader who wants it.
@@ -289,10 +289,10 @@ describe('message time and copy', () => {
 
   it('copies what the bubble says', async () => {
     const user = userEvent.setup();
-    render(<MessageBubble sender="USER" text="幫我看 PT-01 的 SPC" createdAt="2026-09-10T02:00:00.000Z" />);
+    render(<MessageBubble sender="USER" text="幫我看 ZX-01 的 SPC" createdAt="2026-09-10T02:00:00.000Z" />);
 
     await user.click(screen.getByRole('button', { name: 'Copy message' }));
-    expect(writeText).toHaveBeenCalledWith('幫我看 PT-01 的 SPC');
+    expect(writeText).toHaveBeenCalledWith('幫我看 ZX-01 的 SPC');
   });
 
   /** The only confirmation a copy gets. Inside the success path, not beside it: it used

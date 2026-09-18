@@ -34,17 +34,17 @@ const renderCard = (form: QuestionForm, onSubmit = vi.fn()) => {
  *  are long. A dropdown carries both cases without the card taking over the thread. */
 describe('QuestionFormCard: how a field is offered', () => {
   it('keeps chips for a handful of short options', async () => {
-    renderCard(formOf(field({ key: 'part', label: 'Part ID', options: options('PT-01', 'PT-02', 'PT-03') })));
+    renderCard(formOf(field({ key: 'part', label: 'Part ID', options: options('ZX-01', 'PT-02', 'PT-03') })));
 
     const group = screen.getByRole('group', { name: 'Part ID' });
-    expect(within(group).getByRole('button', { name: 'PT-01' })).toBeInTheDocument();
+    expect(within(group).getByRole('button', { name: 'ZX-01' })).toBeInTheDocument();
     expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
   });
 
   it('switches to a dropdown once there are more than five options', async () => {
     renderCard(
       formOf(
-        field({ key: 'part', label: 'Part ID', options: options('PT-01', 'PT-02', 'PT-03', 'PT-04', 'PT-05', 'PT-06') })
+        field({ key: 'part', label: 'Part ID', options: options('ZX-01', 'PT-02', 'PT-03', 'PT-04', 'PT-05', 'PT-06') })
       )
     );
 
@@ -117,7 +117,7 @@ describe('QuestionFormCard: how a field is offered', () => {
           key: 'part',
           label: 'Part ID',
           kind: 'multi',
-          options: options('PT-01', 'PT-01-B', 'PT-02', 'PT-07', 'PT-07-P', 'PT-08', 'PT-08-X', 'PT-09'),
+          options: options('ZX-01', 'ZX-01-B', 'PT-02', 'PT-07', 'PT-07-P', 'PT-08', 'PT-08-X', 'PT-09'),
         })
       )
     );
@@ -126,9 +126,9 @@ describe('QuestionFormCard: how a field is offered', () => {
     await user.click(dropdown);
     expect(await screen.findByTitle('PT-07')).toBeInTheDocument();
 
-    await user.type(dropdown, 'PT-01');
+    await user.type(dropdown, 'ZX-01');
 
-    expect(await screen.findByTitle('PT-01-B')).toBeInTheDocument();
+    expect(await screen.findByTitle('ZX-01-B')).toBeInTheDocument();
     expect(screen.queryByTitle('PT-07')).not.toBeInTheDocument();
   });
 
@@ -161,16 +161,16 @@ describe('QuestionFormCard: how a field is offered', () => {
    *  mount — the card kept the empty object it started with and only filled in when
    *  something remounted it, which in practice meant reloading the page. */
   it('shows answers that arrive after it was drawn', () => {
-    const form = formOf(field({ key: 'part', label: 'Part ID', options: options('PT-01', 'PT-02') }));
+    const form = formOf(field({ key: 'part', label: 'Part ID', options: options('ZX-01', 'PT-02') }));
 
     const view = render(<QuestionFormCard form={form} disabled onSubmit={vi.fn()} />, { wrapper: appWrapper() });
     const group = screen.getByRole('group', { name: 'Part ID' });
-    expect(within(group).getByRole('button', { name: 'PT-01' })).toHaveAttribute('aria-pressed', 'false');
+    expect(within(group).getByRole('button', { name: 'ZX-01' })).toHaveAttribute('aria-pressed', 'false');
 
     // Same instance, no remount — exactly what the refetch does to a card on screen.
-    view.rerender(<QuestionFormCard form={form} disabled answered={{ part: 'PT-01' }} onSubmit={vi.fn()} />);
+    view.rerender(<QuestionFormCard form={form} disabled answered={{ part: 'ZX-01' }} onSubmit={vi.fn()} />);
 
-    expect(within(group).getByRole('button', { name: 'PT-01' })).toHaveAttribute('aria-pressed', 'true');
+    expect(within(group).getByRole('button', { name: 'ZX-01' })).toHaveAttribute('aria-pressed', 'true');
     expect(within(group).getByRole('button', { name: 'PT-02' })).toHaveAttribute('aria-pressed', 'false');
   });
 
@@ -215,15 +215,15 @@ describe('QuestionFormCard: how a field is offered', () => {
   it('keeps the options already picked when a custom value is typed beside them', async () => {
     const user = userEvent.setup();
     const { onSubmit } = renderCard(
-      formOf(field({ key: 'lots', label: 'Lot', kind: 'multi', allowCustom: true, options: options('PT-01', 'PT-07') }))
+      formOf(field({ key: 'lots', label: 'Lot', kind: 'multi', allowCustom: true, options: options('ZX-01', 'PT-07') }))
     );
 
     const group = screen.getByRole('group', { name: 'Lot' });
-    await user.click(within(group).getByRole('button', { name: 'PT-01' }));
-    await user.type(screen.getByRole('textbox', { name: 'Lot' }), 'PT-01-9999');
+    await user.click(within(group).getByRole('button', { name: 'ZX-01' }));
+    await user.type(screen.getByRole('textbox', { name: 'Lot' }), 'ZX-01-9999');
     await user.click(screen.getByRole('button', { name: 'Send' }));
 
-    expect(onSubmit).toHaveBeenCalledWith({ lots: ['PT-01', 'PT-01-9999'] });
+    expect(onSubmit).toHaveBeenCalledWith({ lots: ['ZX-01', 'ZX-01-9999'] });
   });
 
   /** Two controls doing different things must not read as one. The list picks; the box
@@ -256,7 +256,7 @@ describe('QuestionFormCard: how a field is offered', () => {
  *  typed value was what went out. Locking the one not in use says so up front. */
 describe('QuestionFormCard: a single answer comes from one place', () => {
   const singleWithCustom = () =>
-    formOf(field({ key: 'part', label: 'Part ID', options: options('PT-01', 'PT-02', 'PT-03'), allowCustom: true }));
+    formOf(field({ key: 'part', label: 'Part ID', options: options('ZX-01', 'PT-02', 'PT-03'), allowCustom: true }));
 
   it('locks the box once an option is picked, and unlocks it when the pick is undone', async () => {
     const user = userEvent.setup();
@@ -265,11 +265,11 @@ describe('QuestionFormCard: a single answer comes from one place', () => {
     const box = screen.getByLabelText('Part ID', { selector: 'input' });
     expect(box).toBeEnabled();
 
-    await user.click(screen.getByRole('button', { name: 'PT-01' }));
+    await user.click(screen.getByRole('button', { name: 'ZX-01' }));
     expect(box).toBeDisabled();
 
     // Clicking the lit chip again gives the slot back.
-    await user.click(screen.getByRole('button', { name: 'PT-01' }));
+    await user.click(screen.getByRole('button', { name: 'ZX-01' }));
     expect(box).toBeEnabled();
   });
 
@@ -278,11 +278,11 @@ describe('QuestionFormCard: a single answer comes from one place', () => {
     renderCard(singleWithCustom());
 
     const box = screen.getByLabelText('Part ID', { selector: 'input' });
-    await user.type(box, 'PT-01-9999');
-    expect(screen.getByRole('button', { name: 'PT-01' })).toBeDisabled();
+    await user.type(box, 'ZX-01-9999');
+    expect(screen.getByRole('button', { name: 'ZX-01' })).toBeDisabled();
 
     await user.clear(box);
-    expect(screen.getByRole('button', { name: 'PT-01' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'ZX-01' })).toBeEnabled();
   });
 
   /** A multi field holds several answers at once, so a typed value is one more of them

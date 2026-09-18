@@ -26,10 +26,10 @@ describe('useAgentStream', () => {
     });
 
     stream.push({ type: 'TOKEN', delta: 'Vt ' });
-    stream.push({ type: 'TOKEN', delta: 'is drifting on PT-01.' });
+    stream.push({ type: 'TOKEN', delta: 'is drifting on ZX-01.' });
 
     await waitFor(() => {
-      expect(result.current.state.liveText).toBe('Vt is drifting on PT-01.');
+      expect(result.current.state.liveText).toBe('Vt is drifting on ZX-01.');
     });
   });
 
@@ -180,9 +180,9 @@ describe('useAgentStream', () => {
         summaryLabel: '已選 3 個',
       },
     });
-    stream.push({ type: 'ANSWER', text: 'Vt is drifting on PT-01.' });
+    stream.push({ type: 'ANSWER', text: 'Vt is drifting on ZX-01.' });
 
-    await waitFor(() => expect(result.current.state.answer).toBe('Vt is drifting on PT-01.'));
+    await waitFor(() => expect(result.current.state.answer).toBe('Vt is drifting on ZX-01.'));
 
     expect(result.current.state.thinking).toBe('The Vt trend crosses the UCL.');
     expect(result.current.state.codeText).toBe('<div id="chart">');
@@ -203,7 +203,7 @@ describe('useAgentStream', () => {
 
     stream.push({
       type: 'QUESTION',
-      questions: [{ text: 'Which lots?', options: ['PT-01', 'PT-07'], multiSelect: true }],
+      questions: [{ text: 'Which lots?', options: ['ZX-01', 'PT-07'], multiSelect: true }],
     });
 
     await waitFor(() => expect(result.current.state.question).not.toBeNull());
@@ -315,7 +315,7 @@ describe('useAgentStream', () => {
     act(() => {
       void result.current.send({ question: 'Run an SPC analysis on Vt (gate CD).' });
     });
-    stream.push({ type: 'ANSWER', text: 'Vt is drifting on PT-01.' });
+    stream.push({ type: 'ANSWER', text: 'Vt is drifting on ZX-01.' });
     stream.push({ type: 'THINKING', delta: 'noted' });
     await waitFor(() => expect(result.current.state.answer).not.toBeNull());
     act(() => stream.close());
