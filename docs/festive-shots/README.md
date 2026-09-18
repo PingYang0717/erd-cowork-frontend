@@ -18,12 +18,12 @@
 | 聖誕 | ![](10-floor-behind-composer-christmas.png) |
 | 新年 | ![](11-floor-behind-composer-lunarNewYear.png) |
 
-## 圓窗（第六版，重畫得細一點）：聖誕老公公、羊年的羊、小幽靈、嫦娥
+## 圓窗（第七版）：駕雪橇的聖誕老公公、掛中國結叼紅包的羊、小幽靈、嫦娥
 
 | | |
 |---|---|
-| 聖誕：聖誕老公公 | ![](20-window-santa.png) |
-| 新年：戴紅結和鈴鐺的羊 | ![](21-window-sheep.png) |
+| 聖誕：聖誕老公公駕雪橇 | ![](20-window-santa.png) |
+| 新年：掛中國結、叼紅包的羊 | ![](21-window-sheep.png) |
 | 萬聖節：小幽靈 | ![](22-window-ghost.png) |
 | 中秋：月裡的嫦娥 | ![](23-window-change.png) |
 
