@@ -3,7 +3,7 @@ import { ThunderboltFilled } from '@ant-design/icons';
 
 import DataBoundary from '@/components/common/DataBoundary';
 import { EmptyPorthole } from '@/components/layouts/EmptyStateFestive';
-import { FestiveFloor, FestiveWeather } from '@/components/layouts/FestiveSurfaces';
+import { FestiveFloor } from '@/components/layouts/FestiveSurfaces';
 import { isInterruptionRecord } from '@/constants/wireStrings';
 import { type SendInput, useAgentStream } from '@/hooks/useAgentStream';
 import { useArtifactRepair } from '@/hooks/useArtifactRepair';
@@ -44,14 +44,13 @@ interface EmptyStateProps {
 }
 
 /** The empty state, before a conversation or before its first message. Around a
- *  festival the scene's weather comes over its top, and the icon tile steps aside for the
- *  porthole (EmptyStateFestive): a 52px square with things hung off it was a tile with
- *  trinkets on, and the point of the window is that it is a place, which needs the room. */
+ *  festival the icon tile steps aside for the porthole (EmptyStateFestive): a 52px
+ *  square with things hung off it was a tile with trinkets on, and the point of the
+ *  window is that it is a place, which needs the room. */
 const EmptyState: React.FC<EmptyStateProps> = ({ heading, subtitle }) => {
   const festival = useFestival();
   return (
     <div className={styles.emptyState}>
-      {festival !== null && <FestiveWeather festival={festival} surface="chat" />}
       {festival !== null ? (
         <EmptyPorthole festival={festival} panel="left" />
       ) : (
@@ -90,9 +89,10 @@ const ThreadPanel: React.FC = () => {
         </div>
       )}
       {/* The pane's stretch of the floor that runs along the window's foot (FestiveSurfaces),
-          behind the composer: the composer card stands on the ground, and the walker passes
-          behind it with its feet showing under the card. Without this the floor stopped at
-          the rail's edge and started again at the Artifact pane, a gap where a pane was. */}
+          behind the composer, with the weather coming down onto it: the composer card stands
+          on the ground, and the walker passes behind it with its feet showing under the
+          card. Without this the floor stopped at the rail's edge and started again at the
+          Artifact pane, a gap where a pane was. */}
       {festival !== null && <FestiveFloor festival={festival} surface="chat" />}
     </div>
   );

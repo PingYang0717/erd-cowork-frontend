@@ -8,13 +8,45 @@
   transition: box-shadow 0.4s ease;
 }
 
-/* The Artifact just published, for a moment after arriving: the same still ring the
-   rail's Artifacts entry wears while it coaches, so the two read as one gesture. It
-   fades through the transition above when the Gallery settles it. */
+/* The Artifact just published, for a moment after arriving: the same ring the rail's
+   Artifacts entry wears while it coaches, on the same beat, so the two read as one
+   gesture. The card also lands — it comes up from a few px below and settles with a
+   small overshoot — and the ring beats three times and then holds still until the
+   Gallery settles it, when it fades through the transition above. A still ring on one
+   card in a grid of identical cards was not enough to find it by; what moves is found.
+   The beat and the landing are two animations because they animate different
+   properties and end at different times. */
 .card[data-fresh='true'] {
   box-shadow:
-    0 0 0 1.5px var(--erd-color-primary-border, #91caff),
+    0 0 0 1.5px var(--erd-color-highlight-ring, #91caff),
     var(--shadow-sm, 0 1px 2px rgba(0, 0, 0, 0.05));
+  animation:
+    fresh-land 0.7s cubic-bezier(0.22, 1.3, 0.36, 1) both,
+    fresh-beat 1.6s ease-in-out 3 both;
+}
+
+@keyframes fresh-land {
+  from {
+    transform: translateY(10px) scale(0.98);
+  }
+  to {
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes fresh-beat {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 1.5px var(--erd-color-highlight-ring, #91caff),
+      var(--shadow-sm, 0 1px 2px rgba(0, 0, 0, 0.05));
+  }
+  45% {
+    box-shadow:
+      0 0 0 1.5px var(--erd-color-highlight-ring, #91caff),
+      0 0 0 7px color-mix(in srgb, var(--erd-color-highlight-ring, #91caff) 28%, transparent),
+      var(--shadow-sm, 0 1px 2px rgba(0, 0, 0, 0.05));
+  }
 }
 
 .open {

@@ -49,6 +49,12 @@ export interface ThemeTokens {
   chatBorder: string;
   /** cowork mockup's scrollbar thumb (14% black); dark value is ours. */
   scrollbarThumb: string;
+  /** The ring that points something out for a moment — the rail's Artifacts entry
+   *  after a publish, the Gallery card just published, the ComingSoon frame. The
+   *  mockup draws it in `primaryBorder`, which is right on white and invisible on the
+   *  dark surfaces (`#15325b` on `#17181c`), so the dark value is the primary's hover
+   *  tint instead: a ring is a mark, not a border, and has to be seen to work. */
+  highlightRing: string;
   shadowSm: string;
   shadowMd: string;
   shadowLg: string;
@@ -86,6 +92,7 @@ export const THEME_TOKENS: Record<'light' | 'dark', ThemeTokens> = {
     chatStripeBg: '#f9fafb',
     chatBorder: '#e5e7eb',
     scrollbarThumb: 'rgba(0, 0, 0, 0.14)',
+    highlightRing: '#91caff',
     shadowSm: '0 1px 2px rgba(0, 0, 0, 0.04), 0 1px 6px -1px rgba(0, 0, 0, 0.03)',
     shadowMd: '0 6px 16px rgba(0, 0, 0, 0.08)',
     // The mockup never declares --shadow-lg; its dialogs and flyouts use this
@@ -120,9 +127,12 @@ export const THEME_TOKENS: Record<'light' | 'dark', ThemeTokens> = {
     fillQuaternary: 'rgba(255, 255, 255, 0.03)',
     chatBubbleBg: '#262629',
     chatCodeBg: '#303034',
-    chatStripeBg: 'rgba(255, 255, 255, 0.04)',
-    chatBorder: '#303030',
+    chatStripeBg: 'rgba(255, 255, 255, 0.05)',
+    // One rung lighter than `borderSecondary`: that hairline on the bubble's own
+    // `#262629` was six steps of grey apart and a table drew with no lines at all.
+    chatBorder: '#3b3b41',
     scrollbarThumb: 'rgba(255, 255, 255, 0.2)',
+    highlightRing: '#3c89e8',
     shadowSm: '0 1px 2px rgba(0, 0, 0, 0.3)',
     shadowMd: '0 6px 16px rgba(0, 0, 0, 0.45)',
     shadowLg: '0 12px 40px rgba(0, 0, 0, 0.28)',
@@ -165,6 +175,7 @@ export const themeCssVars = (tokens: ThemeTokens): Record<string, string> => {
     '--erd-color-chat-stripe-bg': tokens.chatStripeBg,
     '--erd-color-chat-border': tokens.chatBorder,
     '--erd-scrollbar-thumb': tokens.scrollbarThumb,
+    '--erd-color-highlight-ring': tokens.highlightRing,
     '--shadow-sm': tokens.shadowSm,
     '--shadow-md': tokens.shadowMd,
     '--shadow-lg': tokens.shadowLg,

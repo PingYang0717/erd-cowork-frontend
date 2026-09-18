@@ -17,7 +17,7 @@
 
 /* The feature's icon in a tile the size of the Gallery's thumbnails, in the primary
    pair. It drifts up and down a little, and two rings leave it in turn and fade — the
-   same primary border the rail's coach ring uses. */
+   same highlight ring the rail's coach ring is drawn in. */
 .tile {
   position: relative;
   display: flex;
@@ -39,7 +39,7 @@
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  border: 1.5px solid var(--erd-color-primary-border, #91caff);
+  border: 1.5px solid var(--erd-color-highlight-ring, #91caff);
   animation: coming-soon-ring 2.8s ease-out infinite;
 }
 

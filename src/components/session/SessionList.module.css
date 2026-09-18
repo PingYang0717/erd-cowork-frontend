@@ -1,5 +1,5 @@
 .sessionList {
-  /* For the festive weather layer, which is placed against this box's top. */
+  /* For the festive weather, which is laid against this box's foot, onto the floor. */
   position: relative;
   display: flex;
   flex-direction: column;
@@ -167,12 +167,30 @@
 }
 
 /* Coach ring after publishing an Artifact, until the flyout beside it is dismissed: the
-   mockup's `.erd-coach`, a still 1.5px ring in the primary border colour. An outline and
-   nothing else. The filled background the mockup also paints is how the rail marks the
-   page you are actually on (`aria-current`), so wearing it made a nudge look like a
-   location — the entry read as selected while the user was still somewhere else. */
+   mockup's `.erd-coach`, a 1.5px ring in the highlight colour, and nothing else. The
+   filled background the mockup also paints is how the rail marks the page you are
+   actually on (`aria-current`), so wearing it made a nudge look like a location — the
+   entry read as selected while the user was still somewhere else.
+
+   The ring beats while it is on: a soft halo swells out of it and fades, once every
+   1.6s. A still ring was easy to miss beside the card that appears with it — the card
+   drew the eye and the ring under it looked like part of the card's shadow. Same beat
+   as the Gallery card it points to (ArtifactCard), so the two read as one gesture. */
 .navShortcut[data-coach='true'] {
-  box-shadow: 0 0 0 1.5px var(--erd-color-primary-border, #91caff);
+  box-shadow: 0 0 0 1.5px var(--erd-color-highlight-ring, #91caff);
+  animation: coach-beat 1.6s ease-in-out infinite;
+}
+
+@keyframes coach-beat {
+  0%,
+  100% {
+    box-shadow: 0 0 0 1.5px var(--erd-color-highlight-ring, #91caff);
+  }
+  45% {
+    box-shadow:
+      0 0 0 1.5px var(--erd-color-highlight-ring, #91caff),
+      0 0 0 7px color-mix(in srgb, var(--erd-color-highlight-ring, #91caff) 28%, transparent);
+  }
 }
 
 /* The Artifacts entry and the card that hangs off it share this box so the card can be

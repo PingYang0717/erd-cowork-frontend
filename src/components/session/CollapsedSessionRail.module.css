@@ -1,4 +1,6 @@
 .rail {
+  /* For the festive weather, which is laid against this box's foot, onto the floor. */
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;

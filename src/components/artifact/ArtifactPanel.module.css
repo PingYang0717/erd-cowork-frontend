@@ -1,7 +1,7 @@
 /* The mockup's empty preview state (cwPreviewRoot): a primary-tinted icon
    tile over a heading and one line of guidance. */
 .empty {
-  /* The festive weather and floor are laid against this box's top and foot. */
+  /* The festive floor and the weather onto it are laid against this box's foot. */
   position: relative;
   overflow: hidden;
   height: 100%;

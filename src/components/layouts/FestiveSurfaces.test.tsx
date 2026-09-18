@@ -39,9 +39,9 @@ const renderStudioOnDraft = async () => {
   return user;
 };
 
-/** The scene below the header — the weather over each empty surface and the one floor
- *  along the window's foot — forced on through the preview key the way someone checking
- *  it outside the dates would. Decoration only: hidden from readers, and every row and
+/** The scene below the header — the one floor along the window's foot and the weather
+ *  coming down onto it — forced on through the preview key the way someone checking it
+ *  outside the dates would. Decoration only: hidden from readers, and every row and
  *  button keeps its name. */
 describe('The festive surfaces', () => {
   // Before, not after: the after hooks run ahead of the previous case's unmount, and its
@@ -67,13 +67,21 @@ describe('The festive surfaces', () => {
   });
 
   /** With a draft open the thread pane shows its start state over the composer; its
-   *  stretch of the floor runs behind the composer, at the pane's foot. */
-  it('lets the snow in over every empty surface and lays one floor through all three', async () => {
+   *  stretch of the floor runs behind the composer, at the pane's foot. The snow comes
+   *  down onto each stretch: drawn with the floor, just before it, and nowhere at a
+   *  surface's top. */
+  it('lays one floor through all three surfaces and lets the snow down onto each', async () => {
     localStorage.setItem(FESTIVAL_PREVIEW_STORAGE_KEY, 'christmas');
     await renderStudioOnDraft();
 
-    expect(weathers()).toEqual(['rail', 'chat', 'artifact']);
     expect(floors()).toEqual(['rail', 'chat', 'artifact']);
+    expect(weathers()).toEqual(['rail', 'chat', 'artifact']);
+    for (const floor of document.querySelectorAll('[data-festive-floor]')) {
+      expect(floor.previousElementSibling).toHaveAttribute(
+        'data-festive-weather',
+        floor.getAttribute('data-festive-floor')
+      );
+    }
     for (const piece of document.querySelectorAll('[data-festive-floor], [data-festive-weather]')) {
       expect(piece).toHaveAttribute('aria-hidden', 'true');
     }

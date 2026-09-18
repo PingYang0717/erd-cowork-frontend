@@ -41,8 +41,12 @@ import styles from './FestiveSurfaces.module.css';
  *  are the same picture continued downward, and the rule for all of them is that they
  *  are one place, not three dressed boxes:
  *
- *    weather  what falls in the header's sky (snow, plum petals; Mid-Autumn's sky
- *             lanterns rise) comes over the top of each surface and thins out by 112px
+ *    weather  what falls in the header's sky (snow, plum petals) comes down onto the
+ *             floor: the sheet is drawn at each surface's foot, thinning to nothing
+ *             112px above the ground, so the flakes are seen landing rather than
+ *             hanging over the buttons at the top (Mid-Autumn's sky lanterns rise off
+ *             the ground the same way). Over the top of every surface it was three
+ *             separate drifts across three different things, which read as clutter.
  *    floor    one strip of the festival's ground along the window's foot — snow, grass,
  *             a bank of cloud, swept red-and-gold — running through the rail, behind the
  *             thread pane's composer and across the empty Artifact pane at one height,
@@ -75,17 +79,23 @@ interface SurfaceProps {
 
 /* ---------- weather ---------- */
 
-/** How far the weather reaches down a surface before it has thinned to nothing. Two of
- *  the header's 56px tiles, so the sheet still loops without a seam. */
+/** How far above the ground the weather is still falling before it has thinned to
+ *  nothing. Two of the header's 56px tiles, so the sheet still loops without a seam. */
 const WEATHER_REACH = 112;
+
+/** The whole sheet: the reach above the floor plus the floor's own 40px, so the flakes
+ *  keep falling down through the strip until the ground covers them. */
+const WEATHER_BOX = WEATHER_REACH + 40;
 
 /** The header slides one 56px tile in 14s; two tiles take 28s. Sky lanterns are slower. */
 const FALL_S = 28;
 const RISE_S = 52;
 
-/** The header's falling (or rising) sheet, continued over a surface's top. Same tile,
- *  same speed, same point in the loop wherever it is drawn. */
-export const FestiveWeather: React.FC<SurfaceProps> = ({ festival, surface }) => {
+/** The header's falling (or rising) sheet, coming down onto a surface's floor. Same
+ *  tile, same speed, same point in the loop wherever it is drawn. Laid against the foot
+ *  of the surface's box, behind the floor strip, so the ground's solid drifts cover the
+ *  flakes as they land. */
+const FloorWeather: React.FC<SurfaceProps> = ({ festival, surface }) => {
   const [phase] = useState(() => ({ fall: phaseNow(FALL_S), rise: phaseNow(RISE_S) }));
   const tile = WEATHER_TILES[festival];
   if (tile === null) {
@@ -104,14 +114,14 @@ export const FestiveWeather: React.FC<SurfaceProps> = ({ festival, surface }) =>
           animationDelay: down ? phase.fall : phase.rise,
         }}
         width="100%"
-        height={WEATHER_REACH * 2}
+        height={WEATHER_BOX + WEATHER_REACH}
       >
         <defs>
           <pattern id={id} width={tile.width} height={tile.height} patternUnits="userSpaceOnUse">
             {tile.body}
           </pattern>
         </defs>
-        <rect width="100%" height={WEATHER_REACH * 2} fill={`url(#${id})`} opacity="0.85" />
+        <rect width="100%" height={WEATHER_BOX + WEATHER_REACH} fill={`url(#${id})`} opacity="0.85" />
       </svg>
     </div>
   );
@@ -464,11 +474,15 @@ const FLOOR_CLASS: Record<FestiveSurface, string> = {
   artifact: styles.floorArtifact,
 };
 
-/** The strip of ground at a surface's foot. Still until touched: the pointer over the
- *  strip stirs the pieces once (their parts' hover rules), a click on one plays its
- *  turn — set by `data-poked`, cleared when the piece's own animation ends. Only the
- *  piece's own `animationend` counts: the lights and glows inside it never end, and the
- *  burst overlay ends on its own schedule. */
+/** The strip of ground at a surface's foot, and the weather coming down onto it. Still
+ *  until touched: the pointer over the strip stirs the pieces once (their parts' hover
+ *  rules), a click on one plays its turn — set by `data-poked`, cleared when the
+ *  piece's own animation ends. Only the piece's own `animationend` counts: the lights
+ *  and glows inside it never end, and the burst overlay ends on its own schedule.
+ *
+ *  Two boxes, siblings: the weather is laid against the foot of the surface's own box
+ *  (which must be positioned), the strip is laid out however the surface lays it. The
+ *  weather cannot live inside the strip, which clips itself to its 40px. */
 export const FestiveFloor: React.FC<SurfaceProps> = ({ festival, surface }) => {
   const [poked, setPoked] = useState<number | null>(null);
   // Read once: a delay that moved with every render would move the walker with it.
@@ -479,58 +493,61 @@ export const FestiveFloor: React.FC<SurfaceProps> = ({ festival, surface }) => {
   const walker = WALKERS[festival];
 
   return (
-    <div className={`${styles.floor} ${FLOOR_CLASS[surface]}`} aria-hidden data-festive-floor={surface}>
-      <FloorBackdrop festival={festival} surface={surface} />
-      {/* Fixed to the window, not to this strip, and clipped to the strip: every surface
+    <>
+      <FloorWeather festival={festival} surface={surface} />
+      <div className={`${styles.floor} ${FLOOR_CLASS[surface]}`} aria-hidden data-festive-floor={surface}>
+        <FloorBackdrop festival={festival} surface={surface} />
+        {/* Fixed to the window, not to this strip, and clipped to the strip: every surface
           draws the same walker at the same place, and shows only its own stretch. */}
-      <div
-        className={styles.walkTrack}
-        data-festive-walker={festival}
-        style={{
-          ['--fd-cross-w' as string]: `${walker.width}px`,
-          ['--fd-beat' as string]: phase.beat,
-          animationDuration: `${WALK_LOOP_S}s`,
-          animationDelay: phase.walk,
-        }}
-      >
-        <svg className={styles.walker} viewBox={walker.viewBox} width={walker.width} height={walker.height}>
-          {walker.node}
-        </svg>
-      </div>
-      {placements.map(({ kind, at, scale = 1 }, i) => {
-        const piece = PIECES[kind];
-        const width = Math.round(piece.width * scale);
-        const height = Math.round(piece.height * scale);
-        return (
-          <svg
-            key={`${kind}-${at}`}
-            className={`${styles.piece} ${styles[kind]}`}
-            data-piece={kind}
-            data-poked={poked === i ? 'true' : undefined}
-            style={
-              compact
-                ? { left: `calc(50% - ${width / 2}px)` }
-                : at === 'left'
-                  ? { left: 3 }
-                  : at === 'right'
-                    ? { right: 3 }
-                    : { left: `${at * 100}%` }
-            }
-            viewBox={piece.viewBox}
-            width={width}
-            height={height}
-            onClick={() => setPoked(i)}
-            onAnimationEnd={(event) => {
-              if (event.target === event.currentTarget) {
-                setPoked(null);
-              }
-            }}
-          >
-            {piece.node}
-            {poked === i && burstFor(kind)}
+        <div
+          className={styles.walkTrack}
+          data-festive-walker={festival}
+          style={{
+            ['--fd-cross-w' as string]: `${walker.width}px`,
+            ['--fd-beat' as string]: phase.beat,
+            animationDuration: `${WALK_LOOP_S}s`,
+            animationDelay: phase.walk,
+          }}
+        >
+          <svg className={styles.walker} viewBox={walker.viewBox} width={walker.width} height={walker.height}>
+            {walker.node}
           </svg>
-        );
-      })}
-    </div>
+        </div>
+        {placements.map(({ kind, at, scale = 1 }, i) => {
+          const piece = PIECES[kind];
+          const width = Math.round(piece.width * scale);
+          const height = Math.round(piece.height * scale);
+          return (
+            <svg
+              key={`${kind}-${at}`}
+              className={`${styles.piece} ${styles[kind]}`}
+              data-piece={kind}
+              data-poked={poked === i ? 'true' : undefined}
+              style={
+                compact
+                  ? { left: `calc(50% - ${width / 2}px)` }
+                  : at === 'left'
+                    ? { left: 3 }
+                    : at === 'right'
+                      ? { right: 3 }
+                      : { left: `${at * 100}%` }
+              }
+              viewBox={piece.viewBox}
+              width={width}
+              height={height}
+              onClick={() => setPoked(i)}
+              onAnimationEnd={(event) => {
+                if (event.target === event.currentTarget) {
+                  setPoked(null);
+                }
+              }}
+            >
+              {piece.node}
+              {poked === i && burstFor(kind)}
+            </svg>
+          );
+        })}
+      </div>
+    </>
   );
 };

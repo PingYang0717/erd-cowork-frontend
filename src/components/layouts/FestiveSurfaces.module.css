@@ -1,24 +1,29 @@
-/* The festive scene below the header (FestiveSurfaces): the weather over a surface's
-   top, and the floor along its foot. Animation classes for what never stops — swing,
+/* The festive scene below the header (FestiveSurfaces): the floor along a surface's
+   foot, and the weather coming down onto it. Animation classes for what never stops — swing,
    breath, twinkle, the falling sheet — come from the header's stylesheet
    (FestiveDecoration.module.css) so they run at the same pace here. */
 
 /* ---------- weather ---------- */
 
-/* The header's weather continued down a surface: over everything at the top, transparent
-   to the pointer, thinning to nothing by its foot so it never reaches the content. */
+/* The header's weather landing on a surface's floor: laid against the foot of the
+   surface's box, 112px above the ground plus the strip itself, transparent to the
+   pointer, and thinning to nothing at its top so the flakes come out of the air rather
+   than out of a line. Behind the floor strip in the stacking order (the strip is the
+   later sibling), so the ground's solid drifts cover what lands. */
 .weather {
   position: absolute;
-  top: 0;
   left: 0;
   right: 0;
-  height: 112px;
+  bottom: 0;
+  height: 152px;
   overflow: hidden;
   pointer-events: none;
-  z-index: 2;
-  opacity: 0.7;
-  mask-image: linear-gradient(180deg, #000 0%, #000 25%, transparent 100%);
-  -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 25%, transparent 100%);
+  z-index: 0;
+  /* Quieter than the header's sheet: this falls among the composer's chips and the
+     rail's last rows, and it is there to be noticed at the edge of the eye, not read. */
+  opacity: 0.55;
+  mask-image: linear-gradient(180deg, transparent 0%, #000 70%, #000 100%);
+  -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 70%, #000 100%);
 }
 
 /* ---------- the floor ---------- */

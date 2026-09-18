@@ -52,7 +52,11 @@ const ArtifactFrame: React.FC<ArtifactFrameProps> = ({ html, artifactId, offersM
       title="Artifact preview"
       sandbox="allow-scripts"
       srcDoc={securedHtml}
-      style={{ width: '100%', height: '100%', border: 'none' }}
+      // An opaque white canvas, not the pane's. An Artifact is a page written for a
+      // white page: one that sets no background of its own is transparent here, and on
+      // the dark theme its #333 text went onto the dark pane and vanished. The Artifact
+      // owns its colours; the app only owes it the page it was written for.
+      style={{ width: '100%', height: '100%', border: 'none', background: '#fff' }}
     />
   );
 };

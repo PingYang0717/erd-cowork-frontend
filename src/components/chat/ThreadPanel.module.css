@@ -1,5 +1,6 @@
 .panel {
-  /* The festive floor is laid against this box's foot, behind the composer. */
+  /* The festive floor and the weather onto it are laid against this box's foot, behind
+     the composer. */
   position: relative;
   display: flex;
   flex-direction: column;
@@ -77,7 +78,6 @@
 /* The mockup's empty state: a 52px primary-tinted (blue, not gray) icon
    tile over a fs14.5 heading and a fs12.5 line capped at 280px. */
 .emptyState {
-  /* The festive weather is laid against this box's top. */
   position: relative;
   overflow: hidden;
   height: 100%;
