@@ -101,6 +101,23 @@ describe('AppHeader festive decoration', () => {
     expect(avatarButton()).toHaveAccessibleName('Preferences');
   });
 
+  /** The user's default sources (CONTEXT.md, 預設資料來源) live with the other
+   *  preferences: the row says how many are set and opens the picker. */
+  it('opens the default sources picker from the avatar menu', async () => {
+    const user = userEvent.setup();
+    localStorage.setItem('erd-cowork:connector-prefs', JSON.stringify({ defaultSources: ['inline', 'wat'] }));
+    renderHeader();
+
+    await user.click(avatarButton());
+    const row = await screen.findByRole('button', { name: /^Default sources/ });
+    expect(row).toHaveTextContent('2 selected');
+    await user.click(row);
+
+    expect(await screen.findByRole('button', { name: 'Disconnect Inline' })).toBeInTheDocument();
+    expect(screen.getByRole('dialog')).toHaveTextContent(/Never attached to a conversation/);
+    localStorage.removeItem('erd-cowork:connector-prefs');
+  });
+
   /** The switch lives with the other preferences, behind the avatar. Off means off —
    *  the calendar and the preview key are not consulted — and it is kept like the theme. */
   it('switches off from the avatar menu, and stays off', async () => {

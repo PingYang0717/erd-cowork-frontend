@@ -51,9 +51,8 @@ const selectedSources = () => {
  *  Picking is one decision made out of several clicks, so nothing reaches the server
  *  until Submit — every test here has to press it. */
 describe('ConnectorsPanel', () => {
-  // Submitting remembers the combination, and the panel opens a session that has chosen
-  // nothing on it. That is the feature — but it also means one test's Submit would seed
-  // the next test's opening draft.
+  // The panel opens a session that has chosen nothing on the user's default sources,
+  // which live in this key; one test's defaults must not seed the next's opening draft.
   beforeEach(() => localStorage.removeItem(CONNECTOR_PREFS_STORAGE_KEY));
 
   it('attaches an available source to the session and reads it back on a fresh mount', async () => {
@@ -166,17 +165,19 @@ describe('ConnectorsPanel', () => {
 
   /** A conversation draws on one kind of data source (CONTEXT.md, 已選來源). One that has
    *  files and no sources yet still opens the panel — the question card links here — but
-   *  the panel only says why, and nothing on it writes: no remembered default, no live
+   *  the panel only says why, and nothing on it writes: no default offered, no live
    *  toggles, no Submit. */
   it('opens read-only, with the reason, when the conversation has files and no sources', async () => {
-    localStorage.setItem(CONNECTOR_PREFS_STORAGE_KEY, JSON.stringify({ lastSelected: ['lot'] }));
+    localStorage.setItem(CONNECTOR_PREFS_STORAGE_KEY, JSON.stringify({ defaultSources: ['lot'] }));
     const queryClient = new QueryClient();
     queryClient.setQueryData(['sessions', 'session-with-files'], {
       id: 'session-with-files',
       title: 'New analysis',
       createdAt: '2026-08-31T00:00:00.000Z',
       messages: [],
-      files: [{ id: 'f1', name: 'lots.csv', alias: 'lots', sizeBytes: 512, type: 'text/csv', rowCount: null, expired: false }],
+      files: [
+        { id: 'f1', name: 'lots.csv', alias: 'lots', sizeBytes: 512, type: 'text/csv', rowCount: null, expired: false },
+      ],
       connectors: [],
     });
     render(
@@ -186,33 +187,52 @@ describe('ConnectorsPanel', () => {
       { wrapper: appWrapper({ queryClient }) }
     );
 
-    expect(await screen.findByRole('status')).toHaveTextContent(/files attached/);
+    expect(await screen.findByRole('status')).toHaveTextContent(/uploaded files/);
     expect(screen.getByRole('button', { name: 'Connect Lot Info' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Submit' })).toBeDisabled();
-    // The remembered combination is not offered: nothing here may be written.
+    // The default is not offered: nothing here may be written.
     expect(within(selectedSources()).queryByText('Lot Info')).not.toBeInTheDocument();
   });
 
-  /** The remembered combination is a default for the dialog and nothing more: it is
-   *  offered on a conversation that has chosen nothing, and never written to a session on
-   *  the user's behalf. A conversation with its own selection outranks it. */
-  it('opens a fresh conversation on the combination last submitted', async () => {
-    const user = userEvent.setup();
-    // Defect, because the mock's session store persists across this file and the sources
-    // the tests above touched are no longer where they started.
-    const first = renderPanel('session-1');
+  /** The user's default sources (CONTEXT.md, 預設資料來源) are a default for the dialog
+   *  and nothing more: offered on a conversation that has chosen nothing, never written to
+   *  a session on the user's behalf. A conversation with its own selection outranks it. */
+  it('opens a fresh conversation on the user’s default sources, as a draft', async () => {
+    localStorage.setItem(CONNECTOR_PREFS_STORAGE_KEY, JSON.stringify({ defaultSources: ['defect'] }));
 
-    await user.click(await screen.findByRole('button', { name: 'Connect Defect' }));
-    await submitSelection(user);
-    first.unmount();
-
-    // A conversation with nothing of its own opens on it — as a draft, not as a fact:
-    // Submit is dirty, because none of it has reached this session yet.
     renderPanel('draft-never-chosen', true);
     expect(await screen.findByRole('button', { name: 'Disconnect Defect' })).toBeInTheDocument();
+    // A draft, not a fact: Submit is dirty, because none of it has reached this session.
     expect(screen.getByRole('button', { name: 'Submit' })).toBeEnabled();
+    expect(within(rowOfSource('Defect')).queryByText('Attached')).toBeNull();
+  });
+
+  /** The defaults are the user's, set in the preferences. What one conversation submits
+   *  is that conversation's choice — it used to become every later conversation's
+   *  starting point, so a one-off pick quietly rewrote the default. */
+  it('leaves the user’s defaults alone when a conversation submits its own choice', async () => {
+    const user = userEvent.setup();
+    localStorage.setItem(CONNECTOR_PREFS_STORAGE_KEY, JSON.stringify({ defaultSources: ['defect'] }));
+    renderPanel('session-1');
+
+    await user.click(await screen.findByRole('button', { name: 'Connect Lot Info' }));
+    await submitSelection(user);
+
+    expect(JSON.parse(localStorage.getItem(CONNECTOR_PREFS_STORAGE_KEY)!)).toEqual({ defaultSources: ['defect'] });
+  });
+
+  /** The earlier shape — the combination last submitted anywhere — is read once as the
+   *  starting default, so the move is silent for whoever had one. */
+  it('reads the combination remembered by the earlier version as the default', async () => {
+    localStorage.setItem(CONNECTOR_PREFS_STORAGE_KEY, JSON.stringify({ lastSelected: ['lot'] }));
+
+    renderPanel('draft-never-chosen', true);
+    expect(await screen.findByRole('button', { name: 'Disconnect Lot Info' })).toBeInTheDocument();
   });
 });
+
+const rowOfSource = (name: string) =>
+  screen.getByRole('button', { name: new RegExp(`^(Connect|Disconnect) ${name}$`) }).closest('li') as HTMLElement;
 
 /** Two facts, not one. What the panel is editing is a *selection*, and Submit is what
  *  turns it into an attachment — so a row can be picked and not yet attached (the
@@ -242,22 +262,18 @@ describe('ConnectorsPanel: chosen here vs attached to this conversation', () => 
     expect(within(rowOf('Lot Info')).getByText('Attached')).toBeInTheDocument();
   });
 
-  /** The remembered combination is a convenience, not a claim. A conversation that has
-   *  been given nothing must not open saying it is connected to anything. */
-  it('opens a new conversation on the remembered picks without calling them attached', async () => {
+  /** The user's defaults are a convenience, not a claim. A conversation that has been
+   *  given nothing must not open saying it is connected to anything. */
+  it('opens a new conversation on the user’s defaults without calling them attached', async () => {
     const user = userEvent.setup();
-    renderPanel();
-    await user.click(await screen.findByRole('button', { name: 'Connect Lot Info' }));
-    await submitSelection(user);
+    localStorage.setItem(CONNECTOR_PREFS_STORAGE_KEY, JSON.stringify({ defaultSources: ['lot'] }));
 
-    // A different conversation, with nothing of its own.
+    // A conversation with nothing of its own.
     renderPanel('session-blank', true);
-
-    const lotInfo = await screen.findAllByRole('button', { name: 'Disconnect Lot Info' });
-    expect(lotInfo).not.toHaveLength(0);
+    await screen.findByRole('button', { name: 'Disconnect Lot Info' });
 
     // Picked for them — and nothing attached until they submit it themselves.
-    const panel = screen.getAllByRole('dialog').at(-1) as HTMLElement;
+    const panel = screen.getByRole('dialog');
     expect(within(panel).queryByText('Attached')).toBeNull();
 
     await user.click(within(panel).getByRole('button', { name: 'Submit' }));

@@ -24,6 +24,7 @@ import { useTranslations } from '@/i18n/useTranslations';
 import { useConnectorsPanelStore } from '@/stores/useConnectorsPanelStore';
 import { attachedConnectors } from '@/utils/connectorSelectors';
 import { dispatchMenuAction } from '@/utils/dispatchMenuAction';
+import { sourceKindOf } from '@/utils/sourceKind';
 
 import styles from './ChatComposer.module.css';
 
@@ -126,16 +127,13 @@ const ChatComposer: React.FC<ChatComposerProps> = ({ sessionId, onSend, disabled
 
   const connectedConnectorCount = attachedConnectors(connectors).length;
 
-  // One kind of data source per conversation: Connectors or uploaded files, never both
-  // (CONTEXT.md, 已選來源). Enforced at the entry rather than at send, so the reader
-  // learns the rule when they reach for the second kind, not after typing a question.
-  // A conversation that had both before the rule keeps what it has and can still send;
-  // only taking on the other kind is blocked — and its connectors entry stays open, so
-  // the sources can be cleared from the panel (the files clear from their chips).
-  const usesFiles = attachments.length > 0;
-  const usesConnectors = connectors.attachedIds.length > 0;
-  const attachBlocked = usesConnectors;
-  const connectorsBlocked = usesFiles && !usesConnectors;
+  // One kind of data source per conversation, fixed once either is attached (CONTEXT.md,
+  // 來源種類). Enforced at the entry rather than at send, so the reader learns the rule
+  // when they reach for the second kind, not after typing a question. The kind itself
+  // is worked out in one place; the entries only ask.
+  const sourceKind = sourceKindOf({ files: attachments, connectors: connectors.attachedIds });
+  const attachBlocked = sourceKind === 'connectors';
+  const connectorsBlocked = sourceKind === 'files';
   // At most one is ever off, so at most one reason.
   const blockedReason = attachBlocked
     ? t.composer.attachBlockedByConnectors

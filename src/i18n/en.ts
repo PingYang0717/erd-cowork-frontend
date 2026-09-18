@@ -86,6 +86,9 @@ export const en: Translations = {
     festive: 'Festive',
     festiveOn: 'On',
     festiveOff: 'Off',
+    defaultSources: 'Default sources',
+    defaultSourcesCount: (count: number) => `${count} selected`,
+    defaultSourcesNone: 'Not set',
   },
 
   gallery: {
@@ -189,7 +192,11 @@ export const en: Translations = {
     statusUnavailable: 'Unavailable',
     statusSelectedUnavailable: 'Selected, unavailable',
     blockedByFiles:
-      'This conversation has files attached. A conversation draws on one kind of data source — remove the files to connect data sources.',
+      'This conversation draws on uploaded files. A conversation uses one kind of data source, fixed the first time one is attached — start a new conversation to use data sources.',
+    defaultsTitle: 'Default sources',
+    defaultsSubtitle: (selected: number, total: number) =>
+      `What a new conversation opens on the first time it reaches for data sources · ${selected} of ${total} selected. Never attached to a conversation on its own.`,
+    save: 'Save',
   },
 
   fileModal: {
@@ -209,8 +216,10 @@ export const en: Translations = {
     cpTestStatus: 'CP Test status',
     attachFiles: 'Attach files',
     connectors: 'Connectors',
-    attachBlockedByConnectors: 'This conversation draws on data sources; clear them to attach files',
-    connectorsBlockedByFiles: 'This conversation has files attached; remove them to connect data sources',
+    attachBlockedByConnectors:
+      'This conversation draws on data sources, so files can no longer be attached; start a new conversation to use files',
+    connectorsBlockedByFiles:
+      'This conversation draws on uploaded files, so data sources can no longer be connected; start a new conversation to use data sources',
     placeholder: 'Ask eRD AI, or attach .csv / .xlsx…',
   },
 

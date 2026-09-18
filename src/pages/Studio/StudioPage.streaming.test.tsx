@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
+import { CONNECTOR_PREFS_STORAGE_KEY } from '@/constants/storage';
 import { en } from '@/i18n/en';
 import { useConnectorsPanelStore } from '@/stores/useConnectorsPanelStore';
 import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
@@ -540,39 +541,20 @@ describe('Streaming a run in the Studio', () => {
       ).toBeInTheDocument();
     });
 
-    /** The convenience the localStorage preference exists for: the same person grants
-     *  roughly the same capabilities every time, so having chosen once, the panel opens a
-     *  new conversation on that combination rather than making them choose it again.
+    /** The user's default sources (CONTEXT.md, 預設資料來源): set in the preferences,
+     *  offered when a conversation that has chosen nothing opens the panel.
      *
      *  A default in the dialog and nothing more. It used to be carried in on send —
      *  written to the session without the user seeing it — which meant a conversation
      *  they never opened the panel for silently drew on sources they last picked
      *  somewhere else. Now they see it, and it reaches the backend when they submit it. */
-    it('opens a new conversation on the combination the user last chose', async () => {
+    it('opens a new conversation on the user’s default sources', async () => {
       const user = userEvent.setup();
+      localStorage.setItem(CONNECTOR_PREFS_STORAGE_KEY, JSON.stringify({ defaultSources: ['defect'] }));
       renderStudio();
 
-      // First conversation: grant Defect on top of what is there.
+      // A fresh draft — nothing attached to it of its own.
       await selectASession(user);
-      await user.click(screen.getByRole('button', { name: 'Attach files or connect a data source' }));
-      await user.click(await screen.findByRole('menuitem', { name: /^Connectors/ }));
-      await user.click(await screen.findByRole('button', { name: 'Connect Defect' }));
-      await user.click(screen.getByRole('button', { name: 'Submit' }));
-      await waitFor(() => expect(useConnectorsPanelStore.getState().isOpen).toBe(false));
-
-      // Make the first conversation real: New chat is a no-op while a draft is still
-      // open (useSessionGroups), so it has to have been sent to before a second one can
-      // be started.
-      await user.type(screen.getByRole('textbox', { name: 'Message' }), 'Anything at all.{Enter}');
-      await waitFor(() => expect(screen.getByRole('button', { name: 'Send message' })).toBeInTheDocument(), {
-        timeout: 5000,
-      });
-
-      // A second, entirely fresh conversation — nothing attached to it of its own.
-      const firstSessionId = useSessionSelectionStore.getState().selectedSessionId;
-      await user.click(screen.getByRole('button', { name: 'New chat' }));
-      await waitFor(() => expect(useSessionSelectionStore.getState().selectedSessionId).not.toBe(firstSessionId));
-      await waitForComposer();
 
       await user.click(screen.getByRole('button', { name: 'Attach files or connect a data source' }));
       await user.click(await screen.findByRole('menuitem', { name: /^Connectors/ }));
@@ -581,6 +563,7 @@ describe('Streaming a run in the Studio', () => {
       // conversation yet.
       expect(await screen.findByRole('button', { name: 'Disconnect Defect' })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: 'Submit' })).toBeEnabled();
+      localStorage.removeItem(CONNECTOR_PREFS_STORAGE_KEY);
     }, 20000);
 
     /** The link between the two surfaces, asserted from the user's side rather than from

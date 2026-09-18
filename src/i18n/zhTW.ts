@@ -124,6 +124,10 @@ export const zhTW = {
     festive: '節慶裝飾',
     festiveOn: '開',
     festiveOff: '關',
+    /** 使用者的預設資料來源（CONTEXT.md 預設資料來源）：值是選了幾個。 */
+    defaultSources: '預設資料來源',
+    defaultSourcesCount: (count: number) => `${count} 個`,
+    defaultSourcesNone: '未設定',
   },
 
   gallery: {
@@ -272,8 +276,16 @@ export const zhTW = {
      *  untouched Submit leaves it alone — and the reader may drop it, but not pick it
      *  again once dropped. */
     statusSelectedUnavailable: '已選擇，目前不可用',
-    /** 面板從反問卡的連結也開得到,所以規則在這裡也要說一次。 */
-    blockedByFiles: '這段對話已附加檔案。一段對話只用一種資料來源——移除附加的檔案後，才能連接資料來源。',
+    /** 面板從反問卡的連結也開得到,所以規則在這裡也要說一次。種類在第一次附加時就定了
+     *  （CONTEXT.md 來源種類）,所以不是「移除檔案就能連」,是開新對話。 */
+    blockedByFiles:
+      '這段對話使用上傳的檔案。一段對話只用一種資料來源，種類在第一次附加時就定了——要用資料來源請開新對話。',
+    /** 同一個編輯器編的是使用者的預設（CONTEXT.md 預設資料來源）:只是新對話的起點,
+     *  不會自動掛到任何對話上——這句要在面板上說,不然它看起來跟對話的那個一模一樣。 */
+    defaultsTitle: '預設資料來源',
+    defaultsSubtitle: (selected: number, total: number) =>
+      `新對話第一次打開資料來源時的預選 · ${total} 個中已選擇 ${selected} 個。不會自動掛到任何對話上。`,
+    save: '儲存',
   },
 
   fileModal: {
@@ -293,9 +305,10 @@ export const zhTW = {
     cpTestStatus: 'CP Test 狀態',
     attachFiles: '附加檔案',
     connectors: 'Connectors',
-    /** 一場對話只用一種資料來源。這兩句寫在反灰的選單項目底下,規則在按到的那一刻說明。 */
-    attachBlockedByConnectors: '這段對話已連接資料來源，清除後才能附加檔案',
-    connectorsBlockedByFiles: '這段對話已附加檔案，移除後才能連接資料來源',
+    /** 一場對話只用一種資料來源,種類在第一次附加時就定了(CONTEXT.md 來源種類)。這兩句
+     *  寫在反灰的選單項目底下,規則在按到的那一刻說明;出路是開新對話,不是清掉另一種。 */
+    attachBlockedByConnectors: '這段對話使用資料來源，不能再附加檔案；要用檔案請開新對話',
+    connectorsBlockedByFiles: '這段對話使用上傳的檔案，不能再連接資料來源；要用資料來源請開新對話',
     placeholder: '問 eRD AI，或附加 .csv / .xlsx…',
   },
 

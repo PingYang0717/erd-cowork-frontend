@@ -3,7 +3,9 @@ import { Popover } from 'antd';
 import { MoonOutlined, SunOutlined, UserOutlined } from '@ant-design/icons';
 
 import EmployeeAvatar from '@/components/common/EmployeeAvatar';
+import DefaultSourcesPanel from '@/components/connectors/DefaultSourcesPanel';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
+import { useDefaultSources } from '@/hooks/useDefaultSources';
 import { useFestival } from '@/hooks/useFestival';
 import { useTranslations } from '@/i18n/useTranslations';
 import { useFestiveStore } from '@/stores/useFestiveStore';
@@ -58,6 +60,16 @@ const AppHeader: React.FC = () => {
 
   const [open, setOpen] = useState(false);
 
+  // The user's default sources (CONTEXT.md, 預設資料來源) live with the other
+  // preferences; the row shows how many and opens the same picker a conversation uses.
+  const { ids: defaultSourceIds } = useDefaultSources();
+  const [defaultSourcesOpen, setDefaultSourcesOpen] = useState(false);
+  const openDefaultSources = useCallback(() => {
+    setOpen(false);
+    setDefaultSourcesOpen(true);
+  }, []);
+  const closeDefaultSources = useCallback(() => setDefaultSourcesOpen(false), []);
+
   const toggleLanguage = useCallback(() => setLanguage(language === 'zh-TW' ? 'en' : 'zh-TW'), [language, setLanguage]);
   const toggleTheme = useCallback(() => setDarkMode(!isDarkMode), [isDarkMode, setDarkMode]);
   const toggleFestive = useCallback(() => setFestiveEnabled(!festiveEnabled), [festiveEnabled, setFestiveEnabled]);
@@ -89,6 +101,14 @@ const AppHeader: React.FC = () => {
       <button type="button" className={styles.row} onClick={toggleFestive}>
         <span className={styles.rowLabel}>{t.settings.festive}</span>
         <span className={styles.rowValue}>{festiveEnabled ? t.settings.festiveOn : t.settings.festiveOff}</span>
+      </button>
+      <button type="button" className={styles.row} onClick={openDefaultSources}>
+        <span className={styles.rowLabel}>{t.settings.defaultSources}</span>
+        <span className={styles.rowValue}>
+          {defaultSourceIds.length > 0
+            ? t.settings.defaultSourcesCount(defaultSourceIds.length)
+            : t.settings.defaultSourcesNone}
+        </span>
       </button>
     </div>
   );
@@ -142,6 +162,7 @@ const AppHeader: React.FC = () => {
           </button>
         </Popover>
       </div>
+      <DefaultSourcesPanel open={defaultSourcesOpen} onClose={closeDefaultSources} />
     </header>
   );
 };
