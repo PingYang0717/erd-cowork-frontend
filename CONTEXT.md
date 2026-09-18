@@ -49,7 +49,7 @@ Agent 在給出回覆前的推理過程，以 THINKING 事件串流呈現在可�
 _Avoid_: Reasoning, Chain of thought
 
 **修復（Repair）**:
-Artifact 的 HTML 在 iframe 中執行時拋出 JS 錯誤後，由系統偵測、向使用者提議、經使用者確認才交由 Agent 重新產生一版可執行 HTML 的流程。MCP call 失敗中有兩種也算進來：`TOOL_ERROR`（Tool 有跑但失敗）與 `INVALID_CALL`（Tool 名稱或參數寫錯），因為兩者都是 HTML 自己寫錯了呼叫，重產才修得好；其他 MCP call 的失敗（來源不可用、身分被拒、暫時性錯誤）不是 HTML 的錯，由 Artifact 自己在畫面上處理。提議只在 Studio 的對話串出現；全頁檢視沒有對話串，MCP call 的失敗在那裡不會變成提議。
+Artifact 的 HTML 在 iframe 中執行時拋出 JS 錯誤後，由系統偵測、向使用者提議、經使用者確認才交由 Agent 重新產生一版可執行 HTML 的流程。MCP call 失敗中有兩種也算進來：`TOOL_ERROR`（Tool 有跑但失敗）與 `INVALID_CALL`（Tool 名稱或參數寫錯），因為兩者都是 HTML 自己寫錯了呼叫，重產才修得好；其他 MCP call 的失敗（來源不可用、身分被拒、暫時性錯誤）不是 HTML 的錯，由 Artifact 自己在畫面上處理。提議只在 Studio 的對話串出現；全頁檢視沒有對話串，MCP call 的失敗在那裡不會變成提議。Agent 正在回答時發生的錯誤也不提議，也不留到回答結束：新的對話優先，那時畫面上的 Artifact 要嘛是寫到一半的、要嘛是即將被取代的。
 _Avoid_: Fix, Retry, Regenerate（Regenerate 是使用者主動要新版本，Repair 是錯誤驅動）
 
 **重新整理（Reload）**:

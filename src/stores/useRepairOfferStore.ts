@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 
 import type { BrowserJsError } from '@/api/artifactApi';
+import { useActiveRunStore } from '@/stores/useActiveRunStore';
 
 // Moved to the api layer — it is the repair endpoint's body shape — and re-exported
 // here so the panes that report and read offers keep one import for offer + error.
@@ -32,6 +33,13 @@ type QueuedOffer = Pick<RepairOffer, 'artifactId' | 'errors'>;
  *  still on screen is **queued**, not dropped: the error event fires once (the artifact
  *  postMessages on throw), so a dropped report is a broken artifact with no way to
  *  offer a fix. Resolving or dismissing the current offer promotes the next in line.
+ *
+ *  The one report that IS dropped is the one that arrives while a run is open. The
+ *  conversation in progress wins: whatever the pane is showing mid-run is either the
+ *  half-written artifact the run is still producing, or the one the run is about to
+ *  replace, and an offer to repair either would be an interruption about something
+ *  already being dealt with. Dropped, not queued — by the time the run ends the
+ *  artifact it was about is not the one on screen (ADR-0015 §run-in-progress-wins).
  *
  *  Every mutation that targets a specific artifact carries its id and no-ops if the
  *  current offer is not that artifact — a repair for A that resolves while the user has
@@ -81,6 +89,10 @@ export const useRepairOfferStore = create<RepairOfferState>()(
         const { offer, queue, dismissed } = get();
         // Never for something already waved off, or an empty error batch.
         if (dismissed.includes(artifactId) || errors.length === 0) {
+          return;
+        }
+        // Never while the agent is answering: the run in progress wins (see above).
+        if (useActiveRunStore.getState().isRunStreaming) {
           return;
         }
         // Already the current offer, or already waiting: one report per artifact.

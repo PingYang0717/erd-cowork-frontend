@@ -1,17 +1,34 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 
+import { useActiveRunStore } from './useActiveRunStore';
 import { type BrowserJsError, useRepairOfferStore } from './useRepairOfferStore';
 
 const err: BrowserJsError[] = [{ message: 'boom', line: 1, col: 1 }];
 
 const reset = () => {
   useRepairOfferStore.setState({ offer: null, queue: [], dismissed: [] });
+  useActiveRunStore.setState({ isRunStreaming: false });
 };
 
 describe('useRepairOfferStore', () => {
   beforeEach(reset);
 
   it('shows the first reported artifact as the current offer', () => {
+    useRepairOfferStore.getState().report('a', err);
+    expect(useRepairOfferStore.getState().offer?.artifactId).toBe('a');
+  });
+
+  /** ADR-0015 §run-in-progress-wins: an artifact that throws while the agent is answering
+   *  is either the half-written one the run is producing or the one it is about to
+   *  replace. Not offered, and not queued for later either — dropped. */
+  it('drops a report that arrives while a run is open, and does not queue it', () => {
+    useActiveRunStore.setState({ isRunStreaming: true });
+    useRepairOfferStore.getState().report('a', err);
+    expect(useRepairOfferStore.getState().offer).toBeNull();
+    expect(useRepairOfferStore.getState().queue).toHaveLength(0);
+
+    // Once the run is over, the same artifact throwing again is a fresh report.
+    useActiveRunStore.setState({ isRunStreaming: false });
     useRepairOfferStore.getState().report('a', err);
     expect(useRepairOfferStore.getState().offer?.artifactId).toBe('a');
   });

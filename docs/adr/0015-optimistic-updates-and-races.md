@@ -40,6 +40,19 @@ C 身上。
 第二個壞掉的 artifact **要進佇列,不能丟掉**。先前的行為是第一個提議還在時就把第二個丟棄,
 結果那個 artifact 完全沒有機會被修復;現在它排隊等第一個消失後浮出。
 
+### run-in-progress-wins:agent 回答中,artifact 的錯誤不進對話
+
+Artifact 在 iframe 裡丟出錯誤(postMessage `erd-artifact-error`,或 MCP bridge 的失敗)時,
+如果 agent 正在回答(`isRunStreaming`),這份回報**直接丟掉**,不顯示、也不排隊。
+
+**為什麼。** 這時候面板上的 artifact 只有兩種:正在被這一輪寫到一半的那一份(半成品跑起來
+本來就會出錯),或是這一輪即將取代的上一份。兩種都不值得在對話裡插一張「要不要修?」——
+使用者已經在跟 agent 談這件事了,新的對話優先。
+
+**為什麼不排隊。** 佇列是給「第一個提議還在、第二個 artifact 又壞了」的情況(上一節):
+那個 artifact 沒有別的機會被修。這裡不是:等這一輪結束,畫面上的 artifact 已經不是報錯的
+那一份;排隊等到的提議會指著一個不在畫面上的東西。如果新的那一份也壞,它會自己再回報一次。
+
 ### failed-run-hands-over:失敗的執行,歷史接住了就交棒
 
 執行失敗留下來的那顆泡泡,只活到「重取把這一輪的回覆帶回歷史」為止。條件跟上面同一個形狀:
@@ -59,9 +72,10 @@ C 身上。
 ## 後果
 
 - 6 處 `(C-n)` 改寫成 `(ADR-0015 §<小節名>)`。
-- 這四條都有測試在盯:`optimisticBubble.test.ts` 直接測「連送兩次相同文字」這個情境,
+- 這五條都有測試在盯:`optimisticBubble.test.ts` 直接測「連送兩次相同文字」這個情境,
   `useAgentStream.test.ts` 測閒置時 stop 的無作用,`useRepairOfferStore.test.ts` 測
-  跨 artifact 的錯寫與佇列,`StudioPage.error.test.tsx` 測失敗執行的交棒與不交棒兩種情況。
-  要驗證這些約定還活著,跑這四個測試檔就夠。
+  跨 artifact 的錯寫、佇列與回答中的丟棄,`StudioPage.repair.test.tsx` 測回答中的錯誤
+  不進對話,`StudioPage.error.test.tsx` 測失敗執行的交棒與不交棒兩種情況。
+  要驗證這些約定還活著,跑這五個測試檔就夠。
 - 代號家族沒有 C-1,因為那份個人清單從 C-2 開始編。之後要新增約定直接在這份 ADR 加一個
   小節,不要再開新的代號體系。

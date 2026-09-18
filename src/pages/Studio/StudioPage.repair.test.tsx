@@ -8,6 +8,7 @@ import { server } from '@/mocks/server';
 import { useRepairOfferStore } from '@/stores/useRepairOfferStore';
 import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
 import { useStudioLayoutStore } from '@/stores/useStudioLayoutStore';
+import { mockAgentStream } from '@/test/agentStream';
 import { renderStudio, waitForComposer } from '@/test/renderStudio';
 import { answerAnalysisConditions } from '@/test/studioRun';
 
@@ -129,6 +130,33 @@ describe('Artifact repair', () => {
 
     expect(await screen.findByText(en.repair.filesExpired)).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Try again' })).not.toBeInTheDocument();
+  });
+
+  /** ADR-0015 §run-in-progress-wins. The artifact on the pane throws while the agent is
+   *  still answering — the run is producing its replacement, or has not finished writing
+   *  it. No offer appears in the thread, then or after the run ends. */
+  it('does not offer a repair for an error raised while the agent is answering', async () => {
+    const user = userEvent.setup();
+    renderStudio();
+
+    const iframe = await runAnalysis(user);
+
+    // A follow-up, on a stream the test holds open.
+    const stream = mockAgentStream();
+    await user.type(screen.getByRole('textbox', { name: 'Message' }), 'Narrow it to lot 7');
+    await user.click(screen.getByRole('button', { name: 'Send message' }));
+    await screen.findByRole('button', { name: 'Stop' });
+
+    reportRuntimeError(iframe, "Cannot read properties of undefined (reading 'series')");
+    expect(screen.queryByText(en.repair.detected(1))).not.toBeInTheDocument();
+
+    act(() => stream.push({ type: 'TOKEN', delta: 'Narrowed.' }));
+    act(() => stream.close());
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Send message' })).toBeInTheDocument());
+
+    // Not queued for later either.
+    expect(screen.queryByText(en.repair.detected(1))).not.toBeInTheDocument();
+    expect(useRepairOfferStore.getState().queue).toHaveLength(0);
   });
 
   it('drops the offer when the user moves to another session', async () => {
