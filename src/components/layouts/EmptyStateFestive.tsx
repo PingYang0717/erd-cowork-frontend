@@ -26,8 +26,9 @@ import styles from './EmptyStateFestive.module.css';
  *  floor along the window's foot is made of), the same weather falling through it, and
  *  silhouettes in the text colour at low opacity. Only the creature carries colour — the
  *  header's rule for its near piece. One a festival, none of them used on the header or
- *  the floor: Santa on the Christmas snow, the coming year's sheep in the New Year
- *  street, a ghost under the Halloween tree, and Chang'e flying in the Mid-Autumn moon. */
+ *  the floor: Santa in his sleigh over the Christmas snow, the coming year's sheep in the
+ *  New Year street, a ghost under the Halloween tree, and Chang'e flying in the
+ *  Mid-Autumn moon. */
 
 const INK = 'var(--erd-color-text, rgba(0, 0, 0, 0.88))';
 
@@ -51,9 +52,9 @@ interface CreatureProps {
   id: string;
 }
 
-/** Christmas's Santa, facing right, 44 × 44: the hat with its tip over, brows, cheeks,
- *  moustache and beard, the coat with fur down the front and at the hem, belt and buckle,
- *  boots, the sack over his shoulder, and a mitten up in a wave. */
+/** Christmas's Santa in his sleigh, flying to the right, 72 × 38: one reindeer out in
+ *  front, antlers up and legs stretched in the gallop, the reins back to Santa's hand;
+ *  the sleigh red with its gold runner curling up at the front, the sack behind him. */
 const Santa: React.FC<CreatureProps> = ({ id }) => (
   <g className={styles.bob}>
     <defs>
@@ -73,68 +74,62 @@ const Santa: React.FC<CreatureProps> = ({ id }) => (
         <stop offset="0%" stopColor="#a5713a" />
         <stop offset="100%" stopColor="#6d4423" />
       </radialGradient>
+      <linearGradient id={`${id}-deer`} x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stopColor="#a5733f" />
+        <stop offset="100%" stopColor="#7a4e2a" />
+      </linearGradient>
     </defs>
-    {/* the sack, tied at the neck, over the far shoulder */}
-    <ellipse cx="9" cy="22" rx="7.5" ry="8" fill={`url(#${id}-sack)`} />
-    <path d="M11 14q2-3 5-2" fill="none" stroke="#6d4423" strokeWidth="2.2" strokeLinecap="round" />
-    <path d="M9.5 14.5h4" stroke="#f2c14e" strokeWidth="1" strokeLinecap="round" />
-    <path d="M5 19q1 4 3 6" fill="none" stroke="#fff" strokeWidth="0.8" opacity="0.25" strokeLinecap="round" />
-    {/* the far arm, on the sack's strap */}
-    <path d="M15 24l-3-6" stroke="#b51d21" strokeWidth="4" strokeLinecap="round" />
-    {/* the coat */}
-    <path d="M13 41V28q0-9 7-10h8q7 1 7 10v13z" fill={`url(#${id}-coat)`} />
-    <path d="M13 41V32q3 2 11 2t11-2v9z" fill="#000" opacity="0.08" />
-    <rect x="22.8" y="18" width="2.6" height="20" fill="#fff" />
-    <rect x="12.5" y="37.5" width="23" height="4" rx="2" fill="#fff" />
-    <rect x="12.5" y="40" width="23" height="1.5" fill="#000" opacity="0.06" />
-    <rect x="13" y="29.5" width="22" height="3.2" fill="#2b2b33" />
-    <rect x="22" y="28.8" width="4.6" height="4.6" rx="0.9" fill="#f2c14e" />
-    <rect x="23.1" y="29.9" width="2.4" height="2.4" rx="0.4" fill="#2b2b33" />
-    {/* boots */}
-    <path d="M14.5 41h7.5v3.6h-8.5z" fill="#2b2b33" />
-    <path d="M26 41h7.5v3.6h-8z" fill="#2b2b33" />
-    <path d="M15 41.8h5M27 41.8h5" stroke="#fff" strokeWidth="0.7" opacity="0.25" strokeLinecap="round" />
-    {/* the near arm, waving from the shoulder */}
-    <g className={styles.wave}>
-      <path d="M33 25l6-10" stroke="#d1292c" strokeWidth="4.4" strokeLinecap="round" />
-      <circle cx="38.6" cy="15.4" r="2.4" fill="#fff" />
-      <circle cx="40.2" cy="12.6" r="2.7" fill="#2b2b33" />
-      <path d="M38.2 11.4q-1.6 0-1.8 2" fill="none" stroke="#2b2b33" strokeWidth="1.6" strokeLinecap="round" />
+    {/* the reindeer: legs in the gallop, body, neck and head, antlers, the red nose */}
+    <g stroke={`url(#${id}-deer)`} strokeWidth="2.2" strokeLinecap="round" fill="none">
+      <path d="M50 26l-5 6M54 27l-1 7M60 26l4 6M63 25l5 4" />
     </g>
-    {/* head */}
-    <circle cx="24" cy="15" r="7" fill={`url(#${id}-skin)`} />
-    <circle cx="20" cy="17" r="1.6" fill="#e8807a" opacity="0.45" />
-    <circle cx="28" cy="17" r="1.6" fill="#e8807a" opacity="0.45" />
-    <path
-      d="M20 13q1.3-1 2.6 0M25.4 13q1.3-1 2.6 0"
-      fill="none"
-      stroke="#fff"
-      strokeWidth="1.1"
-      strokeLinecap="round"
-    />
-    <circle cx="21.6" cy="14.6" r="0.9" fill="#2b2b33" />
-    <circle cx="26.4" cy="14.6" r="0.9" fill="#2b2b33" />
-    <circle cx="21.9" cy="14.3" r="0.3" fill="#fff" />
-    <circle cx="26.7" cy="14.3" r="0.3" fill="#fff" />
-    <circle cx="24" cy="17" r="1.5" fill="#e59a8a" />
-    <circle cx="23.6" cy="16.6" r="0.5" fill="#fff" opacity="0.5" />
-    {/* beard and moustache */}
-    <path d="M16.5 17q0 10 7.5 11.5 7.5-1.5 7.5-11.5-2.5 5-7.5 5.5-5-.5-7.5-5.5z" fill={`url(#${id}-beard)`} />
-    <path d="M19.5 22q4.5 4 9 0" fill="none" stroke="#cfd5e2" strokeWidth="0.7" opacity="0.8" />
-    <path d="M19.8 18.6q4.2-2.4 8.4 0-1.6 2.4-4.2 1.6-2.6.8-4.2-1.6z" fill="#fff" />
-    {/* hat: the cone, the brim, and the tip folded over to the right */}
-    <path d="M16 10.5C17 3 24 0 29 2.5c2.5 1.2 3.5 3.6 4.5 8z" fill={`url(#${id}-coat)`} />
-    <path d="M29 2.5q4 1.5 7 7.5" fill="none" stroke="#c9262a" strokeWidth="4" strokeLinecap="round" />
-    <circle cx="36.4" cy="10.6" r="2.6" fill="#fff" />
-    <circle cx="35.8" cy="9.9" r="0.9" fill="#fff" opacity="0.7" />
-    <rect x="14" y="9" width="21" height="4" rx="2" fill="#fff" />
-    <rect x="14" y="11.6" width="21" height="1.4" fill="#000" opacity="0.06" />
+    <ellipse cx="57" cy="22" rx="9" ry="5.2" fill={`url(#${id}-deer)`} />
+    <ellipse cx="57" cy="24" rx="5" ry="2.4" fill="#d9c3a8" opacity="0.6" />
+    <path d="M63 19q3-6 4-9" stroke={`url(#${id}-deer)`} strokeWidth="4" strokeLinecap="round" />
+    <ellipse cx="68.5" cy="9.5" rx="3.6" ry="2.6" fill={`url(#${id}-deer)`} />
+    <path d="M66 7l-2-4M66 7l1-5M64 3l-2-1M65 2l2-1" stroke="#5a3a20" strokeWidth="1.1" strokeLinecap="round" />
+    <ellipse cx="65" cy="8.5" rx="1.6" ry="0.9" fill="#8a5a2b" transform="rotate(-30 65 8.5)" />
+    <circle cx="69.5" cy="8.8" r="0.6" fill="#2b2b33" />
+    <circle cx="71.6" cy="10.4" r="1.2" fill="#e5484d" />
+    <circle cx="71.3" cy="10.1" r="0.4" fill="#fff" opacity="0.7" />
+    {/* harness and reins */}
+    <path d="M58 17q-1 4 0 8" stroke="#d8232a" strokeWidth="1" />
+    <path d="M52 19q-8-2-18 1" fill="none" stroke="#5a3a20" strokeWidth="0.8" />
+    {/* the sleigh: runner, then the body over it */}
+    <path d="M4 34q2 3 6 3h32q4 0 6-3" fill="none" stroke="#d9a83f" strokeWidth="1.6" strokeLinecap="round" />
+    <path d="M42 34q6-1 6-7" fill="none" stroke="#d9a83f" strokeWidth="1.6" strokeLinecap="round" />
+    <path d="M10 34v-3M22 34v-3M36 34v-3" stroke="#d9a83f" strokeWidth="1.2" />
+    <circle cx="10" cy="18" r="6.5" fill={`url(#${id}-sack)`} />
+    <path d="M12 12q2-2 4-1" fill="none" stroke="#6d4423" strokeWidth="2" strokeLinecap="round" />
+    <path d="M6 22q-2-6 5-8h28q5 0 6 5l-2 12H8z" fill={`url(#${id}-coat)`} />
+    <path d="M8 27h35l-1 4H8z" fill="#000" opacity="0.1" />
+    <path d="M6 21.5q4-1.5 8-1.5h25q4 0 5.5 2" fill="none" stroke="#f2c14e" strokeWidth="1.2" strokeLinecap="round" />
+    <path d="M12 26q6 3 12 0" fill="none" stroke="#f2c14e" strokeWidth="0.9" opacity="0.8" />
+    {/* Santa, seated: coat, arm on the reins, head, beard, hat */}
+    <path d="M18 22V16q0-6 6-7h6q6 1 6 7v6z" fill={`url(#${id}-coat)`} />
+    <rect x="17.5" y="20.5" width="19" height="2.4" fill="#2b2b33" />
+    <rect x="25.5" y="20" width="3.4" height="3.4" rx="0.7" fill="#f2c14e" />
+    <rect x="26.6" y="9" width="2" height="11" fill="#fff" />
+    <path d="M34 17l6 2" stroke="#d1292c" strokeWidth="3.4" strokeLinecap="round" />
+    <circle cx="40.5" cy="19.4" r="1.8" fill="#2b2b33" />
+    <circle cx="27" cy="7" r="5.2" fill={`url(#${id}-skin)`} />
+    <circle cx="24" cy="8.5" r="1.2" fill="#e8807a" opacity="0.45" />
+    <circle cx="30" cy="8.5" r="1.2" fill="#e8807a" opacity="0.45" />
+    <circle cx="25.2" cy="6.6" r="0.7" fill="#2b2b33" />
+    <circle cx="28.8" cy="6.6" r="0.7" fill="#2b2b33" />
+    <circle cx="27" cy="8.4" r="1.1" fill="#e59a8a" />
+    <path d="M21.5 8.5q0 7.5 5.5 9 5.5-1.5 5.5-9-2 4-5.5 4.5-3.5-.5-5.5-4.5z" fill={`url(#${id}-beard)`} />
+    <path d="M23.8 9.8q3.2-1.8 6.4 0-1.2 1.8-3.2 1.2-2 .6-3.2-1.2z" fill="#fff" />
+    <path d="M21 3.5C22 -1 28 -2 32 0c2 1 3 2.5 3.5 4.5z" fill={`url(#${id}-coat)`} />
+    <path d="M32 0q3.5 1 5.5 5.5" fill="none" stroke="#c9262a" strokeWidth="3" strokeLinecap="round" />
+    <circle cx="38" cy="6.2" r="2" fill="#fff" />
+    <rect x="20" y="3" width="16.5" height="3" rx="1.5" fill="#fff" />
   </g>
 );
 
 /** New Year's sheep — the coming year's animal — facing right, 48 × 34: a cloud of wool
- *  in overlapping curls, a tan face with a curled horn, hooves, a red bow at the neck
- *  with a gold bell on it. */
+ *  in overlapping curls, a tan face with a curled horn, hooves, a red Chinese knot with
+ *  its tassels at the neck, and a red envelope carried in its mouth. */
 const Sheep: React.FC<CreatureProps> = ({ id }) => (
   <g className={styles.bob}>
     <defs>
@@ -145,10 +140,6 @@ const Sheep: React.FC<CreatureProps> = ({ id }) => (
       <radialGradient id={`${id}-face`} cx="45%" cy="40%" r="60%">
         <stop offset="0%" stopColor="#f0dcc6" />
         <stop offset="100%" stopColor="#d9bc9d" />
-      </radialGradient>
-      <radialGradient id={`${id}-bell`} cx="35%" cy="30%" r="70%">
-        <stop offset="0%" stopColor="#ffe08a" />
-        <stop offset="100%" stopColor="#d9a83f" />
       </radialGradient>
     </defs>
     {/* legs and hooves, the far pair darker */}
@@ -182,14 +173,25 @@ const Sheep: React.FC<CreatureProps> = ({ id }) => (
     <circle cx="42.5" cy="12.8" r="0.35" fill="#fff" />
     <path d="M44.6 15.6q1.6.2 1.4 1.4" fill="none" stroke="#b58a8a" strokeWidth="0.8" strokeLinecap="round" />
     <circle cx="45.4" cy="15.2" r="0.9" fill="#c48a8a" />
-    {/* the bow at the neck, and the bell hanging off it */}
-    <path d="M33.5 18.5q-3.5-3-4.5-.5t4.5 2.5zM33.5 18.5q3.5-3 4.5-.5t-4.5 2.5z" fill="#d8232a" />
-    <path d="M30 17.8q1.5 0 3 .7M37 17.8q-1.5 0-3 .7" fill="none" stroke="#f04a4f" strokeWidth="0.6" />
-    <circle cx="33.5" cy="18.6" r="1.2" fill="#f2c14e" />
-    <path d="M33.5 19.8v1.6" stroke="#d9a83f" strokeWidth="0.8" />
-    <circle cx="33.5" cy="23" r="1.9" fill={`url(#${id}-bell)`} stroke="#b8862e" strokeWidth="0.5" />
-    <path d="M32.3 23.4h2.4" stroke="#b8862e" strokeWidth="0.5" />
-    <circle cx="33.5" cy="24.6" r="0.45" fill="#7a5a1e" />
+    {/* the Chinese knot at the neck: the diamond, its loops, the two tassels */}
+    <path d="M33.5 16l3 3-3 3-3-3z" fill="#d8232a" />
+    <path d="M33.5 17.4l1.6 1.6-1.6 1.6-1.6-1.6z" fill="none" stroke="#f2c14e" strokeWidth="0.5" />
+    <path
+      d="M31 17.5q-2-1.5-1.5 1.5M36 17.5q2-1.5 1.5 1.5"
+      fill="none"
+      stroke="#d8232a"
+      strokeWidth="0.9"
+      strokeLinecap="round"
+    />
+    <path d="M32.6 22v4M34.4 22v4" stroke="#d8232a" strokeWidth="1" strokeLinecap="round" />
+    <path d="M32.6 22.6h1.8" stroke="#f2c14e" strokeWidth="0.7" />
+    {/* the red envelope in its mouth, gold band and seal */}
+    <g transform="rotate(-12 47 17)">
+      <rect x="44" y="15.5" width="6.4" height="4.4" rx="0.5" fill="#d8232a" />
+      <rect x="44" y="15.5" width="6.4" height="1.3" rx="0.5" fill="#f04a4f" />
+      <path d="M44.4 18.4h5.6" stroke="#f2c14e" strokeWidth="0.5" />
+      <circle cx="47.2" cy="17.8" r="0.8" fill="none" stroke="#f2c14e" strokeWidth="0.45" />
+    </g>
   </g>
 );
 
@@ -324,7 +326,7 @@ const SCENES: Record<Festival, Scene> = {
         <g transform="translate(0 80) scale(0.5 1)">{GROUND_BACKDROPS.lunarNewYear.band}</g>
       </>
     ),
-    creature: { draw: (id) => <Sheep id={id} />, width: 48, height: 34, homeScale: 0.68 },
+    creature: { draw: (id) => <Sheep id={id} />, width: 52, height: 34, homeScale: 0.66 },
   },
   christmas: {
     sky: 'rgba(60, 100, 170, 0.06)',
@@ -340,7 +342,7 @@ const SCENES: Record<Festival, Scene> = {
         <g transform="translate(0 80) scale(0.5 1)">{GROUND_BACKDROPS.christmas.band}</g>
       </>
     ),
-    creature: { draw: (id) => <Santa id={id} />, width: 44, height: 44, homeScale: 0.78 },
+    creature: { draw: (id) => <Santa id={id} />, width: 72, height: 38, homeScale: 0.56 },
   },
   halloween: {
     sky: 'rgba(96, 52, 140, 0.06)',
