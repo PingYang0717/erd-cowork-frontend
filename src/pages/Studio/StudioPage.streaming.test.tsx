@@ -556,7 +556,7 @@ describe('Streaming a run in the Studio', () => {
       // A fresh draft — nothing attached to it of its own.
       await selectASession(user);
 
-      await user.click(screen.getByRole('button', { name: 'Attach files or connect a Connector' }));
+      await user.click(screen.getByRole('button', { name: 'Attach files or connect Connectors' }));
       await user.click(await screen.findByRole('menuitem', { name: /^Connectors/ }));
 
       // Offered, not applied: Submit is live because none of this has reached the new
@@ -576,7 +576,7 @@ describe('Streaming a run in the Studio', () => {
       renderStudio();
 
       await selectASession(user);
-      await user.click(screen.getByRole('button', { name: 'Attach files or connect a Connector' }));
+      await user.click(screen.getByRole('button', { name: 'Attach files or connect Connectors' }));
       await user.click(await screen.findByRole('menuitem', { name: /^Connectors/ }));
       await user.click(await screen.findByRole('button', { name: 'Connect Defect' }));
       // Nothing is written until Submit: picking sources is one decision, not one per

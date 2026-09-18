@@ -195,7 +195,7 @@ export const en: Translations = {
       'This conversation draws on uploaded files. A conversation uses one kind of source (Connectors or files), fixed the first time one is attached — start a new conversation to use Connectors.',
     defaultsTitle: 'Default Connectors',
     defaultsSubtitle: (selected: number, total: number) =>
-      `What a new conversation opens Connectors on the first time · ${selected} of ${total} selected. Never attached to a conversation on its own.`,
+      `What a new conversation starts from the first time it opens Connectors · ${selected} of ${total} selected. Never attached to a conversation on its own.`,
     save: 'Save',
   },
 

@@ -8,7 +8,7 @@ import { useStudioLayoutStore } from '@/stores/useStudioLayoutStore';
 import { renderStudio, waitForComposer } from '@/test/renderStudio';
 
 const openPlusMenu = async (user: ReturnType<typeof userEvent.setup>) => {
-  await user.click(screen.getByRole('button', { name: 'Attach files or connect a Connector' }));
+  await user.click(screen.getByRole('button', { name: 'Attach files or connect Connectors' }));
 };
 
 /** A conversation draws on one kind of data source — Connectors or uploaded files,

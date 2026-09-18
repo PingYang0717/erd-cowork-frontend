@@ -13,7 +13,7 @@ const selectASessionAndOpenFileModal = async (user: ReturnType<typeof userEvent.
   await user.click(await screen.findByRole('button', { name: 'New chat' }));
   await screen.findByRole('button', { name: 'New analysis' });
   await waitForComposer();
-  await user.click(screen.getByRole('button', { name: 'Attach files or connect a Connector' }));
+  await user.click(screen.getByRole('button', { name: 'Attach files or connect Connectors' }));
   await user.click(screen.getByRole('menuitem', { name: 'Attach files' }));
   return screen.findByRole('dialog', { name: 'Attach files' });
 };

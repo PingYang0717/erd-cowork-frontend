@@ -239,8 +239,8 @@ const ChatComposer: React.FC<ChatComposerProps> = ({ sessionId, onSend, disabled
               type="button"
               className={styles.iconButton}
               disabled={disabled}
-              title="Attach files or connect a Connector"
-              aria-label="Attach files or connect a Connector"
+              title="Attach files or connect Connectors"
+              aria-label="Attach files or connect Connectors"
             >
               <PlusOutlined aria-hidden />
             </button>
