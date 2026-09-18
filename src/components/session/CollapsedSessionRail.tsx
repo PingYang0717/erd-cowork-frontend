@@ -9,12 +9,12 @@ import {
   ThunderboltOutlined,
 } from '@ant-design/icons';
 
-import { FestiveFloor } from '@/components/layouts/FestiveSurfaces';
+import FestiveFloor from '@/components/layouts/FestiveSurfaces';
 import { useFestival } from '@/hooks/useFestival';
 import { useSessionGroups } from '@/hooks/useSessionGroups';
 import { useTranslations } from '@/i18n/useTranslations';
 import { SessionGroup } from './SessionList';
-import { FestiveString } from './SessionRailFestive';
+import FestiveString from './SessionRailFestive';
 
 import styles from './CollapsedSessionRail.module.css';
 
@@ -26,8 +26,8 @@ const CollapsedSessionRail: React.FC<CollapsedSessionRailProps> = ({ onExpand })
   const t = useTranslations();
   const navigate = useNavigate();
   const location = useLocation();
-  // The narrow rail's share of the festive echoes: the line in the divider's place and
-  // one piece on the floor. No weather — there is no room for it to thin out in.
+  // The narrow rail's share of the festive echoes: the line in the divider's place, and
+  // its stretch of the one floor with the weather coming down onto it, like every surface.
   const festival = useFestival();
   const { pinned, recent, draftSessionId, selectedSessionId, selectAndNavigate, createAndNavigate } =
     useSessionGroups();

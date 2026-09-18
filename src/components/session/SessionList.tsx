@@ -10,13 +10,13 @@ import {
   ThunderboltOutlined,
 } from '@ant-design/icons';
 
-import { FestiveFloor } from '@/components/layouts/FestiveSurfaces';
+import FestiveFloor from '@/components/layouts/FestiveSurfaces';
 import { useFestival } from '@/hooks/useFestival';
 import { useSessionGroups } from '@/hooks/useSessionGroups';
 import { useTranslations } from '@/i18n/useTranslations';
 import { usePublishCoachStore } from '@/stores/usePublishCoachStore';
 import type { Session } from '@/types/api/session';
-import { FestiveString } from './SessionRailFestive';
+import FestiveString from './SessionRailFestive';
 import SessionRow from './SessionRow';
 
 import styles from './SessionList.module.css';

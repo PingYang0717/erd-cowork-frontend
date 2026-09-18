@@ -473,7 +473,7 @@ const PortholeScene: React.FC<{ id: string; festival: Festival; weatherPhase: st
 };
 
 /** The window, in the icon tile's place, and the creature out in the pane. */
-export const EmptyPorthole: React.FC<PanelProps> = ({ festival, panel }) => {
+const EmptyPorthole: React.FC<PanelProps> = ({ festival, panel }) => {
   // Read once: a phase that moved with every render would move the creature with it.
   const [phase] = useState(() => ({ loop: phaseOf(panel), weather: phaseNow(WEATHER_S) }));
   const scene = SCENES[festival];
@@ -508,3 +508,5 @@ export const EmptyPorthole: React.FC<PanelProps> = ({ festival, panel }) => {
     </span>
   );
 };
+
+export default EmptyPorthole;

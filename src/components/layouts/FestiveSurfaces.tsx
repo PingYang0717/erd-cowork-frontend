@@ -483,7 +483,7 @@ const FLOOR_CLASS: Record<FestiveSurface, string> = {
  *  Two boxes, siblings: the weather is laid against the foot of the surface's own box
  *  (which must be positioned), the strip is laid out however the surface lays it. The
  *  weather cannot live inside the strip, which clips itself to its 40px. */
-export const FestiveFloor: React.FC<SurfaceProps> = ({ festival, surface }) => {
+const FestiveFloor: React.FC<SurfaceProps> = ({ festival, surface }) => {
   const [poked, setPoked] = useState<number | null>(null);
   // Read once: a delay that moved with every render would move the walker with it.
   const [phase] = useState(() => ({ walk: phaseNow(WALK_LOOP_S), beat: phaseNow(BEAT_LOOP_S) }));
@@ -551,3 +551,5 @@ export const FestiveFloor: React.FC<SurfaceProps> = ({ festival, surface }) => {
     </>
   );
 };
+
+export default FestiveFloor;

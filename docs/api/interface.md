@@ -49,7 +49,7 @@ provider 每次請求都會被呼叫,NEVER 快取它的回傳值——見
 | PATCH  | `/sessions/:id/data-source` | `["<connectorId>", …]`（裸陣列）          | 200，無 body                            | 已實作   |
 
 `GET /sessions/:id` 回 `SessionDetail`：session 的 messages 與 files 內嵌其中——後端
-**沒有**獨立的 messages 端點。`SessionDetail.connectors` 是這場對話正在用的資料來源，
+**沒有**獨立的 messages 端點。`SessionDetail.connectors` 是這場對話正在用的 Connectors，
 以 `Connector.id` 表示。
 
 **待接:`SessionDetail.source`(2026-09-18,[ADR-0018](../adr/0018-source-kind-is-fixed-and-default-connectors-are-only-a-starting-point.md))。**

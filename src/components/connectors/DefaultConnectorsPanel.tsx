@@ -29,6 +29,8 @@ const DefaultConnectorsPanel: React.FC<DefaultConnectorsPanelProps> = ({ open, o
   // The saved defaults, minus what the catalogue no longer serves: an id it does not
   // know cannot be shown. Kept whether or not it can still be chosen, so a default that
   // has since been disabled is visible and can be let go of, like a session's own.
+  // The comparison base below stays the raw preference, so an id that was dropped here
+  // counts as a change: Save is offered, and writes the list without it.
   const openingIds = useMemo(() => {
     const served = new Set((catalogue.data ?? []).map((connector) => connector.id));
     return ids.filter((id) => served.has(id));
@@ -64,7 +66,7 @@ const DefaultConnectorsPanel: React.FC<DefaultConnectorsPanelProps> = ({ open, o
       submitLabel={t.connectors.save}
       catalogue={catalogue.data}
       openingIds={openingIds}
-      savedIds={openingIds}
+      savedIds={ids}
       isPending={false}
       onSubmit={(next) => {
         setIds(next);

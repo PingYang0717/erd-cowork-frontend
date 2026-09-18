@@ -135,7 +135,7 @@ const twinkleClass = (phase: Hung['twinkle']): string | undefined =>
 
 /** The hung line. The swing is on an inner group and the placement on an outer one:
  *  the sway animation writes `transform`, and would otherwise overwrite the translate. */
-export const FestiveString: React.FC<RailFestiveProps> = ({ festival, compact = false }) => {
+const FestiveString: React.FC<RailFestiveProps> = ({ festival, compact = false }) => {
   const spec = STRINGS[festival];
   const width = compact ? 36 : 240;
   const height = compact ? 16 : spec.depth;
@@ -167,3 +167,5 @@ export const FestiveString: React.FC<RailFestiveProps> = ({ festival, compact = 
     </svg>
   );
 };
+
+export default FestiveString;

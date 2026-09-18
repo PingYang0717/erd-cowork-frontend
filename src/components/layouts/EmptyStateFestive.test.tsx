@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { render } from '@testing-library/react';
 
-import { EmptyPorthole } from './EmptyStateFestive';
+import EmptyPorthole from './EmptyStateFestive';
 
 /** The porthole in the empty panes, and the creature that leaves it. Decoration: hidden
  *  from anyone reading the page, one creature a festival. */

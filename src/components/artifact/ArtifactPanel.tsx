@@ -3,8 +3,8 @@ import { AppstoreOutlined, CheckOutlined, ExportOutlined, ReloadOutlined, ShareA
 
 import { isNotFound } from '@/api/apiError';
 import Tooltip from '@/components/common/Tooltip';
-import { EmptyPorthole } from '@/components/layouts/EmptyStateFestive';
-import { FestiveFloor } from '@/components/layouts/FestiveSurfaces';
+import EmptyPorthole from '@/components/layouts/EmptyStateFestive';
+import FestiveFloor from '@/components/layouts/FestiveSurfaces';
 import { useArtifactContent } from '@/hooks/useArtifactContent';
 import { usePublishArtifact } from '@/hooks/useArtifactMutations';
 import { useArtifacts } from '@/hooks/useArtifacts';

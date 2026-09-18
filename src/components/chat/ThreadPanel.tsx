@@ -2,8 +2,8 @@ import React, { type ReactNode, useCallback, useEffect, useRef, useState } from 
 import { ThunderboltFilled } from '@ant-design/icons';
 
 import DataBoundary from '@/components/common/DataBoundary';
-import { EmptyPorthole } from '@/components/layouts/EmptyStateFestive';
-import { FestiveFloor } from '@/components/layouts/FestiveSurfaces';
+import EmptyPorthole from '@/components/layouts/EmptyStateFestive';
+import FestiveFloor from '@/components/layouts/FestiveSurfaces';
 import { isInterruptionRecord } from '@/constants/wireStrings';
 import { type SendInput, useAgentStream } from '@/hooks/useAgentStream';
 import { useArtifactRepair } from '@/hooks/useArtifactRepair';

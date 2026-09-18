@@ -38,14 +38,20 @@ describe('DefaultConnectorsPanel', () => {
   });
 
   /** A default the catalogue no longer serves is not shown; one it serves but can no
-   *  longer be chosen stays, so it can be let go of. */
+   *  longer be chosen stays, so it can be let go of. The unknown one is not stuck in the
+   *  preference either: its absence counts as a change, and Save writes the list without it. */
   it('drops defaults the catalogue does not know and keeps the ones it cannot offer', async () => {
+    const user = userEvent.setup();
     localStorage.setItem(CONNECTOR_PREFS_STORAGE_KEY, JSON.stringify({ defaultConnectors: ['gone', 'recipe'] }));
     renderPanel();
 
     // Recipe is served but disabled in the mock catalogue.
     expect(await screen.findByRole('button', { name: 'Disconnect Recipe' })).toBeInTheDocument();
     expect(within(selectedSources()).queryByText('gone')).toBeNull();
+
+    expect(screen.getByRole('button', { name: 'Save' })).toBeEnabled();
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+    expect(JSON.parse(localStorage.getItem(CONNECTOR_PREFS_STORAGE_KEY)!)).toEqual({ defaultConnectors: ['recipe'] });
   });
 
   /** Opened from the header, which has no boundary of its own: a catalogue that cannot
