@@ -1,21 +1,24 @@
-/* The empty panes' porthole and the creature that leaves it (EmptyStateFestive).
+/* The empty panes' porthole and the creature that crosses between them (EmptyStateFestive).
 
-   Everything here runs off three custom properties set on the element: `--loop`, the
-   one period the whole piece shares; `--dy`, how far the flight drifts down (up, when
-   negative) by its far end so that it is on the shared flight line at the pane's edge;
-   and `--phase`, where in the loop this pane stands — read off
-   the wall clock and shifted so that the creature crosses this pane's edge at the one
-   instant both panes agree on (EmptyStateFestive, `HANDOFF_SHARE`). That shift is the
-   entire mechanism behind the hand-off: no message between the panes. Change `--loop`
-   and the departure, the crossing and the arrival all stay in step, because they are
-   keyframe percentages of the same number. Change the flight of `escape-out` or
-   `escape-in` and `FLIGHT` in the component must follow.
+   Everything here runs off custom properties. On the porthole: `--loop`, the one period
+   the whole piece shares; `--dir`, which way out of this pane the other one lies (1: to
+   the right, -1: to the left); `--home`, the creature's scale when it is in the window;
+   `--dy`, how far a leg drifts down (up, when negative) by its far end so that it is on
+   the shared flight line at the pane's edge. On each leg: `--phase`, where in the loop
+   that leg stands — read off the wall clock and shifted so that the creature crosses
+   this pane's edge at the instant both panes agree on (EmptyStateFestive, HANDOFF).
+   Those shifts are the entire mechanism behind the hand-off: no message between the
+   panes.
 
-   Timings inside the loop, once, so the percentages below can be read against it:
-     0–56%    the creature moves about behind the glass
-     56–62%   it turns for the rim and the glass rings
-     62–90%   it is out, crossing the pane
-     90–100%  it is back behind the glass, settling */
+   One creature, two legs a pane. The `out` leg is the creature at home, then leaving;
+   the `in` leg is it arriving, then at home. Their stretches at home overlap on purpose:
+   two identical drawings at one spot read as one, and the overlap is what lets each
+   pane's departure and arrival fall where its own geometry puts them, with no gap and no
+   double showing. The shares below are one leg's own; the pane shifts each leg
+   separately. Change a leg's flight and `FLIGHT` in the component must follow.
+
+     out   0–24%  at home     24–26%  through the glass   26–38%  flight   38–100%  gone
+     in    0–62%  gone        62–74%  flight              74–76%  through the glass   76–100%  at home */
 
 .porthole {
   position: relative;
@@ -28,7 +31,7 @@
 
 /* ---------- behind the glass ---------- */
 
-/* The same weather as over every surface's top, falling (or rising) through the glass:
+/* The same weather as over every surface's floor, falling (or rising) through the glass:
    one tile per 14s, the header's pace, phased off the clock like the rest. */
 .weatherDown {
   animation: weather-down 14s linear infinite;
@@ -38,47 +41,13 @@
   animation: weather-up 14s linear infinite;
 }
 
-/* The inhabitant's own circuit, and its exit. It moves in a slow figure behind the glass,
-   turns for the rim, and is gone for the whole crossing — hidden, not shrunk, because the
-   creature out in the pane is the same one and two of it would give the trick away. */
-.resident {
-  transform-box: fill-box;
-  animation: resident-round var(--loop) linear infinite;
-  animation-delay: var(--phase);
-}
-
-/* The right-hand window's resident: same circuit, same exit, but back the moment the
-   visitor goes in through the glass (escape-in, 75–78%), not a while after. */
-.residentRight {
-  transform-box: fill-box;
-  animation: resident-round-in var(--loop) linear infinite;
-  animation-delay: var(--phase);
-}
-
-/* The ring left where the creature went through. One stroke, spreading and fading —
-   ink at low opacity, gone in under a second. */
-.ring {
-  transform-box: fill-box;
-  transform-origin: 50% 50%;
-  opacity: 0;
-  animation: ring-strike var(--loop) ease-out infinite;
-  animation-delay: var(--phase);
-}
-
-.ringRight {
-  transform-box: fill-box;
-  transform-origin: 50% 50%;
-  opacity: 0;
-  animation: ring-strike-in var(--loop) ease-out infinite;
-  animation-delay: var(--phase);
-}
-
-/* ---------- out in the pane ---------- */
+/* ---------- the legs ---------- */
 
 /* Anchored to the middle of the window, so wherever the window sits the creature leaves
    it level. It travels a fixed distance in px rather than a share of the pane: both panes
    are then the same speed, which is what makes the two halves read as one creature. The
-   pane clips what leaves it. */
+   pane clips what leaves it. The drawing is centred on the anchor (its `left` and `top`
+   are set inline from its size). */
 .escape {
   position: absolute;
   top: 50%;
@@ -87,26 +56,21 @@
   height: 0;
 }
 
-/* Centred on the anchor sideways (`left` is set inline from the creature's width), so
-   the translate in the keyframes is where the creature's centre is — the number the
-   hand-off is worked out from. */
 .escape svg {
   position: absolute;
-  top: -14px;
   display: block;
-  opacity: 0;
   animation-duration: var(--loop);
   animation-delay: var(--phase);
   animation-iteration-count: infinite;
   animation-timing-function: linear;
 }
 
-.escapeOut svg {
-  animation-name: escape-out;
+.legOut svg {
+  animation-name: leg-out;
 }
 
-.escapeIn svg {
-  animation-name: escape-in;
+.legIn svg {
+  animation-name: leg-in;
 }
 
 /* ---------- the creatures' own parts ---------- */
@@ -117,7 +81,7 @@
   transform-box: fill-box;
 }
 
-/* Every resident rides a little up and down: Santa's stride, the sheep's trot, the
+/* Every creature rides a little up and down: Santa's stride, the sheep's trot, the
    ghost's float, Chang'e on the air. */
 .bob {
   animation: body-bob 1s ease-in-out infinite;
@@ -183,202 +147,47 @@
   }
 }
 
-/* Behind the glass: a slow circuit, then the turn for the rim, then away — and back at
-   the very end of the loop, settling into the circuit it started in. */
-@keyframes resident-round {
-  0% {
-    transform: translate(0, 0) scaleX(1);
+/* At home, then out through the glass and away at one steady speed until the pane's
+   edge takes it; gone until the loop comes round. */
+@keyframes leg-out {
+  0%,
+  24% {
     opacity: 1;
+    transform: translate(0, 0) scale(var(--home));
   }
-  14% {
-    transform: translate(26px, 10px) scaleX(1);
-  }
-  22% {
-    transform: translate(34px, 14px) scaleX(-1);
-  }
-  40% {
-    transform: translate(-4px, 22px) scaleX(-1);
-  }
-  48% {
-    transform: translate(-12px, 18px) scaleX(1);
-  }
-  /* the turn for the rim: a crouch before the spring, which is the whole difference
-     between leaving and disappearing */
-  54% {
-    transform: translate(-16px, 6px) scaleX(1);
+  26% {
     opacity: 1;
+    transform: translate(calc(16px * var(--dir)), 0) scale(0.9);
   }
-  58% {
-    transform: translate(2px, 0) scale(0.96);
+  38% {
     opacity: 1;
+    transform: translate(calc(760px * var(--dir)), var(--dy, 0px)) scale(1);
+  }
+  38.1%,
+  100% {
+    opacity: 0;
+    transform: translate(calc(760px * var(--dir)), var(--dy, 0px)) scale(1);
+  }
+}
+
+/* In from beyond the pane's edge at the same speed, through the glass, and at home. */
+@keyframes leg-in {
+  0%,
+  61.9% {
+    opacity: 0;
+    transform: translate(calc(760px * var(--dir)), var(--dy, 0px)) scale(1);
   }
   62% {
-    transform: translate(46px, -6px) scale(1.04);
-    opacity: 0;
-  }
-  88% {
-    transform: translate(46px, -6px) scale(1.04);
-    opacity: 0;
-  }
-  /* back in through the rim, decelerating into its circuit */
-  92% {
-    transform: translate(10px, 2px) scale(1.02);
     opacity: 1;
+    transform: translate(calc(760px * var(--dir)), var(--dy, 0px)) scale(1);
   }
-  100% {
-    transform: translate(0, 0) scaleX(1);
+  74% {
     opacity: 1;
+    transform: translate(calc(16px * var(--dir)), 0) scale(0.9);
   }
-}
-
-/* The right-hand window: out through the rim as on the left, and back in as the visitor
-   arrives (escape-in reaches the glass at 78%). */
-@keyframes resident-round-in {
-  0% {
-    transform: translate(0, 0) scaleX(1);
-    opacity: 1;
-  }
-  14% {
-    transform: translate(26px, 10px) scaleX(1);
-  }
-  22% {
-    transform: translate(34px, 14px) scaleX(-1);
-  }
-  40% {
-    transform: translate(-4px, 22px) scaleX(-1);
-  }
-  48% {
-    transform: translate(-12px, 18px) scaleX(1);
-  }
-  54% {
-    transform: translate(-16px, 6px) scaleX(1);
-    opacity: 1;
-  }
-  58% {
-    transform: translate(2px, 0) scale(0.96);
-    opacity: 1;
-  }
-  62% {
-    transform: translate(46px, -6px) scale(1.04);
-    opacity: 0;
-  }
-  78% {
-    transform: translate(46px, -6px) scale(1.04);
-    opacity: 0;
-  }
-  82% {
-    transform: translate(10px, 2px) scale(1.02);
-    opacity: 1;
-  }
-  100% {
-    transform: translate(0, 0) scaleX(1);
-    opacity: 1;
-  }
-}
-
-/* The glass struck twice — once as the creature leaves, once as it comes back. */
-@keyframes ring-strike {
-  0%,
-  58% {
-    opacity: 0;
-    transform: scale(1);
-  }
-  61% {
-    opacity: 0.5;
-    transform: scale(0.4);
-  }
-  70% {
-    opacity: 0;
-    transform: scale(1.5);
-  }
-  89% {
-    opacity: 0;
-    transform: scale(1);
-  }
-  92% {
-    opacity: 0.45;
-    transform: scale(0.4);
-  }
-  100% {
-    opacity: 0;
-    transform: scale(1.45);
-  }
-}
-
-/* The right-hand glass: struck as its resident leaves, and again as the visitor arrives. */
-@keyframes ring-strike-in {
-  0%,
-  58% {
-    opacity: 0;
-    transform: scale(1);
-  }
-  61% {
-    opacity: 0.5;
-    transform: scale(0.4);
-  }
-  70% {
-    opacity: 0;
-    transform: scale(1.5);
-  }
-  77% {
-    opacity: 0;
-    transform: scale(1);
-  }
-  80% {
-    opacity: 0.45;
-    transform: scale(0.4);
-  }
-  89% {
-    opacity: 0;
-    transform: scale(1.45);
-  }
-  100% {
-    opacity: 0;
-    transform: scale(1);
-  }
-}
-
-/* Out of the window and away to the right, until the pane's edge takes it. The pop
-   through the glass is the burst (57–59%); the flight after it is one steady speed —
-   16px to 760px over 59–88%, the stretch `FLIGHT.left` describes — because the two
-   panes can only meet at the rule if both creatures cross it at the same speed. An
-   earlier version dashed out and coasted; the coast fell exactly where a 410px thread
-   pane's edge is, and the creature hung at the edge while its other half sailed on. */
-@keyframes escape-out {
-  0%,
-  57% {
-    opacity: 0;
-    transform: translate(-6px, 10px) scale(0.55);
-  }
-  59% {
-    opacity: 1;
-    transform: translate(16px, 0) scale(0.9);
-  }
-  88%,
+  76%,
   100% {
     opacity: 1;
-    transform: translate(760px, var(--dy, 0px)) scale(1);
-  }
-}
-
-/* In from beyond the pane's edge at the same steady speed — 760px to 16px over 46–75%,
-   the stretch `FLIGHT.right` describes — then in through the glass (75–78%). */
-@keyframes escape-in {
-  0%,
-  46% {
-    opacity: 1;
-    transform: translate(-760px, var(--dy, 0px)) scale(1);
-  }
-  75% {
-    opacity: 1;
-    transform: translate(-16px, 0) scale(0.9);
-  }
-  78% {
-    opacity: 0;
-    transform: translate(6px, 8px) scale(0.55);
-  }
-  100% {
-    opacity: 0;
-    transform: translate(6px, 8px) scale(0.55);
+    transform: translate(0, 0) scale(var(--home));
   }
 }

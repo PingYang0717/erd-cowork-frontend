@@ -39,14 +39,14 @@ const renderInPane = (panel: 'left' | 'right') =>
     </div>
   );
 
-const phase = (root: HTMLElement) =>
-  root.querySelector<HTMLElement>('[data-festive-porthole]')?.style.getPropertyValue('--phase');
+const phase = (root: HTMLElement, leg: 'out' | 'in') =>
+  root.querySelector<HTMLElement>(`[data-festive-escape][data-leg="${leg}"]`)?.style.getPropertyValue('--phase');
 
 const drift = (root: HTMLElement) =>
   root.querySelector<HTMLElement>('[data-festive-porthole]')?.style.getPropertyValue('--dy');
 
-/** The porthole in the empty panes, and the creature that leaves it. Decoration: hidden
- *  from anyone reading the page, one creature a festival. */
+/** The porthole in the empty panes, and the one creature that crosses between them.
+ *  Decoration: hidden from anyone reading the page, one creature a festival. */
 describe('The empty panes’ porthole', () => {
   afterEach(() => {
     vi.useRealTimers();
@@ -56,47 +56,39 @@ describe('The empty panes’ porthole', () => {
   const viewportOf900 = () => vi.spyOn(window, 'innerHeight', 'get').mockReturnValue(900);
 
   it.each(['lunarNewYear', 'christmas', 'halloween', 'midAutumn'] as const)(
-    'draws the window and the escapee for %s, out of the reader’s way',
+    'draws the window and the creature on both its legs for %s, out of the reader’s way',
     (festival) => {
       const { container } = render(<EmptyPorthole festival={festival} panel="left" />);
 
       const porthole = container.querySelector('[data-festive-porthole="left"]');
       expect(porthole).toHaveAttribute('aria-hidden', 'true');
-      // The window, and the creature that is out in the pane: one drawing each.
-      expect(porthole?.querySelectorAll('svg')).toHaveLength(2);
-      expect(porthole?.querySelector('[data-festive-escape="left"]')).toBeInTheDocument();
+      // The window, and the creature leaving and the creature arriving: one drawing each.
+      expect(porthole?.querySelectorAll('svg')).toHaveLength(3);
+      expect(porthole?.querySelector('[data-festive-escape="left"][data-leg="out"]')).toBeInTheDocument();
+      expect(porthole?.querySelector('[data-festive-escape="left"][data-leg="in"]')).toBeInTheDocument();
     }
   );
 
-  /** The hand-off is a phase, not a message: both panes read the clock and agree on one
-   *  instant — 75% of the 46s loop — at which the creature is at the rule between them.
-   *  Each shifts its own copy so that the creature crosses its own edge right then.
-   *  With the edge 475px from either window, that is 76.9% of the way through
-   *  `escape-out` on the left (a shift of +0.870s) and 57.1% through `escape-in` on the
-   *  right (−8.230s).
-   *  Both read the clock, so the offset holds however far apart the two panes mounted. */
-  it('shifts each pane so its creature crosses the rule at the one instant both agree on', () => {
+  /** The hand-off is a phase, not a message: both panes read the clock and agree on two
+   *  instants in the 18s loop — 25% going right, 75% coming back — at which the creature
+   *  is at the rule between them. Each pane shifts each of its legs so that the creature
+   *  crosses its own edge right then. With the edge 475px from either window, a leg out
+   *  crosses it 33.4% of the way through its keyframes and a leg in 66.6% (the flights
+   *  are 26–38% and 62–74%): the left pane's `out` leg runs +1.513s ahead of the clock
+   *  to land on 25%, its `in` leg −1.513s to land on 75%; the right pane's `in` leg
+   *  +7.487s for 25%, its `out` leg −7.487s for 75%. Both read the clock, so the offsets
+   *  hold however far apart the two panes mounted. */
+  it('shifts each leg so its creature crosses the rule at the instant both panes agree on', () => {
     layOut();
     vi.useFakeTimers({ toFake: ['Date'] });
-    vi.setSystemTime(new Date(46_000 * 100 + 10_000));
+    vi.setSystemTime(new Date(18_000 * 100 + 10_000));
     const { container: left } = renderInPane('left');
     const { container: right } = renderInPane('right');
 
-    expect(phase(left)).toBe('-10.870s');
-    expect(phase(right)).toBe('-1.770s');
-  });
-
-  /** At the hand-off itself the left copy stands 76.9% in and the right 57.1% in: the
-   *  one creature at the rule from both sides. */
-  it('has both copies at the rule at the hand-off', () => {
-    layOut();
-    vi.useFakeTimers({ toFake: ['Date'] });
-    vi.setSystemTime(new Date(46_000 * 100 + 34_500));
-    const { container: left } = renderInPane('left');
-    const { container: right } = renderInPane('right');
-
-    expect(phase(left)).toBe('-35.370s');
-    expect(phase(right)).toBe('-26.270s');
+    expect(phase(left, 'out')).toBe('-11.513s');
+    expect(phase(left, 'in')).toBe('-8.487s');
+    expect(phase(right, 'in')).toBe('-17.487s');
+    expect(phase(right, 'out')).toBe('-2.513s');
   });
 
   /** The two windows are not at one height, so each flight drifts towards the one line
