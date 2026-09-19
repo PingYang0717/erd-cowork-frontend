@@ -15,7 +15,8 @@ import styles from './EmptyStateFestive.module.css';
  *
  *  The point is the crossing, and it has to come round quickly: these panes are on
  *  screen only until the first message, so a loop that showed it once a minute would
- *  never be seen. The loop is 18s, with a crossing every 9s.
+ *  never be seen. The loop is 16s, with a crossing every 8s, and the crossing itself is
+ *  quick — about 1.3s pane to pane.
  *
  *  Nothing is exchanged between the panes — they cannot see each other. Both run the
  *  loop off the wall clock (`phaseNow`), and agree on two instants in it: the hand-offs,
@@ -40,7 +41,7 @@ const INK = 'var(--erd-color-text, rgba(0, 0, 0, 0.88))';
 
 /** The loop: at home in one window, across to the other, at home there, and back. Short
  *  on purpose — see above. */
-const LOOP_S = 18;
+const LOOP_S = 16;
 
 /** The two hand-offs: the shares of the loop at which the creature is at the rule
  *  between the panes, going right and coming back. The only two instants the panes
@@ -53,13 +54,13 @@ type Leg = 'out' | 'in';
 
 /** The legs in the CSS keyframes' own terms — the steady stretch of each, as (share of
  *  the loop, distance of the creature's centre from the window in px). One speed on
- *  every leg, 744px over 12% of the loop (about 340px/s): the two halves of a crossing
+ *  every leg, 744px over 8% of the loop (about 580px/s): the two halves of a crossing
  *  can only meet at the rule if they cross it at the same speed. A pane's edge falls in
  *  this stretch for any pane this app lays out; nearer or farther is clamped to its end.
  *  Kept in step with `leg-out` / `leg-in` in the stylesheet by hand. */
 const FLIGHT: Record<Leg, { fromShare: number; fromPx: number; toShare: number; toPx: number }> = {
-  out: { fromShare: 0.26, fromPx: 16, toShare: 0.38, toPx: 760 },
-  in: { fromShare: 0.62, fromPx: 760, toShare: 0.74, toPx: 16 },
+  out: { fromShare: 0.27, fromPx: 16, toShare: 0.35, toPx: 760 },
+  in: { fromShare: 0.65, fromPx: 760, toShare: 0.73, toPx: 16 },
 };
 
 /** Where the creature is assumed to cross until the pane has been measured: about the

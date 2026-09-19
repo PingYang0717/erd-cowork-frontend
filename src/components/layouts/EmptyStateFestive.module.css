@@ -17,8 +17,8 @@
    double showing. The shares below are one leg's own; the pane shifts each leg
    separately. Change a leg's flight and `FLIGHT` in the component must follow.
 
-     out   0–24%  at home     24–26%  through the glass   26–38%  flight   38–100%  gone
-     in    0–62%  gone        62–74%  flight              74–76%  through the glass   76–100%  at home */
+     out   0–25%  at home     25–27%  through the glass   27–35%  flight   35–100%  gone
+     in    0–65%  gone        65–73%  flight              73–75%  through the glass   75–100%  at home */
 
 .porthole {
   position: relative;
@@ -151,19 +151,19 @@
    edge takes it; gone until the loop comes round. */
 @keyframes leg-out {
   0%,
-  24% {
+  25% {
     opacity: 1;
     transform: translate(0, 0) scale(var(--home));
   }
-  26% {
+  27% {
     opacity: 1;
     transform: translate(calc(16px * var(--dir)), 0) scale(0.9);
   }
-  38% {
+  35% {
     opacity: 1;
     transform: translate(calc(760px * var(--dir)), var(--dy, 0px)) scale(1);
   }
-  38.1%,
+  35.1%,
   100% {
     opacity: 0;
     transform: translate(calc(760px * var(--dir)), var(--dy, 0px)) scale(1);
@@ -173,19 +173,19 @@
 /* In from beyond the pane's edge at the same speed, through the glass, and at home. */
 @keyframes leg-in {
   0%,
-  61.9% {
+  64.9% {
     opacity: 0;
     transform: translate(calc(760px * var(--dir)), var(--dy, 0px)) scale(1);
   }
-  62% {
+  65% {
     opacity: 1;
     transform: translate(calc(760px * var(--dir)), var(--dy, 0px)) scale(1);
   }
-  74% {
+  73% {
     opacity: 1;
     transform: translate(calc(16px * var(--dir)), 0) scale(0.9);
   }
-  76%,
+  75%,
   100% {
     opacity: 1;
     transform: translate(0, 0) scale(var(--home));

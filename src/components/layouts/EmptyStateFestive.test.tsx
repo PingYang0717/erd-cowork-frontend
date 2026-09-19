@@ -70,25 +70,25 @@ describe('The empty panes’ porthole', () => {
   );
 
   /** The hand-off is a phase, not a message: both panes read the clock and agree on two
-   *  instants in the 18s loop — 25% going right, 75% coming back — at which the creature
+   *  instants in the 16s loop — 25% going right, 75% coming back — at which the creature
    *  is at the rule between them. Each pane shifts each of its legs so that the creature
    *  crosses its own edge right then. With the edge 475px from either window, a leg out
-   *  crosses it 33.4% of the way through its keyframes and a leg in 66.6% (the flights
-   *  are 26–38% and 62–74%): the left pane's `out` leg runs +1.513s ahead of the clock
-   *  to land on 25%, its `in` leg −1.513s to land on 75%; the right pane's `in` leg
-   *  +7.487s for 25%, its `out` leg −7.487s for 75%. Both read the clock, so the offsets
-   *  hold however far apart the two panes mounted. */
+   *  crosses it 31.9% of the way through its keyframes and a leg in 68.1% (the flights
+   *  are 27–35% and 65–73%): the left pane's `out` leg runs +1.110s ahead of the clock
+   *  to land on 25%, its `in` leg −1.110s to land on 75%; the right pane's `in` leg
+   *  +6.890s for 25% (wrapping past the loop's end), its `out` leg −6.890s for 75%. Both
+   *  read the clock, so the offsets hold however far apart the two panes mounted. */
   it('shifts each leg so its creature crosses the rule at the instant both panes agree on', () => {
     layOut();
     vi.useFakeTimers({ toFake: ['Date'] });
-    vi.setSystemTime(new Date(18_000 * 100 + 10_000));
+    vi.setSystemTime(new Date(16_000 * 100 + 10_000));
     const { container: left } = renderInPane('left');
     const { container: right } = renderInPane('right');
 
-    expect(phase(left, 'out')).toBe('-11.513s');
-    expect(phase(left, 'in')).toBe('-8.487s');
-    expect(phase(right, 'in')).toBe('-17.487s');
-    expect(phase(right, 'out')).toBe('-2.513s');
+    expect(phase(left, 'out')).toBe('-11.110s');
+    expect(phase(left, 'in')).toBe('-8.890s');
+    expect(phase(right, 'in')).toBe('-0.890s');
+    expect(phase(right, 'out')).toBe('-3.110s');
   });
 
   /** The two windows are not at one height, so each flight drifts towards the one line
