@@ -34,8 +34,8 @@
 
 **失去**:離線把整個產品跑一遍的能力。dev 環境需要後端在跑。
 
-**目前仍未落地的**:`GET /directory` 是 stub、`artifactApi.unpublish` 沒有 UI 呼叫端、
-Schedule 頁面只有標題。Session 的改名/釘選/刪除與 Artifact 的刪除/分享/發布都已接真
+**目前仍未落地的**:`GET /directory` 是 stub、`artifactApi.unpublish` 沒有 UI 呼叫端。
+(Schedule 頁面原本只有標題,2026-09-16 整頁拿掉,rail 上換成 Skills 的 coming soon 頁。)Session 的改名/釘選/刪除與 Artifact 的刪除/分享/發布都已接真
 後端,不再停用。
 
 ## 補充(2026-09-07):stub 只剩 Connector 目錄

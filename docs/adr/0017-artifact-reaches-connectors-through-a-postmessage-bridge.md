@@ -70,4 +70,5 @@ LLM 看到的 prompt 和 runtime 的 API 由同一方維護,才不會脫節。
 - 這個 repo 只能用假的 iframe 內容測 Cowork 這側。協定的另一半在後端,
   `interface.md` 那一節是兩邊唯一的共同依據。
 - `types/api/mcpCall.ts` 的 `McpErrorCode` 是開放聯集:Cowork 只轉交,後端加碼不需要
-  前端跟著改;只有 `TOOL_ERROR` 與 `INVALID_CALL` 被指名讀取。
+  前端跟著改;只有 `TOOL_ERROR` 與 `INVALID_CALL` 被指名讀取。整張清單只在一處被讀——
+  非 200 的回應帶著已知 code 時,信 code 不信狀態碼。

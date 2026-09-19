@@ -82,12 +82,12 @@ src/
 
 **hash 路由**（`createHashRouter`）：實際網址是 `/#/cowork/...`。
 
-| 路由                           | 畫面                                              |
-| ------------------------------ | ------------------------------------------------- |
-| `/cowork`                      | Studio：Session 列表、對話串、Artifact 面板三欄   |
-| `/cowork/artifacts`            | Artifacts 總覽                                    |
-| `/cowork/schedule`             | Schedule 排程列表（**尚未實作**，見下方範圍說明） |
-| `/cowork/artifact/:artifactId` | 單一 Artifact 全頁檢視                            |
+| 路由                           | 畫面                                            |
+| ------------------------------ | ----------------------------------------------- |
+| `/cowork`                      | Studio：Session 列表、對話串、Artifact 面板三欄 |
+| `/cowork/artifacts`            | Artifacts 總覽                                  |
+| `/cowork/skills`               | Skills（coming soon 佔位頁，見下方範圍說明）    |
+| `/cowork/artifact/:artifactId` | 單一 Artifact 全頁檢視                          |
 
 設計稿本身是純 state 切換的單頁 app（重新整理會遺失所在畫面），改用 React Router 是刻意
 的偏離：真實路由讓重新整理不遺失畫面，也讓單一 Artifact 能以連結直接開啟。
@@ -164,7 +164,8 @@ chat panel**，它的呈現語彙以 cowork 上游為準。
 
 已知未完成，皆有紀錄、非疏漏：
 
-- **Schedule 排程列表** — `/cowork/schedule` 目前只有標題，無任何端點。
+- **Skills** — `/cowork/skills` 是 coming soon 佔位頁，無任何端點。設計稿有入口、功能未定；
+  原本同一位置的 Schedule 已整頁拿掉。
 - **`Artifact.type`（dashboard / slides）** — 後端契約定版時暫時拿掉，尚未加回。在它回來
   之前 Gallery 不顯示縮圖與 Dash/Deck 標籤，而不是讓每張卡都預設成同一個錯答案。
 - **視覺缺口三項** — Artifact 全頁 header 未顯示名稱與「Shared to me」、附件未做

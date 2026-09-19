@@ -42,7 +42,8 @@ C 身上。
 
 ### run-in-progress-wins:agent 回答中,artifact 的錯誤不進對話
 
-Artifact 在 iframe 裡丟出錯誤(postMessage `erd-artifact-error`,或 MCP bridge 的失敗)時,
+Artifact 在 iframe 裡丟出錯誤(postMessage `erd-artifact-error`,或 MCP bridge 回給它的
+`TOOL_ERROR`／`INVALID_CALL`——只有這兩碼會報修,且只在 Studio)時,
 如果 agent 正在回答(`isRunStreaming`),這份回報**直接丟掉**,不顯示、也不排隊。
 
 **為什麼。** 這時候面板上的 artifact 只有兩種:正在被這一輪寫到一半的那一份(半成品跑起來

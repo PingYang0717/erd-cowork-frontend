@@ -395,8 +395,9 @@ type McpResult = { data: unknown } | { error: { code: McpErrorCode; message: str
 
 - 所有結果**立刻**送回 iframe。Cowork 不畫 banner、不畫卡片、不掛住 Promise、不重試——
   UI 全由 dashboard 自己畫，它才知道自己問了什麼。
-- `TOOL_ERROR` 與 `INVALID_CALL`（含 Cowork 自己判定的格式錯誤與 400）另外報進 repair
-  store，走現有的對話串修復提議。訊息寫成
+- 後端回的 `TOOL_ERROR` 與 `INVALID_CALL`（含 400 換成的那個）另外報進 repair
+  store，走現有的對話串修復提議。Cowork 自己判定的格式錯誤例外：只回 `INVALID_CALL`，
+  不報修——修復提議要指名失敗的 tool 與 connector，壞成那樣的呼叫未必有得指名。訊息寫成
   `MCP call TOOL_ERROR: tool "x" on connector "y": <原話>`，`line`/`col` 為 0。
   只在 Studio 報：全頁檢視沒有對話串，`ArtifactFrame` 的 `offersMcpRepair` 傳 `false`。
 - 同一 iframe 同時最多 8 個在飛，第 9 個起排隊；單一呼叫 30 秒逾時。常數在
@@ -430,12 +431,6 @@ A 對話而不掛在 B 對話，所以 `Connector` 上沒有任何欄位答得�
 
 `PATCH /connectors/:id` 與 `POST /connectors` 已從契約移除。自訂資料來源（使用者自己
 登記一個後端不知道的來源）連同它們一起退場——後端不知道的來源 agent 讀不到。
-
-## Schedule
-
-| Method | Path | Request | Response |
-| ------ | ---- | ------- | -------- |
-|        |      |         |          |
 
 ## Session files（上傳）
 

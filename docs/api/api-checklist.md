@@ -104,7 +104,7 @@ client abort,前端在 abort 後反覆 invalidate(300ms 起、遞增、最多六
 
 ## 8. 尚無前端呼叫
 
-- **Schedule**:頁面仍是佔位,無任何端點
+- **Skills**:coming soon 佔位頁,無任何端點(原本這個位置的 Schedule 已拿掉)
 
 ## 狀態圖例
 
