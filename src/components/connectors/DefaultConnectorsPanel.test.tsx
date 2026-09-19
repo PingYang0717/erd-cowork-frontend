@@ -1,6 +1,6 @@
 import { http, HttpResponse } from 'msw';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { CONNECTOR_PREFS_STORAGE_KEY } from '@/constants/storage';
@@ -52,6 +52,29 @@ describe('DefaultConnectorsPanel', () => {
     expect(screen.getByRole('button', { name: 'Save' })).toBeEnabled();
     await user.click(screen.getByRole('button', { name: 'Save' }));
     expect(JSON.parse(localStorage.getItem(CONNECTOR_PREFS_STORAGE_KEY)!)).toEqual({ defaultConnectors: ['recipe'] });
+  });
+
+  /** The header keeps the panel mounted and only enables the query while it is open, so
+   *  each opening reads the catalogue afresh: a Connector added since is offered, one
+   *  removed is gone. */
+  it('reads the catalogue afresh each time it opens', async () => {
+    let served = 0;
+    const count = ({ request }: { request: Request }) => {
+      if (new URL(request.url).pathname === '/api/connectors') {
+        served += 1;
+      }
+    };
+    server.events.on('request:start', count);
+    const { rerender } = render(<DefaultConnectorsPanel open onClose={() => {}} />, { wrapper: appWrapper() });
+    await screen.findByRole('button', { name: 'Connect Lot Info' });
+    expect(served).toBe(1);
+
+    rerender(<DefaultConnectorsPanel open={false} onClose={() => {}} />);
+    expect(screen.queryByRole('dialog')).toBeNull();
+    rerender(<DefaultConnectorsPanel open onClose={() => {}} />);
+    await screen.findByRole('button', { name: 'Connect Lot Info' });
+    await waitFor(() => expect(served).toBe(2));
+    server.events.removeListener('request:start', count);
   });
 
   /** Opened from the header, which has no boundary of its own: a catalogue that cannot

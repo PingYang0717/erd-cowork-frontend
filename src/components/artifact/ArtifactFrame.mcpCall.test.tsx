@@ -134,7 +134,9 @@ describe('ArtifactFrame — MCP call bridge', () => {
     expect(currentOffer()).toBeNull();
   });
 
-  it('answers a malformed call with INVALID_CALL without asking the backend, and offers a repair', async () => {
+  /** Answered so the Artifact's Promise settles, but no repair offer: the offer names the
+   *  tool and connector that failed, and a call this broken may not have either. */
+  it('answers a malformed call with INVALID_CALL without asking the backend, and offers no repair', async () => {
     const seen = answerWith({ data: null });
     const { iframe, posted } = renderFrame();
 
@@ -146,7 +148,7 @@ describe('ArtifactFrame — MCP call bridge', () => {
       result: { error: { code: 'INVALID_CALL', message: expect.stringContaining('"args"') } },
     });
     expect(seen).toEqual([]);
-    expect(currentOffer()?.errors[0].message).toContain('MCP call INVALID_CALL: tool "query_spc"');
+    expect(currentOffer()).toBeNull();
   });
 
   it('drops a call with no id — there is nobody to answer', async () => {

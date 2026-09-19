@@ -238,7 +238,8 @@ export const en: Translations = {
 
   skills: {
     comingSoonTitle: 'Coming soon',
-    comingSoonDetail: 'Custom Skills let the Agent analyse the way you tell it to. This one is on its way.',
+    comingSoonDetail:
+      'Shared and personal dashboard templates, applied in one line instead of a prompt written item by item; call one with / in the composer. This one is on its way.',
   },
 
   galleryHeader: {

@@ -10,6 +10,7 @@ import { useSessionSelectionStore } from '@/stores/useSessionSelectionStore';
 import { useStudioLayoutStore } from '@/stores/useStudioLayoutStore';
 import { appWrapper } from '@/test/appHarness';
 import { renderStudio } from '@/test/renderStudio';
+import { phaseNow } from '@/utils/festiveClock';
 
 /** React listens for the vendor-prefixed name here: jsdom has no `AnimationEvent`
  *  but does have `WebkitAnimation` on a style, which is React's cue to bind
@@ -91,20 +92,22 @@ describe('The festive surfaces', () => {
 
   /** Every floor draws the walker — the same one, fixed to the window and clipped to the
    *  floor — and every copy is handed its place in the loop from the clock rather than
-   *  from its own mount time, so the copies agree. */
-  it('draws the one walker on every floor, each copy at the same point in the loop', async () => {
+   *  from its own mount time, so the copies agree. The clock is pinned 33.333s into the
+   *  walker's 80s loop: read off the clock, every copy says so; read off its own mount,
+   *  a copy would say 0. */
+  it('draws the one walker on every floor, each copy where the clock says the loop stands', async () => {
     localStorage.setItem(FESTIVAL_PREVIEW_STORAGE_KEY, 'christmas');
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date(80_000 * 21_000_000 + 33_333));
     await renderStudioOnDraft();
 
     const copies = walkers();
     expect(copies).toHaveLength(3);
     for (const copy of copies) {
       expect(copy.getAttribute('data-festive-walker')).toBe('christmas');
-      expect(copy.style.animationDelay).toMatch(/^-\d+(\.\d+)?s$/);
+      expect(copy.style.animationDelay).toBe(phaseNow(80, Date.now()));
+      expect(copy.style.animationDelay).toBe('-33.333s');
     }
-    // Read moments apart, the two delays are moments apart — not a mount time apart.
-    const delays = copies.map((copy) => parseFloat(copy.style.animationDelay));
-    expect(Math.abs(delays[0] - delays[1])).toBeLessThan(1);
   });
 
   it('gives each floor its ground, drawn first so every piece stands in front of it', async () => {

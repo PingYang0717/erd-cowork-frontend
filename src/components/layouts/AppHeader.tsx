@@ -56,14 +56,15 @@ const AppHeader: React.FC = () => {
   // The same answer the session rail gets, so the two dress up and undress together.
   const festival = useFestival();
 
-  const triggerRef = useRef<HTMLButtonElement>(null);
-
-  const [open, setOpen] = useState(false);
-
   // The user's default sources (CONTEXT.md, 預設 Connectors) live with the other
   // preferences; the row shows how many and opens the same picker a conversation uses.
   const { ids: defaultConnectorIds } = useDefaultConnectors();
+
+  const triggerRef = useRef<HTMLButtonElement>(null);
+
+  const [open, setOpen] = useState(false);
   const [defaultConnectorsOpen, setDefaultConnectorsOpen] = useState(false);
+
   const openDefaultConnectors = useCallback(() => {
     setOpen(false);
     setDefaultConnectorsOpen(true);

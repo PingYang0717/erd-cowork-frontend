@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 
 import { useSetSessionDataSources } from '@/hooks/useConnectorMutations';
 import { useConnectors } from '@/hooks/useConnectors';
@@ -62,6 +62,13 @@ const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ sessionId, open, onCl
     return defaultIds.filter((id) => choosable.has(id));
   }, [catalogue, attachedIds, blockedByFiles, defaultIds]);
 
+  // The whole selection in a single request: it describes the outcome rather than a
+  // change, so two panels or a double-press cannot land in an order that decides it.
+  const submit = useCallback(
+    (ids: string[]) => setDataSources.mutate(ids, { onSuccess: onClose }),
+    [onClose, setDataSources]
+  );
+
   return (
     <ConnectorsEditor
       open={open}
@@ -75,9 +82,7 @@ const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ sessionId, open, onCl
       attachedIds={attachedIds}
       readOnlyNotice={blockedByFiles ? t.connectors.blockedByFiles : undefined}
       isPending={setDataSources.isPending}
-      // The whole selection in a single request: it describes the outcome rather than a
-      // change, so two panels or a double-press cannot land in an order that decides it.
-      onSubmit={(ids) => setDataSources.mutate(ids, { onSuccess: onClose })}
+      onSubmit={submit}
     />
   );
 };

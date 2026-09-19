@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { Button, Modal, Spin } from 'antd';
 import { useQuery } from '@tanstack/react-query';
 
@@ -36,6 +36,14 @@ const DefaultConnectorsPanel: React.FC<DefaultConnectorsPanelProps> = ({ open, o
     return ids.filter((id) => served.has(id));
   }, [catalogue.data, ids]);
 
+  const submit = useCallback(
+    (next: string[]) => {
+      setIds(next);
+      onClose();
+    },
+    [onClose, setIds]
+  );
+
   if (!open) {
     return null;
   }
@@ -68,10 +76,7 @@ const DefaultConnectorsPanel: React.FC<DefaultConnectorsPanelProps> = ({ open, o
       openingIds={openingIds}
       savedIds={ids}
       isPending={false}
-      onSubmit={(next) => {
-        setIds(next);
-        onClose();
-      }}
+      onSubmit={submit}
     />
   );
 };

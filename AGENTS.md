@@ -95,7 +95,9 @@ Husky + lint-staged 會自動跑 `oxlint --fix` → `eslint --fix` → `prettier
 - 主要資料抓取一律 **`useSuspenseQuery`**,不要 `useQuery` + `isLoading`
 - API 一律走 `src/api` 的共用 `apiClient`,不要在元件裡開 axios
 - Mutation 錯誤走 `onError`;`useSuspenseQuery` 的錯誤由 `<ErrorBoundary>` 接
-- 例外要在該 hook 的註解裡寫明理由(現有唯一一個:`useArtifactContent`)
+- 例外要在該 hook(或元件,若查詢就在元件裡)的註解裡寫明理由。現有兩個:`useArtifactContent`;
+  `DefaultConnectorsPanel`——從 header 開,外面沒有任何 boundary,目錄讀不到要在對話框裡說,不能
+  把 header 一起帶下去
 
 ### 效能
 

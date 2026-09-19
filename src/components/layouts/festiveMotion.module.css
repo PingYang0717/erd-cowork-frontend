@@ -1,0 +1,40 @@
+/* Motion shared by the header scene (FestiveDecoration) and the session rail's hung
+   line (SessionRailFestive): what hangs swings, what glows twinkles. One place, so a
+   lantern on the rail and one in the header move by the same rule. */
+
+/* Hung things swing a little at the top, as if in a breeze: a few degrees, slow, each
+   at its own phase (set inline, `swayAt`). Only what hangs — a swinging snowman is wrong. */
+.sway {
+  transform-box: fill-box;
+  transform-origin: 50% 0;
+  animation: sway 5.2s ease-in-out infinite;
+}
+
+.twinkle {
+  animation: twinkle 2.4s ease-in-out infinite;
+}
+
+.twinkleLate {
+  animation: twinkle 2.4s ease-in-out infinite;
+  animation-delay: -1.2s;
+}
+
+@keyframes sway {
+  0%,
+  100% {
+    transform: rotate(-2.5deg);
+  }
+  50% {
+    transform: rotate(2.5deg);
+  }
+}
+
+@keyframes twinkle {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 1;
+  }
+}

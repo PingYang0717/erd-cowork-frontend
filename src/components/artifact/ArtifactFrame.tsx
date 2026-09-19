@@ -2,8 +2,9 @@ import React, { useEffect, useMemo, useRef } from 'react';
 
 import { useMcpCallBridge } from '@/hooks/useMcpCallBridge';
 import { type BrowserJsError, useRepairOfferStore } from '@/stores/useRepairOfferStore';
-import { injectCspMeta } from '@/utils/artifactCsp';
-import { injectScrollbarStyle } from '@/utils/artifactScrollbar';
+import { addCspMeta } from '@/utils/artifactCsp';
+import { withHead } from '@/utils/artifactHead';
+import { addScrollbarStyle } from '@/utils/artifactScrollbar';
 
 interface ArtifactFrameProps {
   html: string;
@@ -29,8 +30,15 @@ const ArtifactFrame: React.FC<ArtifactFrameProps> = ({ html, artifactId, offersM
   // The sandbox keeps the artifact out of this app; the policy keeps it off the network.
   // Injected here rather than served with the document — a srcdoc never sees a header.
   // The app's scrollbar goes in the same way, for the same reason: nothing from outside
-  // reaches a srcdoc document unless it is written into it.
-  const securedHtml = useMemo(() => injectScrollbarStyle(injectCspMeta(html, window.location.origin)), [html]);
+  // reaches a srcdoc document unless it is written into it. One parse for both.
+  const securedHtml = useMemo(
+    () =>
+      withHead(html, (doc) => {
+        addCspMeta(doc, window.location.origin);
+        addScrollbarStyle(doc);
+      }),
+    [html]
+  );
 
   // The artifact reports its own runtime errors (the collector injected into its head).
   // Only messages from THIS iframe count — any page can postMessage at us.

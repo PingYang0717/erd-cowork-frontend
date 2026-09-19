@@ -327,7 +327,8 @@ export const zhTW = {
 
   skills: {
     comingSoonTitle: '即將推出',
-    comingSoonDetail: '自訂 Skill 讓 Agent 照你的指示做分析。這個功能正在準備中。',
+    comingSoonDetail:
+      '公版與自建的 dashboard 模板，一句話叫用即套用，省去逐項下 prompt；之後在對話框輸入 / 就能叫用。這個功能正在準備中。',
   },
 
   galleryHeader: {

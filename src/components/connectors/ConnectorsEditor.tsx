@@ -145,7 +145,6 @@ const ConnectorsEditor: React.FC<ConnectorsEditorProps> = ({
   onSubmit,
 }) => {
   const t = useTranslations();
-  const readOnly = readOnlyNotice !== undefined;
 
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('All');
@@ -191,6 +190,8 @@ const ConnectorsEditor: React.FC<ConnectorsEditorProps> = ({
       (!normalizedSearch ||
         `${connector.name} ${connector.description} ${connector.type}`.toLowerCase().includes(normalizedSearch))
   );
+
+  const readOnly = readOnlyNotice !== undefined;
 
   return (
     <Modal

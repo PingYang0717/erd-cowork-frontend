@@ -48,6 +48,9 @@ useState } from 'react'`,不分兩行。
 **宣告:一律 `const X: React.FC<XProps> = (props) => {}`**,包含檔案內的子元件。
 
 - props interface 命名 `<元件名>Props`,**宣告在該元件正上方**,不匯出(除非跨檔用)。
+  例外(2026-09-19 追記):同檔內、不匯出、只為畫圖存在的小零件——節慶場景的燈籠、煙火、
+  帽子——可以把 props 直接寫在泛型裡(`React.FC<MotifProps & { at: number }>`)。一兩個欄位
+  抽成具名 interface 只讓檔案更長,而沒有讀者需要在檔案外面找到那個型別。
   與主元件既有的慣例一致,而且子元件與它的 props 相鄰最好讀。
 - **無 props 的元件寫 `React.FC` 不帶泛型**,不造空 interface。
 - **`ErrorBoundary` 是唯一的例外,它必須是 class**:React 沒有 `componentDidCatch` 的

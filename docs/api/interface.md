@@ -366,7 +366,8 @@ Studio、全頁檢視、Gallery 分享出去的 Artifact 一律代打。
 | 401 / 403               | `{ code, message }` | 身分。403 同時照 ADR-0016 觸發整頁存取遭拒畫面 | `AUTH`                     |
 | 其他 / 斷線 / 30 秒逾時 | —                   | 請求沒到、或回的不是 JSON                      | `RETRYABLE`                |
 
-若 4xx 的 body 帶的 `code` 本身就是下表七個之一，Cowork 信 code 不信狀態碼。
+若 body 帶的 `code` 本身就是下表七個之一，不論狀態碼是 4xx 還是 5xx，Cowork 信 code 不信
+狀態碼——code 比狀態更具體，後端特地寫了就沒有理由丟掉。
 
 ```ts
 type McpResult = { data: unknown } | { error: { code: McpErrorCode; message: string } };

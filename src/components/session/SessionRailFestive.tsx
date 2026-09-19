@@ -11,9 +11,10 @@ import {
   TasselMotif,
 } from '@/components/layouts/festiveMotifs';
 import type { Festival } from '@/utils/festival';
+import { swayAt } from '@/utils/festiveClock';
 
 import styles from './SessionRailFestive.module.css';
-import fd from '@/components/layouts/FestiveDecoration.module.css';
+import motion from '@/components/layouts/festiveMotion.module.css';
 
 /** The session rail's own echo of the header's festive scene (CONTEXT.md, 節慶裝飾): the
  *  rule under the Artifacts/Skills rows becomes the header's hung line — the same
@@ -27,10 +28,6 @@ interface RailFestiveProps {
   /** The collapsed rail's narrow versions: a shorter line, a single standing piece. */
   compact?: boolean;
 }
-
-/** The phase a hung thing swings at, from where it hangs — the header's rule, so a
- *  lantern here and one above at the same fraction move together. */
-const swayAt = (at: number): React.CSSProperties => ({ animationDelay: `${-(at * 9.7).toFixed(2)}s` });
 
 /** Where the line hangs at fraction `t`, for `M0 3q${w/2} ${sag} ${w} 0`. */
 const dropAt = (t: number, sag: number): number => 3 + 2 * t * (1 - t) * sag;
@@ -131,7 +128,7 @@ const STRINGS: Record<Festival, StringSpec> = {
 };
 
 const twinkleClass = (phase: Hung['twinkle']): string | undefined =>
-  phase === 'early' ? fd.twinkle : phase === 'late' ? fd.twinkleLate : undefined;
+  phase === 'early' ? motion.twinkle : phase === 'late' ? motion.twinkleLate : undefined;
 
 /** The hung line. The swing is on an inner group and the placement on an outer one:
  *  the sway animation writes `transform`, and would otherwise overwrite the translate. */
@@ -159,7 +156,7 @@ const FestiveString: React.FC<RailFestiveProps> = ({ festival, compact = false }
       />
       {items.map(({ at, node, twinkle }) => (
         <g key={at} className={twinkleClass(twinkle)} transform={`translate(${at * width} ${dropAt(at, sag)})`}>
-          <g className={fd.sway} style={swayAt(at)}>
+          <g className={motion.sway} style={swayAt(at)}>
             {node}
           </g>
         </g>

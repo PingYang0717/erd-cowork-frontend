@@ -87,15 +87,6 @@
   animation: breathe 5s ease-in-out infinite;
 }
 
-.twinkle {
-  animation: twinkle 2.4s ease-in-out infinite;
-}
-
-.twinkleLate {
-  animation: twinkle 2.4s ease-in-out infinite;
-  animation-delay: -1.2s;
-}
-
 /* One traveller per festival crosses the band, left to right, and waits out of sight
    before coming round again. The track is the band's width; the traveller hangs just
    off its left edge, and the track slides by its own width plus the traveller's, so
@@ -111,14 +102,6 @@
   position: absolute;
   right: 100%;
   display: block;
-}
-
-/* Hung things swing a little at the top, as if in a breeze: a few degrees, slow, each
-   at its own phase (set inline). Only what hangs — a swinging snowman is wrong. */
-.sway {
-  transform-box: fill-box;
-  transform-origin: 50% 0;
-  animation: sway 5.2s ease-in-out infinite;
 }
 
 /* Chimney smoke: puffs that rise, spread and thin out, one after another. */
@@ -149,16 +132,6 @@
   60%,
   100% {
     transform: translateX(calc(100% + var(--fd-cross-w, 80px)));
-  }
-}
-
-@keyframes sway {
-  0%,
-  100% {
-    transform: rotate(-2.5deg);
-  }
-  50% {
-    transform: rotate(2.5deg);
   }
 }
 
@@ -237,16 +210,6 @@
   50% {
     opacity: 1;
     transform: scale(1.06);
-  }
-}
-
-@keyframes twinkle {
-  0%,
-  100% {
-    opacity: 0.35;
-  }
-  50% {
-    opacity: 1;
   }
 }
 

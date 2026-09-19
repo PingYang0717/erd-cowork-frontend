@@ -11,7 +11,8 @@ export type {
 export type { Artifact, ArtifactVersion } from './artifact';
 export type { Connector } from './connector';
 export type { ArtifactShareUpdate, DirectoryEntry, DirectoryEntryType, ShareTarget } from './directory';
-export type { McpCallBody, McpError, McpErrorCode, McpResult } from './mcpCall';
+export { KNOWN_MCP_ERROR_CODES } from './mcpCall';
+export type { KnownMcpErrorCode, McpCallBody, McpError, McpErrorCode, McpResult } from './mcpCall';
 export type { Message } from './message';
 export type { Scenario, ScenarioKey } from './scenario';
 export type { ScheduleJob, ScheduleJobStatus } from './scheduleJob';

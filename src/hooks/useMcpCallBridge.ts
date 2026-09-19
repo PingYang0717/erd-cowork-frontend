@@ -3,7 +3,14 @@ import { type RefObject, useEffect } from 'react';
 import { errorCode, errorMessage, httpStatus, isCanceled } from '@/api/apiError';
 import { mcpCall } from '@/api/artifactApi';
 import { type BrowserJsError, useRepairOfferStore } from '@/stores/useRepairOfferStore';
-import type { McpCallBody, McpError, McpErrorCode, McpResult } from '@/types/api';
+import {
+  KNOWN_MCP_ERROR_CODES,
+  type KnownMcpErrorCode,
+  type McpCallBody,
+  type McpError,
+  type McpErrorCode,
+  type McpResult,
+} from '@/types/api';
 
 /** The bridge between an Artifact's iframe and the backend (ADR-0017).
  *
@@ -20,6 +27,9 @@ import type { McpCallBody, McpError, McpErrorCode, McpResult } from '@/types/api
  *  wrong, and a rebuild is what fixes that. Those two go to the repair store, and only
  *  when the caller says it has somewhere to show the offer (`offersRepair`): the
  *  full-page view has no thread, so a report from there would sit in the store unseen.
+ *  A call too broken to send at all is answered `INVALID_CALL` too, but raises no offer:
+ *  the offer names the tool and the connector that failed, and such a call may have
+ *  neither.
  */
 
 /** iframe → this window. `id` is the iframe runtime's own; it pairs the answer with the
@@ -71,17 +81,8 @@ const readCall = (data: unknown): { call: McpCallMessage } | { id: string; probl
   return { call: { type: 'erd-mcp-call', id, connector, tool, args } };
 };
 
-const isKnownCode = (code: string | null): code is McpErrorCode =>
-  code !== null &&
-  [
-    'AUTH',
-    'RETRYABLE',
-    'TOOL_ERROR',
-    'CONNECTOR_UNREACHABLE',
-    'CONNECTOR_UNAVAILABLE',
-    'CONNECTOR_NOT_ALLOWED',
-    'INVALID_CALL',
-  ].includes(code);
+const isKnownCode = (code: string | null): code is KnownMcpErrorCode =>
+  code !== null && (KNOWN_MCP_ERROR_CODES as readonly string[]).includes(code);
 
 /** What to tell the iframe when the request itself failed — nothing came back, or what
  *  came back was not a 200 `McpResult`. The seven codes all travel inside a 200; a
@@ -209,18 +210,10 @@ export const useMcpCallBridge = ({ artifactId, iframeRef, offersRepair }: UseMcp
         return;
       }
       if ('problem' in read) {
-        // Sent nowhere: a malformed call is the HTML's mistake, and the repair offer is
-        // the only thing this app has to say about that.
-        const error: McpError = { code: 'INVALID_CALL', message: read.problem };
-        reply(read.id, { error });
-        const data = event.data as Partial<McpCallBody>;
-        offerRepair(
-          {
-            connector: typeof data.connector === 'string' ? data.connector : '?',
-            tool: typeof data.tool === 'string' ? data.tool : '?',
-          },
-          error
-        );
+        // Answered, not sent: a malformed call is the HTML's mistake. No repair offer
+        // from here — the offer names the tool and connector that failed, and a call
+        // this broken may not have either to name.
+        reply(read.id, { error: { code: 'INVALID_CALL', message: read.problem } });
         return;
       }
       waiting.push(read.call);

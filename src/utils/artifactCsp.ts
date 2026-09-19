@@ -1,3 +1,5 @@
+import { withHead } from './artifactHead';
+
 /** An Artifact is a whole HTML document the agent wrote, and `sandbox="allow-scripts"`
  *  only stops it reaching back into this app. It does not stop it reaching out: a buggy
  *  or hostile artifact can still fetch, and take the data it was given with it. The
@@ -38,14 +40,11 @@ const buildPolicy = (origin: string): string => {
  *
  *  Parsing here is the same parse the iframe will do, so the head we find is the head
  *  the browser will build — including any element it hoisted into it. */
-export const injectCspMeta = (html: string, origin: string): string => {
-  const doc = new DOMParser().parseFromString(html, 'text/html');
-
+export const addCspMeta = (doc: Document, origin: string): void => {
   const meta = doc.createElement('meta');
   meta.setAttribute('http-equiv', 'Content-Security-Policy');
   meta.setAttribute('content', buildPolicy(origin));
   doc.head.insertBefore(meta, doc.head.firstChild);
-
-  const doctype = doc.doctype ? `<!DOCTYPE ${doc.doctype.name}>` : '';
-  return doctype + doc.documentElement.outerHTML;
 };
+
+export const injectCspMeta = (html: string, origin: string): string => withHead(html, (doc) => addCspMeta(doc, origin));

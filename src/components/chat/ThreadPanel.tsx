@@ -49,6 +49,7 @@ interface EmptyStateProps {
  *  window is that it is a place, which needs the room. */
 const EmptyState: React.FC<EmptyStateProps> = ({ heading, subtitle }) => {
   const festival = useFestival();
+
   return (
     <div className={styles.emptyState}>
       {festival !== null ? (

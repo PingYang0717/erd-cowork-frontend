@@ -1,8 +1,10 @@
 import React from 'react';
 
 import type { Festival } from '@/utils/festival';
+import { swayAt } from '@/utils/festiveClock';
 
 import styles from './FestiveDecoration.module.css';
+import motion from './festiveMotion.module.css';
 
 /** What the middle of the header shows during a festival: one continuous scene, not a
  *  row of figures. Every festival is built the same way —
@@ -78,9 +80,6 @@ const Traveller: React.FC<TravellerProps> = ({ top, width, height, viewBox, dura
   </div>
 );
 
-/** The phase a hung thing swings at, from where it hangs — so neighbours are never in step. */
-const swayAt = (at: number): React.CSSProperties => ({ animationDelay: `${-(at * 9.7).toFixed(2)}s` });
-
 /* ---------- Mid-Autumn: a lantern string over misty hills, the moon and its rabbits ---------- */
 
 /** One lantern on the string, hung at a fraction of the band's width. The string sags
@@ -96,7 +95,7 @@ const StrungLantern: React.FC<{ at: number; size: number }> = ({ at, size }) => 
       width={20 * size}
       height={30 * size}
     >
-      <g className={styles.sway} style={swayAt(at)}>
+      <g className={motion.sway} style={swayAt(at)}>
         <path d="M0 0v3" stroke="#c9a04a" strokeWidth="1" />
         <ellipse className={styles.breathe} cx="0" cy="12" rx="9" ry="10" fill="#f6b26b" opacity="0.28" />
         <rect x="-3.5" y="3" width="7" height="2.2" rx="1" fill="#d9b25c" />
@@ -242,11 +241,11 @@ const MidAutumn: React.FC = () => (
 
     {/* fireflies low over the clouds */}
     {[
-      { left: '14%', top: 40, cls: styles.twinkle },
-      { left: '22%', top: 46, cls: styles.twinkleLate },
-      { left: '33%', top: 43, cls: styles.twinkle },
-      { left: '70%', top: 44, cls: styles.twinkleLate },
-      { left: '76%', top: 39, cls: styles.twinkle },
+      { left: '14%', top: 40, cls: motion.twinkle },
+      { left: '22%', top: 46, cls: motion.twinkleLate },
+      { left: '33%', top: 43, cls: motion.twinkle },
+      { left: '70%', top: 44, cls: motion.twinkleLate },
+      { left: '76%', top: 39, cls: motion.twinkle },
     ].map(({ left, top, cls }) => (
       <svg key={left} className={`${styles.near} ${cls}`} style={{ left, top }} viewBox="0 0 6 6" width="5" height="5">
         <circle cx="3" cy="3" r="2.6" fill="#f5d777" opacity="0.5" />
@@ -378,7 +377,7 @@ const MidAutumn: React.FC = () => (
         width="8"
         height="14"
       >
-        <g className={styles.sway} style={swayAt(at)}>
+        <g className={motion.sway} style={swayAt(at)}>
           <path d="M0 0v2" stroke="#c9a04a" strokeWidth="0.8" />
           <path d="M0 2l3 3-3 3-3-3z" fill="#e0454f" />
           <path d="M0 4.5l1.5 1.5L0 7.5 -1.5 6z" fill="#f08a8e" />
@@ -412,7 +411,7 @@ const BuntingFlag: React.FC<{ at: number; color: string }> = ({ at, color }) => 
       width="12"
       height="12"
     >
-      <g className={styles.sway} style={swayAt(at)}>
+      <g className={motion.sway} style={swayAt(at)}>
         <path d="M-5.5 0h11L0 11z" fill={color} opacity="0.9" />
       </g>
     </svg>
@@ -557,7 +556,7 @@ const Halloween: React.FC = () => (
     </svg>
     {/* a small ghost peeking from behind the house */}
     <svg
-      className={`${styles.near} ${styles.twinkleLate}`}
+      className={`${styles.near} ${motion.twinkleLate}`}
       style={{ left: '74%', top: 56 - 30 }}
       viewBox="0 0 16 18"
       width="12"
@@ -573,8 +572,8 @@ const Halloween: React.FC = () => (
     </svg>
     {/* eyes glowing in the dark of the town */}
     {[
-      { left: '38%', top: 44, cls: styles.twinkle },
-      { left: '90%', top: 40, cls: styles.twinkleLate },
+      { left: '38%', top: 44, cls: motion.twinkle },
+      { left: '90%', top: 40, cls: motion.twinkleLate },
     ].map(({ left, top, cls }) => (
       <svg
         key={left}
@@ -722,13 +721,13 @@ const FairyLight: React.FC<{ at: number; color: string; late: boolean }> = ({ at
   const drop = 2 + 28 * at * (1 - at);
   return (
     <svg
-      className={`${styles.near} ${late ? styles.twinkleLate : styles.twinkle}`}
+      className={`${styles.near} ${late ? motion.twinkleLate : motion.twinkle}`}
       style={{ left: `${at * 100}%`, top: drop - 1, transform: 'translateX(-50%)' }}
       viewBox="-6 0 12 12"
       width="12"
       height="12"
     >
-      <g className={styles.sway} style={swayAt(at)}>
+      <g className={motion.sway} style={swayAt(at)}>
         <path d="M0 0v2" stroke="#8a8a96" strokeWidth="0.8" />
         <circle cx="0" cy="6" r="5" fill={color} opacity="0.3" />
         <circle cx="0" cy="6" r="2.4" fill={color} />
@@ -814,7 +813,7 @@ const Christmas: React.FC = () => (
     </Traveller>
     {/* the star of the night */}
     <svg
-      className={`${styles.near} ${styles.twinkle}`}
+      className={`${styles.near} ${motion.twinkle}`}
       style={{ left: '64%', top: 4 }}
       viewBox="0 0 14 14"
       width="12"
@@ -869,9 +868,9 @@ const Christmas: React.FC = () => (
       <path d="M10 6l6 8H4z" fill="#358a57" />
       <path d="M10 12l8 9H2z" fill="#2c7a4b" />
       <rect x="8.5" y="21" width="3" height="3" fill="#7a4e2a" />
-      <circle className={styles.twinkleLate} cx="8" cy="10" r="1" fill="#ff6b6b" />
-      <circle className={styles.twinkle} cx="12" cy="15" r="1" fill="#f5d777" />
-      <circle className={styles.twinkleLate} cx="7" cy="18" r="1" fill="#6fb3ff" />
+      <circle className={motion.twinkleLate} cx="8" cy="10" r="1" fill="#ff6b6b" />
+      <circle className={motion.twinkle} cx="12" cy="15" r="1" fill="#f5d777" />
+      <circle className={motion.twinkleLate} cx="7" cy="18" r="1" fill="#6fb3ff" />
     </svg>
     {/* mistletoe at the left, mirroring the holly */}
     <svg className={styles.near} style={{ left: 0, top: 12 }} viewBox="0 0 60 40" width="52" height="35" opacity="0.8">
@@ -901,11 +900,11 @@ const Christmas: React.FC = () => (
       <rect x="12.5" y="32" width="5" height="4" fill="#7a4e2a" />
       {(
         [
-          [12, 15, '#ff6b6b', styles.twinkle],
-          [18, 20, '#f5d777', styles.twinkleLate],
-          [10, 27, '#6fb3ff', styles.twinkle],
-          [20, 29, '#ff6b6b', styles.twinkleLate],
-          [15, 24, '#f5d777', styles.twinkleLate],
+          [12, 15, '#ff6b6b', motion.twinkle],
+          [18, 20, '#f5d777', motion.twinkleLate],
+          [10, 27, '#6fb3ff', motion.twinkle],
+          [20, 29, '#ff6b6b', motion.twinkleLate],
+          [15, 24, '#f5d777', motion.twinkleLate],
         ] as const
       ).map(([x, y, color, cls]) => (
         <circle key={`${x}-${y}`} className={cls} cx={x} cy={y} r="1.3" fill={color} />
@@ -1024,7 +1023,7 @@ const Christmas: React.FC = () => (
         width="10"
         height="14"
       >
-        <g className={styles.sway} style={swayAt(at)}>
+        <g className={motion.sway} style={swayAt(at)}>
           <path d="M0 0v2" stroke="#8a8a96" strokeWidth="0.8" />
           <path d="M-1.5 3h3l1 2M-1.5 3v5" fill="none" stroke="#e5484d" strokeWidth="1" />
           <path d="M-4 11q0-6 4-7 4 1 4 7z" fill="#f2c14e" />
@@ -1050,7 +1049,7 @@ const RedLantern: React.FC<{ at: number; size: number }> = ({ at, size }) => {
       width={20 * size}
       height={30 * size}
     >
-      <g className={styles.sway} style={swayAt(at)}>
+      <g className={motion.sway} style={swayAt(at)}>
         <path d="M0 0v3" stroke="#d9a83f" strokeWidth="1" />
         <ellipse className={styles.breathe} cx="0" cy="12" rx="9.5" ry="9" fill="#ffb15c" opacity="0.28" />
         <rect x="-3.5" y="3" width="7" height="2" rx="1" fill="#f2c14e" />
@@ -1073,7 +1072,7 @@ const Firework: React.FC<{ left: string; top: number; size: number; color: strin
   late,
 }) => (
   <svg
-    className={`${styles.near} ${late ? styles.twinkleLate : styles.twinkle}`}
+    className={`${styles.near} ${late ? motion.twinkleLate : motion.twinkle}`}
     style={{ left, top }}
     viewBox="-10 -10 20 20"
     width={size}
@@ -1286,7 +1285,7 @@ const LunarNewYear: React.FC = () => (
         right; red lanterns strung across the top */}
     {/* a string of firecrackers, hung from the top left, one just gone off */}
     <svg className={styles.near} style={{ left: '4%', top: 0 }} viewBox="0 0 16 40" width="14" height="36">
-      <g className={styles.sway} style={swayAt(0.5)}>
+      <g className={motion.sway} style={swayAt(0.5)}>
         <path d="M8 0v4" stroke="#d9a83f" strokeWidth="1" />
         <path d="M8 4q-4 6 0 12t0 12-2 8" fill="none" stroke="#d9a83f" strokeWidth="0.8" />
         <g fill="#d8232a">
@@ -1415,7 +1414,7 @@ const LunarNewYear: React.FC = () => (
         width="8"
         height="14"
       >
-        <g className={styles.sway} style={swayAt(at)}>
+        <g className={motion.sway} style={swayAt(at)}>
           <path d="M0 0v3" stroke="#d9a83f" strokeWidth="0.8" />
           <path d="M-2 3h4l-1 3h-2z" fill="#d8232a" />
           <path d="M-1.5 6v7M0 6v8M1.5 6v7" stroke="#f2c14e" strokeWidth="0.8" strokeLinecap="round" />
