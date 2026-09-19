@@ -117,3 +117,7 @@ export const currentFestival = (now: Date = new Date()): Festival | null => {
  *  theme, at whatever opacity the drawing sets. One definition for the header, the rail,
  *  the floor and the portholes. */
 export const FESTIVE_INK = 'var(--erd-color-text, rgba(0, 0, 0, 0.88))';
+
+/** The fairy lights' colours, cycling along the string: the header's and the rail's
+ *  echo of it are the same string of lights. */
+export const LIGHT_COLORS = ['#ff5c5c', '#f5d777', '#5cc282', '#6fb3ff'] as const;

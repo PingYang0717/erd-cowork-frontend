@@ -10,8 +10,8 @@ import {
   StrungLanternMotif,
   TasselMotif,
 } from '@/components/layouts/festiveMotifs';
-import type { Festival } from '@/utils/festival';
-import { swayAt } from '@/utils/festiveClock';
+import { type Festival, LIGHT_COLORS } from '@/utils/festival';
+import { hangAt, swayAt } from '@/utils/festiveClock';
 
 import styles from './FestiveString.module.css';
 import motion from '@/components/layouts/festiveMotion.module.css';
@@ -29,8 +29,9 @@ interface RailFestiveProps {
   compact?: boolean;
 }
 
-/** Where the line hangs at fraction `t`, for `M0 3q${w/2} ${sag} ${w} 0`. */
-const dropAt = (t: number, sag: number): number => 3 + 2 * t * (1 - t) * sag;
+/** Where the line's ends sit in its box; how much it sags is each string's own (`sag`
+ *  below), and hung things read their drop off the same curve (`hangAt`). */
+const STRING_TOP = 3;
 
 interface Hung {
   at: number;
@@ -49,8 +50,6 @@ interface StringSpec {
   full: Hung[];
   compact: Hung[];
 }
-
-const LIGHT_COLORS = ['#ff5c5c', '#f5d777', '#5cc282', '#6fb3ff'];
 
 const STRINGS: Record<Festival, StringSpec> = {
   midAutumn: {
@@ -148,14 +147,18 @@ const FestiveString: React.FC<RailFestiveProps> = ({ festival, compact = false }
       data-festive-rail="string"
     >
       <path
-        d={`M0 3q${width / 2} ${sag} ${width} 0`}
+        d={`M0 ${STRING_TOP}q${width / 2} ${sag} ${width} 0`}
         fill="none"
         stroke={spec.stroke}
         strokeWidth="0.8"
         opacity={spec.strokeOpacity}
       />
       {items.map(({ at, node, twinkle }) => (
-        <g key={at} className={twinkleClass(twinkle)} transform={`translate(${at * width} ${dropAt(at, sag)})`}>
+        <g
+          key={at}
+          className={twinkleClass(twinkle)}
+          transform={`translate(${at * width} ${hangAt(at, sag, STRING_TOP)})`}
+        >
           <g className={motion.sway} style={swayAt(at)}>
             {node}
           </g>

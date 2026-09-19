@@ -1,7 +1,7 @@
 import React from 'react';
 
-import { type Festival, FESTIVE_INK as INK } from '@/utils/festival';
-import { swayAt } from '@/utils/festiveClock';
+import { type Festival, FESTIVE_INK as INK, LIGHT_COLORS } from '@/utils/festival';
+import { hangAt, swayAt } from '@/utils/festiveClock';
 
 import styles from './FestiveDecoration.module.css';
 import motion from './festiveMotion.module.css';
@@ -80,11 +80,16 @@ const Traveller: React.FC<TravellerProps> = ({ top, width, height, viewBox, dura
 
 /* ---------- Mid-Autumn: a lantern string over misty hills, the moon and its rabbits ---------- */
 
-/** One lantern on the string, hung at a fraction of the band's width. The string sags
- *  as a quadratic curve (`M0 2 q200 14 400 0`, so y = 2 + 28·t·(1−t)); each lantern's
- *  drop is read off that curve, so they hang from the line wherever the band ends up. */
+/** The string every festival hangs things from, over the band's 400-unit width: it sags
+ *  2px at the ends to 9px in the middle. Each hung thing reads its drop off this same
+ *  curve (`dropAt`), so they hang from the line wherever the band ends up. */
+const STRING = { top: 2, sag: 14 } as const;
+const STRING_PATH = `M0 ${STRING.top}q200 ${STRING.sag} 400 0`;
+const dropAt = (at: number): number => hangAt(at, STRING.sag, STRING.top);
+
+/** One lantern on the string, hung at a fraction of the band's width. */
 const StrungLantern: React.FC<{ at: number; size: number }> = ({ at, size }) => {
-  const drop = 2 + 28 * at * (1 - at);
+  const drop = dropAt(at);
   return (
     <svg
       className={styles.near}
@@ -364,13 +369,13 @@ const MidAutumn: React.FC = () => (
 
     {/* the lantern string: one line sagging gently across the band, six lanterns on it */}
     <svg className={styles.string} viewBox="0 0 400 56" preserveAspectRatio="none" width="100%" height="56">
-      <path d="M0 2q200 14 400 0" fill="none" stroke={INK} strokeWidth="0.8" opacity="0.35" />
+      <path d={STRING_PATH} fill="none" stroke={INK} strokeWidth="0.8" opacity="0.35" />
     </svg>
     {[0.145, 0.29, 0.5, 0.71, 0.855].map((at) => (
       <svg
         key={at}
         className={styles.near}
-        style={{ left: `${at * 100}%`, top: 2 + 28 * at * (1 - at), transform: 'translateX(-50%)' }}
+        style={{ left: `${at * 100}%`, top: dropAt(at), transform: 'translateX(-50%)' }}
         viewBox="-4 0 8 14"
         width="8"
         height="14"
@@ -400,7 +405,7 @@ const BAT =
 /** One flag on the bunting, hung by a fraction of the width off the same sagging line
  *  the lanterns use. Orange and purple alternate down the string. */
 const BuntingFlag: React.FC<{ at: number; color: string }> = ({ at, color }) => {
-  const drop = 2 + 28 * at * (1 - at);
+  const drop = dropAt(at);
   return (
     <svg
       className={styles.near}
@@ -676,7 +681,7 @@ const Halloween: React.FC = () => (
     </svg>
     {/* bunting */}
     <svg className={styles.string} viewBox="0 0 400 56" preserveAspectRatio="none" width="100%" height="56">
-      <path d="M0 2q200 14 400 0" fill="none" stroke={INK} strokeWidth="0.8" opacity="0.35" />
+      <path d={STRING_PATH} fill="none" stroke={INK} strokeWidth="0.8" opacity="0.35" />
     </svg>
     {[0.06, 0.15, 0.24, 0.33, 0.42, 0.51, 0.6, 0.69, 0.78, 0.87, 0.95].map((at, i) => (
       <BuntingFlag key={at} at={at} color={i % 2 === 0 ? '#ef8a2c' : '#7a5cc6'} />
@@ -686,7 +691,7 @@ const Halloween: React.FC = () => (
       <svg
         key={at}
         className={styles.near}
-        style={{ left: `${at * 100}%`, top: 2 + 28 * at * (1 - at), transform: 'translateX(-50%)' }}
+        style={{ left: `${at * 100}%`, top: dropAt(at), transform: 'translateX(-50%)' }}
         viewBox="-5 0 10 12"
         width="10"
         height="12"
@@ -716,7 +721,7 @@ const Halloween: React.FC = () => (
 /** One bulb on the light string, hung by a fraction of the width off the same sagging
  *  line; the colours cycle, and two twinkle phases alternate along it. */
 const FairyLight: React.FC<{ at: number; color: string; late: boolean }> = ({ at, color, late }) => {
-  const drop = 2 + 28 * at * (1 - at);
+  const drop = dropAt(at);
   return (
     <svg
       className={`${styles.near} ${late ? motion.twinkleLate : motion.twinkle}`}
@@ -733,8 +738,6 @@ const FairyLight: React.FC<{ at: number; color: string; late: boolean }> = ({ at
     </svg>
   );
 };
-
-const LIGHT_COLORS = ['#ff5c5c', '#f5d777', '#5cc282', '#6fb3ff'];
 
 const Christmas: React.FC = () => (
   <>
@@ -1006,7 +1009,7 @@ const Christmas: React.FC = () => (
     </svg>
     {/* fairy lights */}
     <svg className={styles.string} viewBox="0 0 400 56" preserveAspectRatio="none" width="100%" height="56">
-      <path d="M0 2q200 14 400 0" fill="none" stroke="#8a8a96" strokeWidth="0.8" opacity="0.5" />
+      <path d={STRING_PATH} fill="none" stroke="#8a8a96" strokeWidth="0.8" opacity="0.5" />
     </svg>
     {[0.05, 0.13, 0.21, 0.29, 0.37, 0.45, 0.53, 0.61, 0.69, 0.77, 0.85, 0.93].map((at, i) => (
       <FairyLight key={at} at={at} color={LIGHT_COLORS[i % LIGHT_COLORS.length]} late={i % 2 === 1} />
@@ -1016,7 +1019,7 @@ const Christmas: React.FC = () => (
       <svg
         key={at}
         className={styles.near}
-        style={{ left: `${at * 100}%`, top: 2 + 28 * at * (1 - at), transform: 'translateX(-50%)' }}
+        style={{ left: `${at * 100}%`, top: dropAt(at), transform: 'translateX(-50%)' }}
         viewBox="-5 0 10 14"
         width="10"
         height="14"
@@ -1038,7 +1041,7 @@ const Christmas: React.FC = () => (
 /** A red lantern on the string, the New Year kind: round, red, a gold cap and foot, a
  *  tassel; hung off the same sagging curve as the other festivals' strings. */
 const RedLantern: React.FC<{ at: number; size: number }> = ({ at, size }) => {
-  const drop = 2 + 28 * at * (1 - at);
+  const drop = dropAt(at);
   return (
     <svg
       className={styles.near}
@@ -1397,7 +1400,7 @@ const LunarNewYear: React.FC = () => (
     </svg>
     {/* the lantern string */}
     <svg className={styles.string} viewBox="0 0 400 56" preserveAspectRatio="none" width="100%" height="56">
-      <path d="M0 2q200 14 400 0" fill="none" stroke="#d9a83f" strokeWidth="0.9" opacity="0.6" />
+      <path d={STRING_PATH} fill="none" stroke="#d9a83f" strokeWidth="0.9" opacity="0.6" />
     </svg>
     {[0.1, 0.22, 0.34, 0.46, 0.58, 0.7, 0.82].map((at, i) => (
       <RedLantern key={at} at={at} size={i % 2 === 0 ? 1.05 : 0.85} />
@@ -1407,7 +1410,7 @@ const LunarNewYear: React.FC = () => (
       <svg
         key={at}
         className={styles.near}
-        style={{ left: `${at * 100}%`, top: 2 + 28 * at * (1 - at), transform: 'translateX(-50%)' }}
+        style={{ left: `${at * 100}%`, top: dropAt(at), transform: 'translateX(-50%)' }}
         viewBox="-4 0 8 14"
         width="8"
         height="14"

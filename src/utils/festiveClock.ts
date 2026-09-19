@@ -26,3 +26,10 @@ export const phaseNow = (periodSeconds: number, now: number = Date.now(), shiftS
  *  header at the same fraction move together. Pairs with `.sway` in
  *  festiveMotion.module.css. */
 export const swayAt = (at: number): CSSProperties => ({ animationDelay: `${-(at * 9.7).toFixed(2)}s` });
+
+/** Where a hung thing's hook is, in px down from the top of its line's box, when it hangs
+ *  at fraction `at` of the line's width. Every line things hang from — the header's
+ *  string, the rail's echo of it — is one quadratic curve, `M0 <top> q<w/2> <sag> <w> 0`,
+ *  which is y = top + 2·sag·t·(1−t); reading the drop off the same curve as the path is
+ *  drawn from is what keeps things on the line whatever width it ends up. */
+export const hangAt = (at: number, sag: number, top: number): number => top + 2 * sag * at * (1 - at);
