@@ -112,3 +112,8 @@ export const readFestivalPreview = (): Festival | null => {
 export const currentFestival = (now: Date = new Date()): Festival | null => {
   return readFestivalPreview() ?? activeFestival(now);
 };
+
+/** The colour every festive silhouette is drawn in: the text colour, so it follows the
+ *  theme, at whatever opacity the drawing sets. One definition for the header, the rail,
+ *  the floor and the portholes. */
+export const FESTIVE_INK = 'var(--erd-color-text, rgba(0, 0, 0, 0.88))';

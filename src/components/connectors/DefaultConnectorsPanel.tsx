@@ -14,7 +14,7 @@ interface DefaultConnectorsPanelProps {
   onClose: () => void;
 }
 
-/** The user's default sources (CONTEXT.md, 預設 Connectors): what a new conversation opens
+/** The user's default Connectors (CONTEXT.md, 預設 Connectors): what a new conversation opens
  *  the Connectors panel on. Theirs, across conversations, and only a starting point —
  *  Submit here writes the preference and touches no session.
  *
@@ -35,6 +35,8 @@ const DefaultConnectorsPanel: React.FC<DefaultConnectorsPanelProps> = ({ open, o
     const served = new Set((catalogue.data ?? []).map((connector) => connector.id));
     return ids.filter((id) => served.has(id));
   }, [catalogue.data, ids]);
+
+  const retry = useCallback(() => void catalogue.refetch(), [catalogue]);
 
   const submit = useCallback(
     (next: string[]) => {
@@ -58,7 +60,7 @@ const DefaultConnectorsPanel: React.FC<DefaultConnectorsPanelProps> = ({ open, o
           <div role="alert">
             <p>{failure.heading}</p>
             <p>{failure.detail}</p>
-            <Button onClick={() => void catalogue.refetch()}>{t.common.retry}</Button>
+            <Button onClick={retry}>{t.common.retry}</Button>
           </div>
         )}
       </Modal>

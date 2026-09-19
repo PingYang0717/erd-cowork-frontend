@@ -2,12 +2,13 @@ import { CONNECTOR_PREFS_STORAGE_KEY } from '@/constants/storage';
 import type { Connector } from '@/types/api';
 import { apiClient } from './apiClient';
 
-/** The user's default sources (CONTEXT.md, 預設 Connectors): the combination a new
+/** The user's default Connectors (CONTEXT.md, 預設 Connectors): the combination a new
  *  conversation opens the Connectors panel on. Theirs, not any conversation's — set in
  *  the preferences, and never written to a session on their behalf.
  *
  *  Kept in this browser for now. It belongs on the backend as a user setting, and will
- *  move there; `useDefaultConnectors` is the seam, and nothing else reads this key. */
+ *  move there; `useDefaultConnectors` is the seam, and nothing else reads this key —
+ *  except the hook's own snapshot, which keys on the raw string to know when to re-read. */
 interface ConnectorPrefs {
   defaultConnectors: string[];
   /** The earlier shape: the combination last submitted in any conversation, which the
@@ -29,7 +30,7 @@ const readPrefs = (): ConnectorPrefs => {
   return { defaultConnectors: [] };
 };
 
-/** The user's default sources. Callers intersect it with the catalogue: an id the
+/** The user's default Connectors. Callers intersect it with the catalogue: an id the
  *  catalogue no longer serves cannot be offered, and must never reach the backend as
  *  part of a selection. */
 export const readDefaultConnectors = (): string[] => readPrefs().defaultConnectors;

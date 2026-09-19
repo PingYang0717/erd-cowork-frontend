@@ -36,7 +36,7 @@ import styles from './AppHeader.module.css';
  *
  *  Around a festival the bar dresses up (CONTEXT.md, 節慶裝飾): a small scene in the
  *  empty middle, and the avatar in a hat or, at Halloween, a pumpkin; the session rail
- *  echoes it (SessionRailFestive). The one thing on screen the design does not draw —
+ *  echoes it (FestiveString). The one thing on screen the design does not draw —
  *  recorded as a deliberate exception in ADR-0002 — and the one preference here that is
  *  not about the interface's language or colour: the third row switches it off for
  *  whoever would rather not. */

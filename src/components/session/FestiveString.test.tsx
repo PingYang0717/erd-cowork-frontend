@@ -11,7 +11,7 @@ const strings = () => document.querySelectorAll('[data-festive-rail="string"]');
 
 /** The rail's own echo of the header: the rule under the nav rows becomes the hung
  *  string. (The weather and the floor are the shared scene, tested with
- *  FestiveSurfaces.) Forced on through the preview key; decoration only. */
+ *  FestiveFloor.) Forced on through the preview key; decoration only. */
 describe('Session rail festive string', () => {
   afterEach(() => {
     vi.useRealTimers();

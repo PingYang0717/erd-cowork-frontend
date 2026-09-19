@@ -1,6 +1,6 @@
 import React from 'react';
 
-import type { Festival } from '@/utils/festival';
+import { type Festival, FESTIVE_INK as INK } from '@/utils/festival';
 import { swayAt } from '@/utils/festiveClock';
 
 import styles from './FestiveDecoration.module.css';
@@ -53,8 +53,6 @@ const PatternLayer: React.FC<PatternLayerProps> = ({ id, tile, className, opacit
     <rect width="100%" height="56" fill={`url(#${id})`} opacity={opacity} />
   </svg>
 );
-
-const INK = 'var(--erd-color-text, rgba(0, 0, 0, 0.88))';
 
 /** The festival's traveller: one figure that crosses the band left to right at `top`,
  *  then waits out of frame. `width` is what the track has to slide past to get it fully

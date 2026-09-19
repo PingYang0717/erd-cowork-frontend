@@ -13,14 +13,14 @@ import {
 import type { Festival } from '@/utils/festival';
 import { swayAt } from '@/utils/festiveClock';
 
-import styles from './SessionRailFestive.module.css';
+import styles from './FestiveString.module.css';
 import motion from '@/components/layouts/festiveMotion.module.css';
 
 /** The session rail's own echo of the header's festive scene (CONTEXT.md, 節慶裝飾): the
  *  rule under the Artifacts/Skills rows becomes the header's hung line — the same
  *  lanterns, flags, bulbs or red lanterns, smaller, swinging in step. The weather over
  *  the rail's top and the floor at its foot are not the rail's own: they are the scene
- *  every empty surface shares (`FestiveSurfaces`), and the rail draws its stretch of
+ *  every empty surface shares (`FestiveFloor`), and the rail draws its stretch of
  *  them the way the empty panes draw theirs. */
 
 interface RailFestiveProps {

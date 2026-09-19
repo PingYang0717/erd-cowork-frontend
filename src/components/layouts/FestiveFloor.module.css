@@ -1,4 +1,4 @@
-/* The festive scene below the header (FestiveSurfaces): the floor along a surface's
+/* The festive scene below the header (FestiveFloor): the floor along a surface's
    foot, and the weather coming down onto it. Animation classes for what never stops — swing,
    breath, twinkle, the falling sheet — come from the header's stylesheet
    (FestiveDecoration.module.css) so they run at the same pace here. */
@@ -809,25 +809,6 @@
   }
   80% {
     transform: rotate(3deg);
-  }
-}
-
-/* Off to the right, out of the strip, then back in from the same side. */
-@keyframes run-off {
-  0% {
-    transform: translateX(0) scale(1, 1);
-  }
-  8% {
-    transform: translateX(0) scale(0.9, 1.25);
-  }
-  45% {
-    transform: translateX(160px);
-  }
-  55% {
-    transform: translateX(160px);
-  }
-  100% {
-    transform: translateX(0);
   }
 }
 

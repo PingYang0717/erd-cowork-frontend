@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { render } from '@testing-library/react';
 
-import EmptyPorthole from './EmptyStateFestive';
+import EmptyPorthole from './EmptyPorthole';
 
 /** A pane 950px wide with its window centred 475px from the edge the creature crosses:
  *  the left pane's right edge, the right pane's left. jsdom lays nothing out, so the

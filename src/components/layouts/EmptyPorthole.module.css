@@ -1,11 +1,11 @@
-/* The empty panes' porthole and the creature that passes through both (EmptyStateFestive).
+/* The empty panes' porthole and the creature that passes through both (EmptyPorthole).
 
    Everything here runs off custom properties. On the porthole: `--loop`, the one period
    the whole piece shares; `--home`, the creature's one size; `--dy`, how far the flight
    drifts down (up, when negative) by its far end so that it is on the shared flight line
    at the pane's edge. On the leg: `--phase`, where in the loop it stands — read off the
    wall clock and shifted so that the creature crosses this pane's edge at the instant
-   both panes agree on (EmptyStateFestive, HANDOFF_SHARE). That shift is the entire
+   both panes agree on (EmptyPorthole, HANDOFF_SHARE). That shift is the entire
    mechanism behind the hand-off: no message between the panes.
 
    One creature, one direction, one leg a pane. The thread pane draws `out`: up out of
@@ -94,12 +94,6 @@
   animation: body-bob 1s ease-in-out infinite;
 }
 
-/* Santa's arm, waving from the shoulder. */
-.wave {
-  transform-origin: 0% 100%;
-  animation: arm-wave 0.9s ease-in-out infinite alternate;
-}
-
 /* Chang'e's ribbons, streaming from where they meet the gown. */
 .flutter {
   transform-origin: 100% 50%;
@@ -123,15 +117,6 @@
   }
   to {
     transform: translateY(-56px);
-  }
-}
-
-@keyframes arm-wave {
-  from {
-    transform: rotate(-14deg);
-  }
-  to {
-    transform: rotate(12deg);
   }
 }
 

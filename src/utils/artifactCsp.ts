@@ -1,5 +1,3 @@
-import { withHead } from './artifactHead';
-
 /** An Artifact is a whole HTML document the agent wrote, and `sandbox="allow-scripts"`
  *  only stops it reaching back into this app. It does not stop it reaching out: a buggy
  *  or hostile artifact can still fetch, and take the data it was given with it. The
@@ -46,5 +44,3 @@ export const addCspMeta = (doc: Document, origin: string): void => {
   meta.setAttribute('content', buildPolicy(origin));
   doc.head.insertBefore(meta, doc.head.firstChild);
 };
-
-export const injectCspMeta = (html: string, origin: string): string => withHead(html, (doc) => addCspMeta(doc, origin));

@@ -10,13 +10,13 @@ import {
   ThunderboltOutlined,
 } from '@ant-design/icons';
 
-import FestiveFloor from '@/components/layouts/FestiveSurfaces';
+import FestiveFloor from '@/components/layouts/FestiveFloor';
 import { useFestival } from '@/hooks/useFestival';
 import { useSessionGroups } from '@/hooks/useSessionGroups';
 import { useTranslations } from '@/i18n/useTranslations';
 import { usePublishCoachStore } from '@/stores/usePublishCoachStore';
 import type { Session } from '@/types/api/session';
-import FestiveString from './SessionRailFestive';
+import FestiveString from './FestiveString';
 import SessionRow from './SessionRow';
 
 import styles from './SessionList.module.css';
@@ -134,8 +134,8 @@ const SessionList: React.FC<SessionListProps> = ({ onCollapse, artifactsCount })
   const location = useLocation();
   const isCoaching = usePublishCoachStore((s) => s.isActive);
   // Around a festival the rail joins the header's scene in the two places the mockup
-  // leaves empty: its own hung string (SessionRailFestive), and its stretch of the floor
-  // every empty surface shares, with the weather coming down onto it (FestiveSurfaces).
+  // leaves empty: its own hung string (FestiveString), and its stretch of the floor
+  // every empty surface shares, with the weather coming down onto it (FestiveFloor).
   // Same switch and calendar as the header.
   const festival = useFestival();
   const { pinned, recent, draftSessionId, selectedSessionId, selectAndNavigate, createAndNavigate } =

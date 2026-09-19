@@ -3,7 +3,7 @@ import { useCallback, useSyncExternalStore } from 'react';
 import { readDefaultConnectors, writeDefaultConnectors } from '@/api/connectorApi';
 import { CONNECTOR_PREFS_STORAGE_KEY } from '@/constants/storage';
 
-/** The user's default sources (CONTEXT.md, 預設 Connectors), read and written.
+/** The user's default Connectors (CONTEXT.md, 預設 Connectors), read and written.
  *
  *  The one seam between "the user has a default combination" and where it is kept. It
  *  is this browser's localStorage today; it becomes a backend user setting later, and

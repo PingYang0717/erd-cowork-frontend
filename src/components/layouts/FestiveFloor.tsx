@@ -10,8 +10,6 @@ import {
   CauldronMotif,
   DrumMotif,
   GingerbreadMotif,
-  GROUND_BACKDROPS,
-  GROUND_TILE,
   IngotsMotif,
   LampPostMotif,
   LionWalker,
@@ -29,11 +27,11 @@ import {
   SnowmanMotif,
   TeaSetMotif,
   TombstonesMotif,
-  WEATHER_TILES,
 } from './festiveMotifs';
+import { GROUND_BACKDROPS, GROUND_TILE, WEATHER_TILES } from './festiveTiles';
 
 import fd from './FestiveDecoration.module.css';
-import styles from './FestiveSurfaces.module.css';
+import styles from './FestiveFloor.module.css';
 
 /** The festive scene below the header, on the surfaces that are empty anyway
  *  (CONTEXT.md, 節慶裝飾): the session rail, the thread pane with no conversation open,
@@ -73,7 +71,7 @@ import styles from './FestiveSurfaces.module.css';
 
 /** Where the scene is being drawn. `compact` is the collapsed rail: one piece, no side
  *  room, and the walker passing through like everywhere else. */
-export type FestiveSurface = 'rail' | 'compact' | 'chat' | 'artifact';
+type FestiveSurface = 'rail' | 'compact' | 'chat' | 'artifact';
 
 interface SurfaceProps {
   festival: Festival;
@@ -516,14 +514,6 @@ const burstFor = (kind: PieceKind): React.ReactNode => {
         <g className={styles.flyUp} fill="#c9c9d2">
           <circle cx="26" cy="-2" r="2.4" style={{ ['--fly-x' as string]: '-3px' }} />
           <circle cx="27" cy="-4" r="1.8" style={{ ['--fly-x' as string]: '4px' }} />
-        </g>
-      );
-    case 'cauldron':
-      return (
-        <g className={styles.flyUp} fill="#7ed957">
-          <circle cx="7" cy="5" r="1.6" style={{ ['--fly-x' as string]: '-5px' }} />
-          <circle cx="12" cy="3" r="2" style={{ ['--fly-x' as string]: '0px' }} />
-          <circle cx="17" cy="5" r="1.4" style={{ ['--fly-x' as string]: '5px' }} />
         </g>
       );
     case 'teaSet':

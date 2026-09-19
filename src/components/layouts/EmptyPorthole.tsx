@@ -1,11 +1,11 @@
 import React, { useLayoutEffect, useRef, useState } from 'react';
 
 import { clippingBox, clippingElement } from '@/utils/clippingBox';
-import type { Festival } from '@/utils/festival';
+import { type Festival, FESTIVE_INK as INK } from '@/utils/festival';
 import { phaseNow } from '@/utils/festiveClock';
-import { GROUND_BACKDROPS, WEATHER_TILES } from './festiveMotifs';
+import { GROUND_BACKDROPS, WEATHER_TILES } from './festiveTiles';
 
-import styles from './EmptyStateFestive.module.css';
+import styles from './EmptyPorthole.module.css';
 
 /** The two empty panes' festive centrepiece (CONTEXT.md, 節慶裝飾): a round window where
  *  the icon tile usually sits, and one creature that passes through the pair of them,
@@ -13,12 +13,12 @@ import styles from './EmptyStateFestive.module.css';
  *  out of the distance in the thread pane's window, drifts across it and out at the
  *  rim, flies across the pane and over the rule, in at the Artifact pane's window,
  *  drifts to its middle, and goes off into the distance again. Then the street is
- *  quiet for a few seconds, and it comes again. One creature, one direction, always
- *  the same size — the window is a window, not a lens.
+ *  quiet for a second or two, and it comes again. One creature, one direction, and once
+ *  it is near, one size — the window is a window, not a lens.
  *
  *  It has to come round quickly: these panes are on screen only until the first
  *  message, so a story that took a minute would never be seen. The loop is 14s; the
- *  story takes about eleven of them, the crossing itself about 2.5s — unhurried, so the
+ *  story takes twelve or so of them, the crossing itself about 2.5s — unhurried, so the
  *  eye can follow it over the rule.
  *
  *  Nothing is exchanged between the panes — they cannot see each other. Both run the
@@ -38,8 +38,6 @@ import styles from './EmptyStateFestive.module.css';
  *  New Year street, a ghost under the Halloween tree, and Chang'e flying in the
  *  Mid-Autumn moon. */
 
-const INK = 'var(--erd-color-text, rgba(0, 0, 0, 0.88))';
-
 /** The loop: the story, then the quiet. Short on purpose — see above. */
 const LOOP_S = 14;
 
@@ -51,6 +49,10 @@ const HANDOFF_SHARE = 0.5;
  *  Artifact pane it arriving. */
 type Leg = 'out' | 'in';
 
+/** The far end of the flight in px: the drift is stated there, and the keyframes spread
+ *  it linearly from the window. */
+const FLIGHT_PX = 760;
+
 /** The legs in the CSS keyframes' own terms — the steady stretch of each, as (share of
  *  the loop, distance of the creature's centre from the window in px). One speed on
  *  both, 660px over 18% of the loop (about 260px/s), between 100px from the window
@@ -59,18 +61,20 @@ type Leg = 'out' | 'in';
  *  falls in this stretch for any pane this app lays out; nearer or farther is clamped
  *  (`EDGE_PX`). Kept in step with `leg-out` / `leg-in` in the stylesheet by hand. */
 const FLIGHT: Record<Leg, { fromShare: number; fromPx: number; toShare: number; toPx: number }> = {
-  out: { fromShare: 0.413, fromPx: 100, toShare: 0.593, toPx: 760 },
-  in: { fromShare: 0.413, fromPx: 760, toShare: 0.593, toPx: 100 },
+  out: { fromShare: 0.413, fromPx: 100, toShare: 0.593, toPx: FLIGHT_PX },
+  in: { fromShare: 0.413, fromPx: FLIGHT_PX, toShare: 0.593, toPx: 100 },
 };
 
 /** How near or far the edge is taken to be, whatever is measured: within the steady
  *  stretch. Nearer, the creature is still picking up speed when it crosses; farther,
  *  it is already in the pane when the stretch begins. */
-const EDGE_PX = { min: 100, max: 760 } as const;
+const EDGE_PX = { min: 100, max: FLIGHT_PX } as const;
 
-/** Where the creature is assumed to cross until the pane has been measured: about the
- *  middle of the flight. Replaced before first paint. */
-const UNMEASURED_PX = 388;
+const clampEdge = (distance: number): number => Math.min(EDGE_PX.max, Math.max(EDGE_PX.min, distance));
+
+/** Where the creature is assumed to cross until the pane has been measured: the middle
+ *  of the steady stretch. Replaced before first paint. */
+const UNMEASURED_PX = (EDGE_PX.min + EDGE_PX.max) / 2;
 
 /** The height the creature crosses the rule at, as a share of the window's height — the
  *  other thing both panes agree on. The two windows do not sit at one height (the thread
@@ -78,18 +82,13 @@ const UNMEASURED_PX = 388;
  *  window is from this line and lets the flight drift to it by the edge. */
 const FLIGHT_LINE_SHARE = 0.465;
 
-/** The far end of the flight in px: the drift is stated there, and the keyframes spread
- *  it linearly from the window. */
-const FLIGHT_PX = 760;
-
 /** The header slides one 56px weather tile in 14s; the window's tile is the same. */
 const WEATHER_S = 14;
 
-/* ---------- the residents ---------- */
+/* ---------- the creatures ---------- */
 
-/** Every resident is drawn with its own gradients, so it takes an `id` to keep them
- *  apart: the same creature is drawn twice a pane (at home and out in the pane) and in
- *  both panes. */
+/** Every creature is drawn with its own gradients, so it takes an `id` to keep them
+ *  apart: the same creature is drawn in both panes. */
 interface CreatureProps {
   id: string;
 }
@@ -336,7 +335,7 @@ interface Scene {
     draw: (id: string) => React.ReactNode;
     width: number;
     height: number;
-    /** How large it is drawn behind the glass, as a share of its own size. */
+    /** How large it is drawn, as a share of its own size: its one size, once it is near. */
     homeScale: number;
   };
 }
@@ -437,7 +436,7 @@ interface PanelProps {
  *  at the pane's edge, when that is what is measured. */
 const edgeShare = (leg: Leg, distance: number): number => {
   const flight = FLIGHT[leg];
-  const edge = Math.min(EDGE_PX.max, Math.max(EDGE_PX.min, distance));
+  const edge = clampEdge(distance);
   const along = (edge - flight.fromPx) / (flight.toPx - flight.fromPx);
   return flight.fromShare + along * (flight.toShare - flight.fromShare);
 };
@@ -464,9 +463,11 @@ const edgeGeometry = (porthole: HTMLElement, panel: PanelProps['panel']): EdgeGe
   const centre = box.left + box.width / 2;
   const distance = panel === 'left' ? pane.right - centre : centre - pane.left;
   // The drift is linear from the window, so the amount at the flight's far end is the
-  // amount wanted at the edge scaled up by the far end over the edge's distance.
+  // amount wanted at the edge scaled up by the far end over the edge's distance — the
+  // edge as the phase takes it (`edgeShare`), so that at the hand-off the creature is
+  // on the line whichever way the measurement was clamped.
   const toLine = window.innerHeight * FLIGHT_LINE_SHARE - (box.top + box.height / 2);
-  const drift = (toLine * FLIGHT_PX) / Math.max(distance, EDGE_PX.min);
+  const drift = (toLine * FLIGHT_PX) / clampEdge(distance);
   return { distance, drift };
 };
 
@@ -579,9 +580,9 @@ const EmptyPorthole: React.FC<PanelProps> = ({ festival, panel }) => {
       style={{
         ['--loop' as string]: `${LOOP_S}s`,
         ['--dy' as string]: `${phase.drift.toFixed(1)}px`,
-        // The creature's one size: what it was drawn at as the window's resident
-        // (homeScale of the 120-unit view in 118px), over the 1.2× the leg draws it at.
-        ['--home' as string]: ((creature.homeScale * 118) / 144).toFixed(3),
+        // The creature's one size: homeScale of the window's 120-unit view, in the 118px
+        // the window is drawn at.
+        ['--home' as string]: ((creature.homeScale * 118) / 120).toFixed(3),
       }}
     >
       <svg viewBox="0 0 120 120" width="118" height="118" overflow="visible">
@@ -599,9 +600,9 @@ const EmptyPorthole: React.FC<PanelProps> = ({ festival, panel }) => {
       >
         <svg
           viewBox={`0 0 ${creature.width} ${creature.height}`}
-          width={creature.width * 1.2}
-          height={creature.height * 1.2}
-          style={{ left: -(creature.width * 1.2) / 2, top: -(creature.height * 1.2) / 2 }}
+          width={creature.width}
+          height={creature.height}
+          style={{ left: -creature.width / 2, top: -creature.height / 2 }}
           overflow="visible"
         >
           {creature.draw(`ph-${panel}-${festival}-${leg}`)}

@@ -1,11 +1,15 @@
 import { describe, expect, it } from 'vitest';
 
-import { ARTIFACT_SCROLLBAR_CSS, injectScrollbarStyle } from './artifactScrollbar';
+import { withHead } from './artifactHead';
+import { addScrollbarStyle, ARTIFACT_SCROLLBAR_CSS } from './artifactScrollbar';
+
+/** The rules written the way `ArtifactFrame` writes them: through one `withHead`. */
+const injectScrollbarStyle = (html: string): string => withHead(html, addScrollbarStyle);
 
 const scrollbarStyle = (html: string): HTMLStyleElement | null =>
   new DOMParser().parseFromString(html, 'text/html').head.querySelector('style[data-erd="scrollbar"]');
 
-describe('injectScrollbarStyle', () => {
+describe('addScrollbarStyle', () => {
   it('puts the rules last in <head>, after the artifact’s own styles', () => {
     const html = '<!doctype html><html><head><style>body{margin:0}</style></head><body></body></html>';
 

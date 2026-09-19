@@ -2,8 +2,8 @@ import React, { type ReactNode, useCallback, useEffect, useRef, useState } from 
 import { ThunderboltFilled } from '@ant-design/icons';
 
 import DataBoundary from '@/components/common/DataBoundary';
-import EmptyPorthole from '@/components/layouts/EmptyStateFestive';
-import FestiveFloor from '@/components/layouts/FestiveSurfaces';
+import EmptyPorthole from '@/components/layouts/EmptyPorthole';
+import FestiveFloor from '@/components/layouts/FestiveFloor';
 import { isInterruptionRecord } from '@/constants/wireStrings';
 import { type SendInput, useAgentStream } from '@/hooks/useAgentStream';
 import { useArtifactRepair } from '@/hooks/useArtifactRepair';
@@ -44,7 +44,7 @@ interface EmptyStateProps {
 }
 
 /** The empty state, before a conversation or before its first message. Around a
- *  festival the icon tile steps aside for the porthole (EmptyStateFestive): a 52px
+ *  festival the icon tile steps aside for the porthole (EmptyPorthole): a 52px
  *  square with things hung off it was a tile with trinkets on, and the point of the
  *  window is that it is a place, which needs the room. */
 const EmptyState: React.FC<EmptyStateProps> = ({ heading, subtitle }) => {
@@ -89,7 +89,7 @@ const ThreadPanel: React.FC = () => {
           <EmptyState heading={t.studio.emptyNoSessionHeading} subtitle={t.studio.emptyNoSessionSubtitle} />
         </div>
       )}
-      {/* The pane's stretch of the floor that runs along the window's foot (FestiveSurfaces),
+      {/* The pane's stretch of the floor that runs along the window's foot (FestiveFloor),
           behind the composer, with the weather coming down onto it: the composer card stands
           on the ground, and the walker passes behind it with its feet showing under the
           card. Without this the floor stopped at the rail's edge and started again at the

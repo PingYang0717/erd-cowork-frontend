@@ -1,8 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import { injectCspMeta } from './artifactCsp';
+import { addCspMeta } from './artifactCsp';
+import { withHead } from './artifactHead';
 
 const ORIGIN = 'https://erd.example.com';
+
+/** The policy written the way `ArtifactFrame` writes it: through one `withHead`. */
+const injectCspMeta = (html: string, origin: string): string => withHead(html, (doc) => addCspMeta(doc, origin));
 
 const policyOf = (html: string): string => {
   const match = /<meta http-equiv="Content-Security-Policy" content="([^"]+)">/.exec(html);
@@ -22,7 +26,7 @@ const parsedPolicy = (html: string): { inHead: boolean; isFirstInHead: boolean }
   };
 };
 
-describe('injectCspMeta', () => {
+describe('addCspMeta', () => {
   it('puts the policy first inside <head>, before anything the document loads', () => {
     const html = '<!doctype html><html><head><title>x</title></head><body></body></html>';
 

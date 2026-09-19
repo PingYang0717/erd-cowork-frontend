@@ -3,8 +3,8 @@ import { AppstoreOutlined, CheckOutlined, ExportOutlined, ReloadOutlined, ShareA
 
 import { isNotFound } from '@/api/apiError';
 import Tooltip from '@/components/common/Tooltip';
-import EmptyPorthole from '@/components/layouts/EmptyStateFestive';
-import FestiveFloor from '@/components/layouts/FestiveSurfaces';
+import EmptyPorthole from '@/components/layouts/EmptyPorthole';
+import FestiveFloor from '@/components/layouts/FestiveFloor';
 import { useArtifactContent } from '@/hooks/useArtifactContent';
 import { usePublishArtifact } from '@/hooks/useArtifactMutations';
 import { useArtifacts } from '@/hooks/useArtifacts';
@@ -26,8 +26,8 @@ import VersionSwitcher from './VersionSwitcher';
 import styles from './ArtifactPanel.module.css';
 
 /** The pane with nothing to show. Around a festival it gets its stretch of the floor
- *  along its foot, with the scene's weather coming down onto it (FestiveSurfaces), and
- *  the icon tile steps aside for the porthole (EmptyStateFestive) — the pair of windows
+ *  along its foot, with the scene's weather coming down onto it (FestiveFloor), and
+ *  the icon tile steps aside for the porthole (EmptyPorthole) — the pair of windows
  *  is what the creature crosses between. */
 const EmptyPanel: React.FC = () => {
   const t = useTranslations();

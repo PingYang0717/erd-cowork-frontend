@@ -9,19 +9,19 @@ import { renderStudio, waitForComposer } from '@/test/renderStudio';
 import { answerAnalysisConditions, publishArtifactAs } from '@/test/studioRun';
 
 const artifactsNav = () => {
-  // Name starts with the label ("Artifacts" + badge count); the toast's
+  // Name starts with the label ("Artifacts" + badge count); the flyout's
   // 前往 Artifacts button doesn't match the anchor.
   return screen.findByRole('button', { name: /^Artifacts/ });
 };
 
-describe('Publish feedback: badge count, coach highlight, toast', () => {
+describe('Publish feedback: badge count, coach highlight, flyout', () => {
   beforeEach(() => {
     useStudioLayoutStore.setState(useStudioLayoutStore.getInitialState());
     useSessionSelectionStore.setState(useSessionSelectionStore.getInitialState());
     useThemeStore.setState(useThemeStore.getInitialState());
   });
 
-  it('counts only published Artifacts in the rail badge, increments on publish, coaches the nav entry, and offers a toast', async () => {
+  it('counts only published Artifacts in the rail badge, increments on publish, coaches the nav entry, and offers a flyout', async () => {
     const user = userEvent.setup();
     renderStudio();
 
@@ -44,18 +44,18 @@ describe('Publish feedback: badge count, coach highlight, toast', () => {
 
     await publishArtifactAs(user);
 
-    // Badge +1, coach highlight on, toast with both actions.
+    // Badge +1, coach highlight on, flyout with both actions.
     expect(await within(await artifactsNav()).findByText('4')).toBeInTheDocument();
     expect(await artifactsNav()).toHaveAttribute('data-coach', 'true');
 
-    const toast = await screen.findByRole('status', { name: 'Artifact published' });
-    expect(within(toast).getByRole('button', { name: 'Go to Artifacts' })).toBeInTheDocument();
-    expect(within(toast).getByRole('button', { name: 'Got it' })).toBeInTheDocument();
+    const flyout = await screen.findByRole('status', { name: 'Artifact published' });
+    expect(within(flyout).getByRole('button', { name: 'Go to Artifacts' })).toBeInTheDocument();
+    expect(within(flyout).getByRole('button', { name: 'Got it' })).toBeInTheDocument();
   });
 
   /** The coach points at the Artifacts entry; arriving there is what it was asking for,
    *  so that is where it ends — however the user got there. Reaching the Gallery by
-   *  pressing the entry itself, rather than through the toast, used to leave the
+   *  pressing the entry itself, rather than through the flyout, used to leave the
    *  highlight pulsing for the rest of the session. */
   it('stops coaching once the user reaches the Gallery by the rail entry', async () => {
     const user = userEvent.setup();
@@ -71,13 +71,13 @@ describe('Publish feedback: badge count, coach highlight, toast', () => {
     await publishArtifactAs(user);
     expect(await artifactsNav()).toHaveAttribute('data-coach', 'true');
 
-    // The rail entry, not the toast's shortcut.
+    // The rail entry, not the flyout's shortcut.
     await user.click(await artifactsNav());
 
     await waitFor(async () => expect(await artifactsNav()).not.toHaveAttribute('data-coach'));
   });
 
-  it('知道了 dismisses the toast and coach; 前往 Artifacts navigates to the gallery', async () => {
+  it('知道了 dismisses the flyout and coach; 前往 Artifacts navigates to the gallery', async () => {
     const user = userEvent.setup();
     renderStudio();
 
@@ -89,17 +89,17 @@ describe('Publish feedback: badge count, coach highlight, toast', () => {
     await screen.findByRole('button', { name: 'Publish Artifact' }, { timeout: 5000 });
     await publishArtifactAs(user);
 
-    const toast = await screen.findByRole('status', { name: 'Artifact published' });
-    await user.click(within(toast).getByRole('button', { name: 'Got it' }));
+    const flyout = await screen.findByRole('status', { name: 'Artifact published' });
+    await user.click(within(flyout).getByRole('button', { name: 'Got it' }));
     expect(screen.queryByRole('status', { name: 'Artifact published' })).not.toBeInTheDocument();
     expect(await artifactsNav()).not.toHaveAttribute('data-coach');
 
-    // Publish another version to bring the toast back, then navigate.
+    // Publish another version to bring the flyout back, then navigate.
     await user.type(await screen.findByRole('textbox', { name: 'Message' }), 'Regenerate the dashboard.{Enter}');
     await screen.findByRole('button', { name: 'Publish Artifact' });
     await publishArtifactAs(user);
-    const toast2 = await screen.findByRole('status', { name: 'Artifact published' });
-    await user.click(within(toast2).getByRole('button', { name: 'Go to Artifacts' }));
+    const flyout2 = await screen.findByRole('status', { name: 'Artifact published' });
+    await user.click(within(flyout2).getByRole('button', { name: 'Go to Artifacts' }));
 
     expect(await screen.findByRole('heading', { name: 'Artifacts' })).toBeInTheDocument();
   });

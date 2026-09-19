@@ -9,12 +9,12 @@ import {
   ThunderboltOutlined,
 } from '@ant-design/icons';
 
-import FestiveFloor from '@/components/layouts/FestiveSurfaces';
+import FestiveFloor from '@/components/layouts/FestiveFloor';
 import { useFestival } from '@/hooks/useFestival';
 import { useSessionGroups } from '@/hooks/useSessionGroups';
 import { useTranslations } from '@/i18n/useTranslations';
+import FestiveString from './FestiveString';
 import { SessionGroup } from './SessionList';
-import FestiveString from './SessionRailFestive';
 
 import styles from './CollapsedSessionRail.module.css';
 

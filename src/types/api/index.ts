@@ -15,6 +15,5 @@ export { KNOWN_MCP_ERROR_CODES } from './mcpCall';
 export type { KnownMcpErrorCode, McpCallBody, McpError, McpErrorCode, McpResult } from './mcpCall';
 export type { Message } from './message';
 export type { Scenario, ScenarioKey } from './scenario';
-export type { ScheduleJob, ScheduleJobStatus } from './scheduleJob';
 export type { Session, SessionDetail } from './session';
 export type { UploadedFileInfo } from './upload';

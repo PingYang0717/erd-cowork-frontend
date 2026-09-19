@@ -5,7 +5,8 @@
 
 /** The known codes, written out once: the type below is derived from this list, and so
  *  is the check that narrows a backend `code` to one of them (`useMcpCallBridge`), so the
- *  two cannot drift apart. */
+ *  two cannot drift apart. That check is the one place the list is read as a whole, and
+ *  only to trust a known code riding a non-200 over its status. */
 export const KNOWN_MCP_ERROR_CODES = [
   'AUTH',
   'RETRYABLE',
@@ -18,9 +19,9 @@ export const KNOWN_MCP_ERROR_CODES = [
 
 export type KnownMcpErrorCode = (typeof KNOWN_MCP_ERROR_CODES)[number];
 
-/** Open union: the frontend never branches on the whole list — it forwards whatever the
- *  backend sends — and the backend will add to it. Only the two `REPAIR` ones are read
- *  by name. */
+/** Open union: the frontend forwards whatever the backend sends, and the backend will
+ *  add to it. Only `TOOL_ERROR` and `INVALID_CALL` are read by name (they offer a
+ *  repair). */
 export type McpErrorCode = KnownMcpErrorCode | (string & {});
 
 export interface McpError {

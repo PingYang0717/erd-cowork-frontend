@@ -1,5 +1,5 @@
 /* Motion shared by the header scene (FestiveDecoration) and the session rail's hung
-   line (SessionRailFestive): what hangs swings, what glows twinkles. One place, so a
+   line (FestiveString): what hangs swings, what glows twinkles. One place, so a
    lantern on the rail and one in the header move by the same rule. */
 
 /* Hung things swing a little at the top, as if in a breeze: a few degrees, slow, each
