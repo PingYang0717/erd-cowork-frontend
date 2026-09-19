@@ -74,11 +74,11 @@ describe('The empty panes’ porthole', () => {
   /** The hand-off is a phase, not a message: both panes read the clock and agree on one
    *  instant in the 14s loop — its middle — at which the creature is at the rule between
    *  them. Each pane shifts its leg so that the creature crosses its own edge right then.
-   *  With the edge 475px from either window, the leg out crosses it 44.6% of the way
-   *  through its keyframes and the leg in 43.5% (the steady flights are 40–48.1%, 100px
-   *  to 760px): the thread pane's leg runs 0.756s behind the clock, the Artifact pane's
-   *  0.910s behind. Both read the clock, so the offsets hold however far apart the two
-   *  panes mounted. */
+   *  With the edge 475px from either window, the leg out crosses it 51.5% of the way
+   *  through its keyframes and the leg in 49.1% (the steady flights are 41.3–59.3%,
+   *  100px to 760px): the thread pane's leg runs 0.214s ahead of the clock, the Artifact
+   *  pane's 0.130s behind. Both read the clock, so the offsets hold however far apart
+   *  the two panes mounted. */
   it('shifts each pane so its creature crosses the rule at the instant both agree on', () => {
     layOut();
     vi.useFakeTimers({ toFake: ['Date'] });
@@ -86,8 +86,8 @@ describe('The empty panes’ porthole', () => {
     const { container: left } = renderInPane('left');
     const { container: right } = renderInPane('right');
 
-    expect(phase(left)).toBe('-9.244s');
-    expect(phase(right)).toBe('-9.090s');
+    expect(phase(left)).toBe('-10.214s');
+    expect(phase(right)).toBe('-9.870s');
   });
 
   /** The two windows are not at one height, so each flight drifts towards the one line

@@ -17,15 +17,15 @@
      out   0–6%       gone
            6–27.5     comes up out of the distance to the middle of the window
            27.5–36.8  drifts to the rim (45px, slowly)
-           36.8–40    out through the rim, picking up speed, to 100px
-           40–48.1    flight, 100px to 760px at one speed
-           48.1–100   gone
-     in    0–40       gone
-           40–48.1    flight, 760px to 100px at the same speed
-           48.1–51.3  in through the rim, slowing, to 45px
-           51.3–60.6  drifts to the middle (45px, slowly)
-           60.6–82    goes off into the distance
-           82–100     gone */
+           36.8–41.3  out through the rim, gathering speed, to 100px
+           41.3–59.3  flight, 100px to 760px at one unhurried speed
+           59.3–100   gone
+     in    0–41.3     gone
+           41.3–59.3  flight, 760px to 100px at the same speed
+           59.3–63.8  in through the rim, easing off, to 45px
+           63.8–73.1  drifts to the middle (45px, slowly)
+           73.1–94.6  goes off into the distance
+           94.6–100   gone */
 
 .porthole {
   position: relative;
@@ -179,58 +179,58 @@
     transform: translate(45px, 0) scale(var(--home));
     animation-timing-function: ease-in;
   }
-  40% {
+  41.3% {
     opacity: 1;
     transform: translate(100px, calc(var(--dy, 0px) * 0.13)) scale(var(--home));
   }
-  48.1% {
+  59.3% {
     opacity: 1;
     transform: translate(760px, var(--dy, 0px)) scale(var(--home));
   }
-  48.2%,
+  59.4%,
   100% {
     opacity: 0;
     transform: translate(760px, var(--dy, 0px)) scale(var(--home));
   }
 }
 
-/* In from beyond the pane's edge at the same speed, slowing through the rim, the slow
+/* In from beyond the pane's edge at the same speed, easing off through the rim, the slow
    drift to the middle, and then off into the distance — up and to the right, shrinking
    and fading, the way it came in on the other side. */
 @keyframes leg-in {
   0%,
-  39.9% {
+  41.2% {
     opacity: 0;
     transform: translate(-760px, var(--dy, 0px)) scale(var(--home));
   }
-  40% {
+  41.3% {
     opacity: 1;
     transform: translate(-760px, var(--dy, 0px)) scale(var(--home));
   }
-  48.1% {
+  59.3% {
     opacity: 1;
     transform: translate(-100px, calc(var(--dy, 0px) * 0.13)) scale(var(--home));
     animation-timing-function: ease-out;
   }
-  51.3% {
+  63.8% {
     opacity: 1;
     transform: translate(-45px, 0) scale(var(--home));
   }
-  60.6% {
+  73.1% {
     opacity: 1;
     transform: translate(0, 0) scale(var(--home));
     animation-timing-function: ease-in;
   }
-  72% {
+  84.5% {
     opacity: 0.85;
     transform: translate(11px, -6px) scale(calc(var(--home) * 0.45));
     animation-timing-function: ease-in;
   }
-  82% {
+  94.6% {
     opacity: 0;
     transform: translate(18px, -10px) scale(calc(var(--home) * 0.12));
   }
-  82.1%,
+  94.7%,
   100% {
     opacity: 0;
     transform: translate(18px, -10px) scale(calc(var(--home) * 0.12));

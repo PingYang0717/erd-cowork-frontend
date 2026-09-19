@@ -18,7 +18,8 @@ import styles from './EmptyStateFestive.module.css';
  *
  *  It has to come round quickly: these panes are on screen only until the first
  *  message, so a story that took a minute would never be seen. The loop is 14s; the
- *  story takes about ten of them, the crossing itself about 1.3s.
+ *  story takes about eleven of them, the crossing itself about 2.5s — unhurried, so the
+ *  eye can follow it over the rule.
  *
  *  Nothing is exchanged between the panes — they cannot see each other. Both run the
  *  loop off the wall clock (`phaseNow`) and agree on one instant in it: the hand-off,
@@ -52,14 +53,14 @@ type Leg = 'out' | 'in';
 
 /** The legs in the CSS keyframes' own terms — the steady stretch of each, as (share of
  *  the loop, distance of the creature's centre from the window in px). One speed on
- *  both, 660px over 8.1% of the loop (about 580px/s), between 100px from the window
+ *  both, 660px over 18% of the loop (about 260px/s), between 100px from the window
  *  (where the creature has finished picking up speed) and 760px: the two halves of the
  *  crossing can only meet at the rule if they cross it at the same speed. A pane's edge
  *  falls in this stretch for any pane this app lays out; nearer or farther is clamped
  *  (`EDGE_PX`). Kept in step with `leg-out` / `leg-in` in the stylesheet by hand. */
 const FLIGHT: Record<Leg, { fromShare: number; fromPx: number; toShare: number; toPx: number }> = {
-  out: { fromShare: 0.4, fromPx: 100, toShare: 0.481, toPx: 760 },
-  in: { fromShare: 0.4, fromPx: 760, toShare: 0.481, toPx: 100 },
+  out: { fromShare: 0.413, fromPx: 100, toShare: 0.593, toPx: 760 },
+  in: { fromShare: 0.413, fromPx: 760, toShare: 0.593, toPx: 100 },
 };
 
 /** How near or far the edge is taken to be, whatever is measured: within the steady
