@@ -101,12 +101,11 @@ export const TasselMotif: React.FC<MotifProps> = (props) => (
 /* ---------- standing on the floor ---------- */
 
 /** Mid-Autumn's rabbit out with its lantern: 26 × 22. The lantern's glow takes
- *  `glowClassName` so it can breathe; the ears `earsClassName` so they can perk. */
-export const RabbitWithLanternMotif: React.FC<MotifProps & { glowClassName?: string; earsClassName?: string }> = ({
-  glowClassName,
-  earsClassName,
-  ...props
-}) => (
+ *  `glowClassName` so it can breathe; the ears `earsClassName` so they can perk; the
+ *  lantern as a whole `lanternClassName` so it can swing on its string. */
+export const RabbitWithLanternMotif: React.FC<
+  MotifProps & { glowClassName?: string; earsClassName?: string; lanternClassName?: string }
+> = ({ glowClassName, earsClassName, lanternClassName, ...props }) => (
   <g {...props}>
     <g fill={INK} opacity="0.62">
       <path className={earsClassName} d="M9 10C7 6 7 2 9 0c1.5 0 2.5 4 2.5 9zM18 10c2-4 2-8 0-10-1.5 0-2.5 4-2.5 9z" />
@@ -115,33 +114,43 @@ export const RabbitWithLanternMotif: React.FC<MotifProps & { glowClassName?: str
     </g>
     <circle cx="11" cy="14" r="0.9" fill="#fff" />
     <circle cx="16" cy="14" r="0.9" fill="#fff" />
-    <path d="M24 8v2" stroke="#c9a04a" strokeWidth="0.8" />
-    <ellipse cx="24" cy="13" rx="2.6" ry="3" fill="#e0454f" />
-    <ellipse cx="24" cy="13" rx="3.6" ry="4" fill="#f6b26b" opacity="0.3" className={glowClassName} />
+    <g className={lanternClassName}>
+      <path d="M24 8v2" stroke="#c9a04a" strokeWidth="0.8" />
+      <ellipse cx="24" cy="13" rx="2.6" ry="3" fill="#e0454f" />
+      <ellipse cx="24" cy="13" rx="3.6" ry="4" fill="#f6b26b" opacity="0.3" className={glowClassName} />
+    </g>
   </g>
 );
 
 /** Mid-Autumn's two rabbits with the mooncake between them: 48 × 22. Both pairs of ears
- *  take `earsClassName`, the cake `cakeClassName`. */
-export const RabbitsAndMooncakeMotif: React.FC<MotifProps & { earsClassName?: string; cakeClassName?: string }> = ({
-  earsClassName,
-  cakeClassName,
-  ...props
-}) => (
+ *  take `earsClassName`, the cake `cakeClassName`, and each rabbit as a whole
+ *  `rabbitClassName` so the two can hop in turn. */
+export const RabbitsAndMooncakeMotif: React.FC<
+  MotifProps & { earsClassName?: string; cakeClassName?: string; rabbitClassName?: string }
+> = ({ earsClassName, cakeClassName, rabbitClassName, ...props }) => (
   <g {...props}>
-    <g fill={INK} opacity="0.62">
-      <path className={earsClassName} d="M6 10C4 6 4 2 6 0c1.5 0 2.5 4 2.5 9zM15 10c2-4 2-8 0-10-1.5 0-2.5 4-2.5 9z" />
-      <ellipse cx="10.5" cy="15" rx="8" ry="6.5" />
-      <path
-        className={earsClassName}
-        d="M36 12c-1.6-3-1.6-6 0-8 1.2 0 2 3.2 2 7.2zM43 12c1.6-3 1.6-6 0-8-1.2 0-2 3.2-2 7.2z"
-      />
-      <ellipse cx="39.5" cy="16.5" rx="6.5" ry="5" />
+    <g className={rabbitClassName}>
+      <g fill={INK} opacity="0.62">
+        <path
+          className={earsClassName}
+          d="M6 10C4 6 4 2 6 0c1.5 0 2.5 4 2.5 9zM15 10c2-4 2-8 0-10-1.5 0-2.5 4-2.5 9z"
+        />
+        <ellipse cx="10.5" cy="15" rx="8" ry="6.5" />
+      </g>
+      <circle cx="8" cy="14" r="0.9" fill="#fff" />
+      <circle cx="13" cy="14" r="0.9" fill="#fff" />
     </g>
-    <circle cx="8" cy="14" r="0.9" fill="#fff" />
-    <circle cx="13" cy="14" r="0.9" fill="#fff" />
-    <circle cx="37.5" cy="16" r="0.8" fill="#fff" />
-    <circle cx="41.5" cy="16" r="0.8" fill="#fff" />
+    <g className={rabbitClassName}>
+      <g fill={INK} opacity="0.62">
+        <path
+          className={earsClassName}
+          d="M36 12c-1.6-3-1.6-6 0-8 1.2 0 2 3.2 2 7.2zM43 12c1.6-3 1.6-6 0-8-1.2 0-2 3.2-2 7.2z"
+        />
+        <ellipse cx="39.5" cy="16.5" rx="6.5" ry="5" />
+      </g>
+      <circle cx="37.5" cy="16" r="0.8" fill="#fff" />
+      <circle cx="41.5" cy="16" r="0.8" fill="#fff" />
+    </g>
     <g className={cakeClassName}>
       <ellipse cx="25" cy="18" rx="6" ry="3.6" fill="#c98a3c" />
       <ellipse cx="25" cy="16.6" rx="6" ry="3.4" fill="#e0a752" />
@@ -151,11 +160,19 @@ export const RabbitsAndMooncakeMotif: React.FC<MotifProps & { earsClassName?: st
   </g>
 );
 
-/** Halloween's jack-o'-lantern: 44 × 44. Its face takes `faceClassName` to breathe. */
-export const PumpkinMotif: React.FC<MotifProps & { faceClassName?: string }> = ({ faceClassName, ...props }) => (
+/** Halloween's jack-o'-lantern: 44 × 44. Its face takes `faceClassName` to breathe; the
+ *  lid — the cut top with the stem on it — `lidClassName` so it can pop. */
+export const PumpkinMotif: React.FC<MotifProps & { faceClassName?: string; lidClassName?: string }> = ({
+  faceClassName,
+  lidClassName,
+  ...props
+}) => (
   <g {...props}>
-    <path d="M20 6c1-2.5 3.5-3 5.5-1.5L25 13h-5z" fill="#5f8f3e" />
     <ellipse cx="22" cy="28" rx="20" ry="15" fill="#ef8a2c" />
+    <g className={lidClassName}>
+      <path d="M20 6c1-2.5 3.5-3 5.5-1.5L25 13h-5z" fill="#5f8f3e" />
+      <path d="M13 13.6q9-4.6 18 0-9 3-18 0z" fill="#d97a25" />
+    </g>
     <g fill="none" stroke="#c9691c" strokeWidth="1.4" opacity="0.45">
       <ellipse cx="11" cy="28" rx="7" ry="14.5" />
       <ellipse cx="33" cy="28" rx="7" ry="14.5" />
@@ -230,22 +247,37 @@ export const SmallTreeMotif: React.FC<MotifProps & { twinkle?: string; twinkleLa
   </g>
 );
 
-/** Lunar New Year's gold ingots: 30 × 12. */
-export const IngotsMotif: React.FC<MotifProps> = (props) => (
+/** Lunar New Year's gold ingots: 30 × 12. Each takes `ingotClassName`, so they can hop
+ *  one after the other. */
+export const IngotsMotif: React.FC<MotifProps & { ingotClassName?: string }> = ({ ingotClassName, ...props }) => (
   <g {...props}>
-    <path d="M1 8q1-5 6-6 4 4 8 0 5 1 6 6-2 3-10 3T1 8z" fill="#f2c14e" />
-    <path d="M3 7q2-3 5-3 3 3 6 0 3 0 5 3" fill="none" stroke="#d9a83f" strokeWidth="0.8" />
-    <path d="M15 9q1-4 5-5 3 3 6 0 4 1 5 5-2 2-8 2t-8-2z" fill="#f5d777" />
+    <g className={ingotClassName}>
+      <path d="M1 8q1-5 6-6 4 4 8 0 5 1 6 6-2 3-10 3T1 8z" fill="#f2c14e" />
+      <path d="M3 7q2-3 5-3 3 3 6 0 3 0 5 3" fill="none" stroke="#d9a83f" strokeWidth="0.8" />
+    </g>
+    <g className={ingotClassName}>
+      <path d="M15 9q1-4 5-5 3 3 6 0 4 1 5 5-2 2-8 2t-8-2z" fill="#f5d777" />
+    </g>
   </g>
 );
 
-/** Lunar New Year's pair of mandarins: 24 × 12. */
-export const MandarinsMotif: React.FC<MotifProps> = (props) => (
+/** Lunar New Year's pair of mandarins: 24 × 12. Each takes `mandarinClassName`, so the
+ *  two can roll apart and back. */
+export const MandarinsMotif: React.FC<MotifProps & { mandarinClassName?: string }> = ({
+  mandarinClassName,
+  ...props
+}) => (
   <g {...props}>
-    <circle cx="6" cy="7" r="5" fill="#f28c28" />
-    <circle cx="17" cy="7.5" r="4.5" fill="#f5a03c" />
-    <path d="M6 2l-1-1M17 3l-1-1" stroke="#7a4e2a" strokeWidth="0.8" strokeLinecap="round" />
-    <path d="M6 2q3-2 5 0-2 2-5 0zM17 3q3-2 5 0-2 2-5 0z" fill="#5f8f3e" />
+    <g className={mandarinClassName}>
+      <circle cx="6" cy="7" r="5" fill="#f28c28" />
+      <path d="M6 2l-1-1" stroke="#7a4e2a" strokeWidth="0.8" strokeLinecap="round" />
+      <path d="M6 2q3-2 5 0-2 2-5 0z" fill="#5f8f3e" />
+    </g>
+    <g className={mandarinClassName}>
+      <circle cx="17" cy="7.5" r="4.5" fill="#f5a03c" />
+      <path d="M17 3l-1-1" stroke="#7a4e2a" strokeWidth="0.8" strokeLinecap="round" />
+      <path d="M17 3q3-2 5 0-2 2-5 0z" fill="#5f8f3e" />
+    </g>
   </g>
 );
 
@@ -302,26 +334,30 @@ export const SledMotif: React.FC<MotifProps> = (props) => (
   </g>
 );
 
-/** Christmas's two candy canes stuck in the snow: 20 × 20. */
-export const CandyCanesMotif: React.FC<MotifProps> = (props) => (
+/** Christmas's two candy canes stuck in the snow: 20 × 20. Each takes `caneClassName`,
+ *  so they can twirl one after the other. */
+export const CandyCanesMotif: React.FC<MotifProps & { caneClassName?: string }> = ({ caneClassName, ...props }) => (
   <g {...props} fill="none" strokeLinecap="round">
-    <path d="M4 20V8a3.5 3.5 0 0 1 7 0" stroke="#e5e5ec" strokeWidth="3.4" />
-    <path d="M4 20V8a3.5 3.5 0 0 1 7 0" stroke="#fff" strokeWidth="2.8" />
-    <path d="M4 20V8a3.5 3.5 0 0 1 7 0" stroke="#e5484d" strokeWidth="2.8" strokeDasharray="2.2 2.2" />
-    <path d="M12 20v-8a3 3 0 0 1 6 0" stroke="#e5e5ec" strokeWidth="3" />
-    <path d="M12 20v-8a3 3 0 0 1 6 0" stroke="#fff" strokeWidth="2.4" />
-    <path d="M12 20v-8a3 3 0 0 1 6 0" stroke="#e5484d" strokeWidth="2.4" strokeDasharray="2 2" />
+    <g className={caneClassName}>
+      <path d="M4 20V8a3.5 3.5 0 0 1 7 0" stroke="#e5e5ec" strokeWidth="3.4" />
+      <path d="M4 20V8a3.5 3.5 0 0 1 7 0" stroke="#fff" strokeWidth="2.8" />
+      <path d="M4 20V8a3.5 3.5 0 0 1 7 0" stroke="#e5484d" strokeWidth="2.8" strokeDasharray="2.2 2.2" />
+    </g>
+    <g className={caneClassName}>
+      <path d="M12 20v-8a3 3 0 0 1 6 0" stroke="#e5e5ec" strokeWidth="3" />
+      <path d="M12 20v-8a3 3 0 0 1 6 0" stroke="#fff" strokeWidth="2.4" />
+      <path d="M12 20v-8a3 3 0 0 1 6 0" stroke="#e5484d" strokeWidth="2.4" strokeDasharray="2 2" />
+    </g>
   </g>
 );
 
 /** Christmas's cabin, window lit and chimney going: 36 × 26 (the smoke rises 4 above).
  *  The window takes `windowClassName` to breathe; each puff of smoke takes
- *  `smokeClassName` with its own delay. */
-export const CabinMotif: React.FC<MotifProps & { windowClassName?: string; smokeClassName?: string }> = ({
-  windowClassName,
-  smokeClassName,
-  ...props
-}) => (
+ *  `smokeClassName` with its own delay; the door `doorClassName` so it can swing open
+ *  onto the lit room behind it. */
+export const CabinMotif: React.FC<
+  MotifProps & { windowClassName?: string; smokeClassName?: string; doorClassName?: string }
+> = ({ windowClassName, smokeClassName, doorClassName, ...props }) => (
   <g {...props}>
     <rect x="5" y="10" width="26" height="16" fill="#7a4e2a" />
     <path d="M2 11l16-9 16 9z" fill="#fff" stroke="#d6dbe6" strokeWidth="0.8" />
@@ -337,7 +373,11 @@ export const CabinMotif: React.FC<MotifProps & { windowClassName?: string; smoke
         fill="#c9c9d2"
       />
     ))}
-    <rect x="8" y="14" width="7" height="12" fill="#5a3a20" />
+    <rect x="8" y="14" width="7" height="12" fill="#ffcf5c" />
+    <g className={doorClassName}>
+      <rect x="8" y="14" width="7" height="12" fill="#5a3a20" />
+      <circle cx="13.5" cy="20.5" r="0.6" fill="#f2c14e" />
+    </g>
     <g className={windowClassName}>
       <rect x="19" y="14" width="8" height="7" fill="#ffcf5c" />
       <rect x="19" y="14" width="8" height="7" fill="none" stroke="#5a3a20" strokeWidth="0.8" />
@@ -397,28 +437,35 @@ export const CauldronMotif: React.FC<MotifProps & { bubblesClassName?: string }>
 );
 
 /** Mid-Autumn's tea for the moon-watching, a pot and two cups: 30 × 14. The steam over
- *  the pot takes `steamClassName`; it is invisible until something warms it. */
-export const TeaSetMotif: React.FC<MotifProps & { steamClassName?: string }> = ({ steamClassName, ...props }) => (
+ *  the pot takes `steamClassName`; it is invisible until something warms it. The pot as
+ *  a whole takes `potClassName`, so it can tip and pour. */
+export const TeaSetMotif: React.FC<MotifProps & { steamClassName?: string; potClassName?: string }> = ({
+  steamClassName,
+  potClassName,
+  ...props
+}) => (
   <g {...props}>
     <g className={steamClassName} fill="none" stroke="#c9c9d2" strokeWidth="0.8" strokeLinecap="round" opacity="0">
       <path d="M8 2q1-1.5 0-3M11 2.5q1-1.5 0-3" />
     </g>
-    <path d="M4 13a6 6 0 0 1 12 0z" fill="#8c6b4a" />
-    <ellipse cx="10" cy="7.5" rx="6" ry="1.6" fill="#a58462" />
-    <rect x="9" y="4" width="2" height="3" fill="#8c6b4a" />
-    <path d="M16 8q4-2 3 3" fill="none" stroke="#8c6b4a" strokeWidth="1.2" strokeLinecap="round" />
-    <path d="M4 9q-3-1-1 3" fill="none" stroke="#8c6b4a" strokeWidth="1.2" strokeLinecap="round" />
+    <g className={potClassName}>
+      <path d="M4 13a6 6 0 0 1 12 0z" fill="#8c6b4a" />
+      <ellipse cx="10" cy="7.5" rx="6" ry="1.6" fill="#a58462" />
+      <rect x="9" y="4" width="2" height="3" fill="#8c6b4a" />
+      <path d="M16 8q4-2 3 3" fill="none" stroke="#8c6b4a" strokeWidth="1.2" strokeLinecap="round" />
+      <path d="M4 9q-3-1-1 3" fill="none" stroke="#8c6b4a" strokeWidth="1.2" strokeLinecap="round" />
+    </g>
     <path d="M21 13a2.5 2.5 0 0 1 5 0zM19.5 10h8" fill="#c9c9d2" stroke="#c9c9d2" strokeWidth="0.8" />
     <path d="M21 10.5a2.5 2.5 0 0 1 5 0z" fill="#d6d6dc" />
   </g>
 );
 
-/** Mid-Autumn's pomelo: 16 × 14. */
-export const PomeloMotif: React.FC<MotifProps> = (props) => (
+/** Mid-Autumn's pomelo: 16 × 14. The leaf takes `leafClassName`, so it can spin. */
+export const PomeloMotif: React.FC<MotifProps & { leafClassName?: string }> = ({ leafClassName, ...props }) => (
   <g {...props}>
     <ellipse cx="8" cy="8.5" rx="6.5" ry="5.5" fill="#cddc6a" />
     <ellipse cx="6" cy="6.5" rx="2" ry="1.4" fill="#e3ec9a" opacity="0.7" />
-    <path d="M8 3q3-3 6-1-3 1-6 1z" fill="#3f9a63" />
+    <path className={leafClassName} d="M8 3q3-3 6-1-3 1-6 1z" fill="#3f9a63" />
   </g>
 );
 

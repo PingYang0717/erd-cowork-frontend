@@ -157,6 +157,36 @@ describe('The festive surfaces', () => {
     expect(document.querySelector('[data-festive-floor="rail"] [data-poked]')).toBeNull();
   });
 
+  /** A click runs down the street: every other piece on that strip ripples, later the
+   *  further it stands from the one clicked, and none of them ending its ripple ends the
+   *  turn — only the piece clicked does that. The other strips are not in on it. */
+  it('ripples a click through the rest of that strip, without cutting the turn short', async () => {
+    localStorage.setItem(FESTIVAL_PREVIEW_STORAGE_KEY, 'lunarNewYear');
+    await renderStudioOnDraft();
+    const pieces = Array.from(document.querySelectorAll<HTMLElement>('[data-festive-floor="artifact"] [data-piece]'));
+    expect(pieces.map((piece) => piece.dataset.piece)).toEqual(['envelopes', 'drum', 'ingots', 'mandarins']);
+
+    fireEvent.click(pieces[1]);
+    expect(pieces[1]).not.toHaveAttribute('data-stirred');
+    expect(pieces.filter((piece) => piece.dataset.stirred === 'true')).toHaveLength(3);
+    expect(pieces.map((piece) => piece.style.getPropertyValue('--ripple-delay'))).toEqual([
+      '0.12s',
+      '',
+      '0.12s',
+      '0.24s',
+    ]);
+    expect(document.querySelector('[data-festive-floor="rail"] [data-stirred]')).toBeNull();
+
+    // The nearest neighbour's ripple ends first — long before the drum's four beats do.
+    endAnimation(pieces[0]);
+    expect(pieces[1]).toHaveAttribute('data-poked', 'true');
+    expect(pieces[3]).toHaveAttribute('data-stirred', 'true');
+
+    endAnimation(pieces[1]);
+    expect(pieces[1]).not.toHaveAttribute('data-poked');
+    expect(document.querySelector('[data-stirred]')).toBeNull();
+  });
+
   it('keeps one piece and the passing walker on the collapsed rail', async () => {
     localStorage.setItem(FESTIVAL_PREVIEW_STORAGE_KEY, 'midAutumn');
     const user = await renderStudioOnDraft();

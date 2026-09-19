@@ -63,10 +63,13 @@ import styles from './FestiveSurfaces.module.css';
  *  The floor is the one part that answers the pointer. The header's rule is that what
  *  stands on the ground does not move; here it is "does not move until touched": the
  *  pointer over the strip makes each piece stir once (a hat tips, a tail flicks, a
- *  hand comes up behind a stone), and a click plays a piece its bigger one-shot turn (a jump, a run
- *  off and back, a burst of coins, a beat on the drum), after which it stands still
- *  again. Decoration still: `aria-hidden`, out of the tab order, nothing the app does
- *  depends on it. The drawings are `festiveMotifs`, the same paths as the header's. */
+ *  hand comes up behind a stone), and a click plays a piece its act — the thing that
+ *  piece would do: the snowman's hat goes up and lands back on, the pumpkin's lid pops
+ *  and a bat gets out, the cat bolts off the strip and pads back in from the other
+ *  side, the pot pours, the drum beats four — while the rest of the street ripples in
+ *  turn, and then everything stands still again. Decoration still: `aria-hidden`, out
+ *  of the tab order, nothing the app does depends on it. The drawings are
+ *  `festiveMotifs`, the same paths as the header's. */
 
 /** Where the scene is being drawn. `compact` is the collapsed rail: one piece, no side
  *  room, and the walker passing through like everywhere else. */
@@ -210,7 +213,7 @@ const PIECES: Record<PieceKind, Drawing> = {
       <SmallTreeMotif twinkle={`${fd.twinkle} ${styles.light}`} twinkleLate={`${fd.twinkleLate} ${styles.light}`} />
     ),
   },
-  candyCanes: { viewBox: '0 0 20 20', width: 16, height: 16, node: <CandyCanesMotif /> },
+  candyCanes: { viewBox: '0 0 20 20', width: 16, height: 16, node: <CandyCanesMotif caneClassName={styles.cane} /> },
   lampPost: {
     viewBox: '0 0 14 34',
     width: 12,
@@ -222,7 +225,11 @@ const PIECES: Record<PieceKind, Drawing> = {
     width: 36,
     height: 30,
     node: (
-      <CabinMotif windowClassName={`${fd.breathe} ${styles.light}`} smokeClassName={`${fd.smoke} ${styles.smoke}`} />
+      <CabinMotif
+        windowClassName={`${fd.breathe} ${styles.light}`}
+        smokeClassName={`${fd.smoke} ${styles.smoke}`}
+        doorClassName={styles.door}
+      />
     ),
   },
   sled: { viewBox: '0 0 26 14', width: 24, height: 13, node: <SledMotif /> },
@@ -231,7 +238,7 @@ const PIECES: Record<PieceKind, Drawing> = {
     viewBox: '0 0 44 44',
     width: 28,
     height: 28,
-    node: <PumpkinMotif faceClassName={`${fd.breathe} ${styles.face}`} />,
+    node: <PumpkinMotif faceClassName={`${fd.breathe} ${styles.face}`} lidClassName={styles.lid} />,
   },
   cat: {
     viewBox: '0 0 20 20',
@@ -256,19 +263,41 @@ const PIECES: Record<PieceKind, Drawing> = {
     viewBox: '0 0 26 22',
     width: 26,
     height: 22,
-    node: <RabbitWithLanternMotif glowClassName={`${fd.breathe} ${styles.glow}`} earsClassName={styles.ears} />,
+    node: (
+      <RabbitWithLanternMotif
+        glowClassName={`${fd.breathe} ${styles.glow}`}
+        earsClassName={styles.ears}
+        lanternClassName={styles.lantern}
+      />
+    ),
   },
   rabbitsCake: {
     viewBox: '0 0 48 22',
     width: 44,
     height: 20,
-    node: <RabbitsAndMooncakeMotif earsClassName={styles.ears} cakeClassName={styles.cake} />,
+    node: (
+      <RabbitsAndMooncakeMotif
+        earsClassName={styles.ears}
+        cakeClassName={styles.cake}
+        rabbitClassName={styles.rabbit}
+      />
+    ),
   },
-  teaSet: { viewBox: '0 -4 30 18', width: 28, height: 17, node: <TeaSetMotif steamClassName={styles.steam} /> },
-  pomelo: { viewBox: '0 0 16 14', width: 15, height: 13, node: <PomeloMotif /> },
+  teaSet: {
+    viewBox: '0 -4 30 18',
+    width: 28,
+    height: 17,
+    node: <TeaSetMotif steamClassName={styles.steam} potClassName={styles.pot} />,
+  },
+  pomelo: { viewBox: '0 0 16 14', width: 15, height: 13, node: <PomeloMotif leafClassName={styles.leaf} /> },
   envelopes: { viewBox: '0 0 20 16', width: 20, height: 16, node: <RedEnvelopesMotif /> },
-  ingots: { viewBox: '0 0 30 12', width: 30, height: 12, node: <IngotsMotif /> },
-  mandarins: { viewBox: '0 0 24 12', width: 24, height: 12, node: <MandarinsMotif /> },
+  ingots: { viewBox: '0 0 30 12', width: 30, height: 12, node: <IngotsMotif ingotClassName={styles.ingot} /> },
+  mandarins: {
+    viewBox: '0 0 24 12',
+    width: 24,
+    height: 12,
+    node: <MandarinsMotif mandarinClassName={styles.mandarin} />,
+  },
   drum: { viewBox: '0 0 24 18', width: 22, height: 17, node: <DrumMotif sticksClassName={styles.sticks} /> },
 };
 
@@ -357,11 +386,13 @@ const LAYOUTS: Record<Festival, Record<'rail' | 'chat' | 'artifact', Placement[]
   },
 };
 
-/** What a click throws off a piece, drawn over it while its turn plays: snow off the
- *  snowman and the trees, coins off the ingots, the character for luck off the red
- *  envelopes, a puff off the chimney, bubbles off the cauldron, steam off the pot, the
- *  beat off the drum. Positioned in the piece's own viewBox; the strip clips whatever
- *  flies past its edge. */
+/** What a click throws off a piece, or lets out of it, drawn over it while its turn
+ *  plays: snow off the snowman and the trees, coins off the ingots and out of the red
+ *  envelopes with the character for luck, a puff off the chimney, a frog out of the
+ *  cauldron, a bat out of the pumpkin, a crow off the scarecrow's arm, a moth round the
+ *  lamp, eyes from behind the stones, spray off the sled's runners, steam off the cup
+ *  the pot pours into, the beat off the drum. Positioned in the piece's own viewBox;
+ *  the strip clips whatever flies past its edge. */
 const burstFor = (kind: PieceKind): React.ReactNode => {
   switch (kind) {
     case 'snowman':
@@ -375,17 +406,110 @@ const burstFor = (kind: PieceKind): React.ReactNode => {
       );
     case 'ingots':
       return (
-        <g className={styles.flyUp} fill="#f2c14e" stroke="#d9a83f" strokeWidth="0.5">
-          <circle cx="8" cy="4" r="1.8" style={{ ['--fly-x' as string]: '-8px' }} />
-          <circle cx="15" cy="3" r="2" style={{ ['--fly-x' as string]: '0px' }} />
-          <circle cx="22" cy="4" r="1.8" style={{ ['--fly-x' as string]: '8px' }} />
-        </g>
+        <>
+          <g className={styles.flyUp} fill="#f2c14e" stroke="#d9a83f" strokeWidth="0.5">
+            <circle cx="8" cy="4" r="1.8" style={{ ['--fly-x' as string]: '-8px' }} />
+            <circle cx="15" cy="3" r="2" style={{ ['--fly-x' as string]: '0px' }} />
+            <circle cx="22" cy="4" r="1.8" style={{ ['--fly-x' as string]: '8px' }} />
+          </g>
+          <g className={styles.sparkles} fill="#fff7d6">
+            <path d="M4 1l.7 1.6L6.3 3.3 4.7 4 4 5.6 3.3 4 1.7 3.3 3.3 2.6z" style={{ animationDelay: '0s' }} />
+            <path d="M15-2l.7 1.6L17.3.3 15.7 1 15 2.6 14.3 1 12.7.3 14.3-.4z" style={{ animationDelay: '0.2s' }} />
+            <path
+              d="M26 2l.7 1.6L28.3 4.3 26.7 5 26 6.6 25.3 5 23.7 4.3 25.3 3.6z"
+              style={{ animationDelay: '0.4s' }}
+            />
+          </g>
+        </>
       );
     case 'envelopes':
       return (
-        <text className={styles.luck} x="13.5" y="-2" textAnchor="middle" fontSize="8" fontWeight="700" fill="#d8232a">
-          福
-        </text>
+        <>
+          <text
+            className={styles.luck}
+            x="13.5"
+            y="-2"
+            textAnchor="middle"
+            fontSize="8"
+            fontWeight="700"
+            fill="#d8232a"
+          >
+            福
+          </text>
+          <g className={styles.dropDown} fill="#f2c14e" stroke="#d9a83f" strokeWidth="0.5">
+            <circle cx="5" cy="9" r="1.3" style={{ ['--fly-x' as string]: '-4px', animationDelay: '0.1s' }} />
+            <circle cx="14" cy="8" r="1.4" style={{ ['--fly-x' as string]: '3px', animationDelay: '0.25s' }} />
+            <circle cx="10" cy="10" r="1.1" style={{ ['--fly-x' as string]: '-1px', animationDelay: '0.4s' }} />
+          </g>
+        </>
+      );
+    case 'pumpkin':
+      return (
+        <g className={styles.bat} fill="#2b2b33">
+          <g transform="translate(22 10)">
+            <ellipse cx="0" cy="0" rx="1.6" ry="2.4" />
+            <path className={styles.wing} d="M-1 0q-4-5-8-1 2-1 3 1-2 0-3 2 4-1 8-2z" />
+            <path
+              className={styles.wing}
+              d="M1 0q4-5 8-1-2-1-3 1 2 0 3 2-4-1-8-2z"
+              style={{ transformOrigin: '1px 0' }}
+            />
+          </g>
+        </g>
+      );
+    case 'cauldron':
+      return (
+        <>
+          <g className={styles.flyUp} fill="#7ed957">
+            <circle cx="7" cy="5" r="1.6" style={{ ['--fly-x' as string]: '-5px' }} />
+            <circle cx="12" cy="3" r="2" style={{ ['--fly-x' as string]: '0px' }} />
+            <circle cx="17" cy="5" r="1.4" style={{ ['--fly-x' as string]: '5px' }} />
+          </g>
+          <g className={styles.frog}>
+            <g transform="translate(12 8)">
+              <ellipse cx="0" cy="0" rx="3" ry="2" fill="#5fb84a" />
+              <circle cx="-1.4" cy="-1.8" r="0.9" fill="#5fb84a" />
+              <circle cx="1.4" cy="-1.8" r="0.9" fill="#5fb84a" />
+              <circle cx="-1.4" cy="-1.9" r="0.4" fill="#2b2b33" />
+              <circle cx="1.4" cy="-1.9" r="0.4" fill="#2b2b33" />
+            </g>
+          </g>
+        </>
+      );
+    case 'scarecrow':
+      return (
+        <g className={styles.crow} fill="#2b2b33">
+          <g transform="translate(19 10)">
+            <ellipse cx="0" cy="0" rx="2.4" ry="1.4" />
+            <circle cx="2.2" cy="-1" r="1" />
+            <path d="M3.2-1l1.6.4-1.6.5z" fill="#f2c14e" />
+            <path className={styles.wing} d="M-1-0.5q-1-3 2-4-1 2 0 4z" />
+          </g>
+        </g>
+      );
+    case 'lampPost':
+      return (
+        <g className={styles.moth}>
+          <g transform="translate(7 12)">
+            <ellipse cx="0" cy="0" rx="1.3" ry="0.6" fill="#c9c9d2" />
+            <ellipse cx="0" cy="0" rx="0.4" ry="0.8" fill="#8f8fa3" />
+          </g>
+        </g>
+      );
+    case 'tombstones':
+      return (
+        <g className={styles.peekEyes} fill="#ffcf5c">
+          <circle cx="18.6" cy="4.6" r="0.9" />
+          <circle cx="21.4" cy="4.6" r="0.9" />
+        </g>
+      );
+    case 'sled':
+      return (
+        <g className={styles.spray} fill="none" stroke="#fff" strokeWidth="1" strokeLinecap="round">
+          <path d="M2 11l-3-1" style={{ animationDelay: '0s' }} />
+          <path d="M3 13l-4 0" style={{ animationDelay: '0.08s' }} />
+          <path d="M1 9l-2-2" style={{ animationDelay: '0.16s' }} />
+        </g>
       );
     case 'cabin':
       return (
@@ -403,11 +527,18 @@ const burstFor = (kind: PieceKind): React.ReactNode => {
         </g>
       );
     case 'teaSet':
+      // The cup the pot pours into steams, once the tea is in it.
       return (
-        <g className={styles.flyUp} fill="none" stroke="#c9c9d2" strokeWidth="0.9" strokeLinecap="round">
-          <path d="M7 1q1-2 0-4" style={{ ['--fly-x' as string]: '-2px' }} />
-          <path d="M10 2q1-2 0-4" style={{ ['--fly-x' as string]: '0px' }} />
-          <path d="M13 1q1-2 0-4" style={{ ['--fly-x' as string]: '2px' }} />
+        <g
+          className={styles.flyUp}
+          style={{ ['--fly-delay' as string]: '0.6s' }}
+          fill="none"
+          stroke="#c9c9d2"
+          strokeWidth="0.9"
+          strokeLinecap="round"
+        >
+          <path d="M22 7q1-2 0-4" style={{ ['--fly-x' as string]: '-2px' }} />
+          <path d="M25 7q1-2 0-4" style={{ ['--fly-x' as string]: '2px' }} />
         </g>
       );
     case 'drum':
@@ -477,8 +608,11 @@ const FLOOR_CLASS: Record<FestiveSurface, string> = {
 /** The strip of ground at a surface's foot, and the weather coming down onto it. Still
  *  until touched: the pointer over the strip stirs the pieces once (their parts' hover
  *  rules), a click on one plays its turn — set by `data-poked`, cleared when the
- *  piece's own animation ends. Only the piece's own `animationend` counts: the lights
- *  and glows inside it never end, and the burst overlay ends on its own schedule.
+ *  piece's own animation ends. Only that piece's own `animationend` counts: the lights
+ *  and glows inside it never end, the burst overlay ends on its own schedule, and the
+ *  rest of the street — every other piece on the strip, marked `data-stirred` and
+ *  handed a delay by its distance from the one clicked — ripples for a moment and ends
+ *  before or after the turn, as its distance has it.
  *
  *  Two boxes, siblings: the weather is laid against the foot of the surface's own box
  *  (which must be positioned), the strip is laid out however the surface lays it. The
@@ -517,27 +651,30 @@ const FestiveFloor: React.FC<SurfaceProps> = ({ festival, surface }) => {
           const piece = PIECES[kind];
           const width = Math.round(piece.width * scale);
           const height = Math.round(piece.height * scale);
+          const position = compact
+            ? { left: `calc(50% - ${width / 2}px)` }
+            : at === 'left'
+              ? { left: 3 }
+              : at === 'right'
+                ? { right: 3 }
+                : { left: `${at * 100}%` };
+          const stirred = poked !== null && poked !== i;
           return (
             <svg
               key={`${kind}-${at}`}
               className={`${styles.piece} ${styles[kind]}`}
               data-piece={kind}
               data-poked={poked === i ? 'true' : undefined}
+              data-stirred={stirred ? 'true' : undefined}
               style={
-                compact
-                  ? { left: `calc(50% - ${width / 2}px)` }
-                  : at === 'left'
-                    ? { left: 3 }
-                    : at === 'right'
-                      ? { right: 3 }
-                      : { left: `${at * 100}%` }
+                stirred ? { ...position, ['--ripple-delay' as string]: `${Math.abs(i - poked) * 0.12}s` } : position
               }
               viewBox={piece.viewBox}
               width={width}
               height={height}
               onClick={() => setPoked(i)}
               onAnimationEnd={(event) => {
-                if (event.target === event.currentTarget) {
+                if (event.target === event.currentTarget && poked === i) {
                   setPoked(null);
                 }
               }}
