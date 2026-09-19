@@ -15,4 +15,13 @@ describe('phaseNow', () => {
     const b = phaseNow(80, 1_000_000 + 80_000);
     expect(a).toBe(b);
   });
+
+  /** A shifted copy stands that much further into the loop — and wraps, so a copy run
+   *  behind the clock near the loop's start lands near its end rather than at a
+   *  positive delay that would hold the animation still. */
+  it('shifts a copy ahead of or behind the clock, wrapping round the loop', () => {
+    expect(phaseNow(46, 10_000, 1.38)).toBe('-11.380s');
+    expect(phaseNow(46, 10_000, -8.74)).toBe('-1.260s');
+    expect(phaseNow(46, 10_000, -12)).toBe('-44.000s');
+  });
 });

@@ -1,11 +1,15 @@
 /* The empty panes' porthole and the creature that leaves it (EmptyStateFestive).
 
-   Everything here runs off two custom properties set on the element: `--loop`, the one
-   period the whole piece shares, and `--phase`, where in it this pane stands — read off
-   the wall clock, the right-hand pane a crossing behind the left. That offset is the
+   Everything here runs off three custom properties set on the element: `--loop`, the
+   one period the whole piece shares; `--dy`, how far the flight drifts down (up, when
+   negative) by its far end so that it is on the shared flight line at the pane's edge;
+   and `--phase`, where in the loop this pane stands — read off
+   the wall clock and shifted so that the creature crosses this pane's edge at the one
+   instant both panes agree on (EmptyStateFestive, `HANDOFF_SHARE`). That shift is the
    entire mechanism behind the hand-off: no message between the panes. Change `--loop`
    and the departure, the crossing and the arrival all stay in step, because they are
-   keyframe percentages of the same number.
+   keyframe percentages of the same number. Change the flight of `escape-out` or
+   `escape-in` and `FLIGHT` in the component must follow.
 
    Timings inside the loop, once, so the percentages below can be read against it:
      0–56%    the creature moves about behind the glass
@@ -43,6 +47,14 @@
   animation-delay: var(--phase);
 }
 
+/* The right-hand window's resident: same circuit, same exit, but back the moment the
+   visitor goes in through the glass (escape-in, 75–78%), not a while after. */
+.residentRight {
+  transform-box: fill-box;
+  animation: resident-round-in var(--loop) linear infinite;
+  animation-delay: var(--phase);
+}
+
 /* The ring left where the creature went through. One stroke, spreading and fading —
    ink at low opacity, gone in under a second. */
 .ring {
@@ -50,6 +62,14 @@
   transform-origin: 50% 50%;
   opacity: 0;
   animation: ring-strike var(--loop) ease-out infinite;
+  animation-delay: var(--phase);
+}
+
+.ringRight {
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+  opacity: 0;
+  animation: ring-strike-in var(--loop) ease-out infinite;
   animation-delay: var(--phase);
 }
 
@@ -67,10 +87,12 @@
   height: 0;
 }
 
+/* Centred on the anchor sideways (`left` is set inline from the creature's width), so
+   the translate in the keyframes is where the creature's centre is — the number the
+   hand-off is worked out from. */
 .escape svg {
   position: absolute;
   top: -14px;
-  left: -28px;
   display: block;
   opacity: 0;
   animation-duration: var(--loop);
@@ -209,6 +231,51 @@
   }
 }
 
+/* The right-hand window: out through the rim as on the left, and back in as the visitor
+   arrives (escape-in reaches the glass at 78%). */
+@keyframes resident-round-in {
+  0% {
+    transform: translate(0, 0) scaleX(1);
+    opacity: 1;
+  }
+  14% {
+    transform: translate(26px, 10px) scaleX(1);
+  }
+  22% {
+    transform: translate(34px, 14px) scaleX(-1);
+  }
+  40% {
+    transform: translate(-4px, 22px) scaleX(-1);
+  }
+  48% {
+    transform: translate(-12px, 18px) scaleX(1);
+  }
+  54% {
+    transform: translate(-16px, 6px) scaleX(1);
+    opacity: 1;
+  }
+  58% {
+    transform: translate(2px, 0) scale(0.96);
+    opacity: 1;
+  }
+  62% {
+    transform: translate(46px, -6px) scale(1.04);
+    opacity: 0;
+  }
+  78% {
+    transform: translate(46px, -6px) scale(1.04);
+    opacity: 0;
+  }
+  82% {
+    transform: translate(10px, 2px) scale(1.02);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(0, 0) scaleX(1);
+    opacity: 1;
+  }
+}
+
 /* The glass struck twice — once as the creature leaves, once as it comes back. */
 @keyframes ring-strike {
   0%,
@@ -238,8 +305,45 @@
   }
 }
 
-/* Out of the window and away to the right, until the pane's edge takes it. It leaves
-   fast and coasts — a constant speed reads as a conveyor belt. */
+/* The right-hand glass: struck as its resident leaves, and again as the visitor arrives. */
+@keyframes ring-strike-in {
+  0%,
+  58% {
+    opacity: 0;
+    transform: scale(1);
+  }
+  61% {
+    opacity: 0.5;
+    transform: scale(0.4);
+  }
+  70% {
+    opacity: 0;
+    transform: scale(1.5);
+  }
+  77% {
+    opacity: 0;
+    transform: scale(1);
+  }
+  80% {
+    opacity: 0.45;
+    transform: scale(0.4);
+  }
+  89% {
+    opacity: 0;
+    transform: scale(1.45);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1);
+  }
+}
+
+/* Out of the window and away to the right, until the pane's edge takes it. The pop
+   through the glass is the burst (57–59%); the flight after it is one steady speed —
+   16px to 760px over 59–88%, the stretch `FLIGHT.left` describes — because the two
+   panes can only meet at the rule if both creatures cross it at the same speed. An
+   earlier version dashed out and coasted; the coast fell exactly where a 410px thread
+   pane's edge is, and the creature hung at the edge while its other half sailed on. */
 @keyframes escape-out {
   0%,
   57% {
@@ -248,37 +352,28 @@
   }
   59% {
     opacity: 1;
-    transform: translate(16px, 2px) scale(0.9);
-    animation-timing-function: cubic-bezier(0.14, 0.86, 0.3, 1);
-  }
-  68% {
-    opacity: 1;
-    transform: translate(190px, -16px) scale(1);
+    transform: translate(16px, 0) scale(0.9);
   }
   88%,
   100% {
     opacity: 1;
-    transform: translate(760px, -6px) scale(1);
+    transform: translate(760px, var(--dy, 0px)) scale(1);
   }
 }
 
-/* In from beyond the pane's edge, slowing into the window it is aiming for. */
+/* In from beyond the pane's edge at the same steady speed — 760px to 16px over 46–75%,
+   the stretch `FLIGHT.right` describes — then in through the glass (75–78%). */
 @keyframes escape-in {
   0%,
   46% {
     opacity: 1;
-    transform: translate(-760px, -6px) scale(1);
+    transform: translate(-760px, var(--dy, 0px)) scale(1);
   }
-  66% {
+  75% {
     opacity: 1;
-    transform: translate(-190px, -16px) scale(1);
-    animation-timing-function: cubic-bezier(0.32, 0, 0.2, 1);
+    transform: translate(-16px, 0) scale(0.9);
   }
-  76% {
-    opacity: 1;
-    transform: translate(-12px, 2px) scale(0.9);
-  }
-  79% {
+  78% {
     opacity: 0;
     transform: translate(6px, 8px) scale(0.55);
   }

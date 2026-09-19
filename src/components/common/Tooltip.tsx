@@ -1,5 +1,7 @@
 import React, { type ReactNode, useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 
+import { clippingBox } from '@/utils/clippingBox';
+
 import styles from './Tooltip.module.css';
 
 const SHOW_DELAY_MS = 350;
@@ -8,22 +10,10 @@ const SHOW_DELAY_MS = 350;
  *  trigger, the tip would be clipped by whatever pane it sits in. */
 const SPACE_NEEDED_ABOVE = 34;
 
-/** The top edge the tip must stay under: the nearest ancestor that clips its overflow,
- *  or the viewport when nothing does. Every pane in the Studio clips (`overflow: hidden`
- *  on the columns), and the Artifact toolbar's pane starts right under the 56px header —
- *  so measured from the viewport there was "room" above the buttons, and the tip opened
- *  upward into a strip the pane sliced off. It looked like the header covering it. */
-const clippingBox = (element: HTMLElement): { top: number; left: number; right: number } => {
-  for (let node = element.parentElement; node !== null && node !== document.body; node = node.parentElement) {
-    const { overflow, overflowX, overflowY } = getComputedStyle(node);
-    if ([overflow, overflowX, overflowY].some((value) => value !== '' && value !== 'visible')) {
-      const { top, left, right } = node.getBoundingClientRect();
-      return { top, left, right };
-    }
-  }
-  return { top: 0, left: 0, right: window.innerWidth };
-};
-
+/** The top edge the tip must stay under: the pane's (`clippingBox`), not the viewport's.
+ *  The Artifact toolbar's pane starts right under the 56px header — so measured from the
+ *  viewport there was "room" above the buttons, and the tip opened upward into a strip
+ *  the pane sliced off. It looked like the header covering it. */
 const clippingTop = (element: HTMLElement): number => clippingBox(element).top;
 
 /* Sideways, the tip is centred on the trigger unless that would push it out of the

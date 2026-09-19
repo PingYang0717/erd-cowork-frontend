@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useLayoutEffect, useRef, useState } from 'react';
 
+import { clippingBox, clippingElement } from '@/utils/clippingBox';
 import type { Festival } from '@/utils/festival';
 import { phaseNow } from '@/utils/festiveClock';
 import { GROUND_BACKDROPS, WEATHER_TILES } from './festiveMotifs';
@@ -18,8 +19,12 @@ import styles from './EmptyStateFestive.module.css';
  *  inside drifting; the rest is worth catching.
  *
  *  Nothing is exchanged between the panes — they cannot see each other. Both run one long
- *  loop off the wall clock (`phaseNow`), the right-hand pane a crossing behind the left,
- *  so the arrival lands where the departure left off whenever either pane mounted.
+ *  loop off the wall clock (`phaseNow`), and both agree on one instant in it — the
+ *  hand-off, when the creature is at the rule between them. Each pane measures how far
+ *  its own edge is from its window, works out where in its keyframes the creature
+ *  crosses that edge, and shifts its copy of the loop so that moment falls on the
+ *  hand-off. So the arrival lands where the departure left off whenever either pane
+ *  mounted and however wide the two panes are.
  *
  *  What is behind the glass is the same world as everywhere else on the screen, seen
  *  through a round hole: the festival's sky tint over its ground band (the very band the
@@ -36,9 +41,33 @@ const INK = 'var(--erd-color-text, rgba(0, 0, 0, 0.88))';
  *  payoff that comes round every ten seconds stops being one. */
 const LOOP_S = 46;
 
-/** How much of the loop the crossing takes, and therefore how far behind the left pane
- *  the right one runs. */
-const CROSS_SHARE = 0.28;
+/** The hand-off: the share of the shared loop at which the creature is at the rule
+ *  between the panes. Nothing else about the two panes' timing is shared. */
+const HANDOFF_SHARE = 0.75;
+
+/** The escape's flight in the CSS keyframes' own terms — the steady stretch of each, as
+ *  (share of the loop, distance of the creature's centre from the window in px). One
+ *  speed both ways, 744px over 29% of the loop: the two halves can only meet at the rule
+ *  if they cross it at the same speed. A pane's edge falls in this stretch for any pane
+ *  this app lays out; nearer or farther is clamped to its end. Kept in step with
+ *  `escape-out` / `escape-in` in the stylesheet by hand. */
+const FLIGHT = {
+  left: { fromShare: 0.59, fromPx: 16, toShare: 0.88, toPx: 760 },
+  right: { fromShare: 0.46, fromPx: 760, toShare: 0.75, toPx: 16 },
+} as const;
+
+/** Where the creature is assumed to cross until the pane has been measured: about the
+ *  middle of the flight. Replaced before first paint. */
+const UNMEASURED_PX = 388;
+
+/** The height the creature crosses the rule at, as a share of the window's height — the
+ *  other thing both panes agree on. The two windows do not sit at one height (the thread
+ *  pane's is pushed up by the composer under it), so each pane also measures how far its
+ *  window is from this line and lets the flight drift to it by the edge. */
+const FLIGHT_LINE_SHARE = 0.465;
+
+/** The flight's length in px, the distance the drift is spread over. */
+const FLIGHT_PX = 760 - 16;
 
 /** The header slides one 56px weather tile in 14s; the window's tile is the same. */
 const WEATHER_S = 14;
@@ -391,23 +420,50 @@ interface PanelProps {
   panel: 'left' | 'right';
 }
 
-/** Where this pane's copy of the loop stands: read off the clock, the right-hand pane a
- *  crossing behind, so the two panes agree however far apart they mounted. */
-const phaseOf = (panel: PanelProps['panel']): string => {
-  const left = phaseNow(LOOP_S);
-  if (panel === 'left') {
-    return left;
-  }
-  return `${(parseFloat(left) - LOOP_S * CROSS_SHARE).toFixed(3)}s`;
+/** The share of the loop at which this pane's creature is `distance` px from its window
+ *  — at the pane's edge, when that is what is measured. */
+const edgeShare = (panel: PanelProps['panel'], distance: number): number => {
+  const flight = FLIGHT[panel];
+  const along = Math.min(1, Math.max(0, (distance - flight.fromPx) / (flight.toPx - flight.fromPx)));
+  return flight.fromShare + along * (flight.toShare - flight.fromShare);
+};
+
+/** Where this pane's copy of the loop stands: read off the clock, then shifted so that
+ *  the creature crosses this pane's edge at the hand-off. */
+const phaseOf = (panel: PanelProps['panel'], edgeDistance: number): string =>
+  phaseNow(LOOP_S, Date.now(), (edgeShare(panel, edgeDistance) - HANDOFF_SHARE) * LOOP_S);
+
+interface EdgeGeometry {
+  /** From the window's centre — where the escapee is anchored — to the edge the
+   *  creature leaves or enters this pane by: the left pane's right edge, the right
+   *  pane's left. */
+  distance: number;
+  /** How far down (up, when negative) the creature is at the far end of its flight, so
+   *  that at the pane's edge it is on the flight line. In px, for the keyframes. */
+  drift: number;
+}
+
+const edgeGeometry = (porthole: HTMLElement, panel: PanelProps['panel']): EdgeGeometry => {
+  const pane = clippingBox(porthole);
+  const box = porthole.getBoundingClientRect();
+  const centre = box.left + box.width / 2;
+  const distance = panel === 'left' ? pane.right - centre : centre - pane.left;
+  // The drift is linear along the flight, so the amount at its far end is the amount
+  // wanted at the edge scaled up by the flight's length over the edge's distance. An
+  // edge nearer than the flight's start would send it to infinity; no pane is that thin.
+  const toLine = window.innerHeight * FLIGHT_LINE_SHARE - (box.top + box.height / 2);
+  const drift = (toLine * FLIGHT_PX) / (Math.max(distance, 100) - 16);
+  return { distance, drift };
 };
 
 /** What is behind the glass. There is no rim: the header's band has no frame either — it
  *  fades out at both ends with a mask — and a lacquered ring with a highlight on it is
  *  the vocabulary of an app icon, not of the picture this is supposed to belong to. So
  *  the scene simply stops being there towards its edge. */
-const PortholeScene: React.FC<{ id: string; festival: Festival; weatherPhase: string }> = ({
+const PortholeScene: React.FC<{ id: string; festival: Festival; panel: PanelProps['panel']; weatherPhase: string }> = ({
   id,
   festival,
+  panel,
   weatherPhase,
 }) => {
   const scene = SCENES[festival];
@@ -457,10 +513,20 @@ const PortholeScene: React.FC<{ id: string; festival: Festival; weatherPhase: st
 
         {/* the ring the creature leaves in the glass when it goes through — the one thing
             here that reacts to anything, and the reason the exit reads as an exit */}
-        <circle className={styles.ring} cx="86" cy="52" r="10" fill="none" stroke={INK} strokeWidth="1.4" />
+        <circle
+          className={panel === 'left' ? styles.ring : styles.ringRight}
+          cx="86"
+          cy="52"
+          r="10"
+          fill="none"
+          stroke={INK}
+          strokeWidth="1.4"
+        />
 
-        {/* the inhabitant, at home — and gone from here for as long as it is out */}
-        <g className={styles.resident}>
+        {/* the inhabitant, at home — and gone from here for as long as it is out. In the
+            right-hand window it is back the moment the visitor goes in through the glass,
+            not a while later. */}
+        <g className={panel === 'left' ? styles.resident : styles.residentRight}>
           <g
             transform={`translate(${60 - (scene.creature.width * scene.creature.homeScale) / 2} ${58 - (scene.creature.height * scene.creature.homeScale) / 2}) scale(${scene.creature.homeScale})`}
           >
@@ -474,19 +540,57 @@ const PortholeScene: React.FC<{ id: string; festival: Festival; weatherPhase: st
 
 /** The window, in the icon tile's place, and the creature out in the pane. */
 const EmptyPorthole: React.FC<PanelProps> = ({ festival, panel }) => {
+  const rootRef = useRef<HTMLSpanElement>(null);
+
   // Read once: a phase that moved with every render would move the creature with it.
-  const [phase] = useState(() => ({ loop: phaseOf(panel), weather: phaseNow(WEATHER_S) }));
+  const [phase, setPhase] = useState(() => ({
+    loop: phaseOf(panel, UNMEASURED_PX),
+    drift: 0,
+    weather: phaseNow(WEATHER_S),
+  }));
+
+  // Where this pane's edge is can only be measured once the window is laid out; the
+  // first read happens before first paint, so the creature never shows at the guessed
+  // phase. The pane's shape goes on changing after that — the composer under the thread
+  // pane grows as its chips come in and moves the window up, and the divider can be
+  // dragged — so the pane is watched and the geometry read again whenever it changes.
+  // Re-reading does not jolt the loop: the phase is read off the clock each time, so the
+  // creature carries on from where it is; only the edge it is aiming for moves.
+  useLayoutEffect(() => {
+    const root = rootRef.current;
+    if (root === null) {
+      return undefined;
+    }
+    const measure = () => {
+      const { distance, drift } = edgeGeometry(root, panel);
+      const loop = phaseOf(panel, distance);
+      setPhase((previous) => ({ ...previous, loop, drift }));
+    };
+    measure();
+    if (typeof ResizeObserver === 'undefined') {
+      return undefined;
+    }
+    const observer = new ResizeObserver(measure);
+    observer.observe(clippingElement(root) ?? root);
+    return () => observer.disconnect();
+  }, [panel]);
+
   const scene = SCENES[festival];
 
   return (
     <span
+      ref={rootRef}
       className={styles.porthole}
       aria-hidden
       data-festive-porthole={panel}
-      style={{ ['--loop' as string]: `${LOOP_S}s`, ['--phase' as string]: phase.loop }}
+      style={{
+        ['--loop' as string]: `${LOOP_S}s`,
+        ['--phase' as string]: phase.loop,
+        ['--dy' as string]: `${phase.drift.toFixed(1)}px`,
+      }}
     >
       <svg viewBox="0 0 120 120" width="118" height="118" overflow="visible">
-        <PortholeScene id={`ph-${panel}-${festival}`} festival={festival} weatherPhase={phase.weather} />
+        <PortholeScene id={`ph-${panel}-${festival}`} festival={festival} panel={panel} weatherPhase={phase.weather} />
       </svg>
       {/* The escapee is anchored to the window rather than to the pane: the two panes'
           empty states sit at different heights (one has a header over it), and a creature
@@ -500,6 +604,7 @@ const EmptyPorthole: React.FC<PanelProps> = ({ festival, panel }) => {
           viewBox={`0 0 ${scene.creature.width} ${scene.creature.height}`}
           width={scene.creature.width * 1.2}
           height={scene.creature.height * 1.2}
+          style={{ left: -(scene.creature.width * 1.2) / 2 }}
           overflow="visible"
         >
           {scene.creature.draw(`ph-${panel}-${festival}-out`)}

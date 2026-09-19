@@ -10,9 +10,16 @@ import type { CSSProperties } from 'react';
  *  three times, clipped to three surfaces, is still one walker.
  *
  *  Read once per mount (in a `useState` initialiser), never per render: a delay that
- *  changes while the animation runs moves it, by exactly the time since the last read. */
-export const phaseNow = (periodSeconds: number, now: number = Date.now()): string =>
-  `-${((now % (periodSeconds * 1000)) / 1000).toFixed(3)}s`;
+ *  changes while the animation runs moves it, by exactly the time since the last read.
+ *
+ *  `shiftSeconds` runs this copy that much ahead of the clock (behind, when negative):
+ *  how two loops that must meet at one instant — the porthole's creature leaving one pane
+ *  and entering the other — each place that instant in their own keyframes. */
+export const phaseNow = (periodSeconds: number, now: number = Date.now(), shiftSeconds = 0): string => {
+  const periodMs = periodSeconds * 1000;
+  const intoMs = (((now + shiftSeconds * 1000) % periodMs) + periodMs) % periodMs;
+  return `-${(intoMs / 1000).toFixed(3)}s`;
+};
 
 /** The phase a hung thing swings at, from where it hangs (a fraction of its line's
  *  width) — so neighbours are never in step, and a lantern on the rail and one in the
