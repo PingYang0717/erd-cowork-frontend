@@ -8,10 +8,11 @@ import { GROUND_BACKDROPS, WEATHER_TILES } from './festiveMotifs';
 import styles from './EmptyStateFestive.module.css';
 
 /** The two empty panes' festive centrepiece (CONTEXT.md, 節慶裝飾): a round window where
- *  the icon tile usually sits, with one creature that lives in the pair of them: at home
- *  in the thread pane's window, then out through the glass, across the pane, over the
- *  rule into the Artifact pane and in through that one's window; a few seconds there,
- *  and back the same way. One creature, seen from two panes.
+ *  the icon tile usually sits, with one creature that lives in the pair of them. It
+ *  drifts slowly through the thread pane's window and out at its rim, grows a little
+ *  as it comes out into the pane, picks up speed, crosses the rule into the Artifact
+ *  pane, slows and shrinks again as it reaches that window, drifts in to its middle,
+ *  turns, and drifts back out the way it came. One creature, seen from two panes.
  *
  *  The point is the crossing, and it has to come round quickly: these panes are on
  *  screen only until the first message, so a loop that showed it once a minute would
@@ -24,9 +25,12 @@ import styles from './EmptyStateFestive.module.css';
  *  the creature twice — a leg leaving its window, a leg arriving — and measures how far
  *  its own edge is from its window, works out where in each leg's keyframes the creature
  *  crosses that edge, and shifts that leg so the moment falls on its hand-off. The two
- *  legs' stretches at home overlap, so the pane needs no third drawing to be the
- *  resident: two identical drawings at one spot read as one. So the arrival lands where
- *  the departure left off whenever either pane mounted and however wide the panes are.
+ *  legs meet in the middle of the window: the arriving leg drifts in and comes to rest
+ *  there, the leaving leg starts from that same rest and turns to go. While both are
+ *  resting they overlap — two identical drawings at one spot read as one — and that
+ *  overlap is what absorbs the difference in the two panes' widths. So the arrival
+ *  lands where the departure left off whenever either pane mounted and however wide
+ *  the panes are.
  *
  *  What is behind the glass is the same world as everywhere else on the screen, seen
  *  through a round hole: the festival's sky tint over its ground band (the very band the
@@ -54,14 +58,22 @@ type Leg = 'out' | 'in';
 
 /** The legs in the CSS keyframes' own terms — the steady stretch of each, as (share of
  *  the loop, distance of the creature's centre from the window in px). One speed on
- *  every leg, 744px over 8% of the loop (about 580px/s): the two halves of a crossing
- *  can only meet at the rule if they cross it at the same speed. A pane's edge falls in
- *  this stretch for any pane this app lays out; nearer or farther is clamped to its end.
- *  Kept in step with `leg-out` / `leg-in` in the stylesheet by hand. */
+ *  every leg, 660px over 7.1% of the loop (about 580px/s), between 100px from the
+ *  window (where the creature has finished growing and picking up speed) and 760px:
+ *  the two halves of a crossing can only meet at the rule if they cross it at the same
+ *  speed. A pane's edge falls in this stretch for any pane this app lays out; nearer or
+ *  farther is clamped (`EDGE_PX`). Kept in step with `leg-out` / `leg-in` in the
+ *  stylesheet by hand. */
 const FLIGHT: Record<Leg, { fromShare: number; fromPx: number; toShare: number; toPx: number }> = {
-  out: { fromShare: 0.27, fromPx: 16, toShare: 0.35, toPx: 760 },
-  in: { fromShare: 0.65, fromPx: 760, toShare: 0.73, toPx: 16 },
+  out: { fromShare: 0.258, fromPx: 100, toShare: 0.329, toPx: 760 },
+  in: { fromShare: 0.686, fromPx: 760, toShare: 0.757, toPx: 100 },
 };
+
+/** How near or far the edge is taken to be, whatever is measured. Nearer than the
+ *  flight's start, the creature is still growing when it crosses; farther than 650px,
+ *  the two legs' rests in the window would no longer overlap and the creature would
+ *  show twice or not at all for a moment. */
+const EDGE_PX = { min: 100, max: 650 } as const;
 
 /** Where the creature is assumed to cross until the pane has been measured: about the
  *  middle of the flight. Replaced before first paint. */
@@ -73,8 +85,9 @@ const UNMEASURED_PX = 388;
  *  window is from this line and lets the flight drift to it by the edge. */
 const FLIGHT_LINE_SHARE = 0.465;
 
-/** The flight's length in px, the distance the drift is spread over. */
-const FLIGHT_PX = 760 - 16;
+/** The far end of the flight in px: the drift is stated there, and the keyframes spread
+ *  it linearly from the window. */
+const FLIGHT_PX = 760;
 
 /** The header slides one 56px weather tile in 14s; the window's tile is the same. */
 const WEATHER_S = 14;
@@ -431,7 +444,8 @@ interface PanelProps {
  *  at the pane's edge, when that is what is measured. */
 const edgeShare = (leg: Leg, distance: number): number => {
   const flight = FLIGHT[leg];
-  const along = Math.min(1, Math.max(0, (distance - flight.fromPx) / (flight.toPx - flight.fromPx)));
+  const edge = Math.min(EDGE_PX.max, Math.max(EDGE_PX.min, distance));
+  const along = (edge - flight.fromPx) / (flight.toPx - flight.fromPx);
   return flight.fromShare + along * (flight.toShare - flight.fromShare);
 };
 
@@ -463,11 +477,10 @@ const edgeGeometry = (porthole: HTMLElement, panel: PanelProps['panel']): EdgeGe
   const box = porthole.getBoundingClientRect();
   const centre = box.left + box.width / 2;
   const distance = panel === 'left' ? pane.right - centre : centre - pane.left;
-  // The drift is linear along the flight, so the amount at its far end is the amount
-  // wanted at the edge scaled up by the flight's length over the edge's distance. An
-  // edge nearer than the flight's start would send it to infinity; no pane is that thin.
+  // The drift is linear from the window, so the amount at the flight's far end is the
+  // amount wanted at the edge scaled up by the far end over the edge's distance.
   const toLine = window.innerHeight * FLIGHT_LINE_SHARE - (box.top + box.height / 2);
-  const drift = (toLine * FLIGHT_PX) / (Math.max(distance, 100) - 16);
+  const drift = (toLine * FLIGHT_PX) / Math.max(distance, EDGE_PX.min);
   return { distance, drift };
 };
 
@@ -580,13 +593,16 @@ const EmptyPorthole: React.FC<PanelProps> = ({ festival, panel }) => {
       data-festive-porthole={panel}
       style={{
         ['--loop' as string]: `${LOOP_S}s`,
-        // Which way out of this pane the other one lies.
+        // Which way out of this pane the other one lies. The creature faces the way it
+        // is going: with the flow of `--dir` on the way out, against it on the way in.
         ['--dir' as string]: panel === 'left' ? 1 : -1,
         ['--dy' as string]: `${phase.drift.toFixed(1)}px`,
         // The creature's scale when it is in the window: the size it was drawn at as the
         // resident (homeScale of the 120-unit view in 118px), over the 1.2× the legs
         // draw it at.
         ['--home' as string]: ((creature.homeScale * 118) / 144).toFixed(3),
+        // Out in the pane it is a little bigger than in the window — nearer, not huge.
+        ['--away' as string]: '0.78',
       }}
     >
       <svg viewBox="0 0 120 120" width="118" height="118" overflow="visible">

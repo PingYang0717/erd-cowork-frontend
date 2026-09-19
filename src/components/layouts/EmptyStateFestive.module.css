@@ -3,22 +3,35 @@
    Everything here runs off custom properties. On the porthole: `--loop`, the one period
    the whole piece shares; `--dir`, which way out of this pane the other one lies (1: to
    the right, -1: to the left); `--home`, the creature's scale when it is in the window;
-   `--dy`, how far a leg drifts down (up, when negative) by its far end so that it is on
-   the shared flight line at the pane's edge. On each leg: `--phase`, where in the loop
+   `--away`, its scale out in the pane — a little bigger than at home, as something
+   nearer would be; `--dy`, how far a leg drifts down (up, when negative) by its far end
+   so that it is on the shared flight line at the pane's edge. On each leg: `--phase`, where in the loop
    that leg stands — read off the wall clock and shifted so that the creature crosses
    this pane's edge at the instant both panes agree on (EmptyStateFestive, HANDOFF).
    Those shifts are the entire mechanism behind the hand-off: no message between the
    panes.
 
-   One creature, two legs a pane. The `out` leg is the creature at home, then leaving;
-   the `in` leg is it arriving, then at home. Their stretches at home overlap on purpose:
-   two identical drawings at one spot read as one, and the overlap is what lets each
-   pane's departure and arrival fall where its own geometry puts them, with no gap and no
-   double showing. The shares below are one leg's own; the pane shifts each leg
-   separately. Change a leg's flight and `FLIGHT` in the component must follow.
+   One creature, two legs a pane. The `in` leg is the creature arriving: in at the
+   pane's edge at speed, slowing and shrinking as it reaches the window, drifting in to
+   the middle, and resting there. The `out` leg starts from that same rest, turns to
+   face the way out, drifts to the rim, grows and picks up speed as it comes out, and
+   flies to the edge. The two rests overlap on purpose: two identical drawings at one
+   spot read as one, and the overlap is what lets each pane's departure and arrival fall
+   where its own geometry puts them, with no gap and no double showing. The shares below
+   are one leg's own; the pane shifts each leg separately. Change a leg's flight and
+   `FLIGHT` in the component must follow.
 
-     out   0–25%  at home     25–27%  through the glass   27–35%  flight   35–100%  gone
-     in    0–65%  gone        65–73%  flight              73–75%  through the glass   75–100%  at home */
+     out   0–12.3%    at rest in the middle, facing the way it came
+           12.3–13.8  turns
+           13.8–22.8  drifts to the rim (45px, slowly)
+           22.8–25.8  out through the rim: grows, picks up speed, to 100px
+           25.8–32.9  flight, 100px to 760px at one speed
+           32.9–100   gone
+     in    0–68.6     gone
+           68.6–75.7  flight, 760px to 100px at the same speed
+           75.7–78.7  in through the rim: slows, shrinks, to 45px
+           78.7–87.7  drifts to the middle (45px, slowly)
+           87.7–100   at rest in the middle, facing the way it came */
 
 .porthole {
   position: relative;
@@ -147,47 +160,64 @@
   }
 }
 
-/* At home, then out through the glass and away at one steady speed until the pane's
-   edge takes it; gone until the loop comes round. */
+/* From rest in the middle of the window: the turn, the slow drift to the rim, out and
+   growing and gathering speed, then the flight at one steady speed until the pane's
+   edge takes it; gone until the loop comes round. The creature faces the way it goes. */
 @keyframes leg-out {
   0%,
-  25% {
+  12.3% {
     opacity: 1;
-    transform: translate(0, 0) scale(var(--home));
+    transform: translate(0, 0) scale(var(--home)) scaleX(calc(-1 * var(--dir)));
   }
-  27% {
+  13.8% {
     opacity: 1;
-    transform: translate(calc(16px * var(--dir)), 0) scale(0.9);
+    transform: translate(0, 0) scale(var(--home)) scaleX(var(--dir));
   }
-  35% {
+  22.8% {
     opacity: 1;
-    transform: translate(calc(760px * var(--dir)), var(--dy, 0px)) scale(1);
+    transform: translate(calc(45px * var(--dir)), 0) scale(var(--home)) scaleX(var(--dir));
+    animation-timing-function: ease-in;
   }
-  35.1%,
+  25.8% {
+    opacity: 1;
+    transform: translate(calc(100px * var(--dir)), calc(var(--dy, 0px) * 0.13)) scale(var(--away)) scaleX(var(--dir));
+  }
+  32.9% {
+    opacity: 1;
+    transform: translate(calc(760px * var(--dir)), var(--dy, 0px)) scale(var(--away)) scaleX(var(--dir));
+  }
+  33%,
   100% {
     opacity: 0;
-    transform: translate(calc(760px * var(--dir)), var(--dy, 0px)) scale(1);
+    transform: translate(calc(760px * var(--dir)), var(--dy, 0px)) scale(var(--away)) scaleX(var(--dir));
   }
 }
 
-/* In from beyond the pane's edge at the same speed, through the glass, and at home. */
+/* In from beyond the pane's edge at the same speed, slowing and shrinking through the
+   rim, the slow drift to the middle, and rest — facing the way it came. */
 @keyframes leg-in {
   0%,
-  64.9% {
+  68.5% {
     opacity: 0;
-    transform: translate(calc(760px * var(--dir)), var(--dy, 0px)) scale(1);
+    transform: translate(calc(760px * var(--dir)), var(--dy, 0px)) scale(var(--away)) scaleX(calc(-1 * var(--dir)));
   }
-  65% {
+  68.6% {
     opacity: 1;
-    transform: translate(calc(760px * var(--dir)), var(--dy, 0px)) scale(1);
+    transform: translate(calc(760px * var(--dir)), var(--dy, 0px)) scale(var(--away)) scaleX(calc(-1 * var(--dir)));
   }
-  73% {
+  75.7% {
     opacity: 1;
-    transform: translate(calc(16px * var(--dir)), 0) scale(0.9);
+    transform: translate(calc(100px * var(--dir)), calc(var(--dy, 0px) * 0.13)) scale(var(--away))
+      scaleX(calc(-1 * var(--dir)));
+    animation-timing-function: ease-out;
   }
-  75%,
+  78.7% {
+    opacity: 1;
+    transform: translate(calc(45px * var(--dir)), 0) scale(var(--home)) scaleX(calc(-1 * var(--dir)));
+  }
+  87.7%,
   100% {
     opacity: 1;
-    transform: translate(0, 0) scale(var(--home));
+    transform: translate(0, 0) scale(var(--home)) scaleX(calc(-1 * var(--dir)));
   }
 }

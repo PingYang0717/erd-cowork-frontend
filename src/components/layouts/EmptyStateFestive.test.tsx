@@ -73,11 +73,12 @@ describe('The empty panes’ porthole', () => {
    *  instants in the 16s loop — 25% going right, 75% coming back — at which the creature
    *  is at the rule between them. Each pane shifts each of its legs so that the creature
    *  crosses its own edge right then. With the edge 475px from either window, a leg out
-   *  crosses it 31.9% of the way through its keyframes and a leg in 68.1% (the flights
-   *  are 27–35% and 65–73%): the left pane's `out` leg runs +1.110s ahead of the clock
-   *  to land on 25%, its `in` leg −1.110s to land on 75%; the right pane's `in` leg
-   *  +6.890s for 25% (wrapping past the loop's end), its `out` leg −6.890s for 75%. Both
-   *  read the clock, so the offsets hold however far apart the two panes mounted. */
+   *  crosses it 29.8% of the way through its keyframes and a leg in 71.7% (the steady
+   *  flights are 25.8–32.9% and 68.6–75.7%, 100px to 760px): the left pane's `out` leg
+   *  runs +0.773s ahead of the clock to land on 25%, its `in` leg −0.533s to land on
+   *  75%; the right pane's `in` leg +7.467s for 25% (wrapping past the loop's end), its
+   *  `out` leg −7.227s for 75%. Both read the clock, so the offsets hold however far
+   *  apart the two panes mounted. */
   it('shifts each leg so its creature crosses the rule at the instant both panes agree on', () => {
     layOut();
     vi.useFakeTimers({ toFake: ['Date'] });
@@ -85,24 +86,24 @@ describe('The empty panes’ porthole', () => {
     const { container: left } = renderInPane('left');
     const { container: right } = renderInPane('right');
 
-    expect(phase(left, 'out')).toBe('-11.110s');
-    expect(phase(left, 'in')).toBe('-8.890s');
-    expect(phase(right, 'in')).toBe('-0.890s');
-    expect(phase(right, 'out')).toBe('-3.110s');
+    expect(phase(left, 'out')).toBe('-10.773s');
+    expect(phase(left, 'in')).toBe('-9.467s');
+    expect(phase(right, 'in')).toBe('-1.467s');
+    expect(phase(right, 'out')).toBe('-2.773s');
   });
 
   /** The two windows are not at one height, so each flight drifts towards the one line
    *  both panes agree on — 46.5% of the viewport, 418.5px here — and is on it at the
-   *  edge. The drift is stated for the flight's far end (744px), so at the edge (459px
-   *  past the flight's start) it is the 32.5px down the left window needs and the 30.5px
-   *  up the right one does. */
+   *  edge. The drift is stated for the flight's far end (760px from the window), so at
+   *  the edge (475px out) it is the 32.5px down the left window needs and the 30.5px up
+   *  the right one does. */
   it('drifts each flight onto the shared line by the pane’s edge', () => {
     layOut();
     viewportOf900();
     const { container: left } = renderInPane('left');
     const { container: right } = renderInPane('right');
 
-    expect(drift(left)).toBe('52.7px');
-    expect(drift(right)).toBe('-49.4px');
+    expect(drift(left)).toBe('52.0px');
+    expect(drift(right)).toBe('-48.8px');
   });
 });
