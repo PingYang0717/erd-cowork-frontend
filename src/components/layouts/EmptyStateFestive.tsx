@@ -8,29 +8,25 @@ import { GROUND_BACKDROPS, WEATHER_TILES } from './festiveMotifs';
 import styles from './EmptyStateFestive.module.css';
 
 /** The two empty panes' festive centrepiece (CONTEXT.md, 節慶裝飾): a round window where
- *  the icon tile usually sits, with one creature that lives in the pair of them. It
- *  drifts slowly through the thread pane's window and out at its rim, grows a little
- *  as it comes out into the pane, picks up speed, crosses the rule into the Artifact
- *  pane, slows and shrinks again as it reaches that window, drifts in to its middle,
- *  turns, and drifts back out the way it came. One creature, seen from two panes.
+ *  the icon tile usually sits, and one creature that passes through the pair of them,
+ *  left to right, like something crossing a street seen from two windows: it comes up
+ *  out of the distance in the thread pane's window, drifts across it and out at the
+ *  rim, flies across the pane and over the rule, in at the Artifact pane's window,
+ *  drifts to its middle, and goes off into the distance again. Then the street is
+ *  quiet for a few seconds, and it comes again. One creature, one direction, always
+ *  the same size — the window is a window, not a lens.
  *
- *  The point is the crossing, and it has to come round quickly: these panes are on
- *  screen only until the first message, so a loop that showed it once a minute would
- *  never be seen. The loop is 16s, with a crossing every 8s, and the crossing itself is
- *  quick — about 1.3s pane to pane.
+ *  It has to come round quickly: these panes are on screen only until the first
+ *  message, so a story that took a minute would never be seen. The loop is 14s; the
+ *  story takes about ten of them, the crossing itself about 1.3s.
  *
  *  Nothing is exchanged between the panes — they cannot see each other. Both run the
- *  loop off the wall clock (`phaseNow`), and agree on two instants in it: the hand-offs,
- *  when the creature is at the rule between them, going and coming back. Each pane draws
- *  the creature twice — a leg leaving its window, a leg arriving — and measures how far
- *  its own edge is from its window, works out where in each leg's keyframes the creature
- *  crosses that edge, and shifts that leg so the moment falls on its hand-off. The two
- *  legs meet in the middle of the window: the arriving leg drifts in and comes to rest
- *  there, the leaving leg starts from that same rest and turns to go. While both are
- *  resting they overlap — two identical drawings at one spot read as one — and that
- *  overlap is what absorbs the difference in the two panes' widths. So the arrival
- *  lands where the departure left off whenever either pane mounted and however wide
- *  the panes are.
+ *  loop off the wall clock (`phaseNow`) and agree on one instant in it: the hand-off,
+ *  when the creature is at the rule between them. Each pane draws its own half of the
+ *  journey, measures how far its own edge is from its window, works out where in its
+ *  keyframes the creature crosses that edge, and shifts its half so that moment falls
+ *  on the hand-off. So the arrival lands where the departure left off whenever either
+ *  pane mounted and however wide the panes are.
  *
  *  What is behind the glass is the same world as everywhere else on the screen, seen
  *  through a round hole: the festival's sky tint over its ground band (the very band the
@@ -43,37 +39,33 @@ import styles from './EmptyStateFestive.module.css';
 
 const INK = 'var(--erd-color-text, rgba(0, 0, 0, 0.88))';
 
-/** The loop: at home in one window, across to the other, at home there, and back. Short
- *  on purpose — see above. */
-const LOOP_S = 16;
+/** The loop: the story, then the quiet. Short on purpose — see above. */
+const LOOP_S = 14;
 
-/** The two hand-offs: the shares of the loop at which the creature is at the rule
- *  between the panes, going right and coming back. The only two instants the panes
- *  share. Half a loop apart, so it is at home the same while in each window. */
-const HANDOFF = { toRight: 0.25, toLeft: 0.75 } as const;
+/** The hand-off: the share of the loop at which the creature is at the rule between the
+ *  panes. The one instant the panes share. */
+const HANDOFF_SHARE = 0.5;
 
-/** One leg of the journey as one pane draws it: the creature leaving this pane's window
- *  for the other pane, or arriving from it. */
+/** Which half of the journey a pane draws: the thread pane the creature leaving, the
+ *  Artifact pane it arriving. */
 type Leg = 'out' | 'in';
 
 /** The legs in the CSS keyframes' own terms — the steady stretch of each, as (share of
  *  the loop, distance of the creature's centre from the window in px). One speed on
- *  every leg, 660px over 7.1% of the loop (about 580px/s), between 100px from the
- *  window (where the creature has finished growing and picking up speed) and 760px:
- *  the two halves of a crossing can only meet at the rule if they cross it at the same
- *  speed. A pane's edge falls in this stretch for any pane this app lays out; nearer or
- *  farther is clamped (`EDGE_PX`). Kept in step with `leg-out` / `leg-in` in the
- *  stylesheet by hand. */
+ *  both, 660px over 8.1% of the loop (about 580px/s), between 100px from the window
+ *  (where the creature has finished picking up speed) and 760px: the two halves of the
+ *  crossing can only meet at the rule if they cross it at the same speed. A pane's edge
+ *  falls in this stretch for any pane this app lays out; nearer or farther is clamped
+ *  (`EDGE_PX`). Kept in step with `leg-out` / `leg-in` in the stylesheet by hand. */
 const FLIGHT: Record<Leg, { fromShare: number; fromPx: number; toShare: number; toPx: number }> = {
-  out: { fromShare: 0.258, fromPx: 100, toShare: 0.329, toPx: 760 },
-  in: { fromShare: 0.686, fromPx: 760, toShare: 0.757, toPx: 100 },
+  out: { fromShare: 0.4, fromPx: 100, toShare: 0.481, toPx: 760 },
+  in: { fromShare: 0.4, fromPx: 760, toShare: 0.481, toPx: 100 },
 };
 
-/** How near or far the edge is taken to be, whatever is measured. Nearer than the
- *  flight's start, the creature is still growing when it crosses; farther than 650px,
- *  the two legs' rests in the window would no longer overlap and the creature would
- *  show twice or not at all for a moment. */
-const EDGE_PX = { min: 100, max: 650 } as const;
+/** How near or far the edge is taken to be, whatever is measured: within the steady
+ *  stretch. Nearer, the creature is still picking up speed when it crosses; farther,
+ *  it is already in the pane when the stretch begins. */
+const EDGE_PX = { min: 100, max: 760 } as const;
 
 /** Where the creature is assumed to cross until the pane has been measured: about the
  *  middle of the flight. Replaced before first paint. */
@@ -449,19 +441,12 @@ const edgeShare = (leg: Leg, distance: number): number => {
   return flight.fromShare + along * (flight.toShare - flight.fromShare);
 };
 
-/** Where each of this pane's legs stands in the loop: read off the clock, then shifted
- *  so that the creature crosses this pane's edge at that leg's hand-off — the left
- *  pane's `out` leg and the right pane's `in` leg meet at the rightward hand-off, the
- *  other two at the return. */
-const phasesOf = (panel: PanelProps['panel'], edgeDistance: number): Record<Leg, string> => {
-  const now = Date.now();
-  const handoff: Record<Leg, number> =
-    panel === 'left' ? { out: HANDOFF.toRight, in: HANDOFF.toLeft } : { out: HANDOFF.toLeft, in: HANDOFF.toRight };
-  return {
-    out: phaseNow(LOOP_S, now, (edgeShare('out', edgeDistance) - handoff.out) * LOOP_S),
-    in: phaseNow(LOOP_S, now, (edgeShare('in', edgeDistance) - handoff.in) * LOOP_S),
-  };
-};
+/** Which half this pane draws, and where it stands in the loop: read off the clock,
+ *  then shifted so that the creature crosses this pane's edge at the hand-off. */
+const legOf = (panel: PanelProps['panel']): Leg => (panel === 'left' ? 'out' : 'in');
+
+const phaseOf = (panel: PanelProps['panel'], edgeDistance: number): string =>
+  phaseNow(LOOP_S, Date.now(), (edgeShare(legOf(panel), edgeDistance) - HANDOFF_SHARE) * LOOP_S);
 
 interface EdgeGeometry {
   /** From the window's centre — where the creature is anchored — to the edge it leaves
@@ -488,7 +473,7 @@ const edgeGeometry = (porthole: HTMLElement, panel: PanelProps['panel']): EdgeGe
  *  fades out at both ends with a mask — and a lacquered ring with a highlight on it is
  *  the vocabulary of an app icon, not of the picture this is supposed to belong to. So
  *  the scene simply stops being there towards its edge. The creature is not drawn here:
- *  it is the legs' business, at home or away. */
+ *  it is the leg's business. */
 const PortholeScene: React.FC<{ id: string; festival: Festival; weatherPhase: string }> = ({
   id,
   festival,
@@ -543,16 +528,14 @@ const PortholeScene: React.FC<{ id: string; festival: Festival; weatherPhase: st
   );
 };
 
-const LEGS: readonly Leg[] = ['out', 'in'];
-
-/** The window, in the icon tile's place, and the creature on its two legs. */
+/** The window, in the icon tile's place, and this pane's half of the creature's journey. */
 const EmptyPorthole: React.FC<PanelProps> = ({ festival, panel }) => {
   const rootRef = useRef<HTMLSpanElement>(null);
 
   // Read once per measurement: a phase that moved with every render would move the
   // creature with it.
   const [phase, setPhase] = useState(() => ({
-    legs: phasesOf(panel, UNMEASURED_PX),
+    leg: phaseOf(panel, UNMEASURED_PX),
     drift: 0,
     weather: phaseNow(WEATHER_S),
   }));
@@ -571,8 +554,8 @@ const EmptyPorthole: React.FC<PanelProps> = ({ festival, panel }) => {
     }
     const measure = () => {
       const { distance, drift } = edgeGeometry(root, panel);
-      const legs = phasesOf(panel, distance);
-      setPhase((previous) => ({ ...previous, legs, drift }));
+      const leg = phaseOf(panel, distance);
+      setPhase((previous) => ({ ...previous, leg, drift }));
     };
     measure();
     if (typeof ResizeObserver === 'undefined') {
@@ -584,6 +567,7 @@ const EmptyPorthole: React.FC<PanelProps> = ({ festival, panel }) => {
   }, [panel]);
 
   const { creature } = SCENES[festival];
+  const leg = legOf(panel);
 
   return (
     <span
@@ -593,44 +577,35 @@ const EmptyPorthole: React.FC<PanelProps> = ({ festival, panel }) => {
       data-festive-porthole={panel}
       style={{
         ['--loop' as string]: `${LOOP_S}s`,
-        // Which way out of this pane the other one lies. The creature faces the way it
-        // is going: with the flow of `--dir` on the way out, against it on the way in.
-        ['--dir' as string]: panel === 'left' ? 1 : -1,
         ['--dy' as string]: `${phase.drift.toFixed(1)}px`,
-        // The creature's scale when it is in the window: the size it was drawn at as the
-        // resident (homeScale of the 120-unit view in 118px), over the 1.2× the legs
-        // draw it at.
+        // The creature's one size: what it was drawn at as the window's resident
+        // (homeScale of the 120-unit view in 118px), over the 1.2× the leg draws it at.
         ['--home' as string]: ((creature.homeScale * 118) / 144).toFixed(3),
-        // Out in the pane it is a little bigger than in the window — nearer, not huge.
-        ['--away' as string]: '0.78',
       }}
     >
       <svg viewBox="0 0 120 120" width="118" height="118" overflow="visible">
         <PortholeScene id={`ph-${panel}-${festival}`} festival={festival} weatherPhase={phase.weather} />
       </svg>
-      {/* The legs are anchored to the window rather than to the pane, and the pane clips
-          them — that is what makes the creature leave the screen. The drawing is centred
+      {/* The leg is anchored to the window rather than to the pane, and the pane clips
+          it — that is what makes the creature leave the screen. The drawing is centred
           on the anchor, so the translate in the keyframes is where its centre is: the
           number the hand-off is worked out from. */}
-      {LEGS.map((leg) => (
-        <span
-          key={leg}
-          className={`${styles.escape} ${leg === 'out' ? styles.legOut : styles.legIn}`}
-          data-festive-escape={panel}
-          data-leg={leg}
-          style={{ ['--phase' as string]: phase.legs[leg] }}
+      <span
+        className={`${styles.escape} ${leg === 'out' ? styles.legOut : styles.legIn}`}
+        data-festive-escape={panel}
+        data-leg={leg}
+        style={{ ['--phase' as string]: phase.leg }}
+      >
+        <svg
+          viewBox={`0 0 ${creature.width} ${creature.height}`}
+          width={creature.width * 1.2}
+          height={creature.height * 1.2}
+          style={{ left: -(creature.width * 1.2) / 2, top: -(creature.height * 1.2) / 2 }}
+          overflow="visible"
         >
-          <svg
-            viewBox={`0 0 ${creature.width} ${creature.height}`}
-            width={creature.width * 1.2}
-            height={creature.height * 1.2}
-            style={{ left: -(creature.width * 1.2) / 2, top: -(creature.height * 1.2) / 2 }}
-            overflow="visible"
-          >
-            {creature.draw(`ph-${panel}-${festival}-${leg}`)}
-          </svg>
-        </span>
-      ))}
+          {creature.draw(`ph-${panel}-${festival}-${leg}`)}
+        </svg>
+      </span>
     </span>
   );
 };

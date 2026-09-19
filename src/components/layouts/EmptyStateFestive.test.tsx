@@ -39,13 +39,13 @@ const renderInPane = (panel: 'left' | 'right') =>
     </div>
   );
 
-const phase = (root: HTMLElement, leg: 'out' | 'in') =>
-  root.querySelector<HTMLElement>(`[data-festive-escape][data-leg="${leg}"]`)?.style.getPropertyValue('--phase');
+const phase = (root: HTMLElement) =>
+  root.querySelector<HTMLElement>('[data-festive-escape]')?.style.getPropertyValue('--phase');
 
 const drift = (root: HTMLElement) =>
   root.querySelector<HTMLElement>('[data-festive-porthole]')?.style.getPropertyValue('--dy');
 
-/** The porthole in the empty panes, and the one creature that crosses between them.
+/** The porthole in the empty panes, and the one creature that passes through both.
  *  Decoration: hidden from anyone reading the page, one creature a festival. */
 describe('The empty panes’ porthole', () => {
   afterEach(() => {
@@ -56,40 +56,38 @@ describe('The empty panes’ porthole', () => {
   const viewportOf900 = () => vi.spyOn(window, 'innerHeight', 'get').mockReturnValue(900);
 
   it.each(['lunarNewYear', 'christmas', 'halloween', 'midAutumn'] as const)(
-    'draws the window and the creature on both its legs for %s, out of the reader’s way',
+    'draws the window and the creature for %s, out of the reader’s way',
     (festival) => {
-      const { container } = render(<EmptyPorthole festival={festival} panel="left" />);
+      const { container: left } = render(<EmptyPorthole festival={festival} panel="left" />);
+      const { container: right } = render(<EmptyPorthole festival={festival} panel="right" />);
 
-      const porthole = container.querySelector('[data-festive-porthole="left"]');
+      const porthole = left.querySelector('[data-festive-porthole="left"]');
       expect(porthole).toHaveAttribute('aria-hidden', 'true');
-      // The window, and the creature leaving and the creature arriving: one drawing each.
-      expect(porthole?.querySelectorAll('svg')).toHaveLength(3);
+      // The window, and the creature: one drawing each. The thread pane draws it
+      // leaving, the Artifact pane arriving.
+      expect(porthole?.querySelectorAll('svg')).toHaveLength(2);
       expect(porthole?.querySelector('[data-festive-escape="left"][data-leg="out"]')).toBeInTheDocument();
-      expect(porthole?.querySelector('[data-festive-escape="left"][data-leg="in"]')).toBeInTheDocument();
+      expect(right.querySelector('[data-festive-escape="right"][data-leg="in"]')).toBeInTheDocument();
     }
   );
 
-  /** The hand-off is a phase, not a message: both panes read the clock and agree on two
-   *  instants in the 16s loop — 25% going right, 75% coming back — at which the creature
-   *  is at the rule between them. Each pane shifts each of its legs so that the creature
-   *  crosses its own edge right then. With the edge 475px from either window, a leg out
-   *  crosses it 29.8% of the way through its keyframes and a leg in 71.7% (the steady
-   *  flights are 25.8–32.9% and 68.6–75.7%, 100px to 760px): the left pane's `out` leg
-   *  runs +0.773s ahead of the clock to land on 25%, its `in` leg −0.533s to land on
-   *  75%; the right pane's `in` leg +7.467s for 25% (wrapping past the loop's end), its
-   *  `out` leg −7.227s for 75%. Both read the clock, so the offsets hold however far
-   *  apart the two panes mounted. */
-  it('shifts each leg so its creature crosses the rule at the instant both panes agree on', () => {
+  /** The hand-off is a phase, not a message: both panes read the clock and agree on one
+   *  instant in the 14s loop — its middle — at which the creature is at the rule between
+   *  them. Each pane shifts its leg so that the creature crosses its own edge right then.
+   *  With the edge 475px from either window, the leg out crosses it 44.6% of the way
+   *  through its keyframes and the leg in 43.5% (the steady flights are 40–48.1%, 100px
+   *  to 760px): the thread pane's leg runs 0.756s behind the clock, the Artifact pane's
+   *  0.910s behind. Both read the clock, so the offsets hold however far apart the two
+   *  panes mounted. */
+  it('shifts each pane so its creature crosses the rule at the instant both agree on', () => {
     layOut();
     vi.useFakeTimers({ toFake: ['Date'] });
-    vi.setSystemTime(new Date(16_000 * 100 + 10_000));
+    vi.setSystemTime(new Date(14_000 * 100 + 10_000));
     const { container: left } = renderInPane('left');
     const { container: right } = renderInPane('right');
 
-    expect(phase(left, 'out')).toBe('-10.773s');
-    expect(phase(left, 'in')).toBe('-9.467s');
-    expect(phase(right, 'in')).toBe('-1.467s');
-    expect(phase(right, 'out')).toBe('-2.773s');
+    expect(phase(left)).toBe('-9.244s');
+    expect(phase(right)).toBe('-9.090s');
   });
 
   /** The two windows are not at one height, so each flight drifts towards the one line
